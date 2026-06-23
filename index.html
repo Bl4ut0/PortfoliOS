@@ -614,6 +614,26 @@
                                             </div>
                                         </section>
 
+                                        <section class="settings-section">
+                                            <h3>How to Configure Google OAuth</h3>
+                                            <p class="settings-info-text" style="margin-bottom: 0.5rem;">To connect your personal Google Drive, you need to create a free Web OAuth Client ID on Google Cloud Console:</p>
+                                            <ul class="settings-info-text" style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.35rem; list-style-type: decimal; margin: 0;">
+                                                <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Google Cloud Console</a>.</li>
+                                                <li>Select or create a project, then search for and enable the <strong>Google Drive API</strong>.</li>
+                                                <li>Set up your <strong>OAuth Consent Screen</strong> and add the <code>.../auth/drive.file</code> scope.</li>
+                                                <li>Navigate to <strong>Credentials</strong> &gt; <strong>Create Credentials</strong> &gt; <strong>OAuth client ID</strong>.</li>
+                                                <li>Set the application type to <strong>Web application</strong>.</li>
+                                                <li>In <strong>Authorized JavaScript Origins</strong>, add:
+                                                    <ul style="list-style-type: disc; padding-left: 1.25rem; margin-top: 0.25rem;">
+                                                        <li><code>https://os.bl4ut0.dev</code></li>
+                                                        <li><code>http://localhost:8005</code> (for local testing)</li>
+                                                    </ul>
+                                                </li>
+                                                <li>Leave <strong>Authorized redirect URIs</strong> empty (the token client handles returns directly via JavaScript origin messaging).</li>
+                                                <li>Copy the generated <strong>Client ID</strong> and paste it into the field above.</li>
+                                            </ul>
+                                        </section>
+
                                         <section class="settings-section" id="settings-sync-actions-section" style="display: none;">
                                             <h3>Data Synchronization</h3>
                                             <div class="sync-actions-card">

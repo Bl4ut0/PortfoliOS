@@ -455,7 +455,7 @@
                         <div class="sync-config-section">
                             <label for="sync-client-id">Google Client ID:</label>
                             <input type="text" id="sync-client-id" class="sync-client-id-input" placeholder="Enter your OAuth2 Client ID" />
-                            <p class="sync-help-text">Please enter your Google OAuth 2.0 Client ID to enable personal cloud backup.</p>
+                            <p class="sync-help-text">Please enter your Google OAuth 2.0 Client ID to enable personal cloud backup. See the <strong>Cloud Sync</strong> tab in the <strong>Settings</strong> app for step-by-step credentials instructions.</p>
                         </div>
                         <div class="sync-actions-row">
                             <button class="btn-sync-action btn-connect-gdrive"><i class="fa-solid fa-link"></i> Connect Account</button>
