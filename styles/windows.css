@@ -376,9 +376,9 @@
         width: 100%;
         border-right: none;
         border-bottom: 1px solid var(--line);
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
-        padding: 1rem;
+        padding: 1.25rem 1rem;
         gap: 1rem;
     }
 }

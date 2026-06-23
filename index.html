@@ -151,20 +151,15 @@
                             
                             <div class="profile-layout">
                                 <!-- Sidebar (Left pane) -->
-                                <aside class="profile-sidebar">
-                                    <div class="profile-avatar-container">
-                                        <div class="profile-avatar">
-                                            <img src="identity-portrait.jpg" alt="Alex Mammen portrait">
-                                        </div>
-                                        <div class="profile-status-badge">
-                                            <div class="profile-status-dot" title="Online"></div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="profile-sidebar-details">
-                                        <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text);">Alex Mammen</h2>
-                                        <p style="font-family: var(--mono); font-size: 0.7rem; color: var(--text-soft);">Bl4ut0 / Systems Builder</p>
-                                    </div>
+                                <aside class="profile-sidebar" style="width: 17rem;">
+                                    <figure class="identity-portrait" style="width: 100%; margin: 0 0 0.5rem 0; min-height: 12.5rem; padding: 0.85rem;">
+                                        <img src="identity-portrait.jpg" alt="Drawn portrait of Alex Mammen">
+                                        <figcaption>
+                                            <span>identity record</span>
+                                            <strong style="font-size: 1.35rem;">Alex Mammen</strong>
+                                            <small><b>Handle</b> Bl4ut0</small>
+                                        </figcaption>
+                                    </figure>
                                     
                                     <div class="profile-sidebar-divider"></div>
                                     
@@ -205,7 +200,6 @@
                                 <div class="profile-main">
                                     <nav class="profile-tabs-header" role="tablist" aria-label="Profile section tabs">
                                         <button class="profile-tab active" role="tab" aria-selected="true" data-profile-tab="overview">Overview</button>
-                                        <button class="profile-tab" role="tab" aria-selected="false" data-profile-tab="specs">System Specs</button>
                                         <button class="profile-tab" role="tab" aria-selected="false" data-profile-tab="history">Changelog</button>
                                     </nav>
                                     
@@ -228,33 +222,6 @@
                                                         <i class="fa-solid fa-briefcase"></i>
                                                         WardenIT
                                                     </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Specs Tab Panel -->
-                                        <div class="profile-panel" id="profile-panel-specs" role="tabpanel">
-                                            <p class="eyebrow">identity.sys // specs</p>
-                                            <div class="profile-specs-list">
-                                                <div class="profile-spec-row">
-                                                    <span class="profile-spec-label">Languages</span>
-                                                    <span class="profile-spec-value">Lua, Python, TypeScript, JavaScript, SQL, XML, HTML, CSS</span>
-                                                </div>
-                                                <div class="profile-spec-row">
-                                                    <span class="profile-spec-label">Data & DBs</span>
-                                                    <span class="profile-spec-value">PostgreSQL, SQLite, Redis, Cloudflare KV / D1 / Durable Objects</span>
-                                                </div>
-                                                <div class="profile-spec-row">
-                                                    <span class="profile-spec-label">Hosting/Infra</span>
-                                                    <span class="profile-spec-value">Proxmox VE, Docker, Portainer, Linux (Ubuntu/Debian), VLAN Segmentation, Tailscale, Cloudflare Pages/Workers, n8n</span>
-                                                </div>
-                                                <div class="profile-spec-row">
-                                                    <span class="profile-spec-label">Tools & APIs</span>
-                                                    <span class="profile-spec-value">Git, GitHub Actions, Discord API, WoW API, Emscripten, WebGL, JS-DOS</span>
-                                                </div>
-                                                <div class="profile-spec-row">
-                                                    <span class="profile-spec-label">Pattern</span>
-                                                    <span class="profile-spec-value">Prototype in public, keep the useful parts, document the route, and connect projects back into one navigable network.</span>
                                                 </div>
                                             </div>
                                         </div>
