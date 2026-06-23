@@ -86,18 +86,72 @@ window.applyVolume = () => {
     window.configureGameVolume();
 };
 
+window.getPortfolioThemeOptions = () => {
+    const fallbackTheme = {
+        id: "dark",
+        label: "Dark",
+        colorScheme: "dark",
+        tokens: {
+            "--bg": "#050608",
+            "--panel": "rgba(9, 11, 16, 0.62)",
+            "--panel-strong": "rgba(14, 18, 26, 0.85)",
+            "--panel-soft": "rgba(255, 255, 255, 0.04)",
+            "--line": "rgba(255, 255, 255, 0.07)",
+            "--line-strong": "rgba(255, 255, 255, 0.14)",
+            "--text": "#fafafa",
+            "--text-soft": "#a1a1aa",
+            "--text-muted": "#71717a",
+            "--theme-primary": "#22d3ee",
+            "--theme-accent": "#34d399",
+            "--amber": "#f59e0b",
+            "--blue": "#3b82f6",
+            "--violet": "#a78bfa",
+            "--rose": "#f43f5e",
+            "--teal": "#14b8a6",
+            "--glass-bg": "rgba(10, 12, 18, 0.62)",
+            "--glass-border": "rgba(255, 255, 255, 0.07)",
+            "--glass-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.12)",
+            "--glass-shadow": "0 25px 50px -12px rgba(0, 0, 0, 0.75)"
+        }
+    };
+    return Array.isArray(window.portfolioThemes) && window.portfolioThemes.length
+        ? window.portfolioThemes
+        : [fallbackTheme];
+};
+
+window.getPortfolioTheme = (themeId = state.themeId) => {
+    const themes = window.getPortfolioThemeOptions();
+    return themes.find((theme) => theme.id === themeId) || themes[0];
+};
+
 window.applyThemeColors = () => {
     const primaryPicker = window.byId ? window.byId("theme-primary-picker") : document.getElementById("theme-primary-picker");
     const accentPicker = window.byId ? window.byId("theme-accent-picker") : document.getElementById("theme-accent-picker");
+    const theme = window.getPortfolioTheme();
+    const tokens = theme.tokens || {};
+
+    document.documentElement.dataset.theme = theme.id;
+    document.documentElement.style.colorScheme = theme.colorScheme || "dark";
+    if (document.body) {
+        document.body.dataset.theme = theme.id;
+    }
+
+    Object.entries(tokens).forEach(([name, value]) => {
+        document.documentElement.style.setProperty(name, value);
+    });
 
     if (state.themePrimary) {
         document.documentElement.style.setProperty("--theme-primary", state.themePrimary);
-        if (primaryPicker) primaryPicker.value = state.themePrimary;
     }
     if (state.themeAccent) {
         document.documentElement.style.setProperty("--theme-accent", state.themeAccent);
-        if (accentPicker) accentPicker.value = state.themeAccent;
     }
+
+    const currentPrimary = state.themePrimary || tokens["--theme-primary"] || "#22d3ee";
+    const currentAccent = state.themeAccent || tokens["--theme-accent"] || "#34d399";
+    if (primaryPicker) primaryPicker.value = currentPrimary;
+    if (accentPicker) accentPicker.value = currentAccent;
+    if (window.renderThemeOptions) window.renderThemeOptions();
 };
 
 window.applyDesktopResolution = () => {
@@ -157,6 +211,26 @@ window.applyDesktopPreferences = () => {
     if (resSelect) resSelect.value = state.desktopResolution;
 };
 
+window.setPortfolioTheme = (themeId, options = {}) => {
+    const theme = window.getPortfolioTheme(themeId);
+    state.themeId = theme.id;
+
+    if (options.clearOverrides !== false) {
+        state.themePrimary = null;
+        state.themeAccent = null;
+        if (window.Storage) {
+            window.Storage.local.remove("bl4ut0ThemePrimary");
+            window.Storage.local.remove("bl4ut0ThemeAccent");
+        }
+    }
+
+    if (window.Storage) {
+        window.Storage.local.set("bl4ut0ThemeId", theme.id);
+    }
+    window.applyThemeColors();
+    if (window.EventBus) window.EventBus.emit("theme:changed", { themeId: theme.id, theme });
+};
+
 window.setWallpaper = (wallpaperId) => {
     const options = window.wallpaperOptions || [];
     if (!options.some((wallpaper) => wallpaper.id === wallpaperId)) return;
@@ -186,7 +260,7 @@ window.setThemeColor = (type, value) => {
         if (window.Storage) window.Storage.local.set("bl4ut0ThemeAccent", value);
     }
     window.applyThemeColors();
-    if (window.EventBus) window.EventBus.emit("theme:changed", { type, value });
+    if (window.EventBus) window.EventBus.emit("theme:changed", { themeId: state.themeId, type, value });
 };
 
 window.resetThemeColors = () => {
@@ -196,15 +270,8 @@ window.resetThemeColors = () => {
         window.Storage.local.remove("bl4ut0ThemePrimary");
         window.Storage.local.remove("bl4ut0ThemeAccent");
     }
-    document.documentElement.style.removeProperty("--theme-primary");
-    document.documentElement.style.removeProperty("--theme-accent");
-    
-    const primaryPicker = window.byId ? window.byId("theme-primary-picker") : document.getElementById("theme-primary-picker");
-    const accentPicker = window.byId ? window.byId("theme-accent-picker") : document.getElementById("theme-accent-picker");
-    if (primaryPicker) primaryPicker.value = "#22d3ee";
-    if (accentPicker) accentPicker.value = "#34d399";
-    
-    if (window.EventBus) window.EventBus.emit("theme:reset");
+    window.applyThemeColors();
+    if (window.EventBus) window.EventBus.emit("theme:reset", { themeId: state.themeId });
 };
 
 window.showDesktopToast = (message) => {

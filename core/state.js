@@ -21,6 +21,7 @@
         systemStarted: false,
         wallpaper: "aurora", // will be updated from storage on boot / preferences load
         volume: 70,
+        themeId: "dark",
         themePrimary: null,
         themeAccent: null,
         desktopResolution: "auto",
@@ -31,6 +32,7 @@
     if (window.Storage) {
         rawState.wallpaper = window.Storage.local.get("bl4ut0Wallpaper") || "aurora";
         rawState.volume = Number(window.Storage.local.get("bl4ut0Volume") || 70);
+        rawState.themeId = window.Storage.local.get("bl4ut0ThemeId") || "dark";
         rawState.themePrimary = window.Storage.local.get("bl4ut0ThemePrimary");
         rawState.themeAccent = window.Storage.local.get("bl4ut0ThemeAccent");
         rawState.desktopResolution = window.Storage.local.get("bl4ut0DesktopResolution") || "auto";

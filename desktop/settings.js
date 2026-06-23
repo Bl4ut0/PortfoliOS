@@ -273,6 +273,35 @@ window.renderWallpaperOptions = () => {
     `).join("");
 };
 
+window.renderThemeOptions = () => {
+    const container = window.byId ? window.byId("theme-options") : document.getElementById("theme-options");
+    if (!container) return;
+
+    const themes = window.getPortfolioThemeOptions ? window.getPortfolioThemeOptions() : (window.portfolioThemes || []);
+    const escapeHtml = window.escapeHtml || ((value) => String(value ?? ""));
+
+    container.innerHTML = themes.map((theme) => {
+        const swatches = theme.swatches || [
+            theme.tokens?.["--bg"] || "#050608",
+            theme.tokens?.["--theme-primary"] || "#22d3ee",
+            theme.tokens?.["--theme-accent"] || "#34d399"
+        ];
+        return `
+            <button type="button" class="theme-card ${window.state && window.state.themeId === theme.id ? "active" : ""}"
+                data-theme-choice="${escapeHtml(theme.id)}" title="Use ${escapeHtml(theme.label)} theme">
+                <div class="theme-card-preview" style="--preview-bg:${escapeHtml(swatches[0])}; --preview-primary:${escapeHtml(swatches[1])}; --preview-accent:${escapeHtml(swatches[2])};">
+                    <span></span>
+                    <b></b>
+                </div>
+                <div class="theme-card-info">
+                    <i class="${escapeHtml(theme.icon || "fa-solid fa-palette")}"></i>
+                    <span>${escapeHtml(theme.label)}</span>
+                </div>
+            </button>
+        `;
+    }).join("");
+};
+
 // Bootstrap function for Settings App
 function initSettingsApp() {
     initSettingsTabs();
@@ -280,6 +309,7 @@ function initSettingsApp() {
     initResolutionSettings();
     initGDriveSettings();
     window.renderWallpaperOptions();
+    window.renderThemeOptions();
 }
 
 // Run initialization once the DOM is loaded or when settings is opened
@@ -294,6 +324,9 @@ if (document.readyState === "loading") {
 if (window.EventBus) {
     window.EventBus.on("wallpaper:changed", () => window.renderWallpaperOptions());
     window.EventBus.on("desktop:refresh", () => window.renderWallpaperOptions());
+    window.EventBus.on("desktop:refresh", () => window.renderThemeOptions());
+    window.EventBus.on("theme:changed", () => window.renderThemeOptions());
+    window.EventBus.on("theme:reset", () => window.renderThemeOptions());
     window.EventBus.on("volume:changed", (val) => updateVolumeUI(val));
     window.EventBus.on("state:changed:gdriveConnected", () => updateGDriveUI());
     window.EventBus.on("app:opened", (name) => {
@@ -309,6 +342,7 @@ if (window.EventBus) {
             }
             updateGDriveUI();
             window.renderWallpaperOptions();
+            window.renderThemeOptions();
         }
     });
 }

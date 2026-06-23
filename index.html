@@ -15,7 +15,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="styles-v1.css?v=1.0.34">
+    <link rel="stylesheet" href="styles-v1.css?v=1.0.35">
 </head>
 
 <body>
@@ -568,7 +568,12 @@
                                         </section>
 
                                         <section class="settings-section">
-                                            <h3>Theme Colors</h3>
+                                            <h3>Theme</h3>
+                                            <div class="theme-options-grid" id="theme-options" aria-label="Theme presets"></div>
+                                        </section>
+
+                                        <section class="settings-section">
+                                            <h3>Accent Overrides</h3>
                                             <div class="theme-colors-options">
                                                 <label class="color-picker-label">
                                                     <span>Primary</span>
@@ -580,7 +585,7 @@
                                                 </label>
                                             </div>
                                             <button type="button" id="theme-reset-btn" class="theme-reset-btn">
-                                                <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+                                                <i class="fa-solid fa-rotate-left"></i> Reset Accent Overrides
                                             </button>
                                         </section>
                                     </div>
@@ -779,19 +784,19 @@
     <!-- Core Services -->
     <script src="core/event-bus.js"></script>
     <script src="core/storage.js"></script>
-    <script src="core/state.js"></script>
+    <script src="core/state.js?v=1.0.35"></script>
     <script src="core/utils.js"></script>
     <script src="core/filesystem.js?v=1.0.30"></script>
     <script src="core/gdrive-sync.js?v=1.0.31"></script>
     <script src="core/app-loader.js?v=1.0.33"></script>
-    <script src="core/preferences.js?v=1.0.33"></script>
+    <script src="core/preferences.js?v=1.0.35"></script>
     <script src="core/window-manager.js?v=1.0.33"></script>
     
     <!-- Shared Data -->
     <script src="data/systems.js"></script>
     <script src="data/apps.js"></script>
     <script src="data/bookmarks.js"></script>
-    <script src="data/config.js"></script>
+    <script src="data/config.js?v=1.0.35"></script>
     
     <!-- Desktop Components -->
     <script src="desktop/taskbar.js"></script>
@@ -803,14 +808,14 @@
     <script src="desktop/terminal.js"></script>
     <script src="desktop/network-map.js"></script>
     <script src="desktop/store.js?v=1.0.33"></script>
-    <script src="desktop/settings.js?v=1.0.33"></script>
+    <script src="desktop/settings.js?v=1.0.35"></script>
     <script src="desktop/calendar.js"></script>
     <script src="desktop/toast.js"></script>
     <script src="desktop/canvas-bg.js"></script>
     <script src="desktop/matrix-rain.js"></script>
     <script src="desktop/boot.js"></script>
     <script src="desktop/wad-inspector.js"></script>
-    <script src="desktop/shell.js"></script>
+    <script src="desktop/shell.js?v=1.0.35"></script>
     
     <!-- Mobile & Quick Shells -->
     <script src="mobile/shell.js"></script>

@@ -209,6 +209,12 @@ window.boot = () => {
             return;
         }
 
+        const themeChoice = event.target.closest("[data-theme-choice]");
+        if (themeChoice) {
+            if (window.setPortfolioTheme) window.setPortfolioTheme(themeChoice.dataset.themeChoice);
+            return;
+        }
+
         const dismissMobileNote = event.target.closest("[data-dismiss-mobile-note]");
         if (dismissMobileNote) {
             const advisory = window.byId ? window.byId("mobile-advisory") : document.getElementById("mobile-advisory");
