@@ -3,13 +3,17 @@
  * Dynamically loads and unloads stylesheets and scripts for application extensions.
  */
 
-window.appRegistry = {};
-window.modularApps = ["doomsource", "duke32", "diablo", "quake", "files", "webamp", "taskmgr"];
-window.appAssetVersion = "1.0.31";
-window.appLoadPromises = {};
+window.appRegistry = window.appRegistry || {};
+window.modularApps = window.modularApps || ["doomsource", "duke32", "diablo", "quake", "files", "webamp", "taskmgr"];
+window.appAssetVersion = "1.0.33";
+window.appLoadPromises = window.appLoadPromises || {};
 
 window.ensureAppLoaded = async function(appId) {
-    if (!window.modularApps.includes(appId) || window.appRegistry[appId]) return;
+    if (!window.modularApps.includes(appId)) return;
+    if (window.appRegistry[appId]) {
+        window.validateAppRegistration?.(appId);
+        return;
+    }
     if (window.appLoadPromises[appId]) return window.appLoadPromises[appId];
     
     if (!document.getElementById(`app-style-${appId}`)) {
@@ -17,6 +21,7 @@ window.ensureAppLoaded = async function(appId) {
         link.id = `app-style-${appId}`;
         link.rel = "stylesheet";
         link.href = `apps/${appId}/app.css?v=${window.appAssetVersion}`;
+        link.onerror = () => console.error(`Failed to load stylesheet for app: ${appId}`);
         document.head.appendChild(link);
     }
     
@@ -25,6 +30,12 @@ window.ensureAppLoaded = async function(appId) {
             const script = document.createElement("script");
             const finish = () => {
                 delete window.appLoadPromises[appId];
+                if (window.appRegistry[appId]) {
+                    window.validateAppRegistration?.(appId);
+                } else {
+                    console.error(`PortfoliOS: App "${appId}" loaded without registering itself.`);
+                    script.remove();
+                }
                 resolve();
             };
             script.id = `app-script-${appId}`;
@@ -38,4 +49,6 @@ window.ensureAppLoaded = async function(appId) {
         });
         return window.appLoadPromises[appId];
     }
+
+    window.validateAppRegistration?.(appId);
 };
