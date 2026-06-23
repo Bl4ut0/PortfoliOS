@@ -496,51 +496,142 @@
                                 </div>
                             </div>
                             <div class="desktop-settings-content">
-                                 <section>
-                                    <span>Wallpaper</span>
-                                    <div class="wallpaper-options" id="wallpaper-options" aria-label="Wallpaper choices"></div>
-                                </section>
-                                <section>
-                                    <span>Desktop Resolution</span>
-                                    <select id="desktop-resolution-select" class="settings-select" aria-label="Desktop resolution option">
-                                        <option value="auto">Auto (Stretch to fit)</option>
-                                        <optgroup label="Square / Foldable">
-                                            <option value="1024x1024">1024 x 1024 (Fold Square)</option>
-                                            <option value="2048x2048">2048 x 2048 (2K Square)</option>
-                                        </optgroup>
-                                        <optgroup label="Phone Viewport">
-                                            <option value="390x844">390 x 844 (iPhone 13/14)</option>
-                                            <option value="412x915">412 x 915 (Android Portrait)</option>
-                                            <option value="844x390">844 x 390 (Landscape Phone)</option>
-                                        </optgroup>
-                                        <optgroup label="Tablet">
-                                            <option value="768x1024">768 x 1024 (iPad Portrait)</option>
-                                            <option value="1024x768">1024 x 768 (iPad Landscape)</option>
-                                        </optgroup>
-                                        <optgroup label="Desktop / Laptop">
-                                            <option value="1280x800">1280 x 800 (Widescreen 16:10)</option>
-                                            <option value="1366x768">1366 x 768 (HD 16:9)</option>
-                                            <option value="1920x1080">1920 x 1080 (Full HD 16:9)</option>
-                                            <option value="2560x1440">2560 x 1440 (2K Widescreen)</option>
-                                        </optgroup>
-                                    </select>
-                                </section>
-                                <section>
-                                    <span>Theme Colors</span>
-                                    <div class="theme-colors-options">
-                                        <label class="color-picker-label">
-                                            <span>Primary</span>
-                                            <input type="color" id="theme-primary-picker" value="#22d3ee" aria-label="Primary theme color">
-                                        </label>
-                                        <label class="color-picker-label">
-                                            <span>Accent</span>
-                                            <input type="color" id="theme-accent-picker" value="#34d399" aria-label="Accent theme color">
-                                        </label>
-                                    </div>
-                                    <button type="button" id="theme-reset-btn" class="theme-reset-btn">
-                                        <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+                                <aside class="settings-sidebar">
+                                    <button type="button" class="settings-tab-btn active" data-tab="system">
+                                        <i class="fa-solid fa-laptop"></i>
+                                        <span>System</span>
                                     </button>
-                                </section>
+                                    <button type="button" class="settings-tab-btn" data-tab="personalization">
+                                        <i class="fa-solid fa-palette"></i>
+                                        <span>Personalization</span>
+                                    </button>
+                                    <button type="button" class="settings-tab-btn" data-tab="cloud-sync">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span>Cloud Sync</span>
+                                    </button>
+                                </aside>
+                                <main class="settings-main">
+                                    <!-- SYSTEM PANEL -->
+                                    <div class="settings-panel active" data-panel="system">
+                                        <h2>System Settings</h2>
+                                        
+                                        <section class="settings-section">
+                                            <h3>Display Resolution</h3>
+                                            <div class="settings-control-row">
+                                                <select id="desktop-resolution-select" class="settings-select" aria-label="Desktop resolution option">
+                                                    <option value="auto">Auto (Stretch to fit)</option>
+                                                    <optgroup label="Square / Foldable">
+                                                        <option value="1024x1024">1024 x 1024 (Fold Square)</option>
+                                                        <option value="2048x2048">2048 x 2048 (2K Square)</option>
+                                                    </optgroup>
+                                                    <optgroup label="Phone Viewport">
+                                                        <option value="390x844">390 x 844 (iPhone 13/14)</option>
+                                                        <option value="412x915">412 x 915 (Android Portrait)</option>
+                                                        <option value="844x390">844 x 390 (Landscape Phone)</option>
+                                                    </optgroup>
+                                                    <optgroup label="Tablet">
+                                                        <option value="768x1024">768 x 1024 (iPad Portrait)</option>
+                                                        <option value="1024x768">1024 x 768 (iPad Landscape)</option>
+                                                    </optgroup>
+                                                    <optgroup label="Desktop / Laptop">
+                                                        <option value="1280x800">1280 x 800 (Widescreen 16:10)</option>
+                                                        <option value="1366x768">1366 x 768 (HD 16:9)</option>
+                                                        <option value="1920x1080">1920 x 1080 (Full HD 16:9)</option>
+                                                        <option value="2560x1440">2560 x 1440 (2K Widescreen)</option>
+                                                    </optgroup>
+                                                </select>
+                                                <button type="button" id="settings-reset-resolution-btn" class="settings-action-btn" title="Reset resolution to Auto">
+                                                    <i class="fa-solid fa-rotate-left"></i> Reset
+                                                </button>
+                                            </div>
+                                        </section>
+
+                                        <section class="settings-section">
+                                            <h3>Sound / Volume</h3>
+                                            <div class="settings-control-row volume-control-row">
+                                                <button type="button" id="settings-volume-mute-btn" class="volume-mute-btn" title="Mute/Unmute">
+                                                    <i class="fa-solid fa-volume-high" id="settings-volume-icon"></i>
+                                                </button>
+                                                <input id="settings-volume-slider" type="range" min="0" max="100" step="1" value="70" class="settings-slider" aria-label="Desktop volume slider">
+                                                <b id="settings-volume-value" class="settings-value-readout">70%</b>
+                                            </div>
+                                        </section>
+                                    </div>
+
+                                    <!-- PERSONALIZATION PANEL -->
+                                    <div class="settings-panel" data-panel="personalization">
+                                        <h2>Personalization</h2>
+                                        
+                                        <section class="settings-section">
+                                            <h3>Wallpaper</h3>
+                                            <div class="wallpaper-options-grid" id="wallpaper-options" aria-label="Wallpaper choices"></div>
+                                        </section>
+
+                                        <section class="settings-section">
+                                            <h3>Theme Colors</h3>
+                                            <div class="theme-colors-options">
+                                                <label class="color-picker-label">
+                                                    <span>Primary</span>
+                                                    <input type="color" id="theme-primary-picker" value="#22d3ee" aria-label="Primary theme color">
+                                                </label>
+                                                <label class="color-picker-label">
+                                                    <span>Accent</span>
+                                                    <input type="color" id="theme-accent-picker" value="#34d399" aria-label="Accent theme color">
+                                                </label>
+                                            </div>
+                                            <button type="button" id="theme-reset-btn" class="theme-reset-btn">
+                                                <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+                                            </button>
+                                        </section>
+                                    </div>
+
+                                    <!-- CLOUD SYNC PANEL -->
+                                    <div class="settings-panel" data-panel="cloud-sync">
+                                        <h2>Cloud Sync</h2>
+                                        
+                                        <section class="settings-section">
+                                            <h3>Google Drive Connection</h3>
+                                            <div class="gdrive-status-card">
+                                                <div class="gdrive-status-header">
+                                                    <span class="status-indicator-dot disconnected" id="settings-gdrive-indicator"></span>
+                                                    <span id="settings-gdrive-status-text" class="gdrive-status-label">Not Connected</span>
+                                                </div>
+                                                <p class="settings-info-text">Sync your documents and configuration across devices using Google Drive.</p>
+                                                
+                                                <div class="gdrive-credentials-row" id="gdrive-credentials-row">
+                                                    <label for="settings-gdrive-client-id" class="settings-input-label">OAuth2 Client ID</label>
+                                                    <input type="text" id="settings-gdrive-client-id" class="settings-text-input" placeholder="Enter Google OAuth Client ID">
+                                                </div>
+                                                
+                                                <div class="gdrive-actions-row">
+                                                    <button type="button" id="settings-gdrive-connect-btn" class="settings-btn btn-primary">
+                                                        <i class="fa-solid fa-link"></i> Connect Account
+                                                    </button>
+                                                    <button type="button" id="settings-gdrive-disconnect-btn" class="settings-btn btn-danger" style="display: none;">
+                                                        <i class="fa-solid fa-link-slash"></i> Disconnect Account
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <section class="settings-section" id="settings-sync-actions-section" style="display: none;">
+                                            <h3>Data Synchronization</h3>
+                                            <div class="sync-actions-card">
+                                                <p class="settings-info-text">Trigger a bi-directional synchronization of your local storage and files.</p>
+                                                <button type="button" id="settings-gdrive-sync-btn" class="settings-btn btn-primary">
+                                                    <i class="fa-solid fa-rotate"></i> Sync Files Now
+                                                </button>
+                                                
+                                                <div id="settings-gdrive-progress-container" class="settings-sync-progress-container" style="display: none;">
+                                                    <div class="progress-bar-wrapper">
+                                                        <div id="settings-gdrive-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+                                                    </div>
+                                                    <span id="settings-gdrive-progress-text" class="progress-status-text">Ready</span>
+                                                </div>
+                                            </div>
+                                        </section>
+                                    </div>
+                                </main>
                             </div>
                         </section>
 

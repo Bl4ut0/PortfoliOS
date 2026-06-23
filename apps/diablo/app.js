@@ -103,13 +103,45 @@
         const saveFiles = files.filter(f => !f.isDirectory && /\.sv$/i.test(f.name));
         if (!saveFiles.length) return;
 
+        // Pre-load all files asynchronously before opening the transaction
+        const filesToRestore = [];
+        for (const file of saveFiles) {
+            try {
+                const record = await window.SystemFS.readFile(file.path);
+                if (record && record.data) {
+                    let arrayBuffer = null;
+                    if (record.data instanceof Blob) {
+                        arrayBuffer = await record.data.arrayBuffer();
+                    } else if (record.data instanceof ArrayBuffer) {
+                        arrayBuffer = record.data;
+                    } else if (ArrayBuffer.isView(record.data)) {
+                        arrayBuffer = record.data.buffer.slice(
+                            record.data.byteOffset,
+                            record.data.byteOffset + record.data.byteLength
+                        );
+                    }
+
+                    if (arrayBuffer) {
+                        filesToRestore.push({
+                            name: file.name.toLowerCase(),
+                            data: new Uint8Array(arrayBuffer)
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error(`Failed to pre-load Diablo save ${file.name}:`, e);
+            }
+        }
+
+        if (!filesToRestore.length) return;
+
         return new Promise((resolve) => {
             const request = indexedDB.open("diablo_fs");
             request.onerror = (err) => {
                 console.error("Failed to open diablo_fs IndexedDB:", err);
                 resolve();
             };
-            request.onsuccess = async () => {
+            request.onsuccess = () => {
                 const db = request.result;
                 if (!db.objectStoreNames.contains("kv")) {
                     db.close();
@@ -121,27 +153,8 @@
                     const transaction = db.transaction(["kv"], "readwrite");
                     const store = transaction.objectStore("kv");
 
-                    for (const file of saveFiles) {
-                        const record = await window.SystemFS.readFile(file.path);
-                        if (!record || !record.data) continue;
-
-                        let arrayBuffer;
-                        if (record.data instanceof Blob) {
-                            arrayBuffer = await record.data.arrayBuffer();
-                        } else if (record.data instanceof ArrayBuffer) {
-                            arrayBuffer = record.data;
-                        } else if (ArrayBuffer.isView(record.data)) {
-                            arrayBuffer = record.data.buffer.slice(
-                                record.data.byteOffset,
-                                record.data.byteOffset + record.data.byteLength
-                            );
-                        }
-
-                        if (!arrayBuffer) continue;
-                        
-                        const uint8Array = new Uint8Array(arrayBuffer);
-                        const dbKey = file.name.toLowerCase();
-                        store.put(uint8Array, dbKey);
+                    for (const file of filesToRestore) {
+                        store.put(file.data, file.name);
                     }
 
                     transaction.oncomplete = () => {

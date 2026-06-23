@@ -38,14 +38,14 @@ window.createIframeGameApp = (config) => {
         `,
         onOpen: async (windowEl) => {
             const iframe = windowEl.querySelector("iframe");
-            if (typeof config.beforeLoad === "function" && iframe && !iframe.src) {
+            if (typeof config.beforeLoad === "function" && iframe && (!iframe.src || iframe.src === "about:blank")) {
                 try {
                     await config.beforeLoad(windowEl);
                 } catch (error) {
                     console.warn(`PortfoliOS: ${id} beforeLoad hook failed`, error);
                 }
             }
-            if (iframe && !iframe.src) {
+            if (iframe && (!iframe.src || iframe.src === "about:blank")) {
                 iframe.src = iframe.dataset.src;
             }
             window.syncGameIframe?.(windowEl);

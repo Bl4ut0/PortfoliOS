@@ -476,12 +476,12 @@
 }
 
 .desktop-window.settings-window {
-    right: 1.2rem;
-    left: auto;
-    top: 5.2rem;
-    bottom: auto;
-    width: min(24rem, calc(100% - 2.4rem));
-    min-height: 15rem;
+    left: clamp(6rem, 15vw, 12rem);
+    top: 4.8rem;
+    bottom: var(--window-bottom);
+    width: min(46rem, calc(100% - 2rem));
+    height: min(32rem, calc(100% - 6rem));
+    min-height: 22rem;
 }
 
 .desktop-window.browser-window {

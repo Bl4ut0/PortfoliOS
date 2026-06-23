@@ -31,8 +31,9 @@
         return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
-    function calculateSystemMetrics() {
+    function calculateSystemMetrics(windowEl) {
         const openApps = Array.from(state.openApps || []);
+        const cores = navigator.hardwareConcurrency || 4;
         let totalMem = 55; // Base OS memory
 
         const processList = [{
@@ -63,8 +64,29 @@
             });
         });
 
-        // Fluctuations
-        const cpuUsage = Math.min(100, Math.max(2, Math.floor(Math.random() * 12) + (openApps.length * 3)));
+        // Measure event loop lag
+        let lag = 0;
+        if (windowEl) {
+            const now = performance.now();
+            const last = windowEl.lastUiUpdate || (now - 1200);
+            windowEl.lastUiUpdate = now;
+            const elapsed = now - last;
+            lag = Math.max(0, elapsed - 1200);
+        }
+
+        // Calculate CPU usage based on hardware cores, open apps, and lag
+        let baseCpu = 2; // idle load
+        openApps.forEach(appId => {
+            const isHeavy = ["doomsource", "diablo", "quake", "duke32"].includes(appId);
+            baseCpu += isHeavy ? (80 / cores) : (10 / cores);
+        });
+
+        const lagFactor = (lag / 1200) * 100;
+        let cpuUsage = Math.round(baseCpu + lagFactor);
+        
+        // Add a slight natural-looking jitter
+        const jitter = Math.floor(Math.random() * 5) - 2;
+        cpuUsage = Math.min(99, Math.max(1, cpuUsage + jitter));
         
         return {
             totalMem,
@@ -112,7 +134,15 @@
     }
 
     function updateUI(windowEl) {
-        const metrics = calculateSystemMetrics();
+        const metrics = calculateSystemMetrics(windowEl);
+        
+        // Update hardware cores readout
+        const cores = navigator.hardwareConcurrency || 4;
+        const physicalCores = Math.max(1, Math.floor(cores / 2));
+        const coresEl = windowEl.querySelector(".taskmgr-hardware-cores");
+        if (coresEl) {
+            coresEl.textContent = `${physicalCores} Core${physicalCores > 1 ? 's' : ''} (${cores} Threads)`;
+        }
         
         // Update dashboard counters
         const memPercentEl = windowEl.querySelector(".taskmgr-stat-mem-percent");
@@ -232,10 +262,10 @@
                                  <span>Processor:</span>
                                  <strong>Simulated vCPU @ 3.40GHz</strong>
                              </div>
-                             <div class="hw-item">
-                                 <span>Cores:</span>
-                                 <strong>8 Cores (16 Threads)</strong>
-                             </div>
+                              <div class="hw-item">
+                                  <span>Cores:</span>
+                                  <strong class="taskmgr-hardware-cores">-- Cores (-- Threads)</strong>
+                              </div>
                              <div class="hw-item">
                                  <span>Uptime:</span>
                                  <strong class="taskmgr-uptime">--:--:--</strong>
