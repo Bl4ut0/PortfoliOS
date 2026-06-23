@@ -4,6 +4,8 @@
  */
 
 .desktop-window.taskmgr-window {
+    display: flex;
+    flex-direction: column;
     width: 620px;
     height: 480px;
     min-width: 480px;
@@ -15,7 +17,8 @@
 .taskmgr-container {
     display: flex;
     flex-direction: column;
-    height: calc(100% - 32px); /* Subtracting window-bar height */
+    flex: 1;
+    min-height: 0;
     background: transparent;
     color: var(--text, #fafafa);
     font-family: 'Inter', sans-serif;
@@ -176,7 +179,8 @@
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
     gap: 16px;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 .taskmgr-cpu-chart {
@@ -187,6 +191,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-height: 0;
 }
 
 .taskmgr-cpu-chart .chart-label {
@@ -199,8 +204,8 @@
 
 .svg-graph {
     width: 100%;
-    height: 100%;
-    min-height: 120px;
+    flex: 1;
+    min-height: 0;
     background: rgba(0, 0, 0, 0.25);
     border-radius: 4px;
 }
@@ -218,6 +223,8 @@
     flex-direction: column;
     gap: 10px;
     padding: 8px 0;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .hw-item {
@@ -283,9 +290,17 @@
     color: #f1f5f9;
 }
 
-.stat-group small {
+.stat-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.taskmgr-stat-mem-text {
     font-size: 11px;
     color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.85;
 }
 
 /* Memory progress bar in footer */

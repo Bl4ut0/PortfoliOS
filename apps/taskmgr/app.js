@@ -309,16 +309,17 @@
                                  </defs>
                                  <!-- Grid Lines -->
                                  <line x1="10" y1="10" x2="270" y2="10" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
-                                 <line x1="10" y1="40" x2="270" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
-                                 <line x1="10" y1="70" x2="270" y2="70" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
-                                 <line x1="10" y1="100" x2="270" y2="100" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
+                                 <line x1="10" y1="35" x2="270" y2="35" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
+                                 <line x1="10" y1="60" x2="270" y2="60" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
+                                 <line x1="10" y1="85" x2="270" y2="85" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
+                                 <line x1="10" y1="110" x2="270" y2="110" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
                                  
                                  <!-- Vertical Grid Lines -->
-                                 <line x1="53" y1="10" x2="53" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
-                                 <line x1="96" y1="10" x2="96" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
-                                 <line x1="139" y1="10" x2="139" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
-                                 <line x1="182" y1="10" x2="182" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
-                                 <line x1="225" y1="10" x2="225" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="53" y1="10" x2="53" y2="110" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="96" y1="10" x2="96" y2="110" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="139" y1="10" x2="139" y2="110" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="182" y1="10" x2="182" y2="110" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="225" y1="10" x2="225" y2="110" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
                                  
                                  <path class="chart-area" fill="url(#cpu-grad)" d="" />
                                  <polyline fill="none" stroke="var(--theme-primary, #22d3ee)" stroke-width="2" points="" />
@@ -359,11 +360,13 @@
                              <span class="label">CPU Usage</span>
                              <strong class="taskmgr-stat-cpu-percent">0%</strong>
                          </div>
-                         <div class="stat-group">
-                             <span class="label">Memory (RAM)</span>
-                             <strong class="taskmgr-stat-mem-percent">0%</strong>
-                             <small class="taskmgr-stat-mem-text">0 MB / 1024 MB</small>
-                         </div>
+                          <div class="stat-group">
+                              <span class="label">Memory (RAM)</span>
+                              <div class="stat-value-row">
+                                  <strong class="taskmgr-stat-mem-percent">0%</strong>
+                                  <span class="taskmgr-stat-mem-text">0 MB / 1024 MB</span>
+                              </div>
+                          </div>
                      </div>
                      <div class="taskmgr-actions">
                          <button class="btn-optimize-mem" title="Clear resources & close minimized applications">
