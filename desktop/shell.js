@@ -267,6 +267,32 @@ window.boot = () => {
             return;
         }
 
+        const profileTab = event.target.closest("[data-profile-tab]");
+        if (profileTab) {
+            const tabId = profileTab.dataset.profileTab;
+            const header = profileTab.closest(".profile-tabs-header");
+            if (header) {
+                header.querySelectorAll(".profile-tab").forEach(btn => {
+                    btn.classList.remove("active");
+                    btn.setAttribute("aria-selected", "false");
+                });
+            }
+            profileTab.classList.add("active");
+            profileTab.setAttribute("aria-selected", "true");
+            
+            const layout = profileTab.closest(".profile-layout");
+            if (layout) {
+                layout.querySelectorAll(".profile-panel").forEach(panel => {
+                    panel.classList.remove("active");
+                });
+                const activePanel = layout.querySelector(`#profile-panel-${tabId}`);
+                if (activePanel) {
+                    activePanel.classList.add("active");
+                }
+            }
+            return;
+        }
+
         const minimizeButton = event.target.closest("[data-minimize-window]");
         if (minimizeButton) {
             if (window.minimizeDesktopWindow) window.minimizeDesktopWindow(minimizeButton.dataset.minimizeWindow);

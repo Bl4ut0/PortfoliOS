@@ -171,11 +171,13 @@
     z-index: 5;
     overflow: hidden;
     min-width: 18rem;
-    background: rgba(9, 12, 19, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    box-shadow: 0 26px 80px rgba(0, 0, 0, 0.48);
-    backdrop-filter: blur(24px);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-highlight), var(--shadow);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
 }
 
 .desktop-window.profile-window,
@@ -193,7 +195,8 @@
 
 .desktop-window.active {
     z-index: 7;
-    border-color: rgba(34, 211, 238, 0.28);
+    border-color: color-mix(in srgb, var(--active-color, var(--theme-primary)) 40%, rgba(255, 255, 255, 0.12));
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 12px 0 color-mix(in srgb, var(--active-color, var(--theme-primary)) 15%, transparent);
 }
 
 .desktop-window.is-hidden {
@@ -277,25 +280,111 @@
     left: auto;
     top: 4.8rem;
     bottom: var(--window-bottom);
-    width: min(31rem, 38vw);
+    width: min(48rem, 80vw);
     overflow: hidden;
 }
 
-.profile-window .identity-dossier {
-    flex: 1;
+.profile-layout {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
     min-height: 0;
-    overflow-x: hidden;
+    flex: 1;
+}
+
+.profile-sidebar {
+    width: 16rem;
+    flex-shrink: 0;
+    border-right: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.015);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1.25rem;
+    gap: 1.25rem;
     overflow-y: auto;
-    scrollbar-gutter: stable;
 }
 
-.profile-window .identity-actions {
-    flex: 0 0 auto;
-    border-top: 1px solid var(--line);
-    background: rgba(8, 10, 15, 0.52);
+.profile-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
 }
 
-.profile-window .identity-dossier,
+.profile-tabs-header {
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.01);
+    padding: 0 0.5rem;
+    gap: 0.25rem;
+}
+
+.profile-tab {
+    padding: 0.85rem 1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: var(--heading);
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-tab:hover {
+    color: var(--text-soft);
+}
+
+.profile-tab.active {
+    color: var(--theme-primary);
+    border-bottom-color: var(--theme-primary);
+}
+
+.profile-panels {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    min-height: 0;
+}
+
+.profile-panel {
+    display: none;
+    animation: fadeIn 0.22s ease-out;
+}
+
+.profile-panel.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .profile-window {
+        width: 95vw !important;
+        right: 2.5vw !important;
+    }
+    .profile-layout {
+        flex-direction: column;
+    }
+    .profile-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+        flex-direction: row;
+        align-items: center;
+        padding: 1rem;
+        gap: 1rem;
+    }
+}
+
+.profile-sidebar,
+.profile-panels,
 .dossier-window .dossier-content,
 .linux-terminal,
 .terminal-output,
@@ -305,7 +394,8 @@
     scrollbar-width: thin;
 }
 
-.profile-window .identity-dossier::-webkit-scrollbar,
+.profile-sidebar::-webkit-scrollbar,
+.profile-panels::-webkit-scrollbar,
 .dossier-window .dossier-content::-webkit-scrollbar,
 .linux-terminal::-webkit-scrollbar,
 .terminal-output::-webkit-scrollbar,
@@ -315,7 +405,8 @@
     height: 0.7rem;
 }
 
-.profile-window .identity-dossier::-webkit-scrollbar-track,
+.profile-sidebar::-webkit-scrollbar-track,
+.profile-panels::-webkit-scrollbar-track,
 .dossier-window .dossier-content::-webkit-scrollbar-track,
 .linux-terminal::-webkit-scrollbar-track,
 .terminal-output::-webkit-scrollbar-track,
@@ -326,7 +417,8 @@
     border-radius: 999px;
 }
 
-.profile-window .identity-dossier::-webkit-scrollbar-thumb,
+.profile-sidebar::-webkit-scrollbar-thumb,
+.profile-panels::-webkit-scrollbar-thumb,
 .dossier-window .dossier-content::-webkit-scrollbar-thumb,
 .linux-terminal::-webkit-scrollbar-thumb,
 .terminal-output::-webkit-scrollbar-thumb,

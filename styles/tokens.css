@@ -1,26 +1,36 @@
 :root {
     color-scheme: dark;
-    --bg: #080a0f;
-    --panel: rgba(13, 16, 24, 0.84);
-    --panel-strong: rgba(17, 21, 31, 0.94);
-    --panel-soft: rgba(255, 255, 255, 0.035);
-    --line: rgba(255, 255, 255, 0.09);
-    --line-strong: rgba(255, 255, 255, 0.16);
-    --text: #f8fafc;
-    --text-soft: #b6c2d2;
-    --text-muted: #718096;
+    --bg: #050608;
+    --panel: rgba(9, 11, 16, 0.62);
+    --panel-strong: rgba(14, 18, 26, 0.85);
+    --panel-soft: rgba(255, 255, 255, 0.04);
+    --line: rgba(255, 255, 255, 0.07);
+    --line-strong: rgba(255, 255, 255, 0.14);
+    --text: #fafafa;
+    --text-soft: #a1a1aa;
+    --text-muted: #71717a;
     --theme-primary: #22d3ee;
     --theme-accent: #34d399;
     --amber: #f59e0b;
-    --blue: #60a5fa;
+    --blue: #3b82f6;
     --violet: #a78bfa;
-    --rose: #fb7185;
-    --teal: #2dd4bf;
-    --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+    --rose: #f43f5e;
+    --teal: #14b8a6;
+    
+    /* Premium Glassmorphism Specs */
+    --glass-bg: rgba(10, 12, 18, 0.62);
+    --glass-border: rgba(255, 255, 255, 0.07);
+    --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+
+    --shadow: var(--glass-shadow);
     --mono: "JetBrains Mono", Consolas, monospace;
     --heading: "Space Grotesk", Inter, system-ui, sans-serif;
     --body: Inter, system-ui, sans-serif;
-    --radius: 8px;
+    --radius: 12px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
 
     /* Layout Constants */
     --taskbar-height: 2.85rem;

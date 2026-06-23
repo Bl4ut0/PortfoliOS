@@ -34,20 +34,24 @@
 
 .boot-panel {
     width: min(620px, 100%);
-    padding: clamp(1.2rem, 4vw, 2rem);
-    background: var(--panel-strong);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    padding: clamp(1.5rem, 5vw, 2.5rem);
+    background: rgba(9, 11, 16, 0.62);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), var(--shadow);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    position: relative;
+    overflow: hidden;
 }
 
 .boot-panel::after {
     content: "Hold to fast-forward boot";
     display: block;
-    margin-top: 1rem;
+    margin-top: 1.25rem;
     color: var(--text-muted);
     font-family: var(--mono);
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     opacity: 0.72;
 }
 
@@ -62,35 +66,50 @@
 
 .boot-lines {
     display: grid;
-    gap: 0.2rem;
-    margin-bottom: 1.1rem;
+    gap: 0.25rem;
+    margin-bottom: 1.25rem;
     color: var(--theme-accent);
     font-family: var(--mono);
-    font-size: 0.75rem;
+    font-size: 0.76rem;
+    text-shadow: 0 0 8px rgba(52, 211, 153, 0.2);
 }
 
 .boot-mark {
-    width: 3.7rem;
-    height: 3.7rem;
-    margin-bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-bottom: 1.25rem;
     color: var(--theme-primary);
-    border-radius: var(--radius);
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.24);
+    border-radius: var(--radius-md);
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.14);
 }
 
 .boot-mark span {
     font-family: var(--mono);
-    font-size: 1.35rem;
+    font-size: 1.4rem;
     font-weight: 800;
+    text-shadow: 0 0 8px var(--theme-primary);
 }
 
 .boot-panel h1 {
-    margin: 0;
+    margin: 0 0 0.5rem;
     font-family: var(--heading);
-    font-size: clamp(2.3rem, 8vw, 4.5rem);
+    font-weight: 700;
+    font-size: clamp(2.3rem, 8vw, 4.2rem);
     line-height: 0.96;
+    letter-spacing: -0.02em;
+    color: var(--text);
 }
 
 .boot-screen .boot-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
     opacity: 0;
     pointer-events: none;
     transform: translateY(0.5rem);
@@ -106,6 +125,8 @@
 .boot-panel p:not(.eyebrow) {
     max-width: 48rem;
     color: var(--text-soft);
+    font-size: 0.88rem;
+    line-height: 1.45;
 }
 
 .mobile-boot-note {
@@ -118,25 +139,46 @@
 
 .primary-action,
 .secondary-action {
-    padding: 0.7rem 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.85rem;
     font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .primary-action {
     color: #031016;
     background: var(--theme-primary);
     border-color: rgba(34, 211, 238, 0.7);
+    box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25);
 }
 
 .secondary-action {
     color: var(--text-soft);
-    background: rgba(255, 255, 255, 0.045);
+    background: rgba(255, 255, 255, 0.035);
     border-color: var(--line);
 }
 
-.primary-action:hover,
+.primary-action:hover {
+    transform: translateY(-2px);
+    background: #ffffff;
+    border-color: #ffffff;
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.35);
+}
+
 .secondary-action:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--line-strong);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .noscript {

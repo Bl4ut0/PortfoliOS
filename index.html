@@ -148,105 +148,163 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="identity-dossier">
-                                <figure class="identity-portrait">
-                                    <img src="identity-portrait.jpg" alt="Drawn portrait of Alex Mammen">
-                                    <figcaption>
-                                        <span>identity record</span>
-                                        <strong>Alex Mammen</strong>
-                                        <small><b>Handle</b> Bl4ut0</small>
-                                    </figcaption>
-                                </figure>
-                                <div class="identity-core">
-                                    <p class="eyebrow">identity.sys / about me</p>
-                                    <h2>Systems builder, addon porter, automation tinkerer, and homelab operator.</h2>
-                                    <p>Built to solve, designed to learn. I turn recurring community, infrastructure,
-                                        and workflow problems into tools that are practical to run and easy to revisit.</p>
-                                </div>
-                                <div class="person-dossier-grid" aria-label="Personal dossier">
-                                    <section class="person-handle-strip">
-                                        <span>Platform Links</span>
-                                        <div>
-                                            <a href="https://github.com/Bl4ut0" target="_blank" rel="noreferrer">
-                                                <i class="fa-brands fa-github"></i>
-                                                GitHub / Bl4ut0
-                                            </a>
-                                            <a href="https://steamcommunity.com/id/Bl4ut0/" target="_blank"
-                                                rel="noreferrer">
-                                                <i class="fa-brands fa-steam"></i>
-                                                Steam / Bl4ut0
-                                            </a>
-                                            <a href="https://discord.gg/fEwanmFR9m" target="_blank" rel="noreferrer">
-                                                <i class="fa-brands fa-discord"></i>
-                                                Discord / Bl4ut0
-                                            </a>
-                                            <a href="https://www.curseforge.com/members/bl4ut0/projects"
-                                                target="_blank" rel="noreferrer">
-                                                <i class="fa-solid fa-download"></i>
-                                                CurseForge
-                                            </a>
-                                            <a href="https://bl4ut0.dev" target="_blank" rel="noreferrer">
-                                                <i class="fa-solid fa-globe"></i>
-                                                Dev Hub
-                                            </a>
+                            
+                            <div class="profile-layout">
+                                <!-- Sidebar (Left pane) -->
+                                <aside class="profile-sidebar">
+                                    <div class="profile-avatar-container">
+                                        <div class="profile-avatar">
+                                            <img src="identity-portrait.jpg" alt="Alex Mammen portrait">
                                         </div>
-                                    </section>
-                                    <section>
-                                        <span>Focus</span>
-                                        <p>WoW addon modernization, Discord/community tooling, self-hosted systems,
-                                            Cloudflare automation, local-first AI ideas, and browser-native experiments.</p>
-                                    </section>
-                                    <section>
-                                        <span>Operator Pattern</span>
-                                        <p>Prototype in public, keep the useful parts, document the route, and connect
-                                            projects back into one navigable network instead of scattering them.</p>
-                                    </section>
-                                    <section>
-                                        <span>Current Nodes</span>
-                                        <p>Bl4ut0.dev, GuildCraft, WardenIT, connected home lab, Status Console,
-                                            Doom, and project dossiers.</p>
-                                    </section>
-                                    <section>
-                                        <span>Signal</span>
-                                        <p>Comfortable moving between user-facing UX, infrastructure operations,
-                                            scripting, older game/plugin ecosystems, and practical support work.</p>
-                                    </section>
+                                        <div class="profile-status-badge">
+                                            <div class="profile-status-dot" title="Online"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="profile-sidebar-details">
+                                        <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text);">Alex Mammen</h2>
+                                        <p style="font-family: var(--mono); font-size: 0.7rem; color: var(--text-soft);">Bl4ut0 / Systems Builder</p>
+                                    </div>
+                                    
+                                    <div class="profile-sidebar-divider"></div>
+                                    
+                                    <div class="profile-meta-list">
+                                        <div class="profile-meta-item">
+                                            <i class="fa-solid fa-location-dot"></i>
+                                            <span>Wisconsin, USA</span>
+                                        </div>
+                                        <div class="profile-meta-item">
+                                            <i class="fa-solid fa-clock"></i>
+                                            <span>CST (UTC-6)</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="profile-sidebar-divider"></div>
+                                    
+                                    <nav class="profile-sidebar-links" aria-label="Social links">
+                                        <a href="https://github.com/Bl4ut0" target="_blank" rel="noreferrer">
+                                            <i class="fa-brands fa-github"></i>
+                                            <span>GitHub</span>
+                                        </a>
+                                        <a href="https://discord.gg/fEwanmFR9m" target="_blank" rel="noreferrer">
+                                            <i class="fa-brands fa-discord"></i>
+                                            <span>Discord</span>
+                                        </a>
+                                        <a href="https://www.curseforge.com/members/bl4ut0/projects" target="_blank" rel="noreferrer">
+                                            <i class="fa-solid fa-download"></i>
+                                            <span>CurseForge</span>
+                                        </a>
+                                        <a href="https://steamcommunity.com/id/Bl4ut0/" target="_blank" rel="noreferrer">
+                                            <i class="fa-brands fa-steam"></i>
+                                            <span>Steam</span>
+                                        </a>
+                                    </nav>
+                                </aside>
+                                
+                                <!-- Main Content Area (Right pane) -->
+                                <div class="profile-main">
+                                    <nav class="profile-tabs-header" role="tablist" aria-label="Profile section tabs">
+                                        <button class="profile-tab active" role="tab" aria-selected="true" data-profile-tab="overview">Overview</button>
+                                        <button class="profile-tab" role="tab" aria-selected="false" data-profile-tab="specs">System Specs</button>
+                                        <button class="profile-tab" role="tab" aria-selected="false" data-profile-tab="history">Changelog</button>
+                                    </nav>
+                                    
+                                    <div class="profile-panels">
+                                        <!-- Overview Tab Panel -->
+                                        <div class="profile-panel active" id="profile-panel-overview" role="tabpanel">
+                                            <div class="identity-core" style="padding: 0;">
+                                                <p class="eyebrow">identity.sys // about me</p>
+                                                <h2 style="font-size: 1.4rem; line-height: 1.15; margin-bottom: 0.75rem; font-family: var(--heading); font-weight: 700; color: var(--text);">Systems builder, addon porter, automation tinkerer, and homelab operator.</h2>
+                                                <p style="font-size: 0.82rem; line-height: 1.45; margin-bottom: 0.75rem; color: var(--text-soft);">Built to solve, designed to learn. I turn recurring community, infrastructure, and workflow problems into tools that are practical to run and easy to revisit.</p>
+                                                <p style="font-size: 0.82rem; line-height: 1.45; margin-bottom: 1.25rem; color: var(--text-soft);">I focus on WoW addon modernization, Discord/community tooling, self-hosted environments, Cloudflare automation, and browser-native experiments. I Prototype in public, document the route, and connect projects back into a navigable network.</p>
+                                            </div>
+                                            <div class="identity-actions" style="padding: 0;">
+                                                <div class="identity-command-row">
+                                                    <button type="button" data-view="quick" style="cursor: pointer;">
+                                                        <i class="fa-solid fa-compass"></i>
+                                                        Quick Index
+                                                    </button>
+                                                    <button type="button" data-open-app="dossier" data-select="wardenit" style="cursor: pointer;">
+                                                        <i class="fa-solid fa-briefcase"></i>
+                                                        WardenIT
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Specs Tab Panel -->
+                                        <div class="profile-panel" id="profile-panel-specs" role="tabpanel">
+                                            <p class="eyebrow">identity.sys // specs</p>
+                                            <div class="profile-specs-list">
+                                                <div class="profile-spec-row">
+                                                    <span class="profile-spec-label">Languages</span>
+                                                    <span class="profile-spec-value">Lua, Python, TypeScript, JavaScript, SQL, XML, HTML, CSS</span>
+                                                </div>
+                                                <div class="profile-spec-row">
+                                                    <span class="profile-spec-label">Data & DBs</span>
+                                                    <span class="profile-spec-value">PostgreSQL, SQLite, Redis, Cloudflare KV / D1 / Durable Objects</span>
+                                                </div>
+                                                <div class="profile-spec-row">
+                                                    <span class="profile-spec-label">Hosting/Infra</span>
+                                                    <span class="profile-spec-value">Proxmox VE, Docker, Portainer, Linux (Ubuntu/Debian), VLAN Segmentation, Tailscale, Cloudflare Pages/Workers, n8n</span>
+                                                </div>
+                                                <div class="profile-spec-row">
+                                                    <span class="profile-spec-label">Tools & APIs</span>
+                                                    <span class="profile-spec-value">Git, GitHub Actions, Discord API, WoW API, Emscripten, WebGL, JS-DOS</span>
+                                                </div>
+                                                <div class="profile-spec-row">
+                                                    <span class="profile-spec-label">Pattern</span>
+                                                    <span class="profile-spec-value">Prototype in public, keep the useful parts, document the route, and connect projects back into one navigable network.</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Changelog / History Tab Panel -->
+                                        <div class="profile-panel" id="profile-panel-history" role="tabpanel">
+                                            <p class="eyebrow">identity.sys // changelog</p>
+                                            <div class="profile-timeline">
+                                                <div class="profile-timeline-item">
+                                                    <div class="profile-timeline-dot"></div>
+                                                    <div class="profile-timeline-header">
+                                                        <span class="profile-timeline-title">WardenIT Dossier Node</span>
+                                                        <span class="profile-timeline-meta">Active</span>
+                                                    </div>
+                                                    <div class="profile-timeline-company">Systems & Bot Dev</div>
+                                                    <ul class="profile-timeline-highlights">
+                                                        <li>Developing custom bots, automation scripts, and workflow systems.</li>
+                                                        <li>Orchestrating self-hosted tools and alerts for team connectivity.</li>
+                                                    </ul>
+                                                </div>
+                                                
+                                                <div class="profile-timeline-item">
+                                                    <div class="profile-timeline-dot"></div>
+                                                    <div class="profile-timeline-header">
+                                                        <span class="profile-timeline-title">WoW Addons & Porting</span>
+                                                        <span class="profile-timeline-meta">Active</span>
+                                                    </div>
+                                                    <div class="profile-timeline-company">Lua Developer (Open-Source)</div>
+                                                    <ul class="profile-timeline-highlights">
+                                                        <li>Modernizing legacy WoW addons (ItemRack, MarketSync, MeshNav) to Classic/TBC Anniversary clients.</li>
+                                                        <li>Writing custom Lua UI bindings and back-porting frame logic.</li>
+                                                    </ul>
+                                                </div>
+                                                
+                                                <div class="profile-timeline-item">
+                                                    <div class="profile-timeline-dot"></div>
+                                                    <div class="profile-timeline-header">
+                                                        <span class="profile-timeline-title">Connected Home Lab</span>
+                                                        <span class="profile-timeline-meta">Stable / Ongoing</span>
+                                                    </div>
+                                                    <div class="profile-timeline-company">Home Systems Administrator</div>
+                                                    <ul class="profile-timeline-highlights">
+                                                        <li>Maintaining VLAN isolated virtual environment on Proxmox VE.</li>
+                                                        <li>Automating server pipelines using Docker, n8n, and Tailscale overlays.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="identity-actions">
-                                <div class="identity-command-row">
-                                    <button type="button" data-view="quick">
-                                        <i class="fa-solid fa-compass"></i>
-                                        Quick Index
-                                    </button>
-                                    <button type="button" data-open-app="dossier" data-select="wardenit">
-                                        <i class="fa-solid fa-briefcase"></i>
-                                        WardenIT
-                                    </button>
-                                </div>
-                                <nav class="identity-link-list" aria-label="Identity links">
-                                    <a href="https://github.com/Bl4ut0" target="_blank" rel="noreferrer">
-                                        <i class="fa-brands fa-github"></i>
-                                        <span>github.com/Bl4ut0</span>
-                                    </a>
-                                    <a href="https://discord.gg/fEwanmFR9m" target="_blank" rel="noreferrer">
-                                        <i class="fa-brands fa-discord"></i>
-                                        <span>discord.gg/fEwanmFR9m</span>
-                                    </a>
-                                    <a href="https://steamcommunity.com/id/Bl4ut0/" target="_blank" rel="noreferrer">
-                                        <i class="fa-brands fa-steam"></i>
-                                        <span>steamcommunity.com/id/Bl4ut0</span>
-                                    </a>
-                                    <a href="https://bl4ut0.dev" target="_blank" rel="noreferrer">
-                                        <i class="fa-solid fa-globe"></i>
-                                        <span>bl4ut0.dev</span>
-                                    </a>
-                                    <a href="https://www.curseforge.com/members/bl4ut0/projects" target="_blank"
-                                        rel="noreferrer">
-                                        <i class="fa-solid fa-download"></i>
-                                        <span>curseforge.com/members/bl4ut0</span>
-                                    </a>
-                                </nav>
                             </div>
                         </section>
 
