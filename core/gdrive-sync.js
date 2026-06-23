@@ -4,6 +4,48 @@
  */
 window.GDriveSync = {
     token: null,
+    parentFolderId: null,
+    
+    async getOrCreateParentFolder(token) {
+        if (this.parentFolderId) return this.parentFolderId;
+
+        // Search for existing "PortfoliOS" folder
+        const searchUrl = `https://www.googleapis.com/drive/v3/files?q=name='PortfoliOS'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&fields=files(id)`;
+        const searchResponse = await fetch(searchUrl, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!searchResponse.ok) {
+            const errText = await searchResponse.text();
+            throw new Error(`Failed to search parent folder: ${searchResponse.status} - ${errText}`);
+        }
+        const searchResult = await searchResponse.json();
+        if (searchResult.files && searchResult.files.length > 0) {
+            this.parentFolderId = searchResult.files[0].id;
+            return this.parentFolderId;
+        }
+
+        // If not found, create the folder
+        const createUrl = "https://www.googleapis.com/drive/v3/files";
+        const metadata = {
+            name: "PortfoliOS",
+            mimeType: "application/vnd.google-apps.folder"
+        };
+        const createResponse = await fetch(createUrl, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(metadata)
+        });
+        if (!createResponse.ok) {
+            const errText = await createResponse.text();
+            throw new Error(`Failed to create parent folder: ${createResponse.status} - ${errText}`);
+        }
+        const createResult = await createResponse.json();
+        this.parentFolderId = createResult.id;
+        return this.parentFolderId;
+    },
     
     loadGsiLibrary() {
         if (window.google) return Promise.resolve();
@@ -63,6 +105,7 @@ window.GDriveSync = {
     
     logout() {
         this.token = null;
+        this.parentFolderId = null;
         if (window.Storage) {
             window.Storage.local.remove("bl4ut0_gdrive_token");
             window.Storage.local.remove("bl4ut0_gdrive_token_expiry");
@@ -77,7 +120,8 @@ window.GDriveSync = {
     async fetchRemoteFiles() {
         const token = this.token || this.getToken();
         if (!token) throw new Error("Not authenticated with Google Drive");
-        const url = `https://www.googleapis.com/drive/v3/files?q=trashed=false&fields=files(id,name,mimeType,modifiedTime,appProperties)`;
+        const parentFolderId = await this.getOrCreateParentFolder(token);
+        const url = `https://www.googleapis.com/drive/v3/files?q='${parentFolderId}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,modifiedTime,appProperties)&pageSize=1000`;
         const response = await fetch(url, {
             headers: { "Authorization": `Bearer ${token}` }
         });
@@ -112,10 +156,13 @@ window.GDriveSync = {
     async uploadFile(path, name, mimeType, data) {
         const token = this.token || this.getToken();
         if (!token) throw new Error("Not authenticated");
+ 
+        const parentFolderId = await this.getOrCreateParentFolder(token);
 
         const metadata = {
             name: name,
             mimeType: mimeType,
+            parents: [parentFolderId],
             appProperties: { path: path }
         };
 
@@ -159,10 +206,13 @@ window.GDriveSync = {
     async createRemoteFolder(path, name) {
         const token = this.token || this.getToken();
         if (!token) throw new Error("Not authenticated");
+ 
+        const parentFolderId = await this.getOrCreateParentFolder(token);
 
         const metadata = {
             name: name,
             mimeType: "application/vnd.google-apps.folder",
+            parents: [parentFolderId],
             appProperties: { path: path }
         };
 
