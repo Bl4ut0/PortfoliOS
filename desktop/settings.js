@@ -131,7 +131,8 @@ function updateGDriveUI() {
     const clientIdInput = document.getElementById("settings-gdrive-client-id");
     
     if (clientIdInput) {
-        const storedId = localStorage.getItem("bl4ut0_gdrive_client_id") || "";
+        const defaultId = window.GDriveSync?.defaultClientId || "";
+        const storedId = localStorage.getItem("bl4ut0_gdrive_client_id") || defaultId;
         if (!clientIdInput.value && storedId) {
             clientIdInput.value = storedId;
         }

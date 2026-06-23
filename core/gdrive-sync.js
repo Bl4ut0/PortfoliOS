@@ -5,6 +5,7 @@
 window.GDriveSync = {
     token: null,
     parentFolderId: null,
+    defaultClientId: "271385155591-4g949illm5c7ke55rf9aupcko53iju53.apps.googleusercontent.com",
     
     async getOrCreateParentFolder(token) {
         if (this.parentFolderId) return this.parentFolderId;

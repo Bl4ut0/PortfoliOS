@@ -351,7 +351,8 @@
         const startSyncBtn = panel.querySelector(".btn-start-sync");
         const clientIdInput = panel.querySelector(".sync-client-id-input");
 
-        clientIdInput.value = localStorage.getItem("bl4ut0_gdrive_client_id") || "";
+        const defaultId = window.GDriveSync?.defaultClientId || "";
+        clientIdInput.value = localStorage.getItem("bl4ut0_gdrive_client_id") || defaultId;
 
         if (isConnected) {
             statusText.textContent = "Connected to Google Drive";
