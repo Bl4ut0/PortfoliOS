@@ -3,11 +3,13 @@
  * Styles for the system process monitor, tab views, CPU graphs, and progress bars.
  */
 
-.taskmgr-window {
+.desktop-window.taskmgr-window {
     width: 620px;
     height: 480px;
     min-width: 480px;
     min-height: 380px;
+    left: clamp(10rem, 20vw, 15rem);
+    top: 5.5rem;
 }
 
 .taskmgr-container {
