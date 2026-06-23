@@ -3,6 +3,66 @@
     let cpuHistory = Array(30).fill(10); // Start with some initial history data
     let startTime = Date.now();
 
+    // Diagnostics metrics
+    let lastFrameTime = performance.now();
+    let frameCount = 0;
+    let fps = 60;
+    let latency = 0;
+    let longTasksMs = 0;
+    let lastSampleTime = performance.now();
+    let rafId = null;
+    let perfObserver = null;
+
+    function startDiagnosticsLoop() {
+        lastFrameTime = performance.now();
+        frameCount = 0;
+        longTasksMs = 0;
+        lastSampleTime = performance.now();
+
+        const tick = (now) => {
+            frameCount++;
+            const delta = now - lastFrameTime;
+            lastFrameTime = now;
+
+            const frameLatency = Math.max(0, delta - (1000 / 60));
+            latency = (latency * 0.9) + (frameLatency * 0.1);
+
+            const sampleDelta = now - lastSampleTime;
+            if (sampleDelta >= 1000) {
+                fps = Math.round((frameCount * 1000) / sampleDelta);
+                frameCount = 0;
+                lastSampleTime = now;
+            }
+
+            rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+
+        if (typeof PerformanceObserver !== "undefined") {
+            try {
+                perfObserver = new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                        longTasksMs += entry.duration;
+                    }
+                });
+                perfObserver.observe({ entryTypes: ["longtask"] });
+            } catch (e) {
+                console.warn("PerformanceObserver 'longtask' is not supported in this browser.");
+            }
+        }
+    }
+
+    function stopDiagnosticsLoop() {
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+        if (perfObserver) {
+            perfObserver.disconnect();
+            perfObserver = null;
+        }
+    }
+
     // Map of apps to their simulated memory footprints (in MB)
     const APP_MEM_FOOTPRINT = {
         doomsource: 128,
@@ -64,25 +124,25 @@
             });
         });
 
-        // Measure event loop lag
-        let lag = 0;
-        if (windowEl) {
-            const now = performance.now();
-            const last = windowEl.lastUiUpdate || (now - 1200);
-            windowEl.lastUiUpdate = now;
-            const elapsed = now - last;
-            lag = Math.max(0, elapsed - 1200);
-        }
+        // Calculate CPU busy load based on performance diagnostics
+        // Long Tasks duration in current sampling window (1200ms)
+        const busyTimePercent = Math.min(100, Math.round((longTasksMs / 1200) * 100));
+        // Reset longTasksMs accumulator for the next interval
+        longTasksMs = 0;
 
-        // Calculate CPU usage based on hardware cores, open apps, and lag
+        // Base CPU load based on open applications (weighted by cores)
         let baseCpu = 2; // idle load
         openApps.forEach(appId => {
             const isHeavy = ["doomsource", "diablo", "quake", "duke32"].includes(appId);
-            baseCpu += isHeavy ? (80 / cores) : (10 / cores);
+            baseCpu += isHeavy ? (40 / cores) : (5 / cores);
         });
 
-        const lagFactor = (lag / 1200) * 100;
-        let cpuUsage = Math.round(baseCpu + lagFactor);
+        // Event loop latency factor
+        // E.g., latency of 15ms adds Math.min(30, 15 * 2) = 30% load
+        const latencyFactor = Math.min(35, latency * 2);
+
+        // Combine all metrics: actual thread busy load, app base load, and event loop lag
+        let cpuUsage = Math.round(baseCpu + busyTimePercent + latencyFactor);
         
         // Add a slight natural-looking jitter
         const jitter = Math.floor(Math.random() * 5) - 2;
@@ -143,6 +203,13 @@
         if (coresEl) {
             coresEl.textContent = `${physicalCores} Core${physicalCores > 1 ? 's' : ''} (${cores} Threads)`;
         }
+
+        // Update real diagnostics readouts
+        const fpsEl = windowEl.querySelector(".taskmgr-fps-value");
+        if (fpsEl) fpsEl.textContent = `${fps} FPS`;
+
+        const lagEl = windowEl.querySelector(".taskmgr-lag-value");
+        if (lagEl) lagEl.textContent = `${Math.round(latency)} ms`;
         
         // Update dashboard counters
         const memPercentEl = windowEl.querySelector(".taskmgr-stat-mem-percent");
@@ -266,14 +333,22 @@
                                   <span>Cores:</span>
                                   <strong class="taskmgr-hardware-cores">-- Cores (-- Threads)</strong>
                               </div>
-                             <div class="hw-item">
-                                 <span>Uptime:</span>
-                                 <strong class="taskmgr-uptime">--:--:--</strong>
-                             </div>
-                             <div class="hw-item">
-                                 <span>Virtual RAM:</span>
-                                 <strong>1.00 GB Web Buffer</strong>
-                             </div>
+                              <div class="hw-item">
+                                  <span>Uptime:</span>
+                                  <strong class="taskmgr-uptime">--:--:--</strong>
+                              </div>
+                              <div class="hw-item">
+                                  <span>Virtual RAM:</span>
+                                  <strong>1.00 GB Web Buffer</strong>
+                              </div>
+                              <div class="hw-item">
+                                  <span>Frame Rate:</span>
+                                  <strong class="taskmgr-fps-value">-- FPS</strong>
+                              </div>
+                              <div class="hw-item">
+                                  <span>Event Loop Lag:</span>
+                                  <strong class="taskmgr-lag-value">-- ms</strong>
+                              </div>
                          </div>
                      </div>
                  </div>
@@ -300,6 +375,9 @@
         `,
 
         onOpen: (windowEl) => {
+            // Start diagnostics loops
+            startDiagnosticsLoop();
+
             // Setup initial render
             updateUI(windowEl);
 
@@ -378,6 +456,9 @@
         },
 
         onClose: () => {
+            // Stop diagnostics loops
+            stopDiagnosticsLoop();
+
             if (statsInterval) {
                 clearInterval(statsInterval);
                 statsInterval = null;
