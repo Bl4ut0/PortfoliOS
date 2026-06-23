@@ -93,12 +93,21 @@
         const points = cpuHistory.map((val, idx) => {
             const x = padding + (idx * (graphW / 29));
             const y = padding + graphH - (val * (graphH / 100));
-            return `${x},${y}`;
+            return { x, y };
         });
 
         const polyline = svg.querySelector("polyline");
         if (polyline) {
-            polyline.setAttribute("points", points.join(" "));
+            polyline.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
+        }
+
+        const path = svg.querySelector("path.chart-area");
+        if (path && points.length > 0) {
+            const bottomY = padding + graphH;
+            const pathData = `M ${points[0].x} ${bottomY} ` + 
+                             points.map(p => `L ${p.x} ${p.y}`).join(" ") + 
+                             ` L ${points[points.length-1].x} ${bottomY} Z`;
+            path.setAttribute("d", pathData);
         }
     }
 
@@ -193,53 +202,69 @@
                 <div class="taskmgr-tab-content" data-tab="performance">
                     <div class="taskmgr-perf-grid">
                         <div class="taskmgr-cpu-chart">
-                            <span class="chart-label">CPU History (% Utilization)</span>
-                            <svg width="280" height="120" class="svg-graph">
-                                <!-- Grid Lines -->
-                                <line x1="10" y1="10" x2="270" y2="10" stroke="rgba(255,255,255,0.07)" stroke-dasharray="2" />
-                                <line x1="10" y1="40" x2="270" y2="40" stroke="rgba(255,255,255,0.07)" stroke-dasharray="2" />
-                                <line x1="10" y1="70" x2="270" y2="70" stroke="rgba(255,255,255,0.07)" stroke-dasharray="2" />
-                                <line x1="10" y1="100" x2="270" y2="100" stroke="rgba(255,255,255,0.07)" stroke-dasharray="2" />
-                                
-                                <polyline fill="none" stroke="var(--theme-primary, #22d3ee)" stroke-width="2.5" points="" />
-                            </svg>
-                        </div>
-                        <div class="taskmgr-hardware-details">
-                            <div class="hw-item">
-                                <span>Processor:</span>
-                                <strong>Simulated vCPU @ 3.40GHz</strong>
-                            </div>
-                            <div class="hw-item">
-                                <span>Cores:</span>
-                                <strong>8 Cores (16 Threads)</strong>
-                            </div>
-                            <div class="hw-item">
-                                <span>Uptime:</span>
-                                <strong class="taskmgr-uptime">--:--:--</strong>
-                            </div>
-                            <div class="hw-item">
-                                <span>Virtual RAM:</span>
-                                <strong>1.00 GB Web Buffer</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <footer class="taskmgr-footer">
-                    <div class="taskmgr-global-stats">
-                        <div class="stat-group">
-                            <span class="label">CPU Usage</span>
-                            <strong class="taskmgr-stat-cpu-percent">0%</strong>
-                        </div>
-                        <div class="stat-group">
-                            <span class="label">Memory (RAM)</span>
-                            <strong class="taskmgr-stat-mem-percent">0%</strong>
-                            <small class="taskmgr-stat-mem-text">0 MB / 1024 MB</small>
-                        </div>
-                    </div>
-                    <div class="taskmgr-actions">
-                        <button class="btn-optimize-mem" title="Clear resources & close minimized applications">Optimize Memory</button>
-                    </div>
+                             <span class="chart-label">CPU History (% Utilization)</span>
+                             <svg width="280" height="120" class="svg-graph" viewBox="0 0 280 120" preserveAspectRatio="none">
+                                 <defs>
+                                     <linearGradient id="cpu-grad" x1="0" y1="0" x2="0" y2="1">
+                                         <stop offset="0%" stop-color="var(--theme-primary, #22d3ee)" stop-opacity="0.32" />
+                                         <stop offset="100%" stop-color="var(--theme-primary, #22d3ee)" stop-opacity="0.0" />
+                                     </linearGradient>
+                                 </defs>
+                                 <!-- Grid Lines -->
+                                 <line x1="10" y1="10" x2="270" y2="10" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
+                                 <line x1="10" y1="40" x2="270" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
+                                 <line x1="10" y1="70" x2="270" y2="70" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
+                                 <line x1="10" y1="100" x2="270" y2="100" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2" />
+                                 
+                                 <!-- Vertical Grid Lines -->
+                                 <line x1="53" y1="10" x2="53" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="96" y1="10" x2="96" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="139" y1="10" x2="139" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="182" y1="10" x2="182" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 <line x1="225" y1="10" x2="225" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="2" />
+                                 
+                                 <path class="chart-area" fill="url(#cpu-grad)" d="" />
+                                 <polyline fill="none" stroke="var(--theme-primary, #22d3ee)" stroke-width="2" points="" />
+                             </svg>
+                         </div>
+                         <div class="taskmgr-hardware-details">
+                             <div class="hw-item">
+                                 <span>Processor:</span>
+                                 <strong>Simulated vCPU @ 3.40GHz</strong>
+                             </div>
+                             <div class="hw-item">
+                                 <span>Cores:</span>
+                                 <strong>8 Cores (16 Threads)</strong>
+                             </div>
+                             <div class="hw-item">
+                                 <span>Uptime:</span>
+                                 <strong class="taskmgr-uptime">--:--:--</strong>
+                             </div>
+                             <div class="hw-item">
+                                 <span>Virtual RAM:</span>
+                                 <strong>1.00 GB Web Buffer</strong>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+ 
+                 <footer class="taskmgr-footer">
+                     <div class="taskmgr-global-stats">
+                         <div class="stat-group">
+                             <span class="label">CPU Usage</span>
+                             <strong class="taskmgr-stat-cpu-percent">0%</strong>
+                         </div>
+                         <div class="stat-group">
+                             <span class="label">Memory (RAM)</span>
+                             <strong class="taskmgr-stat-mem-percent">0%</strong>
+                             <small class="taskmgr-stat-mem-text">0 MB / 1024 MB</small>
+                         </div>
+                     </div>
+                     <div class="taskmgr-actions">
+                         <button class="btn-optimize-mem" title="Clear resources & close minimized applications">
+                             <i class="fa-solid fa-gauge-high"></i> Optimize Memory
+                         </button>
+                     </div>
                 </footer>
             </div>
         `,
@@ -305,11 +330,11 @@
                 }
 
                 optimizeBtn.disabled = true;
-                optimizeBtn.textContent = "Optimizing...";
+                optimizeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Optimizing...';
 
                 setTimeout(() => {
                     optimizeBtn.disabled = false;
-                    optimizeBtn.textContent = "Optimize Memory";
+                    optimizeBtn.innerHTML = '<i class="fa-solid fa-gauge-high"></i> Optimize Memory';
                     if (window.showDesktopToast) {
                         window.showDesktopToast(closedCount > 0 
                             ? `Optimized! Closed ${closedCount} background task(s) and cleared caches.`

@@ -16,10 +16,8 @@
     display: flex;
     flex-direction: column;
     height: calc(100% - 32px); /* Subtracting window-bar height */
-    background: rgba(10, 11, 18, 0.7);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    color: #f8fafc;
+    background: transparent;
+    color: var(--text, #fafafa);
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     overflow: hidden;
@@ -28,8 +26,8 @@
 /* Tabs */
 .taskmgr-tabs {
     display: flex;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(15, 17, 28, 0.5);
+    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+    background: rgba(255, 255, 255, 0.015);
     padding: 0 8px;
 }
 
@@ -203,8 +201,16 @@
     width: 100%;
     height: 100%;
     min-height: 120px;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.25);
     border-radius: 4px;
+}
+
+.chart-area {
+    transition: d 1.2s linear;
+}
+
+.svg-graph polyline {
+    transition: points 1.2s linear;
 }
 
 .taskmgr-hardware-details {
@@ -306,10 +312,10 @@
 
 /* Optimize Button */
 .btn-optimize-mem {
-    background: linear-gradient(135deg, var(--theme-primary, #22d3ee), #0284c7);
-    color: #ffffff;
-    border: none;
-    border-radius: 4px;
+    background: rgba(34, 211, 238, 0.07);
+    color: var(--theme-primary, #22d3ee);
+    border: 1px solid rgba(34, 211, 238, 0.22);
+    border-radius: 6px;
     padding: 8px 16px;
     font-size: 12px;
     font-weight: 600;
@@ -317,12 +323,15 @@
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .btn-optimize-mem:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+    background: rgba(34, 211, 238, 0.14);
+    color: #ffffff;
+    border-color: rgba(34, 211, 238, 0.45);
+    box-shadow: 0 4px 12px rgba(34, 211, 238, 0.15);
+    transform: translateY(-1.5px);
 }
 
 .btn-optimize-mem:active {
@@ -330,8 +339,9 @@
 }
 
 .btn-optimize-mem:disabled {
-    background: #334155;
-    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-muted, #71717a);
     cursor: not-allowed;
     box-shadow: none;
     transform: none;
