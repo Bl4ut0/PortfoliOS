@@ -5,9 +5,7 @@
 
 window.postVolumeToGameFrame = (iframe) => {
     if (!iframe?.contentWindow) return;
-    try {
-        iframe.contentWindow.postMessage({ type: "volume", value: state.volume }, "*");
-    } catch (error) {}
+    window.postMessageToIframe?.(iframe, { type: "volume", value: state.volume });
 };
 
 window.configureGameVolume = (root = document) => {
@@ -15,6 +13,7 @@ window.configureGameVolume = (root = document) => {
     if (window.appRegistry && window.appRegistry.doomsource && typeof window.appRegistry.doomsource.setVolume === "function") {
         window.appRegistry.doomsource.setVolume(state.volume);
     }
+    window.PortfolioOSAppFramework?.applyVolumeToRegisteredApps(state.volume);
 };
 
 window.focusGameIframe = (iframe) => {
@@ -23,7 +22,7 @@ window.focusGameIframe = (iframe) => {
         iframe.focus({ preventScroll: true });
         try {
             iframe.contentWindow?.focus();
-            iframe.contentWindow?.postMessage({ type: "focus-game" }, "*");
+            window.postMessageToIframe?.(iframe, { type: "focus-game" });
         } catch (error) {}
     }, 40);
 };

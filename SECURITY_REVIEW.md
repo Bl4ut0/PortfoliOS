@@ -22,6 +22,14 @@ This review covers the browser-local filesystem, game-save backup flow, and plan
 - Cross-frame game bridges must only accept expected message shapes and same-origin frames.
 - `allow-same-origin` on game iframes is useful for save access but raises the impact of any game-port script compromise.
 
+## Mitigations Added
+
+- Modular app registration now runs through `validateAppRegistration()`.
+- Modular app lifecycle hooks now run through a shared hook runner that catches async failures.
+- Game iframe messages now use `window.postMessageToIframe()` so runtime messages target the iframe's resolved origin instead of `*`.
+- Store catalog display text is escaped before insertion into the Store UI.
+- The modular app framework documentation now requires explicit origin checks, adaptive sizing, audio adapters, and `/Saved Games` save sync patterns.
+
 ## Required Before Public OAuth Launch
 
 - Add a Content Security Policy that restricts scripts to trusted origins and blocks inline script where practical.
@@ -30,7 +38,7 @@ This review covers the browser-local filesystem, game-save backup flow, and plan
 - Add explicit sync preview before destructive remote/local deletes.
 - Store a signed or checksummed sync manifest to detect unexpected deletion waves.
 - Filter backup paths to user documents and `/Saved Games`; exclude hidden dotfiles and bundled game assets by default.
-- Add origin and source checks for all `postMessage` bridges.
+- Continue adding origin and source checks inside every iframe runtime that receives `postMessage` traffic.
 - Add a manual "Export backup archive" path so users can back up saves without OAuth.
 
 ## Review Status

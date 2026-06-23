@@ -9,10 +9,7 @@ window.createIframeGameApp = (config) => {
     
     function releasePointerLock(windowEl) {
         const iframe = windowEl?.querySelector("iframe.game-frame");
-        try {
-            const targetOrigin = iframe ? new URL(iframe.dataset.src || iframe.src, window.location.href).origin : window.location.origin;
-            iframe?.contentWindow?.postMessage({ type: "release-pointer-lock" }, targetOrigin);
-        } catch (error) {}
+        window.postMessageToIframe?.(iframe, { type: "release-pointer-lock" });
     }
 
     return {
@@ -63,10 +60,7 @@ window.createIframeGameApp = (config) => {
             releasePointerLock(windowEl);
             const iframe = windowEl.querySelector("iframe");
             if (iframe) {
-                try {
-                    const targetOrigin = new URL(iframe.dataset.src || iframe.src, window.location.href).origin;
-                    iframe.contentWindow?.postMessage({ type: "save-sync" }, targetOrigin);
-                } catch (e) {}
+                window.postMessageToIframe?.(iframe, { type: "save-sync" });
                 if (typeof config.onSaveSync === "function") {
                     try {
                         await config.onSaveSync(windowEl);

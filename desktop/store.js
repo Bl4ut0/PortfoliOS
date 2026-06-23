@@ -11,6 +11,7 @@ window.renderStore = () => {
     const activeCategory = state.storeCategory || "all";
     const storeApps = window.storeApps || [];
     const storeCategories = window.storeCategories || [];
+    const escapeHtml = window.escapeHtml || ((value) => String(value ?? ""));
     
     const visibleApps = storeApps.filter((app) => {
         if (activeCategory === "all") return true;
@@ -21,11 +22,12 @@ window.renderStore = () => {
         const count = category.id === "all"
             ? storeApps.length
             : storeApps.filter((app) => app.category.toLowerCase() === category.id).length;
+        const categoryId = escapeHtml(category.id);
         return `
             <button type="button" class="store-category ${activeCategory === category.id ? "active" : ""}"
-                data-store-category="${category.id}">
-                <i class="${category.icon}"></i>
-                <span>${category.label}</span>
+                data-store-category="${categoryId}">
+                <i class="${escapeHtml(category.icon)}"></i>
+                <span>${escapeHtml(category.label)}</span>
                 <b>${count}</b>
             </button>
         `;
@@ -36,35 +38,41 @@ window.renderStore = () => {
         const installingProgress = state.installingApps[app.id];
         const isInstalling = installingProgress !== undefined;
         const installable = app.installable !== false;
+        const appId = escapeHtml(app.id);
+        const title = escapeHtml(app.title);
+        const category = escapeHtml(app.category);
+        const description = escapeHtml(app.description);
+        const size = escapeHtml(app.size);
+        const publisher = escapeHtml(app.publisher);
 
         let actionButtonHtml = "";
         if (isInstalling) {
             actionButtonHtml = `
                 <div class="store-progress-container">
-                    <span class="store-progress-label" data-progress-text="${app.id}">Installing (${installingProgress}%)...</span>
+                    <span class="store-progress-label" data-progress-text="${appId}">Installing (${installingProgress}%)...</span>
                     <div class="store-progress-track">
-                        <div class="store-progress-bar" data-progress-bar="${app.id}" style="width: ${installingProgress}%"></div>
+                        <div class="store-progress-bar" data-progress-bar="${appId}" style="width: ${installingProgress}%"></div>
                     </div>
                 </div>
             `;
         } else if (!installable && app.bookmarkId) {
             actionButtonHtml = `
-                <button type="button" class="store-btn open" data-open-store-bookmark="${app.bookmarkId}">
+                <button type="button" class="store-btn open" data-open-store-bookmark="${escapeHtml(app.bookmarkId)}">
                     <i class="fa-solid fa-arrow-up-right-from-square"></i> Open
                 </button>
             `;
         } else if (installed) {
             actionButtonHtml = `
-                <button type="button" class="store-btn launch" data-open-app="${app.id}">
+                <button type="button" class="store-btn launch" data-open-app="${appId}">
                     <i class="fa-solid fa-play"></i> Launch
                 </button>
-                <button type="button" class="store-btn uninstall" data-uninstall-store-app="${app.id}">
+                <button type="button" class="store-btn uninstall" data-uninstall-store-app="${appId}">
                     <i class="fa-solid fa-trash-can"></i> Uninstall
                 </button>
             `;
         } else {
             actionButtonHtml = `
-                <button type="button" class="store-btn install" data-install-store-app="${app.id}">
+                <button type="button" class="store-btn install" data-install-store-app="${appId}">
                     <i class="fa-solid fa-download"></i> Install
                 </button>
             `;
@@ -77,15 +85,15 @@ window.renderStore = () => {
                         ${window.getAppIconHtml(app.icon)}
                     </div>
                     <div class="store-app-card-info">
-                        <h3>${app.title}</h3>
-                        <span>${app.category}</span>
+                        <h3>${title}</h3>
+                        <span>${category}</span>
                     </div>
                 </div>
-                <p class="store-app-card-desc">${app.description}</p>
+                <p class="store-app-card-desc">${description}</p>
                 <div class="store-app-card-footer">
                     <div class="store-app-card-meta">
-                        <div>${installable ? "Size" : "Mode"}: ${app.size}</div>
-                        <div>${app.publisher}</div>
+                        <div>${installable ? "Size" : "Mode"}: ${size}</div>
+                        <div>${publisher}</div>
                     </div>
                     <div class="store-app-card-action-container">
                         ${actionButtonHtml}

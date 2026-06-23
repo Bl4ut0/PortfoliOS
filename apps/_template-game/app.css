@@ -1,0 +1,8 @@
+@import "../_shared/iframe-game.css?v=1.0.33";
+
+.desktop-window.mygame-window {
+    --app-window-left: clamp(4rem, 10vw, 8rem);
+    --app-window-top: 4.8rem;
+    --app-window-width: min(54rem, calc(100% - 2rem));
+    --app-window-height: min(38rem, calc(100% - 6rem));
+}

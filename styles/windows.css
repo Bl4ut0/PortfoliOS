@@ -185,6 +185,11 @@
 .desktop-window.linux-window,
 .desktop-window.cli-window,
 .desktop-window.game-window,
+.desktop-window.app-window,
+.desktop-window.utility-window,
+.desktop-window.service-window,
+.desktop-window.document-window,
+.desktop-window.media-window,
 .desktop-window.doom-source-window,
 .desktop-window.settings-window,
 .desktop-window.browser-window,
@@ -252,6 +257,19 @@
 
 .desktop-window.is-dragging .window-bar {
     cursor: grabbing;
+}
+
+.desktop-window.app-window,
+.desktop-window.utility-window,
+.desktop-window.service-window,
+.desktop-window.document-window,
+.desktop-window.media-window {
+    left: var(--app-window-left, clamp(4rem, 10vw, 8rem));
+    top: var(--app-window-top, 4.8rem);
+    bottom: auto;
+    width: var(--app-window-width, min(48rem, calc(100% - 2rem)));
+    height: var(--app-window-height, min(34rem, calc(100% - 6rem)));
+    min-height: var(--app-window-min-height, 22rem);
 }
 
 .resize-handle {
@@ -460,10 +478,12 @@
 }
 
 .desktop-window.game-window {
-    left: clamp(10rem, 18vw, 16rem);
-    top: 4.6rem;
-    bottom: var(--window-bottom);
-    width: min(56rem, 72vw);
+    left: var(--app-window-left, clamp(4rem, 10vw, 8rem));
+    top: var(--app-window-top, 4.8rem);
+    bottom: auto;
+    width: var(--app-window-width, min(54rem, calc(100% - 2rem)));
+    height: var(--app-window-height, min(38rem, calc(100% - 6rem)));
+    min-height: var(--app-window-min-height, 24rem);
 }
 
 .desktop-window.doom-source-window {

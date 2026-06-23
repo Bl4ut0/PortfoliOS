@@ -1,11 +1,20 @@
 .boot-screen {
+    --boot-bg: #080a0f;
+    --boot-panel: rgba(9, 11, 16, 0.62);
+    --boot-line: rgba(255, 255, 255, 0.12);
+    --boot-text: #f8fafc;
+    --boot-text-soft: #cbd5e1;
+    --boot-text-muted: #94a3b8;
+    --boot-cyan: #22d3ee;
+    --boot-green: #34d399;
+    --boot-amber: #f59e0b;
     position: fixed;
     inset: 0;
     z-index: 150;
     display: grid;
     place-items: center;
     padding: 1rem;
-    background: var(--bg);
+    background: var(--boot-bg);
     user-select: none;
     touch-action: none;
 }
@@ -35,8 +44,8 @@
 .boot-panel {
     width: min(620px, 100%);
     padding: clamp(1.5rem, 5vw, 2.5rem);
-    background: rgba(9, 11, 16, 0.62);
-    border: 1px solid var(--line);
+    background: var(--boot-panel);
+    border: 1px solid var(--boot-line);
     border-radius: var(--radius-lg);
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), var(--shadow);
     backdrop-filter: blur(30px);
@@ -49,7 +58,7 @@
     content: "Hold to fast-forward boot";
     display: block;
     margin-top: 1.25rem;
-    color: var(--text-muted);
+    color: var(--boot-text-muted);
     font-family: var(--mono);
     font-size: 0.72rem;
     opacity: 0.72;
@@ -60,7 +69,7 @@
 }
 
 .boot-screen.is-fast-forwarding .boot-panel::after {
-    color: var(--amber);
+    color: var(--boot-amber);
     content: "Fast-forwarding...";
 }
 
@@ -68,10 +77,15 @@
     display: grid;
     gap: 0.25rem;
     margin-bottom: 1.25rem;
-    color: var(--theme-accent);
+    color: var(--boot-cyan);
     font-family: var(--mono);
     font-size: 0.76rem;
-    text-shadow: 0 0 8px rgba(52, 211, 153, 0.2);
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.24);
+}
+
+.boot-lines span:first-child {
+    color: var(--boot-text);
+    text-shadow: 0 0 8px rgba(248, 250, 252, 0.28);
 }
 
 .boot-mark {
@@ -81,7 +95,6 @@
     width: 3.5rem;
     height: 3.5rem;
     margin-bottom: 1.25rem;
-    color: var(--theme-primary);
     background: rgba(34, 211, 238, 0.08);
     border: 1px solid rgba(34, 211, 238, 0.24);
     border-radius: var(--radius-md);
@@ -92,7 +105,17 @@
     font-family: var(--mono);
     font-size: 1.4rem;
     font-weight: 800;
-    text-shadow: 0 0 8px var(--theme-primary);
+    line-height: 1;
+}
+
+.boot-mark .prompt-chevron {
+    color: var(--boot-text);
+    text-shadow: 0 0 8px rgba(248, 250, 252, 0.42);
+}
+
+.boot-mark .prompt-cursor {
+    color: var(--boot-cyan);
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.8);
 }
 
 .boot-panel h1 {
@@ -102,7 +125,11 @@
     font-size: clamp(2.3rem, 8vw, 4.2rem);
     line-height: 0.96;
     letter-spacing: -0.02em;
-    color: var(--text);
+    color: var(--boot-text);
+}
+
+.boot-screen .eyebrow {
+    color: var(--boot-cyan);
 }
 
 .boot-screen .boot-actions {
@@ -124,7 +151,7 @@
 
 .boot-panel p:not(.eyebrow) {
     max-width: 48rem;
-    color: var(--text-soft);
+    color: var(--boot-text-soft);
     font-size: 0.88rem;
     line-height: 1.45;
 }
@@ -155,15 +182,15 @@
 
 .primary-action {
     color: #031016;
-    background: var(--theme-primary);
+    background: var(--boot-cyan);
     border-color: rgba(34, 211, 238, 0.7);
     box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25);
 }
 
 .secondary-action {
-    color: var(--text-soft);
+    color: var(--boot-text-soft);
     background: rgba(255, 255, 255, 0.035);
-    border-color: var(--line);
+    border-color: var(--boot-line);
 }
 
 .primary-action:hover {
@@ -175,7 +202,7 @@
 
 .secondary-action:hover {
     transform: translateY(-2px);
-    color: var(--text);
+    color: var(--boot-text);
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--line-strong);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);

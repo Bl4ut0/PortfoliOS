@@ -1,8 +1,6 @@
-@import "../_shared/iframe-game.css";
+@import "../_shared/iframe-game.css?v=1.0.33";
 
 .desktop-window.duke32-window {
-    width: min(54rem, calc(100% - 2rem));
-    height: min(38rem, calc(100% - 6rem));
-    left: clamp(4rem, 10vw, 8rem);
-    top: 4.8rem;
+    --app-window-left: clamp(4rem, 10vw, 8rem);
+    --app-window-top: 4.8rem;
 }

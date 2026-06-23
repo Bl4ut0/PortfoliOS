@@ -36,8 +36,12 @@ This directory houses the foundational services that drive PortfoliOS. These ser
 5. **[app-loader.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-loader.js)**
    - **Role**: Lazy-loader for modular applications. Injects scripts and links dynamically, resolving load promises.
 
-6. **[preferences.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/preferences.js)**
+6. **[app-framework.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-framework.js)**
+   - **Role**: Shared modular app contract helpers.
+   - **Features**: App registration validation, safe iframe `postMessage` targeting, lifecycle hook execution, modular teardown, and audio adapter registration.
+
+7. **[preferences.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/preferences.js)**
    - **Role**: Applies user selections (volume percentages, color pickers, wallpaper choices, scaling adjustments). Handles volume updates for nested iframe runtimes.
 
-7. **[utils.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/utils.js)**
+8. **[utils.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/utils.js)**
    - **Role**: Common helper functions (`byId`, `getDesktopScale`, `formatBytes`, and icon template builder).

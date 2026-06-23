@@ -27,6 +27,21 @@ window.openDesktopWindow = async (name) => {
     let windowEl = document.querySelector(`[data-window="${name}"]`);
     if (!windowEl && window.appRegistry && window.appRegistry[name]) {
         const app = window.appRegistry[name];
+        if (window.validateAppRegistration && !window.validateAppRegistration(name, app)) {
+            window.showDesktopToast?.(`Application "${name}" failed validation.`);
+            return;
+        }
+
+        let bodyHtml = "";
+        try {
+            bodyHtml = app.renderBody();
+        } catch (error) {
+            console.error(`PortfoliOS: Failed to render app "${name}".`, error);
+            window.showDesktopToast?.(`Application "${name}" failed to render.`);
+            return;
+        }
+
+        const safeTitle = window.escapeHtml ? window.escapeHtml(app.title) : app.title;
         windowEl = document.createElement("section");
         windowEl.className = `desktop-window ${app.windowClass || ""} is-hidden`;
         windowEl.dataset.window = name;
@@ -41,26 +56,29 @@ window.openDesktopWindow = async (name) => {
 
         windowEl.innerHTML = `
             <div class="window-bar">
-                <span>${iconHtml} ${app.title}</span>
+                <span>${iconHtml} ${safeTitle}</span>
                 <div class="window-actions">
-                    <button type="button" data-minimize-window="${name}" title="Minimize ${app.title}">
+                    <button type="button" data-minimize-window="${name}" title="Minimize ${safeTitle}">
                         <i class="fa-solid fa-minus"></i>
                     </button>
-                    <button type="button" data-maximize-window="${name}" title="Maximize ${app.title}">
+                    <button type="button" data-maximize-window="${name}" title="Maximize ${safeTitle}">
                         <i class="fa-regular fa-square"></i>
                     </button>
-                    <button type="button" data-close-window="${name}" title="Close ${app.title}">
+                    <button type="button" data-close-window="${name}" title="Close ${safeTitle}">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
             </div>
-            ${app.renderBody()}
+            ${bodyHtml}
         `;
 
-        const container = window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience");
+        const container = document.querySelector(".desktop-wallpaper")
+            || (window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience"));
         if (container) {
             container.appendChild(windowEl);
-            const surface = document.querySelector(".desktop-wallpaper");
+            const surface = container.classList.contains("desktop-wallpaper")
+                ? container
+                : document.querySelector(".desktop-wallpaper") || container;
             const mobileQuery = window.matchMedia("(max-width: 820px)");
             window.setupSingleWindowManagement(windowEl, surface, mobileQuery);
         }
@@ -95,9 +113,7 @@ window.openDesktopWindow = async (name) => {
         window.setTimeout(() => termInput?.focus({ preventScroll: true }), 50);
     }
 
-    if (window.appRegistry && window.appRegistry[name] && typeof window.appRegistry[name].onOpen === "function") {
-        window.appRegistry[name].onOpen(windowEl);
-    }
+    window.runAppLifecycleHook?.(name, "onOpen", windowEl);
 };
 
 window.minimizeDesktopWindow = (name) => {
@@ -108,9 +124,7 @@ window.minimizeDesktopWindow = (name) => {
     windowEl.classList.remove("active");
     if (state.activeWindow === name) window.focusNextOpenWindow();
     
-    if (window.appRegistry && window.appRegistry[name] && typeof window.appRegistry[name].onMinimize === "function") {
-        window.appRegistry[name].onMinimize(windowEl);
-    }
+    window.runAppLifecycleHook?.(name, "onMinimize", windowEl);
     
     if (window.renderTaskbar) window.renderTaskbar();
     if (window.EventBus) window.EventBus.emit("app:minimized", name);
@@ -134,40 +148,20 @@ window.closeDesktopWindow = (name) => {
         }
     }
 
-    let closePromise = Promise.resolve();
-    if (window.appRegistry && window.appRegistry[name] && typeof window.appRegistry[name].onClose === "function") {
-        try {
-            const result = window.appRegistry[name].onClose(windowEl);
-            if (result instanceof Promise) {
-                closePromise = result;
-            }
-        } catch (e) {
-            console.error("Error in app onClose:", name, e);
-        }
-    }
+    const closePromise = window.runAppLifecycleHook
+        ? window.runAppLifecycleHook(name, "onClose", windowEl, { rethrow: true })
+        : Promise.resolve();
 
     closePromise.then(() => {
         if (window.modularApps && window.modularApps.includes(name)) {
-            const el = document.querySelector(`[data-window="${name}"]`);
-            if (el) el.remove();
-            const scriptEl = document.getElementById(`app-script-${name}`);
-            if (scriptEl) {
-                scriptEl.remove();
-            }
-            if (window.appRegistry) delete window.appRegistry[name];
+            window.unloadModularApp?.(name);
         }
         if (window.renderTaskbar) window.renderTaskbar();
         if (window.EventBus) window.EventBus.emit("app:closed", name);
     }).catch((err) => {
         console.error("Error in onClose promise resolution:", name, err);
         if (window.modularApps && window.modularApps.includes(name)) {
-            const el = document.querySelector(`[data-window="${name}"]`);
-            if (el) el.remove();
-            const scriptEl = document.getElementById(`app-script-${name}`);
-            if (scriptEl) {
-                scriptEl.remove();
-            }
-            if (window.appRegistry) delete window.appRegistry[name];
+            window.unloadModularApp?.(name);
         }
         if (window.renderTaskbar) window.renderTaskbar();
         if (window.EventBus) window.EventBus.emit("app:closed", name);
@@ -179,9 +173,7 @@ window.toggleMaximizeWindow = (name) => {
     if (!windowEl) return;
     window.openDesktopWindow(name);
     windowEl.classList.toggle("is-maximized");
-    if (window.appRegistry && window.appRegistry[name] && typeof window.appRegistry[name].onMaximize === "function") {
-        window.appRegistry[name].onMaximize(windowEl);
-    }
+    window.runAppLifecycleHook?.(name, "onMaximize", windowEl);
     if (window.EventBus) window.EventBus.emit("app:maximized", name);
 };
 

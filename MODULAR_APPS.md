@@ -1,178 +1,251 @@
-# PortfoliOS Modular Application Framework
+# PortfoliOS Modular App Framework
 
-PortfoliOS features a modular, dynamic application framework designed to treat web applications and WebAssembly ports as proper desktop executables. Rather than eagerly loading scripts, styles, and iframe elements at system boot, resources are fetched dynamically on demand. When an application is closed, its memory, DOM container, script tags, and registry entries are fully unloaded and garbage-collected, ensuring a clean, low-overhead workspace.
+This document is the source of truth for building apps inside PortfoliOS. The goal is to keep each app isolated in its own folder while sharing the same window lifecycle, adaptive sizing, audio routing, save storage, and security rules.
 
----
+## Runtime Pieces
 
-## 1. Directory Structure
+- `core/app-framework.js`: app validation, lifecycle hook runner, safe iframe messaging, modular teardown, and audio adapter registration.
+- `core/app-loader.js`: lazy loads `apps/<app-id>/app.css` and `apps/<app-id>/app.js`, then validates registration.
+- `core/window-manager.js`: creates, focuses, drags, resizes, minimizes, maximizes, and closes app windows.
+- `apps/_shared/iframe-game.js`: factory for iframe/WASM games with controls overlay, pointer release, `beforeLoad`, and save sync hooks.
+- `apps/_shared/iframe-game.css`: shared adaptive sizing and iframe fill rules for game windows.
+- `core/filesystem.js`: IndexedDB-backed `SystemFS`, including `/Saved Games`.
+- `core/preferences.js`: desktop preferences, volume propagation, and game iframe focus handling.
 
-Each modular application resides in its own subdirectory under the `apps/` folder:
+## Folder Shape
 
-```
-c:/Dev Projects/bl4ut0-portfolio-os/apps/
-├── doomsource/
-│   ├── app.js      # App registration, WebAssembly loader, and lifecycle hooks
-│   └── app.css     # App-specific layout, loading panels, and canvas styling
-├── duke32/
-│   ├── app.js      # Iframe loader referencing duke32/index.html
-│   └── app.css     # Sizing and positioning rules
-└── <new-app-id>/
-    ├── app.js
-    └── app.css
-```
+Each modular app owns a directory:
 
----
-
-## 2. Dynamic Loader & Registry
-
-The framework centers around two structures:
-1. `modularApps` array in `app.js` containing active modular app IDs (e.g. `["doomsource", "duke32", "diablo", "quake"]`).
-2. `window.appRegistry` object where each loaded script registers its metadata, template renderer, and lifecycle hooks.
-
-When an app is launched, `openDesktopWindow(name)` triggers `ensureAppLoaded(name)`. This helper injects the stylesheet and script:
-
-```javascript
-async function ensureAppLoaded(appId) {
-    if (!modularApps.includes(appId) || window.appRegistry[appId]) return;
-    
-    // Inject app-specific styling
-    if (!document.getElementById(`app-style-${appId}`)) {
-        const link = document.createElement("link");
-        link.id = `app-style-${appId}`;
-        link.rel = "stylesheet";
-        link.href = `apps/${appId}/app.css`;
-        document.head.appendChild(link);
-    }
-    
-    // Inject and execute app script
-    if (!document.getElementById(`app-script-${appId}`)) {
-        return new Promise((resolve) => {
-            const script = document.createElement("script");
-            script.id = `app-script-${appId}`;
-            script.src = `apps/${appId}/app.js`;
-            script.onload = () => resolve();
-            script.onerror = () => {
-                console.error(`Failed to load script for app: ${appId}`);
-                resolve();
-            };
-            document.head.appendChild(script);
-        });
-    }
-}
+```text
+apps/
+  myapp/
+    app.js
+    app.css
 ```
 
----
+Templates live in:
 
-## 3. App Script Specification (`app.js`)
+```text
+apps/_template/
+apps/_template-game/
+```
 
-An application script should wrap its logic inside an Immediately Invoked Function Expression (IIFE) to encapsulate its state variables. It must register a configuration object on `window.appRegistry[appId]` containing:
+After copying a template, add the new app ID to:
 
-* `title` (string): Title displayed in the window bar.
-* `icon` (string): FontAwesome class name (e.g. `fa-solid fa-radiation`) or image URL path (e.g. `doom-icon.png`).
-* `windowClass` (string): Unique class added to the window element (e.g. `duke32-window`).
-* `renderBody` (function): Returns the inner HTML template of the window (typically containing a `<canvas>` or `<iframe>`).
-* `onOpen(windowEl)` (function): Callback triggered when the window is loaded and displayed. Used to initialize scripts, assign iframe sources, or kick off WASM executables.
-* `onClose(windowEl)` (function): Callback triggered right before the window is destroyed. Used to close AudioContexts, release pointers, and clear internal variables.
-* `onMinimize(windowEl)` (function): Callback triggered when minimizing. Used to pause main game loops or suspend audio.
-* `onMaximize(windowEl)` (function): Callback triggered when maximizing.
+- `core/app-loader.js` in `window.modularApps`
+- `data/apps.js` in `window.desktopApps`
+- `data/apps.js` in `window.storeApps` if it should appear in the Store
 
-### Example Iframe App Script
+## App Registration Contract
+
+Each `app.js` registers itself on `window.appRegistry[appId]`:
 
 ```javascript
 (function() {
-    window.appRegistry.duke32 = {
-        title: "duke3d.exe",
-        icon: "fa-solid fa-radiation",
-        windowClass: "duke32-window",
-        renderBody: () => `
-            <div class="game-shell">
-                <iframe data-src="duke32/index.html" class="game-frame" title="emduke32 runtime" sandbox="allow-scripts allow-same-origin allow-pointer-lock"></iframe>
-            </div>
-        `,
-        onOpen: (windowEl) => {
-            const iframe = windowEl.querySelector("iframe");
-            if (iframe && !iframe.src) {
-                iframe.src = iframe.dataset.src;
-            }
-        },
-        onClose: (windowEl) => {
-            const iframe = windowEl.querySelector("iframe");
-            if (iframe) {
-                iframe.src = "";
-            }
-        }
+    const APP_ID = "myapp";
+
+    window.appRegistry[APP_ID] = {
+        title: "myapp.exe",
+        icon: "fa-solid fa-window-restore",
+        windowClass: "myapp-window utility-window",
+        renderBody: () => `<div class="myapp-shell">...</div>`,
+        onOpen: (windowEl) => {},
+        onMinimize: (windowEl) => {},
+        onMaximize: (windowEl) => {},
+        onClose: async (windowEl) => {}
     };
 })();
 ```
 
----
+Required fields:
 
-## 4. Adaptive Window Sizing Guidelines (`app.css`)
+- `title`: text shown in the title bar.
+- `icon`: Font Awesome class or image path.
+- `windowClass`: unique app class plus a framework preset such as `utility-window`, `service-window`, `media-window`, `document-window`, or `game-window`.
+- `renderBody()`: returns the app body HTML.
 
-To support responsive layouts, dynamic viewport resizing, and adaptive wallpapers, **avoid static pixel widths/heights** (e.g. `width: 800px; height: 600px;`) on window containers. Instead, follow these adaptive rules:
+Lifecycle hooks:
 
-1. **Flex Column Structure**: Always declare `display: flex; flex-direction: column;` on the window container. This allows the window bar to maintain its static height while the main content stretches to fill the remaining area.
-2. **Flexible Container Constraints**: Style the window container using `min` and `calc` relative to the viewport:
-   - Width: `min(54rem, calc(100% - 2rem))` (locks at `54rem` / `864px` on desktop, but shrinks to fit smaller screens with a `2rem` side margin).
-   - Height: `min(38rem, calc(100% - 6rem))` (locks at `38rem` / `608px` on desktop, leaving room for taskbars and borders, while shrinking on short viewports).
-3. **Internal Stretching**:
-   - Set `.game-shell` to `flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden;`.
-   - Set the `<iframe>` or `<canvas>` (`.game-frame`) to `flex: 1 1 auto; width: 100%; height: 100%;`.
+- `onOpen(windowEl)`: called after the window is created and shown. It may return a Promise; the window manager catches failures but does not block initial display.
+- `onClose(windowEl)`: called before modular teardown. It may return a Promise; teardown waits for it so save sync and cleanup can finish.
+- `onMinimize(windowEl)`: pause timers, loops, animations, or audio.
+- `onMaximize(windowEl)`: re-measure canvas/editor/game surfaces.
 
-### Example Adaptive Stylesheet
+## Adaptive Window Sizing
+
+Do not hard-code fixed `width: 800px` or `height: 600px` on app windows. Use a preset class and CSS variables:
 
 ```css
-.desktop-window.quake-window {
-    display: flex;
-    flex-direction: column;
-    width: min(54rem, calc(100% - 2rem));
-    height: min(38rem, calc(100% - 6rem));
-    left: clamp(8rem, 14vw, 12rem);
-    top: 5.6rem;
-    background: #000;
-}
-.quake-window .game-shell {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    background: #000;
-    overflow: hidden;
-}
-.quake-window .game-frame {
-    flex: 1 1 auto;
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
+.desktop-window.myapp-window {
+    --app-window-width: min(48rem, calc(100% - 2rem));
+    --app-window-height: min(34rem, calc(100% - 6rem));
+    --app-window-left: clamp(4rem, 10vw, 8rem);
+    --app-window-top: 4.8rem;
 }
 ```
 
----
+Framework presets:
 
-## 5. Unloading & Process Termination Lifecycle
+- `utility-window`: general tools and operational panels.
+- `service-window`: hosted tools or external service launchers.
+- `document-window`: editors, readers, and file-centric apps.
+- `media-window`: audio/video apps.
+- `game-window`: iframe/canvas/WASM games.
 
-When a user clicks the close action (`xmark`) on a modular window:
-1. `closeDesktopWindow()` triggers the app's `onClose` callback in the registry.
-2. The window element `<section>` is removed from the DOM, destroying its embedded iframes or canvas nodes.
-3. The loader script tag `#app-script-<name>` is deleted from `document.head`.
-4. The registry entry `delete window.appRegistry[name]` is cleared.
-5. In custom JS wrappers (like Doom), any global properties (`window.Module`, `window.SDL2`), event listeners, and Web Audio contexts are closed and deleted.
+Inside the window body, use this pattern:
 
-This ensures all memory is reclaimed, processes are halted, and the application opens 100% fresh on the next execution.
+```css
+.myapp-shell {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
 
----
+.myapp-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+```
 
-## 6. On-Demand Asset Installation Pattern (Large Apps)
+## Iframe Game Apps
 
-For applications with substantial download requirements (e.g. Diablo's 500MB asset pack, LibreOffice's 100MB WASM package, or RCT2's data files), assets **must not** be loaded during primary system boot or installation.
+Use `window.createIframeGameApp()` for iframe-hosted games:
 
-### Design Standard
-1. **Metadata Installation**: When a user clicks "Install" in the Store, PortfoliOS registers the application as installed in `localStorage` but does not download any large assets.
-2. **First-Launch Bootstrapping**:
-   - When the user first launches the app, the `onOpen` hook renders a download/extraction progress screen inside the window shell.
-   - The app fetches the large assets (e.g., `.WAD`, `.MPQ`, or `.wasm` binaries) via a chunked `fetch` request, displaying an accurate progress bar.
-3. **Local Storage Caching (IndexedDB)**:
-   - Once fetched, store the binary files in the shared `IndexedDB` instance.
-   - On subsequent launches, the app checks `IndexedDB` first. If present, it loads the assets locally in milliseconds without hitting the network.
-   - This keeps the core PortfoliOS initial load size tiny (under 2MB) while allowing 100MB+ applications to function seamlessly.
+```javascript
+window.appRegistry.mygame = window.createIframeGameApp({
+    id: "mygame",
+    title: "mygame.exe",
+    icon: "fa-solid fa-gamepad",
+    windowClass: "mygame-window game-window",
+    iframeSrc: "mygame/index.html",
+    controlsHtml: `
+        <li><kbd>WASD</kbd><span>move</span></li>
+        <li><kbd>Ctrl</kbd><kbd>Alt</kbd><span>release cursor</span></li>
+    `,
+    beforeLoad: restoreSavesFromSystemFS,
+    onSaveSync: syncSavesToSystemFS
+});
+```
+
+Game windows should import the shared CSS:
+
+```css
+@import "../_shared/iframe-game.css?v=1.0.33";
+```
+
+The game helper:
+
+- Renders a standard `.game-shell` and `.game-frame`.
+- Delays assigning `iframe.src` until `beforeLoad` finishes.
+- Posts `release-pointer-lock`, `focus-game`, `volume`, and `save-sync` using the iframe's resolved origin.
+- Shows a controls card that includes the standard `Ctrl` + `Alt` cursor release hint.
+
+## Audio Layer
+
+Apps with direct audio control should register an audio adapter on open and unregister on close:
+
+```javascript
+let unregisterAudio = null;
+
+function setVolume(volume) {
+    gainNode.gain.value = volume / 100;
+}
+
+onOpen: () => {
+    unregisterAudio = window.registerAppAudioAdapter("myapp", { setVolume });
+},
+onClose: () => {
+    unregisterAudio?.();
+}
+```
+
+Iframe games should listen for:
+
+```javascript
+window.addEventListener("message", (event) => {
+    if (event.origin !== window.location.origin) return;
+    if (event.data?.type === "volume") {
+        setRuntimeVolume(event.data.value);
+    }
+});
+```
+
+If a third-party iframe runtime cannot change volume through JavaScript, document that limitation in the app file and keep the PortfoliOS controls visible.
+
+## Save Storage
+
+All game saves that should be visible in File Explorer belong under:
+
+```text
+/Saved Games/<Game Name>/
+```
+
+Use:
+
+```javascript
+const saveDir = await window.SystemFS.ensureSavedGameDirectory("My Game");
+await window.SystemFS.writeFile(
+    `${saveDir}/slot1.sav`,
+    "slot1.sav",
+    saveDir,
+    blob,
+    blob.size,
+    "application/octet-stream",
+    false,
+    { metadata: { game: "mygame" } }
+);
+```
+
+Game save lifecycle:
+
+1. `beforeLoad`: restore saves from `SystemFS` into the runtime before launch.
+2. Runtime play: write saves normally inside the game engine.
+3. `onSaveSync` or `onClose`: flush runtime saves back into `SystemFS`.
+4. File Explorer: users can see `/Saved Games/<Game Name>`.
+5. Cloud sync: only sync user files and saves, not hidden runtime assets or secrets.
+
+## Store And Service Apps
+
+Use `data/apps.js` categories consistently:
+
+- `Games`: installable browser/WASM games.
+- `Services`: hosted apps such as `tools.bl4ut0.com` and `pdf.bl4ut0.com`.
+- `Productivity`: editors, document tools, and future office apps.
+- `Media`: players, visualizers, and audio tools.
+
+For hosted services, set:
+
+```javascript
+{
+    id: "tools",
+    title: "Tools Hub",
+    category: "Services",
+    bookmarkId: "tools",
+    installable: false
+}
+```
+
+## Security Rules
+
+- Never use `postMessage(..., "*")` for game/runtime messages. Use `window.postMessageToIframe()`.
+- Validate `event.origin` and message shape before trusting iframe messages.
+- Treat same-origin game iframes with `allow-same-origin` as privileged code.
+- Do not place OAuth client secrets in the frontend.
+- Access tokens are sensitive. The current Google Drive flow stores a short-lived access token in local storage for convenience; this should be revisited before broader user accounts.
+- Sync only approved `SystemFS` paths. Hidden dotfiles and runtime assets should stay local unless explicitly exported.
+- Escape user-visible file names and external catalog text before inserting HTML.
+
+## Verification Checklist
+
+For every new modular app:
+
+- App opens, closes, reopens, minimizes, maximizes, drags, and resizes.
+- Window fits at 390 x 844, 768 x 1024, 1366 x 768, and 1920 x 1080.
+- Text and controls do not overflow at narrow sizes.
+- `onClose` releases timers, event listeners, iframes, audio contexts, and pointer lock.
+- Audio follows the PortfoliOS volume slider or clearly documents why it cannot.
+- Saves restore on first launch and sync back into `/Saved Games` on close.
+- Console has no uncaught hook errors, missing registration errors, or cross-origin message warnings.
