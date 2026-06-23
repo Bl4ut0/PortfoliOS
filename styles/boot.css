@@ -1,0 +1,164 @@
+.boot-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: var(--bg);
+    user-select: none;
+    touch-action: none;
+}
+
+.boot-screen.hidden {
+    display: none;
+}
+
+.boot-screen:not(.is-ready) .boot-lines span,
+.boot-screen:not(.is-ready) .boot-mark,
+.boot-screen:not(.is-ready) .eyebrow,
+.boot-screen:not(.is-ready) #boot-title,
+.boot-screen:not(.is-ready) #boot-summary,
+.boot-screen:not(.is-ready) .mobile-boot-note {
+    opacity: 0;
+}
+
+.boot-screen .mobile-boot-note {
+    opacity: 0;
+    transition: opacity 220ms ease;
+}
+
+.boot-screen.is-ready .mobile-boot-note {
+    opacity: 1;
+}
+
+.boot-panel {
+    width: min(620px, 100%);
+    padding: clamp(1.2rem, 4vw, 2rem);
+    background: var(--panel-strong);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.boot-panel::after {
+    content: "Hold to fast-forward boot";
+    display: block;
+    margin-top: 1rem;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    opacity: 0.72;
+}
+
+.boot-screen.is-ready .boot-panel::after {
+    content: "Choose a session";
+}
+
+.boot-screen.is-fast-forwarding .boot-panel::after {
+    color: var(--amber);
+    content: "Fast-forwarding...";
+}
+
+.boot-lines {
+    display: grid;
+    gap: 0.2rem;
+    margin-bottom: 1.1rem;
+    color: var(--theme-accent);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+}
+
+.boot-mark {
+    width: 3.7rem;
+    height: 3.7rem;
+    margin-bottom: 1rem;
+    color: var(--theme-primary);
+    border-radius: var(--radius);
+}
+
+.boot-mark span {
+    font-family: var(--mono);
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.boot-panel h1 {
+    margin: 0;
+    font-family: var(--heading);
+    font-size: clamp(2.3rem, 8vw, 4.5rem);
+    line-height: 0.96;
+}
+
+.boot-screen .boot-actions {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.5rem);
+    transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.boot-screen.is-ready .boot-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.boot-panel p:not(.eyebrow) {
+    max-width: 48rem;
+    color: var(--text-soft);
+}
+
+.mobile-boot-note {
+    display: none;
+}
+
+.mobile-advisory {
+    display: none;
+}
+
+.primary-action,
+.secondary-action {
+    padding: 0.7rem 0.9rem;
+    font-weight: 700;
+}
+
+.primary-action {
+    color: #031016;
+    background: var(--theme-primary);
+    border-color: rgba(34, 211, 238, 0.7);
+}
+
+.secondary-action {
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.045);
+    border-color: var(--line);
+}
+
+.primary-action:hover,
+.secondary-action:hover {
+    transform: translateY(-1px);
+}
+
+.noscript {
+    position: fixed;
+    inset: auto 1rem 1rem;
+    z-index: 100;
+    padding: 1rem;
+    background: #111827;
+    border: 1px solid var(--amber);
+    border-radius: var(--radius);
+}
+
+/* --- Desktop OS Experience --- */
+.desktop-view {
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.desktop-view.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;

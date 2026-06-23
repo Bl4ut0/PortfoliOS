@@ -1,0 +1,8 @@
+@import "../_shared/iframe-game.css";
+
+.desktop-window.diablo-window {
+    width: min(54rem, calc(100% - 2rem));
+    height: min(38rem, calc(100% - 6rem));
+    left: clamp(6rem, 12vw, 10rem);
+    top: 5.2rem;
+}

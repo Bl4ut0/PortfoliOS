@@ -1,0 +1,29 @@
+:root {
+    color-scheme: dark;
+    --bg: #080a0f;
+    --panel: rgba(13, 16, 24, 0.84);
+    --panel-strong: rgba(17, 21, 31, 0.94);
+    --panel-soft: rgba(255, 255, 255, 0.035);
+    --line: rgba(255, 255, 255, 0.09);
+    --line-strong: rgba(255, 255, 255, 0.16);
+    --text: #f8fafc;
+    --text-soft: #b6c2d2;
+    --text-muted: #718096;
+    --theme-primary: #22d3ee;
+    --theme-accent: #34d399;
+    --amber: #f59e0b;
+    --blue: #60a5fa;
+    --violet: #a78bfa;
+    --rose: #fb7185;
+    --teal: #2dd4bf;
+    --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+    --mono: "JetBrains Mono", Consolas, monospace;
+    --heading: "Space Grotesk", Inter, system-ui, sans-serif;
+    --body: Inter, system-ui, sans-serif;
+    --radius: 8px;
+
+    /* Layout Constants */
+    --taskbar-height: 2.85rem;
+    --window-bottom: 5.6rem;
+    --panel-bottom: calc(var(--taskbar-height) + 2.05rem);
+}

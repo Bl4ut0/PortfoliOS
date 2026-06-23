@@ -1,0 +1,432 @@
+.workspace {
+    width: min(1480px, 100%);
+    margin: 0 auto;
+    padding: clamp(1rem, 2.2vw, 1.7rem);
+}
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+.desktop-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.85fr) minmax(420px, 1.5fr) minmax(310px, 0.95fr);
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.window,
+.terminal-window {
+    min-width: 0;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(20px);
+}
+
+.window-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.65rem;
+    padding: 0.55rem 0.75rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.035);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 0.76rem;
+}
+
+.window-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.window-controls {
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.window-controls i {
+    display: block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.window-controls i:nth-child(1) {
+    background: var(--rose);
+}
+
+.window-controls i:nth-child(2) {
+    background: var(--amber);
+}
+
+.window-controls i:nth-child(3) {
+    background: var(--theme-accent);
+}
+
+.identity-window,
+.dossier-window {
+    min-height: 34rem;
+}
+
+.identity-dossier,
+.identity-core,
+.dossier-content {
+
+.desktop-session-card {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 3;
+    display: grid;
+    gap: 0.1rem;
+    min-width: 13rem;
+    padding: 0.75rem 0.85rem;
+    background: rgba(8, 10, 16, 0.56);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    backdrop-filter: blur(18px);
+}
+
+.desktop-session-card span {
+    font-family: var(--heading);
+    font-weight: 700;
+}
+
+.desktop-session-card small {
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+}
+
+.desktop-icons {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    bottom: 5.15rem;
+    z-index: 4;
+}
+
+.desktop-icon {
+    position: absolute;
+    width: 7.6rem;
+    height: 5.7rem;
+    display: grid;
+    justify-items: center;
+    gap: 0.38rem;
+    padding: 0.55rem 0.35rem;
+    color: var(--text);
+    text-align: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.desktop-icon.is-dragging {
+    z-index: 1000;
+    opacity: 0.8;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.desktop-icon:hover,
+.desktop-icon.active {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.desktop-icon i {
+    display: grid;
+    place-items: center;
+    width: 2.65rem;
+    height: 2.65rem;
+    color: var(--tile-color, var(--theme-primary));
+    background: rgba(8, 10, 16, 0.58);
+    border: 1px solid color-mix(in srgb, var(--tile-color, var(--theme-primary)) 34%, transparent);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+}
+
+.desktop-icon span {
+    max-width: 6.6rem;
+    color: var(--text);
+    font-size: 0.78rem;
+    line-height: 1.15;
+    text-shadow: 0 2px 9px rgba(0, 0, 0, 0.8);
+}
+
+.desktop-window {
+    position: absolute;
+    z-index: 5;
+    overflow: hidden;
+    min-width: 18rem;
+    background: rgba(9, 12, 19, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    box-shadow: 0 26px 80px rgba(0, 0, 0, 0.48);
+    backdrop-filter: blur(24px);
+}
+
+.desktop-window.profile-window,
+.desktop-window.dossier-window,
+.desktop-window.linux-window,
+.desktop-window.cli-window,
+.desktop-window.game-window,
+.desktop-window.doom-source-window,
+.desktop-window.settings-window,
+.desktop-window.browser-window,
+.desktop-window.store-window {
+    display: flex;
+    flex-direction: column;
+}
+
+.desktop-window.active {
+    z-index: 7;
+    border-color: rgba(34, 211, 238, 0.28);
+}
+
+.desktop-window.is-hidden {
+    display: none;
+}
+
+.desktop-window.is-maximized {
+    left: 0 !important;
+    top: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 60 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0;
+}
+
+.desktop-window .window-bar {
+    cursor: default;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.045);
+    user-select: none;
+}
+
+.window-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.window-actions button {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid transparent;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.window-actions button:hover {
+    color: var(--text);
+    border-color: var(--line-strong);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.desktop-window.is-dragging,
+.desktop-window.is-resizing {
+    user-select: none;
+}
+
+.desktop-window.is-dragging .window-bar {
+    cursor: grabbing;
+}
+
+.resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 9;
+    width: 1.15rem;
+    height: 1.15rem;
+    cursor: nwse-resize;
+}
+
+.resize-handle::before {
+    content: "";
+    position: absolute;
+    right: 0.28rem;
+    bottom: 0.28rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-right: 2px solid rgba(255, 255, 255, 0.38);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.38);
+}
+
+.profile-window {
+    right: 2rem;
+    left: auto;
+    top: 4.8rem;
+    bottom: var(--window-bottom);
+    width: min(31rem, 38vw);
+    overflow: hidden;
+}
+
+.profile-window .identity-dossier {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+.profile-window .identity-actions {
+    flex: 0 0 auto;
+    border-top: 1px solid var(--line);
+    background: rgba(8, 10, 15, 0.52);
+}
+
+.profile-window .identity-dossier,
+.dossier-window .dossier-content,
+.linux-terminal,
+.terminal-output,
+.browser-page,
+.doom-source-shell {
+    scrollbar-color: rgba(182, 194, 210, 0.78) rgba(255, 255, 255, 0.045);
+    scrollbar-width: thin;
+}
+
+.profile-window .identity-dossier::-webkit-scrollbar,
+.dossier-window .dossier-content::-webkit-scrollbar,
+.linux-terminal::-webkit-scrollbar,
+.terminal-output::-webkit-scrollbar,
+.browser-page::-webkit-scrollbar,
+.doom-source-shell::-webkit-scrollbar {
+    width: 0.7rem;
+    height: 0.7rem;
+}
+
+.profile-window .identity-dossier::-webkit-scrollbar-track,
+.dossier-window .dossier-content::-webkit-scrollbar-track,
+.linux-terminal::-webkit-scrollbar-track,
+.terminal-output::-webkit-scrollbar-track,
+.browser-page::-webkit-scrollbar-track,
+.doom-source-shell::-webkit-scrollbar-track {
+    margin: 0.6rem;
+    background: rgba(255, 255, 255, 0.045);
+    border-radius: 999px;
+}
+
+.profile-window .identity-dossier::-webkit-scrollbar-thumb,
+.dossier-window .dossier-content::-webkit-scrollbar-thumb,
+.linux-terminal::-webkit-scrollbar-thumb,
+.terminal-output::-webkit-scrollbar-thumb,
+.browser-page::-webkit-scrollbar-thumb,
+.doom-source-shell::-webkit-scrollbar-thumb {
+    background: rgba(182, 194, 210, 0.76);
+    border: 2px solid rgba(8, 10, 15, 0.76);
+    border-radius: 999px;
+}
+
+.desktop-window.dossier-window {
+    top: 4.8rem;
+    right: 2rem;
+    bottom: var(--window-bottom);
+    width: min(33rem, 42vw);
+    overflow: hidden;
+    min-height: 0;
+}
+
+.desktop-window.network-window {
+    left: clamp(8.6rem, 14vw, 13rem);
+    bottom: calc(var(--window-bottom) + 0.3rem);
+    width: min(48rem, 62vw);
+}
+
+.desktop-window.linux-window {
+    left: clamp(8.6rem, 13vw, 12rem);
+    top: 5.4rem;
+    bottom: var(--window-bottom);
+    width: min(52rem, 66vw);
+}
+
+.desktop-window.cli-window {
+    left: clamp(2rem, 12vw, 8rem);
+    top: 5rem;
+    bottom: calc(var(--window-bottom) + 2.4rem);
+    width: min(64rem, 80vw);
+    min-height: 0;
+}
+
+.desktop-window.game-window {
+    left: clamp(10rem, 18vw, 16rem);
+    top: 4.6rem;
+    bottom: var(--window-bottom);
+    width: min(56rem, 72vw);
+}
+
+.desktop-window.doom-source-window {
+    left: clamp(6rem, 12vw, 11rem);
+    top: 4.25rem;
+    bottom: auto;
+    width: min(56rem, calc(100% - 2rem));
+    height: min(35.5rem, calc(100% - 6rem));
+    min-height: 24rem;
+}
+
+.desktop-window.settings-window {
+    right: 1.2rem;
+    left: auto;
+    top: 5.2rem;
+    bottom: auto;
+    width: min(24rem, calc(100% - 2.4rem));
+    min-height: 15rem;
+}
+
+.desktop-window.browser-window {
+    left: clamp(8rem, 16vw, 15rem);
+    top: 5.1rem;
+    bottom: var(--window-bottom);
+    width: min(54rem, 70vw);
+    min-height: 26rem;
+}
+
+.desktop-experience[data-session="linux"] .profile-window {
+    display: none;
+}
+
+.desktop-experience[data-session="linux"] .desktop-window.linux-window:not(.is-hidden) {
+    display: flex;
+}
+
+.desktop-experience[data-session="linux"] .desktop-window.dossier-window {
+    top: 5.4rem;
+    right: 1.5rem;
+    bottom: var(--window-bottom);
+    width: min(31rem, 38vw);
+}
+
+.dossier-window .dossier-content {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.desktop-experience[data-session="linux"] .window-bar {
+    font-family: var(--mono);
+}
+
+.cli-app-shell {

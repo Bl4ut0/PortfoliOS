@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="PortfoliOS is a personal portfolio network for development projects, homelab infrastructure, community tools, and professional IT work.">
+    <title>PortfoliOS | Portfolio Network</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23090a0f'/%3E%3Cpath d='M8 10l7 6-7 6' stroke='%23f8fafc' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M18 22h7' stroke='%2322d3ee' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="styles-v1.css?v=1.0.27">
+</head>
+
+<body>
+    <canvas id="network-canvas" aria-hidden="true"></canvas>
+
+    <div class="boot-screen" id="boot-screen" role="dialog" aria-labelledby="boot-title"
+        aria-describedby="boot-summary">
+        <div class="boot-panel">
+            <div class="boot-lines" aria-hidden="true">
+                <span>POST OK</span>
+                <span>mount /personality/network</span>
+                <span>load bl4ut0.session</span>
+            </div>
+            <div class="boot-mark">
+                <span>&gt;_</span>
+            </div>
+            <p class="eyebrow">Personal Network Console</p>
+            <h1 id="boot-title">PortfoliOS</h1>
+            <p id="boot-summary">Development projects, infrastructure, community links, and professional systems work
+                in one interactive hub.</p>
+            <p class="mobile-boot-note">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+                Mobile has its own app shell. Desktop is still best for draggable windows and the game.
+            </p>
+            <div class="boot-actions" aria-label="Choose a session">
+                <button class="primary-action" data-enter-view="desktop">
+                    <i class="fa-solid fa-desktop"></i>
+                    Desktop
+                </button>
+                <button class="secondary-action" data-enter-view="mobile">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    Mobile
+                </button>
+                <button class="secondary-action" data-enter-view="quick">
+                    <i class="fa-solid fa-compass"></i>
+                    Quick
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="os-shell">
+        <header class="topbar">
+            <a class="brand-lockup" href="#" aria-label="PortfoliOS home">
+                <span class="brand-icon"><i class="fa-solid fa-terminal"></i></span>
+                <span>
+                    <strong>PortfoliOS</strong>
+                    <small>portfolio network</small>
+                </span>
+            </a>
+
+            <button class="topbar-tab" id="topbar-tab" type="button" aria-expanded="false"
+                aria-controls="topbar-dock" title="Open navigation">
+                <i class="fa-solid fa-grip-lines"></i>
+                <span>Nav</span>
+            </button>
+
+            <div class="topbar-dock" id="topbar-dock">
+            <nav class="mode-switch" aria-label="Experience mode">
+                <button class="mode-btn active" data-view="desktop">
+                    <i class="fa-solid fa-desktop"></i>
+                    Desktop
+                </button>
+                <button class="mode-btn" data-view="mobile">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    Mobile
+                </button>
+                <button class="mode-btn" data-view="quick">
+                    <i class="fa-solid fa-compass"></i>
+                    Quick
+                </button>
+            </nav>
+
+            <div class="system-readout" aria-label="System readout">
+                <button type="button" id="reset-resolution-btn" class="reset-resolution-btn" title="Reset resolution to Auto (Stretch to fit)" style="display: none;">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Reset Res</span>
+                </button>
+                <span class="status-chip status-online">
+                    <i class="fa-solid fa-circle"></i>
+                    Online
+                </span>
+                <time id="system-clock">--:--</time>
+            </div>
+            </div>
+        </header>
+
+        <section class="mobile-advisory" id="mobile-advisory" role="note" aria-label="Mobile experience note">
+            <div>
+                <strong>Mobile Experience Available</strong>
+                <p>Use Mobile for the phone-style app shell. Desktop stays available for draggable windows, browser
+                    bookmarks, and the game.</p>
+            </div>
+            <div class="mobile-advisory-actions">
+                <button type="button" data-view="mobile">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    Mobile
+                </button>
+                <button type="button" data-view="quick">
+                    <i class="fa-solid fa-compass"></i>
+                    Quick
+                </button>
+                <button type="button" data-dismiss-mobile-note title="Dismiss mobile note">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </section>
+
+        <main class="workspace">
+            <section class="view active desktop-view" data-view-panel="desktop" aria-label="Desktop portfolio">
+                <div class="desktop-experience" id="desktop-experience">
+                    <div class="desktop-wallpaper">
+
+                        <div class="desktop-icons" id="desktop-icons" aria-label="Desktop icons"></div>
+
+                        <section class="desktop-window profile-window active" data-window="profile"
+                            aria-label="Profile window">
+                            <div class="window-bar">
+                                <span><i class="fa-solid fa-id-card"></i> identity.sys</span>
+                                <div class="window-actions">
+                                    <button type="button" data-minimize-window="profile" title="Minimize profile">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <button type="button" data-maximize-window="profile" title="Maximize profile">
+                                        <i class="fa-regular fa-square"></i>
+                                    </button>
+                                    <button type="button" data-close-window="profile" title="Close profile">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="identity-dossier">
+                                <figure class="identity-portrait">
+                                    <img src="identity-portrait.jpg" alt="Drawn portrait of Alex Mammen">
+                                    <figcaption>
+                                        <span>identity record</span>
+                                        <strong>Alex Mammen</strong>
+                                        <small><b>Handle</b> Bl4ut0</small>
+                                    </figcaption>
+                                </figure>
+                                <div class="identity-core">
+                                    <p class="eyebrow">identity.sys / about me</p>
+                                    <h2>Systems builder, addon porter, automation tinkerer, and homelab operator.</h2>
+                                    <p>Built to solve, designed to learn. I turn recurring community, infrastructure,
+                                        and workflow problems into tools that are practical to run and easy to revisit.</p>
+                                </div>
+                                <div class="person-dossier-grid" aria-label="Personal dossier">
+                                    <section class="person-handle-strip">
+                                        <span>Platform Links</span>
+                                        <div>
+                                            <a href="https://github.com/Bl4ut0" target="_blank" rel="noreferrer">
+                                                <i class="fa-brands fa-github"></i>
+                                                GitHub / Bl4ut0
+                                            </a>
+                                            <a href="https://steamcommunity.com/id/Bl4ut0/" target="_blank"
+                                                rel="noreferrer">
+                                                <i class="fa-brands fa-steam"></i>
+                                                Steam / Bl4ut0
+                                            </a>
+                                            <a href="https://discord.gg/fEwanmFR9m" target="_blank" rel="noreferrer">
+                                                <i class="fa-brands fa-discord"></i>
+                                                Discord / Bl4ut0
+                                            </a>
+                                            <a href="https://www.curseforge.com/members/bl4ut0/projects"
+                                                target="_blank" rel="noreferrer">
+                                                <i class="fa-solid fa-download"></i>
+                                                CurseForge
+                                            </a>
+                                            <a href="https://bl4ut0.dev" target="_blank" rel="noreferrer">
+                                                <i class="fa-solid fa-globe"></i>
+                                                Dev Hub
+                                            </a>
+                                        </div>
+                                    </section>
+                                    <section>
+                                        <span>Focus</span>
+                                        <p>WoW addon modernization, Discord/community tooling, self-hosted systems,
+                                            Cloudflare automation, local-first AI ideas, and browser-native experiments.</p>
+                                    </section>
+                                    <section>
+                                        <span>Operator Pattern</span>
+                                        <p>Prototype in public, keep the useful parts, document the route, and connect
+                                            projects back into one navigable network instead of scattering them.</p>
+                                    </section>
+                                    <section>
+                                        <span>Current Nodes</span>
+                                        <p>Bl4ut0.dev, GuildCraft, WardenIT, connected home lab, Status Console,
+                                            Doom, and project dossiers.</p>
+                                    </section>
+                                    <section>
+                                        <span>Signal</span>
+                                        <p>Comfortable moving between user-facing UX, infrastructure operations,
+                                            scripting, older game/plugin ecosystems, and practical support work.</p>
+                                    </section>
+                                </div>
+                            </div>
+                            <div class="identity-actions">
+                                <div class="identity-command-row">
+                                    <button type="button" data-view="quick">
+                                        <i class="fa-solid fa-compass"></i>
+                                        Quick Index
+                                    </button>
+                                    <button type="button" data-open-app="dossier" data-select="wardenit">
+                                        <i class="fa-solid fa-briefcase"></i>
+                                        WardenIT
+                                    </button>
+                                </div>
+                                <nav class="identity-link-list" aria-label="Identity links">
+                                    <a href="https://github.com/Bl4ut0" target="_blank" rel="noreferrer">
+                                        <i class="fa-brands fa-github"></i>
+                                        <span>github.com/Bl4ut0</span>
+                                    </a>
+                                    <a href="https://discord.gg/fEwanmFR9m" target="_blank" rel="noreferrer">
+                                        <i class="fa-brands fa-discord"></i>
+                                        <span>discord.gg/fEwanmFR9m</span>
+                                    </a>
+                                    <a href="https://steamcommunity.com/id/Bl4ut0/" target="_blank" rel="noreferrer">
+                                        <i class="fa-brands fa-steam"></i>
+                                        <span>steamcommunity.com/id/Bl4ut0</span>
+                                    </a>
+                                    <a href="https://bl4ut0.dev" target="_blank" rel="noreferrer">
+                                        <i class="fa-solid fa-globe"></i>
+                                        <span>bl4ut0.dev</span>
+                                    </a>
+                                    <a href="https://www.curseforge.com/members/bl4ut0/projects" target="_blank"
+                                        rel="noreferrer">
+                                        <i class="fa-solid fa-download"></i>
+                                        <span>curseforge.com/members/bl4ut0</span>
+                                    </a>
+                                </nav>
+                            </div>
+                        </section>
+
+                        <section class="desktop-window dossier-window active" data-window="dossier" aria-live="polite">
+                            <div class="window-bar">
+                                <span id="dossier-file">dossier/devhub.md</span>
+                                <div class="window-actions">
+                                    <button type="button" data-minimize-window="dossier" title="Minimize dossier">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <button type="button" data-maximize-window="dossier" title="Maximize dossier">
+                                        <i class="fa-regular fa-square"></i>
+                                    </button>
+                                    <button type="button" data-close-window="dossier" title="Close dossier">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="dossier-content">
+                                <div class="dossier-heading">
+                                    <span class="project-icon-large" id="dossier-icon">
+                                        <i class="fa-solid fa-terminal"></i>
+                                    </span>
+                                    <div>
+                                        <span class="status-pill" id="dossier-status">Online</span>
+                                        <h2 id="dossier-title">Bl4ut0.dev</h2>
+                                        <p id="dossier-type">Developer Portal</p>
+                                    </div>
+                                </div>
+                                <p id="dossier-summary"></p>
+                                <div class="detail-block">
+                                    <h3>Stack</h3>
+                                    <div class="tag-list" id="dossier-tech"></div>
+                                </div>
+                                <div class="detail-block">
+                                    <h3>Signal</h3>
+                                    <p id="dossier-signal"></p>
+                                </div>
+                                <div class="dossier-links" id="dossier-links"></div>
+                            </div>
+                        </section>
+
+                        <section class="desktop-window network-window is-hidden" data-window="network"
+                            aria-label="Network map window">
+                            <div class="window-bar">
+                                <span><i class="fa-solid fa-diagram-project"></i> network.map</span>
+                                <div class="window-actions">
+                                    <button type="button" data-minimize-window="network" title="Minimize network map">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <button type="button" data-maximize-window="network" title="Maximize network map">
+                                        <i class="fa-regular fa-square"></i>
+                                    </button>
+                                    <button type="button" data-close-window="network" title="Close network map">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="network-map" id="network-map" aria-label="Portfolio network map"></div>
+                        </section>
+
+                        <section class="desktop-window linux-window is-hidden" data-window="linux"
+                            aria-label="Linux workstation window">
+                            <div class="window-bar">
+                                <span><i class="fa-brands fa-linux"></i> lab@bl4ut0:~</span>
+                                <div class="window-actions">
+                                    <button type="button" data-minimize-window="linux" title="Minimize Linux shell">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <button type="button" data-maximize-window="linux" title="Maximize Linux shell">
+                                        <i class="fa-regular fa-square"></i>
+                                    </button>
+                                    <button type="button" data-close-window="linux" title="Close Linux shell">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="linux-layout">
+                                <aside class="linux-sidebar">
+                                    <span class="linux-dot"></span>
+                                    <strong>workspace</strong>
+                                    <button type="button" data-open-app="dossier" data-select="homelab">infra</button>
+                                    <button type="button" data-open-app="dossier" data-select="survival-ai">llm</button>
+                                    <button type="button" data-open-app="network">map</button>
+                                    <button type="button" data-open-app="cli">portfolio cli</button>
+                                </aside>
+                                <div class="linux-terminal">
+                                    <p>bl4ut0@lab:~$ neofetch</p>
+                                    <pre id="linux-neofetch"></pre>
+                                    <p>bl4ut0@lab:~$ ls ~/nodes</p>
+                                    <pre id="linux-node-list"></pre>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="desktop-window cli-window is-hidden" data-window="cli"
+                            aria-label="CLI terminal app window">
+                            <div class="window-bar">
+                                <span><i class="fa-solid fa-terminal"></i> bl4ut0@portfolio:~</span>
+                                <div class="window-actions">
+                                    <button type="button" data-minimize-window="cli" title="Minimize CLI">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <button type="button" data-maximize-window="cli" title="Maximize CLI">
+                                        <i class="fa-regular fa-square"></i>
+                                    </button>
+                                    <button type="button" data-close-window="cli" title="Close CLI">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="cli-app-shell">
+                                <div class="terminal-window">
+                                    <div class="terminal-output" id="terminal-output" aria-live="polite"></div>
+                                    <form class="terminal-input-row" id="terminal-form">
+                                        <label for="terminal-input">Command</label>
+                                        <span>$</span>
+                                        <input id="terminal-input" name="command" autocomplete="off" spellcheck="false"
+                                            aria-label="Terminal command" value="">
+                                        <button type="submit" title="Run command">
+                                            <i class="fa-solid fa-play"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <section class="desktop-window store-window is-hidden" data-window="store"
+                            aria-label="Store window">
+                            <div class="window-bar">
+                                <span><i class="fa-solid fa-shop"></i> Store</span>
+                                <div class="window-actions">
+                                    <button type="button" data-minimize-window="store" title="Minimize Store">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <button type="button" data-maximize-window="store" title="Maximize Store">
+                                        <i class="fa-regular fa-square"></i>
+                                    </button>
+                                    <button type="button" data-close-window="store" title="Close Store">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="store-content" id="store-content">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </section>
+
+                        <section class="desktop-window browser-window is-hidden" data-window="browser"
+                            aria-label="Browser window">
+                            <div class="window-bar">
+                                <span><i class="fa-brands fa-chrome"></i> browser.app</span>
+                                <div class="window-actions">
+                                    <button type="button" data-minimize-window="browser" title="Minimize browser">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <button type="button" data-maximize-window="browser" title="Maximize browser">
+                                        <i class="fa-regular fa-square"></i>
+                                    </button>
+                                    <button type="button" data-close-window="browser" title="Close browser">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="browser-shell">
+                                <div class="browser-toolbar">
+                                    <div class="browser-nav" aria-hidden="true">
+                                        <i class="fa-solid fa-arrow-left"></i>
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                        <i class="fa-solid fa-rotate-right"></i>
+                                    </div>
+                                    <div class="browser-address" id="browser-address">experience://devhub</div>
+                                </div>
+                                <div class="browser-bookmarks" id="browser-bookmarks"
+                                    aria-label="Browser bookmarks"></div>
+                                <article class="browser-page" id="browser-page"></article>
+                            </div>
+                        </section>
+
+
+                        <div class="start-menu" id="start-menu" hidden>
+                            <div class="start-header">
+                                <div class="brand-lockup">
+                                    <span class="brand-icon"><i class="fa-solid fa-terminal"></i></span>
+                                    <span>
+                                        <strong>PortfoliOS</strong>
+                                        <small>portfolio network</small>
+                                    </span>
+                                </div>
+                                <span>Experience launcher</span>
+                            </div>
+                            <div class="start-search">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <span>Apps, projects, services, and routes</span>
+                            </div>
+                            <div class="start-section">
+                                <h3>Pinned</h3>
+                                <div class="start-pinned" id="start-pinned"></div>
+                            </div>
+                            <div class="start-section">
+                                <h3>All nodes</h3>
+                                <div class="start-grid" id="start-grid"></div>
+                            </div>
+                        </div>
+
+                        <section class="desktop-window settings-window is-hidden" data-window="settings"
+                            aria-label="Desktop settings window">
+                            <div class="window-bar">
+                                <span><i class="fa-solid fa-sliders"></i> desktop.settings</span>
+                                <div class="window-actions">
+                                    <button type="button" data-minimize-window="settings" title="Minimize settings">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <button type="button" data-maximize-window="settings" title="Maximize settings">
+                                        <i class="fa-regular fa-square"></i>
+                                    </button>
+                                    <button type="button" data-close-window="settings" data-close-settings
+                                        title="Close settings">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="desktop-settings-content">
+                                 <section>
+                                    <span>Wallpaper</span>
+                                    <div class="wallpaper-options" id="wallpaper-options" aria-label="Wallpaper choices"></div>
+                                </section>
+                                <section>
+                                    <span>Desktop Resolution</span>
+                                    <select id="desktop-resolution-select" class="settings-select" aria-label="Desktop resolution option">
+                                        <option value="auto">Auto (Stretch to fit)</option>
+                                        <optgroup label="Square / Foldable">
+                                            <option value="1024x1024">1024 x 1024 (Fold Square)</option>
+                                            <option value="2048x2048">2048 x 2048 (2K Square)</option>
+                                        </optgroup>
+                                        <optgroup label="Phone Viewport">
+                                            <option value="390x844">390 x 844 (iPhone 13/14)</option>
+                                            <option value="412x915">412 x 915 (Android Portrait)</option>
+                                            <option value="844x390">844 x 390 (Landscape Phone)</option>
+                                        </optgroup>
+                                        <optgroup label="Tablet">
+                                            <option value="768x1024">768 x 1024 (iPad Portrait)</option>
+                                            <option value="1024x768">1024 x 768 (iPad Landscape)</option>
+                                        </optgroup>
+                                        <optgroup label="Desktop / Laptop">
+                                            <option value="1280x800">1280 x 800 (Widescreen 16:10)</option>
+                                            <option value="1366x768">1366 x 768 (HD 16:9)</option>
+                                            <option value="1920x1080">1920 x 1080 (Full HD 16:9)</option>
+                                            <option value="2560x1440">2560 x 1440 (2K Widescreen)</option>
+                                        </optgroup>
+                                    </select>
+                                </section>
+                                <section>
+                                    <span>Theme Colors</span>
+                                    <div class="theme-colors-options">
+                                        <label class="color-picker-label">
+                                            <span>Primary</span>
+                                            <input type="color" id="theme-primary-picker" value="#22d3ee" aria-label="Primary theme color">
+                                        </label>
+                                        <label class="color-picker-label">
+                                            <span>Accent</span>
+                                            <input type="color" id="theme-accent-picker" value="#34d399" aria-label="Accent theme color">
+                                        </label>
+                                    </div>
+                                    <button type="button" id="theme-reset-btn" class="theme-reset-btn">
+                                        <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+                                    </button>
+                                </section>
+                            </div>
+                        </section>
+
+                        <div class="desktop-context-menu" id="desktop-context-menu" hidden role="menu"></div>
+                        <div class="desktop-toast" id="desktop-toast" hidden></div>
+
+                        <footer class="os-taskbar" aria-label="Desktop taskbar">
+                            <button class="start-button" id="start-toggle" type="button" title="Open launcher">
+                                <i class="fa-solid fa-terminal"></i>
+                            </button>
+                            <div class="taskbar-pins" id="taskbar-apps"></div>
+                            <div class="taskbar-tray">
+                                <button class="volume-button" id="volume-toggle" type="button" title="Adjust volume"
+                                    aria-expanded="false" aria-controls="volume-panel">
+                                    <i class="fa-solid fa-volume-high" id="taskbar-volume-icon"></i>
+                                </button>
+                                <button class="clock-button" id="clock-toggle" type="button" title="Open calendar">
+                                    <time id="desktop-clock">--:--</time>
+                                </button>
+                            </div>
+                        </footer>
+                        <aside class="volume-panel" id="volume-panel" hidden aria-label="Volume controls">
+                            <div class="volume-panel-header">
+                                <span><i class="fa-solid fa-volume-high"></i> sound</span>
+                                <b id="desktop-volume-value">70%</b>
+                            </div>
+                            <input id="desktop-volume" type="range" min="0" max="100" step="1" value="70"
+                                aria-label="Desktop volume">
+                        </aside>
+                        <aside class="calendar-panel" id="calendar-panel" hidden aria-label="Calendar and clock">
+                            <strong id="calendar-time">--:--</strong>
+                            <span id="calendar-date">Loading calendar</span>
+                            <div class="calendar-grid" id="calendar-grid"></div>
+                        </aside>
+                    </div>
+                </div>
+            </section>
+
+            <section class="view quick-view" data-view-panel="quick" aria-label="Quick portfolio review">
+                <div class="quick-layout">
+                    <aside class="quick-nav">
+                        <div class="quick-title-row">
+                            <span class="brand-icon"><i class="fa-solid fa-compass"></i></span>
+                            <div>
+                                <p class="eyebrow">Direct Index</p>
+                                <h1>Quick Review</h1>
+                            </div>
+                        </div>
+
+                        <div class="quick-search">
+                            <label for="quick-search">Search portfolio nodes</label>
+                            <div>
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input id="quick-search" type="search" autocomplete="off" spellcheck="false"
+                                    placeholder="Search projects, stacks, status">
+                            </div>
+                        </div>
+
+                        <div class="quick-route-list" id="quick-routes" aria-label="Quick sections"></div>
+                        <div class="quick-filters" id="quick-filters" aria-label="Quick filters"></div>
+                        <div class="quick-tabs" id="quick-tabs" aria-label="Portfolio nodes"></div>
+                    </aside>
+
+                    <article class="quick-detail" id="quick-detail" aria-live="polite"></article>
+                </div>
+            </section>
+
+            <section class="view" data-view-panel="mobile" aria-label="Mobile portfolio">
+                <div class="mobile-device" id="mobile-device">
+                    <div class="mobile-statusbar">
+                        <span>Bl4ut0 Mobile</span>
+                        <div>
+                            <i class="fa-solid fa-signal"></i>
+                            <i class="fa-solid fa-wifi"></i>
+                            <i class="fa-solid fa-battery-three-quarters"></i>
+                        </div>
+                    </div>
+                    <main class="mobile-screen" id="mobile-screen">
+                        <section class="mobile-home" id="mobile-home">
+                            <div class="mobile-widget">
+                                <span>Experience OS</span>
+                                <strong>Portfolio apps, project nodes, and public routes.</strong>
+                            </div>
+                            <div class="mobile-app-grid" id="mobile-app-grid"></div>
+                        </section>
+                        <section class="mobile-app-view is-hidden" id="mobile-app-view" aria-live="polite">
+                            <div class="mobile-app-header">
+                                <button type="button" data-mobile-home title="Back to mobile home">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                </button>
+                                <span id="mobile-app-title">App</span>
+                            </div>
+                            <article class="mobile-app-content" id="mobile-app-content"></article>
+                        </section>
+                    </main>
+                    <nav class="mobile-nav" aria-label="Mobile navigation">
+                        <button type="button" data-mobile-back title="Back">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button type="button" data-mobile-home title="Home">
+                            <i class="fa-regular fa-circle"></i>
+                        </button>
+                        <button type="button" data-mobile-recents title="Recent apps">
+                            <i class="fa-regular fa-square"></i>
+                        </button>
+                    </nav>
+                </div>
+            </section>
+
+        </main>
+
+    </div>
+
+    <noscript>
+        <div class="noscript">
+            This portfolio uses JavaScript for the OS interface. Core links: GitHub
+            https://github.com/Bl4ut0, Dev Hub https://bl4ut0.dev, Discord https://discord.gg/fEwanmFR9m.
+        </div>
+    </noscript>
+
+    <!-- Shared Ext Utilities -->
+    <script src="apps/_shared/iframe-game.js"></script>
+    
+    <!-- Core Services -->
+    <script src="core/event-bus.js"></script>
+    <script src="core/storage.js"></script>
+    <script src="core/state.js"></script>
+    <script src="core/utils.js"></script>
+    <script src="core/filesystem.js"></script>
+    <script src="core/gdrive-sync.js"></script>
+    <script src="core/app-loader.js"></script>
+    <script src="core/preferences.js"></script>
+    <script src="core/window-manager.js"></script>
+    
+    <!-- Shared Data -->
+    <script src="data/systems.js"></script>
+    <script src="data/apps.js"></script>
+    <script src="data/bookmarks.js"></script>
+    <script src="data/config.js"></script>
+    
+    <!-- Desktop Components -->
+    <script src="desktop/taskbar.js"></script>
+    <script src="desktop/start-menu.js"></script>
+    <script src="desktop/desktop-icons.js"></script>
+    <script src="desktop/context-menu.js"></script>
+    <script src="desktop/dossier.js"></script>
+    <script src="desktop/browser.js"></script>
+    <script src="desktop/terminal.js"></script>
+    <script src="desktop/network-map.js"></script>
+    <script src="desktop/store.js"></script>
+    <script src="desktop/settings.js"></script>
+    <script src="desktop/calendar.js"></script>
+    <script src="desktop/toast.js"></script>
+    <script src="desktop/canvas-bg.js"></script>
+    <script src="desktop/boot.js"></script>
+    <script src="desktop/wad-inspector.js"></script>
+    <script src="desktop/shell.js"></script>
+    
+    <!-- Mobile & Quick Shells -->
+    <script src="mobile/shell.js"></script>
+    <script src="quick/shell.js"></script>
+    
+    <!-- Main Entry Point -->
+    <script src="main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Duke Nukem 3D Runtime</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dosbox-container {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            display: flex !important;
+            background: #000 !important;
+            overflow: hidden !important;
+            contain: strict;
+            transform: translateZ(0);
+        }
+
+        #jsdos,
+        .dosbox-container > canvas {
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            max-width: none !important;
+            max-height: none !important;
+            object-fit: fill !important;
+            image-rendering: pixelated;
+            display: block !important;
+            background: #000;
+            outline: none;
+            backface-visibility: hidden;
+        }
+
+        .dosbox-container > #jsdos,
+        .dosbox-container > canvas {
+            object-fit: fill !important;
+        }
+
+        .loading {
+            position: absolute;
+            color: #22d3ee;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            z-index: 10;
+        }
+    </style>
+    <script src="/volume-hook.js?v=1.0.25"></script>
+    <!-- JS-DOS 6.22 is lightweight and reliable for DOSBox emulation in the browser -->
+    <script src="https://js-dos.com/6.22/current/js-dos.js"></script>
+</head>
+<body>
+    <div id="loading" class="loading">Loading Duke Nukem 3D Engine...</div>
+    <canvas id="jsdos" tabindex="0"></canvas>
+    <script>
+        const dukeCanvas = document.getElementById("jsdos");
+        const loadingEl = document.getElementById("loading");
+        const dukeConfig = `
+[Setup]
+SetupVersion = "1.3D"
+[Screen Setup]
+ScreenMode = 2
+ScreenWidth = 320
+ScreenHeight = 200
+Shadows = 0
+Environment = ""
+Detail = 0
+Tilt = 1
+Messages = 1
+Out = 0
+ScreenSize = 0
+ScreenGamma = 0
+[Sound Setup]
+FXDevice = 0
+MusicDevice = 0
+FXVolume = 220
+MusicVolume = 200
+NumVoices = 8
+NumChannels = 2
+NumBits = 16
+MixRate = 11000
+MidiPort = 0x330
+BlasterAddress = 0x220
+BlasterType = 6
+BlasterInterrupt = 7
+BlasterDma8 = 1
+BlasterDma16 = 5
+BlasterEmu = 0x620
+ReverseStereo = 0
+SoundToggle = 1
+VoiceToggle = 1
+AmbienceToggle = 1
+MusicToggle = 1
+[KeyDefinitions]
+Move_Forward = "W" ""
+Move_Backward = "S" ""
+Turn_Left = "Left" "Kpad4"
+Turn_Right = "Right" "KPad6"
+Strafe = "LAlt" "RAlt"
+Fire = "Q" "LCtrl"
+Open = "E" "Space"
+Run = "LShift" "RShift"
+AutoRun = "CapLck" ""
+Jump = "X" "/"
+Crouch = "Z" ""
+Look_Up = "Up" "PgUp"
+Look_Down = "Down" "PgDn"
+Look_Left = "Insert" "Kpad0"
+Look_Right = "Delete" "Kpad."
+Strafe_Left = "A" ""
+Strafe_Right = "D" ""
+Aim_Up = "Home" "KPad7"
+Aim_Down = "End" "Kpad1"
+Weapon_1 = "1" ""
+Weapon_2 = "2" ""
+Weapon_3 = "3" ""
+Weapon_4 = "4" ""
+Weapon_5 = "5" ""
+Weapon_6 = "6" ""
+Weapon_7 = "7" ""
+Weapon_8 = "8" ""
+Weapon_9 = "9" ""
+Weapon_10 = "0" ""
+Inventory = "Enter" "KpdEnt"
+Inventory_Left = "[" ""
+Inventory_Right = "]" ""
+Holo_Duke = "H" ""
+Jetpack = "J" ""
+NightVision = "N" ""
+MedKit = "M" ""
+TurnAround = "BakSpc" ""
+SendMessage = "T" ""
+Map = "Tab" ""
+Shrink_Screen = "-" "Kpad-"
+Enlarge_Screen = "=" "Kpad+"
+Center_View = "KPad5" ""
+Holster_Weapon = "ScrLck" ""
+Show_Opponents_Weapon = "O" ""
+Map_Follow_Mode = "F" ""
+See_Coop_View = "K" ""
+Mouse_Aiming = "U" ""
+Toggle_Crosshair = "I" ""
+Steroids = "R" ""
+Quick_Kick = "\`" ""
+Next_Weapon = "'" ""
+Previous_Weapon = ";" ""
+[Controls]
+ControllerType = 1
+JoystickPort = 0
+MouseSensitivity = 32768
+ExternalFilename = "EXTERNAL.EXE"
+EnableRudder = 0
+MouseAiming = 1
+MouseButton0 = "Fire"
+MouseButtonClicked0 = ""
+MouseButton1 = "Strafe"
+MouseButtonClicked1 = "Open"
+MouseButton2 = "Move_Forward"
+MouseButtonClicked2 = ""
+MouseAnalogAxes0 = "analog_turning"
+MouseDigitalAxes0_0 = ""
+MouseDigitalAxes0_1 = ""
+MouseAnalogScale0 = 65536
+MouseAnalogAxes1 = "analog_lookingupanddown"
+MouseDigitalAxes1_0 = ""
+MouseDigitalAxes1_1 = ""
+MouseAnalogScale1 = 65536
+[Comm Setup]
+PlayerName = "DUKE"
+RTSName = "DUKE.RTS"
+`.trimStart();
+
+        function focusDukeRuntime() {
+            window.focus();
+            dukeCanvas.focus({ preventScroll: true });
+        }
+
+        document.addEventListener("pointerdown", focusDukeRuntime, true);
+        window.addEventListener("message", function (event) {
+            if (event.data && event.data.type === "focus-game") {
+                focusDukeRuntime();
+            }
+
+            if (event.data && event.data.type === "release-pointer-lock" && document.pointerLockElement) {
+                document.exitPointerLock();
+            }
+        });
+
+        function showLoading(message) {
+            loadingEl.innerText = message;
+        }
+
+        function handleDukeError(error) {
+            console.error("[PortfoliOS] Duke launch failed:", error);
+            showLoading("Duke launch failed. Close and reopen the app to retry.");
+        }
+
+        function removeDukeConfig(fs) {
+            if (!fs.fs || typeof fs.fs.analyzePath !== "function" || typeof fs.fs.unlink !== "function") {
+                return;
+            }
+
+            ["DUKE3D.CFG", "/DUKE3D.CFG"].some(function (configPath) {
+                try {
+                    if (fs.fs.analyzePath(configPath).exists) {
+                        fs.fs.unlink(configPath);
+                        return true;
+                    }
+                } catch (error) {
+                    console.warn("[PortfoliOS] Could not remove existing Duke config:", error);
+                }
+
+                return false;
+            });
+        }
+
+        function seedDukeConfig(fs) {
+            const bytes = new TextEncoder().encode(dukeConfig);
+            removeDukeConfig(fs);
+            fs.createFile("DUKE3D.CFG", bytes);
+        }
+
+        Dos(dukeCanvas, {
+            wdosboxUrl: "https://js-dos.com/6.22/current/wdosbox.js",
+            cycles: "fixed 70000",
+            autolock: true
+        }).ready(function (fs, main) {
+            showLoading("Extracting GAME.CON and DUKE3D.GRP...");
+            fs.extract("duke3d.zip").then(function () {
+                showLoading("Applying PortfoliOS controls...");
+                seedDukeConfig(fs);
+                showLoading("Starting Duke Nukem 3D...");
+                return main(["-c", "DUKE3D.EXE"]);
+            }).then(function (ci) {
+                loadingEl.style.display = "none";
+                window.ci = ci;
+                window.dukeStarted = true;
+                focusDukeRuntime();
+                window.setTimeout(focusDukeRuntime, 250);
+            }).catch(handleDukeError);
+        });
+    </script>
+</body>
+</html>

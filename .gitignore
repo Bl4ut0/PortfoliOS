@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+
+# Deployment tooling (not part of the site)
+deploy.js
+package.json
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Game Assets (proprietary/large)
+diablo/*.MPQ
+diablo/*.mpq

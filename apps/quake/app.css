@@ -1,0 +1,8 @@
+@import "../_shared/iframe-game.css";
+
+.desktop-window.quake-window {
+    width: min(54rem, calc(100% - 2rem));
+    height: min(38rem, calc(100% - 6rem));
+    left: clamp(8rem, 14vw, 12rem);
+    top: 5.6rem;
+}

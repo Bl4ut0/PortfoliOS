@@ -1,0 +1,31 @@
+{
+  "files": {
+    "static/js/0.aaa06a1e.chunk.js": "/diablo/static/js/0.aaa06a1e.chunk.js",
+    "static/js/0.aaa06a1e.chunk.js.map": "/diablo/static/js/0.aaa06a1e.chunk.js.map",
+    "main.css": "/diablo/static/css/main.e1dd4272.chunk.css",
+    "main.js": "/diablo/static/js/main.0a18bc0c.chunk.js",
+    "main.js.map": "/diablo/static/js/main.0a18bc0c.chunk.js.map",
+    "runtime~main.js": "/diablo/static/js/runtime~main.bf17ce54.js",
+    "runtime~main.js.map": "/diablo/static/js/runtime~main.bf17ce54.js.map",
+    "runtime~storage.js": "/diablo/static/js/runtime~storage.83a78cef.js",
+    "runtime~storage.js.map": "/diablo/static/js/runtime~storage.83a78cef.js.map",
+    "storage.js": "/diablo/static/js/storage.8fcdd212.chunk.js",
+    "storage.js.map": "/diablo/static/js/storage.8fcdd212.chunk.js.map",
+    "static/js/5.430d8c5c.chunk.js": "/diablo/static/js/5.430d8c5c.chunk.js",
+    "static/js/5.430d8c5c.chunk.js.map": "/diablo/static/js/5.430d8c5c.chunk.js.map",
+    "8acc76fdb6ee253c485e.worker.js": "/diablo/8acc76fdb6ee253c485e.worker.js",
+    "8acc76fdb6ee253c485e.worker.js.map": "/diablo/8acc76fdb6ee253c485e.worker.js.map",
+    "d2271be9a67638d3642f.worker.js": "/diablo/d2271be9a67638d3642f.worker.js",
+    "d2271be9a67638d3642f.worker.js.map": "/diablo/d2271be9a67638d3642f.worker.js.map",
+    "index.html": "/diablo/index.html",
+    "precache-manifest.3dac5a6109bc75df34456f034ca62b7b.js": "/diablo/precache-manifest.3dac5a6109bc75df34456f034ca62b7b.js",
+    "service-worker.js": "/diablo/service-worker.js",
+    "static/css/main.e1dd4272.chunk.css.map": "/diablo/static/css/main.e1dd4272.chunk.css.map",
+    "static/media/Diablo.wasm": "/diablo/static/media/Diablo.570bd59a.wasm",
+    "static/media/DiabloSpawn.wasm": "/diablo/static/media/DiabloSpawn.9c2373b2.wasm",
+    "static/media/ListFile.txt": "/diablo/static/media/ListFile.b370797d.txt",
+    "static/media/MpqCmp.wasm": "/diablo/static/media/MpqCmp.8aa3c6dc.wasm",
+    "static/media/App.scss": "/diablo/static/media/shift.b40e4a63.svg",
+    "storage.html": "/diablo/storage.html"
+  }
+}

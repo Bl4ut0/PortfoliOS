@@ -1,0 +1,338 @@
+.os-shell {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem clamp(1rem, 2vw, 1.5rem);
+    background: rgba(7, 9, 14, 0.84);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(20px);
+}
+
+.topbar-dock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex: 1;
+}
+
+.topbar-tab {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.35rem;
+    padding: 0.4rem 0.8rem;
+    color: var(--text-soft);
+    background: rgba(7, 9, 14, 0.84);
+    border: 1px solid var(--line);
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.34);
+    cursor: pointer;
+}
+
+.topbar-tab:hover,
+.topbar-tab[aria-expanded="true"] {
+    color: var(--text);
+    border-color: rgba(34, 211, 238, 0.32);
+    background: rgba(13, 16, 24, 0.94);
+}
+
+.brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.72rem;
+    min-width: 13rem;
+    text-decoration: none;
+}
+
+.brand-icon,
+.project-icon-large,
+.node-emblem,
+.boot-mark {
+    display: inline-grid;
+    place-items: center;
+    background: linear-gradient(145deg, rgba(34, 211, 238, 0.18), rgba(245, 158, 11, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 34px rgba(0, 0, 0, 0.26);
+}
+
+.brand-icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: var(--radius);
+    color: var(--theme-primary);
+}
+
+.brand-lockup strong {
+    display: block;
+    font-family: var(--heading);
+    font-size: 1.02rem;
+    letter-spacing: 0;
+}
+
+.brand-lockup small {
+    display: block;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+}
+
+.mode-switch,
+.system-readout,
+.boot-actions,
+.quick-actions,
+.identity-actions,
+.dossier-links {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+
+.mode-switch {
+    justify-content: center;
+    padding: 0.25rem;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius);
+}
+
+.mode-btn,
+.dock-btn,
+.primary-action,
+.secondary-action,
+.terminal-input-row button,
+.route-list button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.35rem;
+    color: var(--text-soft);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: transform 160ms ease, color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.mode-btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.mode-btn:hover,
+.dock-btn:hover,
+.route-list button:hover,
+.terminal-input-row button:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--line-strong);
+}
+
+.mode-btn.active,
+.dock-btn.active {
+    color: var(--theme-primary);
+    background: rgba(34, 211, 238, 0.11);
+    border-color: rgba(34, 211, 238, 0.28);
+}
+
+.system-readout {
+    justify-content: flex-end;
+    min-width: 13rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+}
+
+.focus-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.focus-toggle:hover {
+    color: var(--text);
+    border-color: rgba(34, 211, 238, 0.3);
+    background: rgba(34, 211, 238, 0.09);
+}
+
+.reset-resolution-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(34, 211, 238, 0.06);
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    color: var(--theme-primary);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    height: 1.75rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reset-resolution-btn:hover {
+    color: var(--text);
+    background: rgba(34, 211, 238, 0.12);
+    border-color: rgba(34, 211, 238, 0.35);
+}
+
+.reset-resolution-btn:active {
+    transform: scale(0.95);
+}
+
+body.desktop-focus-mode .mobile-advisory {
+    display: none;
+}
+
+body.desktop-focus-mode .topbar {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 80;
+    display: block;
+    height: 0.95rem;
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    pointer-events: auto;
+}
+
+body.desktop-focus-mode .topbar::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: 0.95rem;
+}
+
+body.desktop-focus-mode .brand-lockup {
+    position: fixed;
+    top: 0.65rem;
+    left: 0.7rem;
+    min-width: 0;
+    width: 2.45rem;
+    height: 2.45rem;
+    padding: 0;
+    pointer-events: auto;
+}
+
+body.desktop-focus-mode .brand-lockup span:not(.brand-icon),
+body.desktop-focus-mode .system-readout > :not(.focus-toggle) {
+    display: none;
+}
+
+body.desktop-focus-mode .mode-switch {
+    position: fixed;
+    top: 0.65rem;
+    left: 50%;
+    transform: translate(-50%, -150%);
+    pointer-events: auto;
+    opacity: 0;
+    transition: transform 180ms ease, opacity 180ms ease;
+}
+
+body.desktop-focus-mode .topbar:hover .mode-switch,
+body.desktop-focus-mode .topbar:focus-within .mode-switch {
+    transform: translate(-50%, 0);
+    opacity: 1;
+}
+
+body.desktop-focus-mode .system-readout {
+    position: fixed;
+    top: 0.7rem;
+    right: 0.7rem;
+    min-width: 0;
+    pointer-events: auto;
+}
+
+body.desktop-focus-mode .focus-toggle {
+    color: var(--text);
+    background: rgba(7, 9, 14, 0.82);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.38);
+}
+
+body.desktop-focus-mode .workspace {
+    width: 100%;
+    padding: 0;
+}
+
+body.desktop-focus-mode .desktop-experience {
+    height: 100vh;
+    border: 0;
+    border-radius: 0;
+}
+
+.status-chip,
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    width: fit-content;
+    min-height: 1.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.status-online,
+.status-pill[data-status="Online"],
+.status-pill[data-status="Stable"],
+.status-pill[data-status="Active"],
+.status-pill[data-status="Playable"] {
+    color: var(--theme-accent);
+    background: rgba(52, 211, 153, 0.13);
+    border: 1px solid rgba(52, 211, 153, 0.22);
+}
+
+.status-pill[data-status="Dev"],
+.status-pill[data-status="Alpha"] {
+    color: var(--amber);
+    background: rgba(245, 158, 11, 0.13);
+    border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.status-pill[data-status="Port"],
+.status-pill[data-status="Beta"] {
+    color: var(--blue);
+    background: rgba(96, 165, 250, 0.14);
+    border: 1px solid rgba(96, 165, 250, 0.24);
+}
+
+.status-pill[data-status="Planned"],
+.status-pill[data-status="Support"] {
+    color: var(--violet);
+    background: rgba(167, 139, 250, 0.13);
+    border: 1px solid rgba(167, 139, 250, 0.24);
+}
+
+.status-chip i {
+    font-size: 0.48rem;
+}
