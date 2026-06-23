@@ -1,7 +1,3 @@
-    font-size: 0.74rem;
-    white-space: pre-wrap;
-}
-
 .start-menu {
     position: absolute;
     z-index: 75;
@@ -391,11 +387,10 @@
 .desktop-toast,
 .volume-panel {
     position: absolute;
+    z-index: 80;
     color: var(--text-soft);
     background: rgba(8, 10, 16, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.14);
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
     backdrop-filter: blur(22px);
 }
-
-.desktop-context-menu,

@@ -81,10 +81,6 @@
     min-height: 34rem;
 }
 
-.identity-dossier,
-.identity-core,
-.dossier-content {
-
 .desktop-session-card {
     position: absolute;
     top: 1rem;
@@ -430,3 +426,11 @@
 }
 
 .cli-app-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background:
+        radial-gradient(circle at 8% 0%, rgba(34, 211, 238, 0.13), transparent 28%),
+        rgba(2, 5, 8, 0.96);
+}

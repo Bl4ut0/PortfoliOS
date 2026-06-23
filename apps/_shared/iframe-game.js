@@ -10,7 +10,8 @@ window.createIframeGameApp = (config) => {
     function releasePointerLock(windowEl) {
         const iframe = windowEl?.querySelector("iframe.game-frame");
         try {
-            iframe?.contentWindow?.postMessage({ type: "release-pointer-lock" }, "*");
+            const targetOrigin = iframe ? new URL(iframe.dataset.src || iframe.src, window.location.href).origin : window.location.origin;
+            iframe?.contentWindow?.postMessage({ type: "release-pointer-lock" }, targetOrigin);
         } catch (error) {}
     }
 
@@ -35,26 +36,47 @@ window.createIframeGameApp = (config) => {
                 </aside>
             </div>
         `,
-        onOpen: (windowEl) => {
+        onOpen: async (windowEl) => {
             const iframe = windowEl.querySelector("iframe");
+            if (typeof config.beforeLoad === "function" && iframe && !iframe.src) {
+                try {
+                    await config.beforeLoad(windowEl);
+                } catch (error) {
+                    console.warn(`PortfoliOS: ${id} beforeLoad hook failed`, error);
+                }
+            }
             if (iframe && !iframe.src) {
                 iframe.src = iframe.dataset.src;
             }
             window.syncGameIframe?.(windowEl);
             window.showGameControls?.(windowEl);
+            if (typeof config.onOpen === "function") {
+                await config.onOpen(windowEl);
+            }
         },
         onMinimize: releasePointerLock,
         onMaximize: (windowEl) => {
             window.syncGameIframe?.(windowEl);
             window.showGameControls?.(windowEl);
         },
-        onClose: (windowEl) => {
+        onClose: async (windowEl) => {
             releasePointerLock(windowEl);
             const iframe = windowEl.querySelector("iframe");
             if (iframe) {
                 try {
-                    iframe.contentWindow?.postMessage({ type: "save-sync" }, "*");
+                    const targetOrigin = new URL(iframe.dataset.src || iframe.src, window.location.href).origin;
+                    iframe.contentWindow?.postMessage({ type: "save-sync" }, targetOrigin);
                 } catch (e) {}
+                if (typeof config.onSaveSync === "function") {
+                    try {
+                        await config.onSaveSync(windowEl);
+                    } catch (error) {
+                        console.warn(`PortfoliOS: ${id} save sync hook failed`, error);
+                    }
+                }
+                if (typeof config.onClose === "function") {
+                    await config.onClose(windowEl);
+                }
                 iframe.style.visibility = "hidden";
                 window.setTimeout(() => {
                     iframe.src = "";

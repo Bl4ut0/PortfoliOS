@@ -1,3 +1,6 @@
+.identity-dossier,
+.identity-core,
+.dossier-content {
     padding: 1rem;
 }
 
@@ -525,9 +528,6 @@
     clip: rect(0 0 0 0);
 }
 
-
-}
-
 .desktop-experience {
     height: clamp(520px, calc(100vh - 9.2rem), 820px);
     min-height: 0;
@@ -544,6 +544,22 @@
     height: 100%;
     min-height: 0;
     overflow: hidden;
+}
+
+.matrix-rain-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+    transition: opacity 180ms ease;
+}
+
+.desktop-experience[data-wallpaper="matrix"] .matrix-rain-canvas {
+    opacity: 0.92;
 }
 
 .desktop-wallpaper,
@@ -607,10 +623,38 @@
 .desktop-experience[data-wallpaper="matrix"] .desktop-wallpaper,
 .wallpaper-preview[data-preview-wallpaper="matrix"] {
     background:
+        radial-gradient(circle at 18% 20%, rgba(44, 255, 130, 0.12), transparent 26%),
         linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%),
-        repeating-linear-gradient(0deg, rgba(16, 185, 129, 0.05) 0 2px, transparent 2px 4px),
-        repeating-linear-gradient(90deg, rgba(16, 185, 129, 0.03) 0 1px, transparent 1px 20px),
+        repeating-linear-gradient(0deg, rgba(16, 185, 129, 0.05) 0 1px, transparent 1px 5px),
         #020804;
+}
+
+.wallpaper-preview[data-preview-wallpaper="matrix"]::after {
+    content: "10110 01101 11001 00110 01011 11100 00101 10010";
+    position: absolute;
+    inset: -1.5rem 0 0;
+    z-index: 1;
+    color: rgba(86, 255, 141, 0.74);
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: 0;
+    text-align: center;
+    text-shadow: 0 0 8px rgba(86, 255, 141, 0.55);
+    word-break: break-all;
+    pointer-events: none;
+    animation: matrix-preview-rain 2.8s linear infinite;
+}
+
+@keyframes matrix-preview-rain {
+    from {
+        transform: translateY(-1.7rem);
+    }
+
+    to {
+        transform: translateY(2.4rem);
+    }
 }
 
 /* Cyberpunk */
@@ -681,15 +725,6 @@
         linear-gradient(180deg, rgba(49, 46, 129, 0.4) 0%, rgba(15, 23, 42, 0.9) 100%),
         repeating-linear-gradient(0deg, rgba(219, 39, 119, 0.05) 0 2px, transparent 2px 6px),
         #0b0616;
-}
-
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    background:
-        radial-gradient(circle at 8% 0%, rgba(34, 211, 238, 0.13), transparent 28%),
-        rgba(2, 5, 8, 0.96);
 }
 
 .cli-window .terminal-window {
@@ -1172,10 +1207,8 @@
     border: 1px solid rgba(52, 211, 153, 0.18);
     border-radius: 8px;
     font-family: var(--mono);
-
-.desktop-toast,
-.volume-panel {
-    z-index: 80;
+    font-size: 0.74rem;
+    white-space: pre-wrap;
 }
 
 .desktop-settings-content {
@@ -1954,6 +1987,14 @@
     #network-canvas {
         display: none;
     }
+
+    .matrix-rain-canvas {
+        display: none;
+    }
+
+    .wallpaper-preview[data-preview-wallpaper="matrix"]::after {
+        animation: none;
+    }
 }
 
 /* --- DESKTOP VIEW OVERRIDES & CLICKABLE TOP DOCK --- */
@@ -2280,9 +2321,10 @@ body[data-view].top-dock-carry .topbar-dock {
 /* --- Store Application --- */
 .desktop-window.store-window {
     left: clamp(0.75rem, 4vw, 3.5rem);
+    right: clamp(0.75rem, 4vw, 3.5rem);
     top: 3.7rem;
     bottom: 4.8rem;
-    width: min(64rem, calc(100% - 1.5rem));
+    width: auto;
     height: auto;
     min-height: 0;
 }

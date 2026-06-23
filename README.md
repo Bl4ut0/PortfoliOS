@@ -4,12 +4,18 @@ Client-first Experience OS concept: a personal operating environment that connec
 
 The shell runs independently in each visitor's browser. Server-side pieces can be added for data, status, PHP endpoints, or hosted assets, but the desktop/mobile/quick/CLI sessions are not shared streamed machines.
 
-## Files
+## Directory Structure
 
-- `index.html` - main portfolio OS interface
-- `styles.css` - visual system and responsive layout
-- `app.js` - shared project data, Desktop/Mobile/Quick renderers, CLI commands, app lifecycle, and network canvas
-- `DOOM.WAD` can be placed in the web root for the DOOM route.
+* **[core/](file:///c:/Dev Projects/bl4ut0-portfolio-os/core)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, Google Drive sync, preferences loader, and app-loader).
+* **[data/](file:///c:/Dev Projects/bl4ut0-portfolio-os/data)**: Shared static dataset arrays (portfolio project nodes, catalogs, settings, bookmarks).
+* **[desktop/](file:///c:/Dev Projects/bl4ut0-portfolio-os/desktop)**: Desktop UI components and shell boot orchestration (start launcher, taskbar window mapping, snapping desktop icons, context menus, and custom WAD inspector).
+* **[mobile/](file:///c:/Dev Projects/bl4ut0-portfolio-os/mobile)**: Mobile view grid layouts and app launcher.
+* **[quick/](file:///c:/Dev Projects/bl4ut0-portfolio-os/quick)**: Split-screen quick search index layout.
+* **[apps/](file:///c:/Dev Projects/bl4ut0-portfolio-os/apps)**: Custom modular desktop applications (Task Manager `taskmgr`, File Explorer `files`, Webamp media player, and browser-compiled game runtimes).
+* **[styles/](file:///c:/Dev Projects/bl4ut0-portfolio-os/styles)**: Segmented CSS stylesheet system imported globally via `styles-v1.css`.
+* **[main.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/main.js)**: Entry point orchestrator bootstrapping the OS shell on DOM load.
+* **`index.html`** - HTML shell template and static markup container.
+* `DOOM.WAD` can be placed in the web root for the DOOM route.
 
 ## Test Locally
 

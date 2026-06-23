@@ -318,6 +318,3 @@
     color: var(--text-muted);
     font-size: 0.86rem;
 }
-
-.mobile-device {
-    width: min(430px, 100%);

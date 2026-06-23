@@ -106,7 +106,7 @@ window.storeCategories = [
 window.isAppInstalled = function(id) {
     const coreApps = [
         "devhub", "profile", "dossier", "browser", "network", "linux", "cli", 
-        "settings", "store", "files", "addons", "guildcraft", "homelab", "survival-ai", "status"
+        "settings", "store", "files", "addons", "guildcraft", "homelab", "survival-ai", "status", "taskmgr"
     ];
     if (coreApps.includes(id)) return true;
 

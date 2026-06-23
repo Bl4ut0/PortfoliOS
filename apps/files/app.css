@@ -1,7 +1,7 @@
 .desktop-window.files-window {
     display: flex;
     flex-direction: column;
-    width: min(54rem, calc(100% - 2rem));
+    width: min(56rem, calc(100% - 2rem));
     height: min(38rem, calc(100% - 6rem));
     left: clamp(3rem, 8vw, 6rem);
     top: 4.5rem;
@@ -24,6 +24,7 @@
 
 .files-toolbar {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     align-items: center;
     padding: 0.5rem;
@@ -56,6 +57,7 @@
     display: flex;
     align-items: center;
     flex: 1 1 auto;
+    min-width: min(18rem, 100%);
     background: var(--bg);
     border: 1px solid var(--line);
     border-radius: 4px;
@@ -225,11 +227,11 @@
 }
 
 .dir-item .file-icon {
-    color: var(--amber) || #f59e0b;
+    color: var(--amber, #f59e0b);
 }
 
 .file-item-doc .file-icon {
-    color: var(--theme-accent) || #22d3ee;
+    color: var(--theme-accent, #22d3ee);
 }
 
 .file-name {

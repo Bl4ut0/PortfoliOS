@@ -152,6 +152,7 @@ window.applyDesktopPreferences = () => {
     window.applyVolume();
     window.applyThemeColors();
     window.applyDesktopResolution();
+    if (window.updateMatrixRain) window.updateMatrixRain(state.wallpaper);
     
     const resSelect = window.byId ? window.byId("desktop-resolution-select") : document.getElementById("desktop-resolution-select");
     if (resSelect) resSelect.value = state.desktopResolution;

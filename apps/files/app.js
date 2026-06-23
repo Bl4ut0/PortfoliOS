@@ -2,6 +2,29 @@
     let currentPath = "/";
     let searchQuery = "";
     let unsubscribeFs = null;
+    let unsubscribeFsReady = null;
+    let searchTimeout = null;
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function sanitizeName(name) {
+        return String(name || "")
+            .replace(/[\\/:*?"<>|]/g, "-")
+            .replace(/[\u0000-\u001f]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function childPath(name) {
+        return currentPath === "/" ? `/${name}` : `${currentPath}/${name}`;
+    }
 
     function renderBreadcrumbs(windowEl) {
         const breadcrumbsContainer = windowEl.querySelector(".files-breadcrumbs");
@@ -136,6 +159,7 @@
                 const el = document.createElement("div");
                 el.className = `file-item ${item.isDirectory ? "dir-item" : "file-item-doc"}`;
                 el.dataset.path = item.path;
+                const safeName = escapeHtml(item.name);
 
                 let iconHtml = '<i class="fa-regular fa-file"></i>';
                 if (item.isDirectory) {
@@ -150,8 +174,8 @@
 
                 el.innerHTML = `
                     <div class="file-icon">${iconHtml}</div>
-                    <div class="file-name" title="${item.name}">${item.name}</div>
-                    <button class="delete-btn" title="Delete ${item.name}"><i class="fa-solid fa-trash"></i></button>
+                    <div class="file-name" title="${safeName}">${safeName}</div>
+                    <button class="delete-btn" title="Delete ${safeName}"><i class="fa-solid fa-trash"></i></button>
                 `;
 
                 el.addEventListener("dblclick", () => {
@@ -185,6 +209,7 @@
             grid.appendChild(fragment);
         } catch (err) {
             console.error("Failed to render files grid:", err);
+            grid.innerHTML = `<div class="empty-state-container"><div class="empty-state">Filesystem unavailable. Try reopening File Explorer.</div></div>`;
         }
     }
 
@@ -228,7 +253,7 @@
     function setupEditorUI(overlay, item, text, windowEl) {
         overlay.innerHTML = `
             <div class="editor-header">
-                <span>Editing: ${item.name}</span>
+                <span>Editing: ${escapeHtml(item.name)}</span>
                 <div class="editor-actions">
                     <button class="editor-btn save-btn"><i class="fa-solid fa-floppy-disk"></i> Save</button>
                     <button class="editor-btn close-btn"><i class="fa-solid fa-xmark"></i> Close</button>
@@ -245,7 +270,7 @@
             await window.SystemFS.writeFile(item.path, item.name, item.parent, updatedContent, updatedContent.length, "text/plain", false);
             overlay.classList.remove("active");
             renderFilesGrid(windowEl);
-            showDesktopToast(`Saved ${item.name}`);
+            window.showDesktopToast?.(`Saved ${item.name}`);
         });
 
         overlay.querySelector(".close-btn").addEventListener("click", () => {
@@ -307,11 +332,13 @@
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                const path = currentPath === "/" ? `/${file.name}` : `${currentPath}/${file.name}`;
-                await window.SystemFS.writeFile(path, file.name, currentPath, file, file.size, file.type, false);
+                const cleanName = sanitizeName(file.name);
+                if (!cleanName) continue;
+                const path = childPath(cleanName);
+                await window.SystemFS.writeFile(path, cleanName, currentPath, file, file.size, file.type, false);
             }
             renderFilesGrid(windowEl);
-            showDesktopToast(`Uploaded ${files.length} file(s) to ${currentPath}`);
+            window.showDesktopToast?.(`Uploaded ${files.length} file(s) to ${currentPath}`);
         });
     }
 
@@ -363,7 +390,7 @@
                     progressBar.style.width = `${percent}%`;
                 }
             });
-            showDesktopToast("File Sync Complete!");
+            window.showDesktopToast?.("File Sync Complete!");
             progressText.textContent = "Sync complete!";
             progressBar.style.width = "100%";
             renderFilesGrid(windowEl);
@@ -389,6 +416,7 @@
             <div class="files-shell">
                 <div class="files-toolbar">
                     <button class="btn-toolbar btn-new-folder" title="New Folder"><i class="fa-solid fa-folder-plus"></i> New Folder</button>
+                    <button class="btn-toolbar btn-new-file" title="New Text File"><i class="fa-solid fa-file-circle-plus"></i> New File</button>
                     <button class="btn-toolbar btn-upload" title="Upload File"><i class="fa-solid fa-file-arrow-up"></i> Upload</button>
                     <button class="btn-toolbar btn-sync" title="Cloud Sync Settings"><i class="fa-solid fa-cloud"></i> Sync</button>
                     <input type="file" class="files-file-input" multiple style="display: none;" />
@@ -407,6 +435,7 @@
                         <button class="sidebar-shortcut" data-path="/"><i class="fa-solid fa-computer"></i> Root (/)</button>
                         <button class="sidebar-shortcut" data-path="/documents"><i class="fa-solid fa-file-lines"></i> Documents</button>
                         <button class="sidebar-shortcut" data-path="/music"><i class="fa-solid fa-music"></i> Music</button>
+                        <button class="sidebar-shortcut" data-path="/Saved Games"><i class="fa-solid fa-gamepad"></i> Saved Games</button>
                     </aside>
                     <div class="files-grid-container">
                         <div class="files-grid"></div>
@@ -444,22 +473,27 @@
             </div>
         `,
         onOpen: (windowEl) => {
-            currentPath = "/";
-            searchQuery = "";
+            if (!currentPath) currentPath = "/";
             renderFilesGrid(windowEl);
+
+            if (windowEl.dataset.filesInitialized === "1") {
+                return;
+            }
+
+            windowEl.dataset.filesInitialized = "1";
             setupDragAndDrop(windowEl);
 
-            if (window.EventBus) {
+            if (window.EventBus && !unsubscribeFs) {
                 unsubscribeFs = window.EventBus.on("fs:changed", (event) => {
                     if (event.parent === currentPath || event.path === currentPath || event.action === "sync") {
                         renderFilesGrid(windowEl);
                     }
                 });
+                unsubscribeFsReady = window.EventBus.on("fs:ready", () => renderFilesGrid(windowEl));
             }
 
             // Hook search input handler with debounce
             const searchInput = windowEl.querySelector(".files-search-input");
-            let searchTimeout = null;
             if (searchInput) {
                 searchInput.addEventListener("input", (e) => {
                     searchQuery = e.target.value;
@@ -488,10 +522,26 @@
                 newFolderBtn.addEventListener("click", async () => {
                     const name = prompt("Enter folder name:");
                     if (!name) return;
-                    const cleanName = name.replace(/[\/]/g, "").trim();
+                    const cleanName = sanitizeName(name);
                     if (!cleanName) return;
-                    const path = currentPath === "/" ? `/${cleanName}` : `${currentPath}/${cleanName}`;
+                    const path = childPath(cleanName);
                     await window.SystemFS.writeFile(path, cleanName, currentPath, null, 0, "directory", true);
+                    renderFilesGrid(windowEl);
+                });
+            }
+
+            const newFileBtn = windowEl.querySelector(".btn-new-file");
+            if (newFileBtn) {
+                newFileBtn.addEventListener("click", async () => {
+                    const name = prompt("Enter text file name:", "new-file.txt");
+                    if (!name) return;
+                    let cleanName = sanitizeName(name);
+                    if (!cleanName) return;
+                    if (!/\.[A-Za-z0-9]{1,8}$/.test(cleanName)) {
+                        cleanName += ".txt";
+                    }
+                    const path = childPath(cleanName);
+                    await window.SystemFS.writeFile(path, cleanName, currentPath, "", 0, "text/plain", false);
                     renderFilesGrid(windowEl);
                 });
             }
@@ -506,11 +556,13 @@
                     if (!files.length) return;
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
-                        const path = currentPath === "/" ? `/${file.name}` : `${currentPath}/${file.name}`;
-                        await window.SystemFS.writeFile(path, file.name, currentPath, file, file.size, file.type, false);
+                        const cleanName = sanitizeName(file.name);
+                        if (!cleanName) continue;
+                        const path = childPath(cleanName);
+                        await window.SystemFS.writeFile(path, cleanName, currentPath, file, file.size, file.type, false);
                     }
                     renderFilesGrid(windowEl);
-                    showDesktopToast(`Uploaded ${files.length} file(s).`);
+                    window.showDesktopToast?.(`Uploaded ${files.length} file(s).`);
                     fileInput.value = "";
                 });
             }
@@ -541,7 +593,7 @@
                         connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
                         await window.GDriveSync.loadGsiLibrary();
                         await window.GDriveSync.login(clientId);
-                        showDesktopToast("Google Drive Connected!");
+                        window.showDesktopToast?.("Google Drive Connected!");
                         await runSyncProcess(syncPanel, windowEl);
                     } catch (err) {
                         console.error(err);
@@ -556,7 +608,7 @@
                 const disconnectBtn = syncPanel.querySelector(".btn-disconnect-gdrive");
                 disconnectBtn.addEventListener("click", () => {
                     window.GDriveSync.logout();
-                    showDesktopToast("Google Drive Disconnected.");
+                    window.showDesktopToast?.("Google Drive Disconnected.");
                     updateSyncPanelUI(syncPanel);
                 });
 
@@ -574,6 +626,11 @@
                 unsubscribeFs();
                 unsubscribeFs = null;
             }
+            if (unsubscribeFsReady) {
+                unsubscribeFsReady();
+                unsubscribeFsReady = null;
+            }
+            windowEl.dataset.filesInitialized = "";
         }
     };
 })();
