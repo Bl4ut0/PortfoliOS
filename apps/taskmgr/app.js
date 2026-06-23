@@ -378,6 +378,13 @@
         `,
 
         onOpen: (windowEl) => {
+            // Clean up any existing intervals/loops to prevent duplicates/leaks
+            stopDiagnosticsLoop();
+            if (statsInterval) {
+                clearInterval(statsInterval);
+                statsInterval = null;
+            }
+
             // Start diagnostics loops
             startDiagnosticsLoop();
 
@@ -389,73 +396,78 @@
                 updateUI(windowEl);
             }, 1200);
 
-            // Event listener: Tabs switching
-            const tabs = windowEl.querySelectorAll(".taskmgr-tab");
-            tabs.forEach(tab => {
-                tab.addEventListener("click", () => {
-                    tabs.forEach(t => t.classList.remove("active"));
-                    tab.classList.add("active");
-                    
-                    const target = tab.dataset.target;
-                    windowEl.querySelectorAll(".taskmgr-tab-content").forEach(content => {
-                        content.classList.toggle("active", content.dataset.tab === target);
+            // Guard event listeners so they are only bound once
+            if (!windowEl.dataset.taskmgrInitialized) {
+                windowEl.dataset.taskmgrInitialized = "true";
+
+                // Event listener: Tabs switching
+                const tabs = windowEl.querySelectorAll(".taskmgr-tab");
+                tabs.forEach(tab => {
+                    tab.addEventListener("click", () => {
+                        tabs.forEach(t => t.classList.remove("active"));
+                        tab.classList.add("active");
+                        
+                        const target = tab.dataset.target;
+                        windowEl.querySelectorAll(".taskmgr-tab-content").forEach(content => {
+                            content.classList.toggle("active", content.dataset.tab === target);
+                        });
                     });
                 });
-            });
 
-            // Event delegation: End Task
-            const tbody = windowEl.querySelector(".taskmgr-tbody");
-            tbody.addEventListener("click", (event) => {
-                const killBtn = event.target.closest("[data-kill]");
-                if (!killBtn) return;
-                
-                const appId = killBtn.dataset.kill;
-                if (window.closeDesktopWindow) {
-                    window.closeDesktopWindow(appId);
-                    if (window.showDesktopToast) {
-                        const appDef = window.desktopApps?.find(a => a.id === appId);
-                        const appName = appDef ? appDef.title : appId;
-                        window.showDesktopToast(`Terminated process: ${appName}`);
-                    }
-                    updateUI(windowEl);
-                }
-            });
-
-            // Optimize memory trigger
-            const optimizeBtn = windowEl.querySelector(".btn-optimize-mem");
-            optimizeBtn.addEventListener("click", () => {
-                const minimized = Array.from(state.minimizedApps || []);
-                let closedCount = 0;
-
-                minimized.forEach(appId => {
-                    // Prevent closing task manager itself or essential explorer
-                    if (appId !== "taskmgr" && appId !== "files" && window.closeDesktopWindow) {
+                // Event delegation: End Task
+                const tbody = windowEl.querySelector(".taskmgr-tbody");
+                tbody.addEventListener("click", (event) => {
+                    const killBtn = event.target.closest("[data-kill]");
+                    if (!killBtn) return;
+                    
+                    const appId = killBtn.dataset.kill;
+                    if (window.closeDesktopWindow) {
                         window.closeDesktopWindow(appId);
-                        closedCount++;
+                        if (window.showDesktopToast) {
+                            const appDef = window.desktopApps?.find(a => a.id === appId);
+                            const appName = appDef ? appDef.title : appId;
+                            window.showDesktopToast(`Terminated process: ${appName}`);
+                        }
+                        updateUI(windowEl);
                     }
                 });
 
-                // Clear files app cache if files registry exists
-                if (window.SystemFS && typeof window.SystemFS.clearCache === "function") {
-                    window.SystemFS.clearCache();
-                }
+                // Optimize memory trigger
+                const optimizeBtn = windowEl.querySelector(".btn-optimize-mem");
+                optimizeBtn.addEventListener("click", () => {
+                    const minimized = Array.from(state.minimizedApps || []);
+                    let closedCount = 0;
 
-                optimizeBtn.disabled = true;
-                optimizeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Optimizing...';
+                    minimized.forEach(appId => {
+                        // Prevent closing task manager itself or essential explorer
+                        if (appId !== "taskmgr" && appId !== "files" && window.closeDesktopWindow) {
+                            window.closeDesktopWindow(appId);
+                            closedCount++;
+                        }
+                    });
 
-                setTimeout(() => {
-                    optimizeBtn.disabled = false;
-                    optimizeBtn.innerHTML = '<i class="fa-solid fa-gauge-high"></i> Optimize Memory';
-                    if (window.showDesktopToast) {
-                        window.showDesktopToast(closedCount > 0 
-                            ? `Optimized! Closed ${closedCount} background task(s) and cleared caches.`
-                            : "Memory optimized. Caches cleared successfully."
-                        );
+                    // Clear files app cache if files registry exists
+                    if (window.SystemFS && typeof window.SystemFS.clearCache === "function") {
+                        window.SystemFS.clearCache();
                     }
-                    cpuHistory = Array(30).fill(5); // Temporarily drop CPU load display
-                    updateUI(windowEl);
-                }, 1000);
-            });
+
+                    optimizeBtn.disabled = true;
+                    optimizeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Optimizing...';
+
+                    setTimeout(() => {
+                        optimizeBtn.disabled = false;
+                        optimizeBtn.innerHTML = '<i class="fa-solid fa-gauge-high"></i> Optimize Memory';
+                        if (window.showDesktopToast) {
+                            window.showDesktopToast(closedCount > 0 
+                                ? `Optimized! Closed ${closedCount} background task(s) and cleared caches.`
+                                : "Memory optimized. Caches cleared successfully."
+                            );
+                        }
+                        cpuHistory = Array(30).fill(5); // Temporarily drop CPU load display
+                        updateUI(windowEl);
+                    }, 1000);
+                });
+            }
         },
 
         onClose: () => {
