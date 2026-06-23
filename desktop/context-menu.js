@@ -102,6 +102,10 @@ window.getContextMenuItems = (event) => {
     }
 
     return [
+        { label: "Task Manager", icon: "fa-solid fa-microchip", action: () => {
+            if (window.openDesktopWindow) window.openDesktopWindow("taskmgr");
+        } },
+        { type: "separator" },
         { label: "Paste", icon: "fa-regular fa-clipboard", action: () => window.pasteIntoInput(document.activeElement) },
         { label: "Refresh desktop", icon: "fa-solid fa-rotate-right", action: () => { 
             if (window.renderDesktopIcons) window.renderDesktopIcons(); 

@@ -240,10 +240,20 @@ RTSName = "DUKE.RTS"
             cycles: "fixed 70000",
             autolock: true
         }).ready(function (fs, main) {
+            window.dukeFs = fs;
             showLoading("Extracting GAME.CON and DUKE3D.GRP...");
             fs.extract("duke3d.zip").then(function () {
                 showLoading("Applying PortfoliOS controls...");
                 seedDukeConfig(fs);
+                if (window.parent && typeof window.parent.restoreDukeSaves === "function") {
+                    showLoading("Restoring save games...");
+                    return window.parent.restoreDukeSaves(fs).catch(function(e) {
+                        console.error("Failed to restore Duke saves:", e);
+                    }).then(function() {
+                        showLoading("Starting Duke Nukem 3D...");
+                        return main(["-c", "DUKE3D.EXE"]);
+                    });
+                }
                 showLoading("Starting Duke Nukem 3D...");
                 return main(["-c", "DUKE3D.EXE"]);
             }).then(function (ci) {

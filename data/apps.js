@@ -5,7 +5,7 @@
 
 window.desktopPinnedIds = [
     "devhub", "store", "files", "webamp", "doomsource", "duke32", "diablo", "quake", 
-    "addons", "guildcraft", "homelab", "survival-ai", "status", "linux", "cli", "taskmgr"
+    "addons", "guildcraft", "homelab", "survival-ai", "status", "linux", "cli"
 ];
 
 window.desktopApps = [
@@ -17,7 +17,7 @@ window.desktopApps = [
     { id: "cli", title: "Portfolio CLI", icon: "fa-solid fa-terminal", pinned: true },
     { id: "store", title: "Store", icon: "fa-solid fa-shop", pinned: true },
     { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", pinned: true },
-    { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: true },
+    { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false },
     { id: "settings", title: "Desktop Settings", icon: "fa-solid fa-sliders", pinned: false },
     { id: "doomsource", title: "Doom", icon: "doom-icon.png", pinned: false },
