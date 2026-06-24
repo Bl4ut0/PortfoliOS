@@ -8,22 +8,21 @@ function initSettingsTabs() {
     const tabs = document.querySelectorAll(".settings-tab-btn");
     const panels = document.querySelectorAll(".settings-main .settings-panel");
 
+    window.openSettingsPanel = (targetTab = "desktop") => {
+        tabs.forEach(tab => {
+            const isActive = tab.dataset.tab === targetTab;
+            tab.classList.toggle("active", isActive);
+            tab.setAttribute("aria-selected", String(isActive));
+        });
+
+        panels.forEach(panel => {
+            panel.classList.toggle("active", panel.dataset.panel === targetTab);
+        });
+    };
+
     tabs.forEach(tab => {
         tab.addEventListener("click", () => {
-            const targetTab = tab.dataset.tab;
-            
-            // Switch tabs
-            tabs.forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-
-            // Switch panels
-            panels.forEach(panel => {
-                if (panel.dataset.panel === targetTab) {
-                    panel.classList.add("active");
-                } else {
-                    panel.classList.remove("active");
-                }
-            });
+            window.openSettingsPanel(tab.dataset.tab);
         });
     });
 }
@@ -119,6 +118,23 @@ function initResolutionSettings() {
     }
 }
 
+function initScreensaverSettings() {
+    const delaySelect = document.getElementById("screensaver-delay-select");
+    const previewBtn = document.getElementById("screensaver-preview-btn");
+
+    if (delaySelect) {
+        delaySelect.addEventListener("change", (event) => {
+            if (window.setScreensaverDelay) window.setScreensaverDelay(event.target.value);
+        });
+    }
+
+    if (previewBtn) {
+        previewBtn.addEventListener("click", () => {
+            if (window.startScreensaver) window.startScreensaver({ preview: true });
+        });
+    }
+}
+
 // Google Drive Sync UI Sync Logic
 function updateGDriveUI() {
     const isConnected = window.GDriveSync && window.GDriveSync.getToken() !== null;
@@ -129,6 +145,8 @@ function updateGDriveUI() {
     const disconnectBtn = document.getElementById("settings-gdrive-disconnect-btn");
     const syncSection = document.getElementById("settings-sync-actions-section");
     const clientIdInput = document.getElementById("settings-gdrive-client-id");
+    const originText = document.getElementById("settings-gdrive-origin");
+    const returnModeText = document.getElementById("settings-gdrive-return-mode");
     
     if (clientIdInput) {
         const defaultId = window.GDriveSync?.defaultClientId || "";
@@ -136,6 +154,12 @@ function updateGDriveUI() {
         if (!clientIdInput.value && storedId) {
             clientIdInput.value = storedId;
         }
+    }
+
+    if (window.GDriveSync?.getOAuthStatus) {
+        const oauthStatus = window.GDriveSync.getOAuthStatus();
+        if (originText) originText.textContent = oauthStatus.origin;
+        if (returnModeText) returnModeText.textContent = oauthStatus.returnMode;
     }
 
     if (indicator) {
@@ -187,7 +211,7 @@ function initGDriveSettings() {
                 alert("Connection failed. Please check your credentials.");
             } finally {
                 connectBtn.disabled = false;
-                connectBtn.innerHTML = '<i class="fa-solid fa-link"></i> Connect Account';
+                connectBtn.innerHTML = '<i class="fa-brands fa-google-drive"></i> Sign in with Google Drive';
                 updateGDriveUI();
             }
         });
@@ -302,14 +326,37 @@ window.renderThemeOptions = () => {
     }).join("");
 };
 
+window.renderScreensaverOptions = () => {
+    const container = window.byId ? window.byId("screensaver-options") : document.getElementById("screensaver-options");
+    if (!container) return;
+
+    const options = window.getScreensaverOptions ? window.getScreensaverOptions() : (window.screensaverOptions || []);
+    const escapeHtml = window.escapeHtml || ((value) => String(value ?? ""));
+
+    container.innerHTML = options.map((option) => `
+        <button type="button" class="screensaver-card ${window.state && window.state.screensaver === option.id ? "active" : ""}"
+            data-screensaver-choice="${escapeHtml(option.id)}" title="Use ${escapeHtml(option.label)} screensaver">
+            <div class="screensaver-card-preview" data-preview-screensaver="${escapeHtml(option.id)}">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="screensaver-card-info">
+                <i class="${escapeHtml(option.icon || "fa-regular fa-square")}"></i>
+                <span>${escapeHtml(option.label)}</span>
+            </div>
+        </button>
+    `).join("");
+};
+
 // Bootstrap function for Settings App
 function initSettingsApp() {
     initSettingsTabs();
     initVolumeSettings();
     initResolutionSettings();
+    initScreensaverSettings();
     initGDriveSettings();
     window.renderWallpaperOptions();
     window.renderThemeOptions();
+    window.renderScreensaverOptions();
 }
 
 // Run initialization once the DOM is loaded or when settings is opened
@@ -325,8 +372,10 @@ if (window.EventBus) {
     window.EventBus.on("wallpaper:changed", () => window.renderWallpaperOptions());
     window.EventBus.on("desktop:refresh", () => window.renderWallpaperOptions());
     window.EventBus.on("desktop:refresh", () => window.renderThemeOptions());
+    window.EventBus.on("desktop:refresh", () => window.renderScreensaverOptions());
     window.EventBus.on("theme:changed", () => window.renderThemeOptions());
     window.EventBus.on("theme:reset", () => window.renderThemeOptions());
+    window.EventBus.on("screensaver:changed", () => window.renderScreensaverOptions());
     window.EventBus.on("volume:changed", (val) => updateVolumeUI(val));
     window.EventBus.on("state:changed:gdriveConnected", () => updateGDriveUI());
     window.EventBus.on("app:opened", (name) => {
@@ -339,10 +388,16 @@ if (window.EventBus) {
                 if (resSelect) {
                     resSelect.value = window.state.desktopResolution;
                 }
+
+                const screensaverDelay = document.getElementById("screensaver-delay-select");
+                if (screensaverDelay) {
+                    screensaverDelay.value = String(window.state.screensaverDelay || 5);
+                }
             }
             updateGDriveUI();
             window.renderWallpaperOptions();
             window.renderThemeOptions();
+            window.renderScreensaverOptions();
         }
     });
 }

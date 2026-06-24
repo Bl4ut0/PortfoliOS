@@ -20,6 +20,15 @@ window.wallpaperOptions = [
     { id: "retrowave", label: "Retrowave", icon: "fa-solid fa-guitar" }
 ];
 
+window.screensaverOptions = [
+    { id: "none", label: "None", icon: "fa-solid fa-ban", description: "Keep the desktop visible." },
+    { id: "blank", label: "Blank Screen", icon: "fa-regular fa-square", description: "Fade to a quiet black display." },
+    { id: "starfield", label: "Starfield", icon: "fa-solid fa-star", description: "Classic flying stars in deep space." },
+    { id: "mystify", label: "Mystify", icon: "fa-solid fa-draw-polygon", description: "Neon line trails inspired by Windows 3.x." },
+    { id: "flying-windows", label: "Flying Windows", icon: "fa-brands fa-windows", description: "Floating window marks across the desktop." },
+    { id: "marquee", label: "Marquee", icon: "fa-solid fa-align-left", description: "Scrolling PortfoliOS status text." }
+];
+
 window.portfolioThemes = [
     {
         id: "dark",

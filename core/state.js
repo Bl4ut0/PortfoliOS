@@ -25,6 +25,8 @@
         themePrimary: null,
         themeAccent: null,
         desktopResolution: "auto",
+        screensaver: "none",
+        screensaverDelay: 5,
         gdriveConnected: false
     };
 
@@ -36,6 +38,8 @@
         rawState.themePrimary = window.Storage.local.get("bl4ut0ThemePrimary");
         rawState.themeAccent = window.Storage.local.get("bl4ut0ThemeAccent");
         rawState.desktopResolution = window.Storage.local.get("bl4ut0DesktopResolution") || "auto";
+        rawState.screensaver = window.Storage.local.get("bl4ut0Screensaver") || "none";
+        rawState.screensaverDelay = Number(window.Storage.local.get("bl4ut0ScreensaverDelay") || 5);
     }
 
     window.state = new Proxy(rawState, {

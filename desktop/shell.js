@@ -215,6 +215,12 @@ window.boot = () => {
             return;
         }
 
+        const screensaverChoice = event.target.closest("[data-screensaver-choice]");
+        if (screensaverChoice) {
+            if (window.setScreensaver) window.setScreensaver(screensaverChoice.dataset.screensaverChoice);
+            return;
+        }
+
         const dismissMobileNote = event.target.closest("[data-dismiss-mobile-note]");
         if (dismissMobileNote) {
             const advisory = window.byId ? window.byId("mobile-advisory") : document.getElementById("mobile-advisory");
@@ -424,7 +430,11 @@ window.boot = () => {
                 delete openButton.dataset.preventClick;
                 return;
             }
-            if (window.openDesktopWindow) window.openDesktopWindow(openButton.dataset.openApp);
+            if (openButton.dataset.openApp === "settings" && window.openDesktopSettings) {
+                window.openDesktopSettings("desktop");
+            } else if (window.openDesktopWindow) {
+                window.openDesktopWindow(openButton.dataset.openApp);
+            }
             const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
             if (startMenu) startMenu.hidden = true;
         }

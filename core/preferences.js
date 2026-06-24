@@ -124,6 +124,20 @@ window.getPortfolioTheme = (themeId = state.themeId) => {
     return themes.find((theme) => theme.id === themeId) || themes[0];
 };
 
+window.getScreensaverOptions = () => {
+    const fallback = [
+        { id: "none", label: "None", icon: "fa-solid fa-ban", description: "Keep the desktop visible." }
+    ];
+    return Array.isArray(window.screensaverOptions) && window.screensaverOptions.length
+        ? window.screensaverOptions
+        : fallback;
+};
+
+window.getScreensaverOption = (screensaverId = state.screensaver) => {
+    const options = window.getScreensaverOptions();
+    return options.find((option) => option.id === screensaverId) || options[0];
+};
+
 window.applyThemeColors = () => {
     const primaryPicker = window.byId ? window.byId("theme-primary-picker") : document.getElementById("theme-primary-picker");
     const accentPicker = window.byId ? window.byId("theme-accent-picker") : document.getElementById("theme-accent-picker");
@@ -205,6 +219,7 @@ window.applyDesktopPreferences = () => {
     window.applyVolume();
     window.applyThemeColors();
     window.applyDesktopResolution();
+    window.applyScreensaverPreferences();
     if (window.updateMatrixRain) window.updateMatrixRain(state.wallpaper);
     
     const resSelect = window.byId ? window.byId("desktop-resolution-select") : document.getElementById("desktop-resolution-select");
@@ -240,6 +255,130 @@ window.setWallpaper = (wallpaperId) => {
     }
     window.applyDesktopPreferences();
     if (window.EventBus) window.EventBus.emit("wallpaper:changed", wallpaperId);
+};
+
+window.renderScreensaverStage = () => {
+    const overlay = window.byId ? window.byId("desktop-screensaver") : document.getElementById("desktop-screensaver");
+    if (!overlay) return;
+
+    const screensaver = state.screensaver || "none";
+    const stars = Array.from({ length: 34 }, (_, index) => {
+        const left = (index * 29) % 100;
+        const top = (index * 47) % 100;
+        const size = 1 + (index % 4);
+        return `<span style="--i:${index}; left:${left}%; top:${top}%; width:${size}px; height:${size}px;"></span>`;
+    }).join("");
+    const lines = Array.from({ length: 5 }, (_, index) => `<span style="--i:${index}"></span>`).join("");
+    const windows = Array.from({ length: 9 }, (_, index) => {
+        const x = -18 - ((index * 11) % 30);
+        const y = 8 + ((index * 17) % 78);
+        return `<span style="--i:${index}; --x:${x}%; --y:${y}%;"><i class="fa-brands fa-windows"></i></span>`;
+    }).join("");
+
+    const templates = {
+        blank: '<div class="screensaver-blank" aria-hidden="true"></div>',
+        starfield: `<div class="screensaver-starfield" aria-hidden="true">${stars}</div>`,
+        mystify: `<div class="screensaver-mystify" aria-hidden="true">${lines}</div>`,
+        "flying-windows": `<div class="screensaver-flying-windows" aria-hidden="true">${windows}</div>`,
+        marquee: '<div class="screensaver-marquee" aria-hidden="true"><span>PortfoliOS // desktop protected // move pointer or press any key</span></div>'
+    };
+
+    overlay.dataset.screensaver = screensaver;
+    overlay.innerHTML = templates[screensaver] || "";
+};
+
+window.startScreensaver = (options = {}) => {
+    const overlay = window.byId ? window.byId("desktop-screensaver") : document.getElementById("desktop-screensaver");
+    if (!overlay || state.screensaver === "none") {
+        if (options.preview && window.showDesktopToast) window.showDesktopToast("Choose a screensaver first.");
+        return;
+    }
+
+    window.clearTimeout(window.screensaverTimer);
+    window.renderScreensaverStage();
+    overlay.hidden = false;
+    overlay.classList.add("active");
+    document.body.classList.add("screensaver-active");
+};
+
+window.stopScreensaver = () => {
+    const overlay = window.byId ? window.byId("desktop-screensaver") : document.getElementById("desktop-screensaver");
+    const wasActive = overlay && !overlay.hidden;
+
+    if (overlay) {
+        overlay.classList.remove("active");
+        overlay.hidden = true;
+    }
+    document.body.classList.remove("screensaver-active");
+
+    if (wasActive || state.screensaver !== "none") {
+        window.scheduleScreensaver();
+    }
+};
+
+window.scheduleScreensaver = () => {
+    window.clearTimeout(window.screensaverTimer);
+    if (!state || state.screensaver === "none") return;
+
+    const delayMinutes = Math.max(1, Math.min(60, Number(state.screensaverDelay) || 5));
+    window.screensaverTimer = window.setTimeout(() => {
+        if (document.hidden || !state.systemStarted) {
+            window.scheduleScreensaver();
+            return;
+        }
+        window.startScreensaver();
+    }, delayMinutes * 60000);
+};
+
+window.bindScreensaverActivity = () => {
+    if (window.screensaverActivityBound) return;
+    window.screensaverActivityBound = true;
+    ["pointerdown", "keydown", "wheel", "touchstart"].forEach((eventName) => {
+        window.addEventListener(eventName, () => {
+            const overlay = window.byId ? window.byId("desktop-screensaver") : document.getElementById("desktop-screensaver");
+            if (overlay && !overlay.hidden) {
+                window.stopScreensaver();
+            } else {
+                window.scheduleScreensaver();
+            }
+        }, { passive: true });
+    });
+};
+
+window.applyScreensaverPreferences = () => {
+    window.bindScreensaverActivity();
+
+    const option = window.getScreensaverOption();
+    if (state.screensaver !== option.id) {
+        state.screensaver = option.id;
+    }
+
+    const delaySelect = window.byId ? window.byId("screensaver-delay-select") : document.getElementById("screensaver-delay-select");
+    if (delaySelect) delaySelect.value = String(state.screensaverDelay || 5);
+
+    if (window.renderScreensaverOptions) window.renderScreensaverOptions();
+    window.renderScreensaverStage();
+    window.scheduleScreensaver();
+};
+
+window.setScreensaver = (screensaverId) => {
+    const options = window.getScreensaverOptions();
+    if (!options.some((option) => option.id === screensaverId)) return;
+    state.screensaver = screensaverId;
+    if (window.Storage) {
+        window.Storage.local.set("bl4ut0Screensaver", screensaverId);
+    }
+    window.applyScreensaverPreferences();
+    if (window.EventBus) window.EventBus.emit("screensaver:changed", { screensaverId });
+};
+
+window.setScreensaverDelay = (minutes) => {
+    state.screensaverDelay = Math.max(1, Math.min(60, Number(minutes) || 5));
+    if (window.Storage) {
+        window.Storage.local.set("bl4ut0ScreensaverDelay", String(state.screensaverDelay));
+    }
+    window.applyScreensaverPreferences();
+    if (window.EventBus) window.EventBus.emit("screensaver:delay-changed", { delay: state.screensaverDelay });
 };
 
 window.setDesktopVolume = (value) => {

@@ -19,7 +19,7 @@ window.desktopApps = [
     { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", pinned: true },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false },
-    { id: "settings", title: "Desktop Settings", icon: "fa-solid fa-sliders", pinned: false },
+    { id: "settings", title: "Settings", icon: "fa-solid fa-sliders", pinned: true },
     { id: "doomsource", title: "Doom", icon: "doom-icon.png", pinned: false },
     { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", pinned: false },
     { id: "diablo", title: "Diablo", icon: "diablo-icon.png", pinned: false },

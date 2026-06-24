@@ -6,6 +6,17 @@ window.GDriveSync = {
     token: null,
     parentFolderId: null,
     defaultClientId: "271385155591-4g949illm5c7ke55rf9aupcko53iju53.apps.googleusercontent.com",
+    productionOrigin: "https://os.bl4ut0.dev",
+
+    getOAuthStatus() {
+        const origin = window.location?.origin || this.productionOrigin;
+        return {
+            origin,
+            productionOrigin: this.productionOrigin,
+            returnMode: "Google Identity Services token callback",
+            usesRedirectUri: false
+        };
+    },
     
     async getOrCreateParentFolder(token) {
         if (this.parentFolderId) return this.parentFolderId;
@@ -66,6 +77,7 @@ window.GDriveSync = {
             const client = window.google.accounts.oauth2.initTokenClient({
                 client_id: clientId,
                 scope: "https://www.googleapis.com/auth/drive.file",
+                include_granted_scopes: true,
                 callback: (response) => {
                     if (response.error) {
                         reject(response);

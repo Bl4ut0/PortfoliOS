@@ -1694,6 +1694,339 @@
     color: var(--text);
 }
 
+.settings-control-row-wrap {
+    flex-wrap: wrap;
+}
+
+.settings-inline-label {
+    color: var(--text-soft);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.settings-select-compact {
+    flex: 0 1 11rem;
+    max-width: 11rem;
+}
+
+.settings-placeholder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 0.75rem;
+}
+
+.settings-placeholder-grid div {
+    display: grid;
+    gap: 0.35rem;
+    min-height: 6.5rem;
+    padding: 0.85rem;
+    color: var(--text-soft);
+    background: var(--panel-soft);
+    border: 1px dashed var(--line-strong);
+    border-radius: 8px;
+}
+
+.settings-placeholder-grid i {
+    color: var(--theme-primary);
+    font-size: 1.1rem;
+}
+
+.settings-placeholder-grid strong {
+    color: var(--text);
+    font-family: var(--heading);
+}
+
+.settings-placeholder-grid span {
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+.screensaver-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.6rem, 1fr));
+    gap: 0.75rem;
+}
+
+.screensaver-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 7.5rem;
+    padding: 0;
+    overflow: hidden;
+    color: var(--text-soft);
+    background: var(--panel-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.screensaver-card-preview {
+    position: relative;
+    min-height: 4.65rem;
+    overflow: hidden;
+    background: #020204;
+    border-bottom: 1px solid var(--line);
+}
+
+.screensaver-card-preview[data-preview-screensaver="none"] {
+    background:
+        linear-gradient(135deg, transparent 46%, rgba(244, 63, 94, 0.9) 47% 53%, transparent 54%),
+        rgba(255, 255, 255, 0.045);
+}
+
+.screensaver-card-preview[data-preview-screensaver="blank"] {
+    background: #000;
+}
+
+.screensaver-card-preview[data-preview-screensaver="starfield"] span {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #fff;
+}
+
+.screensaver-card-preview[data-preview-screensaver="starfield"] span:nth-child(1) {
+    left: 18%;
+    top: 28%;
+}
+
+.screensaver-card-preview[data-preview-screensaver="starfield"] span:nth-child(2) {
+    left: 58%;
+    top: 45%;
+}
+
+.screensaver-card-preview[data-preview-screensaver="starfield"] span:nth-child(3) {
+    left: 78%;
+    top: 18%;
+}
+
+.screensaver-card-preview[data-preview-screensaver="mystify"] {
+    background:
+        linear-gradient(135deg, transparent 26%, rgba(34, 211, 238, 0.9) 27% 29%, transparent 30%),
+        linear-gradient(32deg, transparent 36%, rgba(244, 63, 94, 0.85) 37% 39%, transparent 40%),
+        #030308;
+}
+
+.screensaver-card-preview[data-preview-screensaver="flying-windows"] span {
+    position: absolute;
+    width: 1.35rem;
+    height: 1rem;
+    background:
+        linear-gradient(90deg, #ef4444 0 50%, #22d3ee 50%),
+        linear-gradient(#facc15 0 50%, #22c55e 50%);
+    background-blend-mode: screen;
+    border-radius: 3px;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.18);
+}
+
+.screensaver-card-preview[data-preview-screensaver="flying-windows"] span:nth-child(1) {
+    left: 16%;
+    top: 20%;
+}
+
+.screensaver-card-preview[data-preview-screensaver="flying-windows"] span:nth-child(2) {
+    left: 52%;
+    top: 52%;
+}
+
+.screensaver-card-preview[data-preview-screensaver="flying-windows"] span:nth-child(3) {
+    left: 72%;
+    top: 24%;
+}
+
+.screensaver-card-preview[data-preview-screensaver="marquee"]::after {
+    content: "PortfoliOS";
+    position: absolute;
+    left: 0.55rem;
+    top: 50%;
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    transform: translateY(-50%);
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.72);
+}
+
+.screensaver-card-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.38rem;
+    min-width: 0;
+    padding: 0.48rem 0.42rem;
+    color: var(--text-soft);
+    background: color-mix(in srgb, var(--panel-strong) 72%, transparent);
+    font-size: 0.72rem;
+}
+
+.screensaver-card-info span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.screensaver-card-info i {
+    color: var(--theme-primary);
+}
+
+.screensaver-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--theme-primary) 45%, var(--line));
+    background: color-mix(in srgb, var(--theme-primary) 9%, var(--panel-soft));
+}
+
+.screensaver-card.active {
+    border-color: var(--theme-primary);
+    background: color-mix(in srgb, var(--theme-primary) 12%, var(--panel-soft));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-primary) 30%, transparent), 0 0 16px color-mix(in srgb, var(--theme-primary) 20%, transparent);
+}
+
+.screensaver-card.active .screensaver-card-info {
+    color: var(--text);
+}
+
+.screensaver-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 95;
+    overflow: hidden;
+    color: #fff;
+    background: #000;
+    cursor: none;
+}
+
+.screensaver-overlay[hidden] {
+    display: none;
+}
+
+.screensaver-blank,
+.screensaver-starfield,
+.screensaver-mystify,
+.screensaver-flying-windows,
+.screensaver-marquee {
+    position: absolute;
+    inset: 0;
+}
+
+.screensaver-starfield {
+    perspective: 420px;
+}
+
+.screensaver-starfield span {
+    position: absolute;
+    display: block;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.85);
+    animation: starfield-flight 2.8s linear infinite;
+    animation-delay: calc(var(--i) * -0.12s);
+}
+
+@keyframes starfield-flight {
+    from {
+        transform: translate3d(-50vw, -30vh, -260px) scale(0.35);
+        opacity: 0;
+    }
+
+    18% {
+        opacity: 1;
+    }
+
+    to {
+        transform: translate3d(50vw, 30vh, 260px) scale(2.6);
+        opacity: 0;
+    }
+}
+
+.screensaver-mystify span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 38vw;
+    height: 18vh;
+    border: 2px solid currentColor;
+    color: hsl(calc(var(--i) * 64), 86%, 62%);
+    filter: drop-shadow(0 0 12px currentColor);
+    transform-origin: center;
+    animation: mystify-drift 9s linear infinite;
+    animation-delay: calc(var(--i) * -1.4s);
+}
+
+@keyframes mystify-drift {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg) skew(12deg, -10deg);
+    }
+
+    50% {
+        transform: translate(-35%, -62%) rotate(190deg) skew(-18deg, 12deg);
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg) skew(12deg, -10deg);
+    }
+}
+
+.screensaver-flying-windows span {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    color: hsl(calc(var(--i) * 44), 86%, 62%);
+    font-size: 2rem;
+    text-shadow: 0 0 18px currentColor;
+    animation: flying-windows-drift 10s linear infinite;
+    animation-delay: calc(var(--i) * -0.85s);
+}
+
+@keyframes flying-windows-drift {
+    from {
+        transform: translate(-8rem, 18vh) rotate(-18deg);
+    }
+
+    to {
+        transform: translate(calc(100vw + 8rem), -24vh) rotate(22deg);
+    }
+}
+
+.screensaver-marquee {
+    display: grid;
+    align-items: center;
+    background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px),
+        #000;
+}
+
+.screensaver-marquee span {
+    display: inline-block;
+    width: max-content;
+    color: #fff;
+    font-family: var(--mono);
+    font-size: clamp(1rem, 2vw, 1.45rem);
+    font-weight: 800;
+    text-shadow: 0 0 14px rgba(34, 211, 238, 0.8);
+    animation: marquee-slide 12s linear infinite;
+}
+
+@keyframes marquee-slide {
+    from {
+        transform: translateX(100vw);
+    }
+
+    to {
+        transform: translateX(-100%);
+    }
+}
+
 /* Google Drive Cards and Forms */
 .gdrive-status-card, .sync-actions-card {
     background: rgba(0, 0, 0, 0.25);
@@ -1738,6 +2071,40 @@
     flex-direction: column;
     gap: 0.35rem;
     max-width: 24rem;
+}
+
+.gdrive-oauth-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.6rem;
+}
+
+.gdrive-oauth-grid div {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+    padding: 0.65rem;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+.gdrive-oauth-grid span {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.gdrive-oauth-grid code {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-soft);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .settings-input-label {
