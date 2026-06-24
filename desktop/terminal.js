@@ -699,6 +699,44 @@ async function runRm(args) {
     }
 }
 
+async function runLocalAICommand(args) {
+    if (!window.LocalAI) {
+        return "Local AI service is unavailable.";
+    }
+
+    const subcommand = (args[0] || "").toLowerCase();
+    if (!subcommand) {
+        if (window.openDesktopWindow) window.openDesktopWindow("local-ai");
+        const status = window.LocalAI.getStatus();
+        return `${status.statusText} Use ai on to enable it, ai off to stop it, or ai <question> once it is ready.`;
+    }
+
+    if (subcommand === "on" || subcommand === "enable" || subcommand === "start") {
+        try {
+            const status = await window.LocalAI.enable("Portfolio CLI");
+            return status.ready
+                ? "Local AI is ready. Try: ai explain ls -l"
+                : status.statusText;
+        } catch (error) {
+            return `Local AI failed to start: ${error.message}`;
+        }
+    }
+
+    if (subcommand === "off" || subcommand === "disable" || subcommand === "stop") {
+        await window.LocalAI.disable("cli");
+        return "Local AI stopped. Starting it again will ask permission.";
+    }
+
+    if (!window.LocalAI.isReady()) {
+        return "Local AI is off. Run ai on or open Local AI from Start to enable conversational guidance.";
+    }
+
+    return await window.LocalAI.chat(args.join(" "), {
+        user: currentUser,
+        cwd: currentDir
+    });
+}
+
 // Core execution engine
 async function executeCommand(command, args, raw) {
     if (command === "clear") {
@@ -726,6 +764,7 @@ async function executeCommand(command, args, raw) {
             "  mkdir <dir>     create a directory",
             "  rm [-rf] <path> delete file or directory recursively",
             "  echo <text>     print text (redirect with > or >> to files)",
+            "  ai [on|off|text] manage or talk to the Local AI assistant",
             "  whoami --info   print Alex's developer profile summary"
         ].join("\n");
     }
@@ -889,9 +928,18 @@ async function executeCommand(command, args, raw) {
         return args.join(" ");
     }
 
-    // Fallback: AI Assistant response
-    window.simulateAiResponse(raw);
-    return;
+    if (command === "ai" || command === "assistant") {
+        return await runLocalAICommand(args);
+    }
+
+    if (window.LocalAI?.isReady?.()) {
+        return await window.LocalAI.chat(`The user entered this PortfoliOS CLI input: ${raw}`, {
+            user: currentUser,
+            cwd: currentDir
+        });
+    }
+
+    return `${command || raw}: command not found. Type help for available commands, or open Local AI from Start to enable conversational command guidance.`;
 }
 
 // Public handleCommand wrapper

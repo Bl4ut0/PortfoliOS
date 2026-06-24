@@ -173,6 +173,10 @@ window.boot = () => {
         if (!event.target.closest("#volume-panel") && !event.target.closest("#volume-toggle") && window.closeVolumePanel) {
             window.closeVolumePanel();
         }
+
+        if (!event.target.closest("#local-ai-tray-panel") && !event.target.closest("#local-ai-tray-toggle") && window.closeLocalAITrayPanel) {
+            window.closeLocalAITrayPanel();
+        }
     });
 
     // Global click delegation
@@ -260,6 +264,7 @@ window.boot = () => {
             if (startMenu) startMenu.hidden = !startMenu.hidden;
             if (calPanel) calPanel.hidden = true;
             if (window.closeVolumePanel) window.closeVolumePanel();
+            if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
             return;
         }
 
@@ -280,6 +285,30 @@ window.boot = () => {
         const volumeToggle = event.target.closest("#volume-toggle");
         if (volumeToggle) {
             if (window.toggleVolumePanel) window.toggleVolumePanel();
+            if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
+            return;
+        }
+
+        const localAITrayToggle = event.target.closest("#local-ai-tray-toggle");
+        if (localAITrayToggle) {
+            if (window.toggleLocalAITrayPanel) window.toggleLocalAITrayPanel();
+            return;
+        }
+
+        const localAITrayOpen = event.target.closest("[data-local-ai-tray-open]");
+        if (localAITrayOpen) {
+            if (window.openDesktopWindow) window.openDesktopWindow("local-ai");
+            if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
+            return;
+        }
+
+        const localAITrayStop = event.target.closest("[data-local-ai-tray-stop]");
+        if (localAITrayStop) {
+            if (window.LocalAI) {
+                window.LocalAI.disable("tray");
+                window.showDesktopToast?.("Local AI stopped.");
+            }
+            if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
             return;
         }
 
@@ -290,6 +319,7 @@ window.boot = () => {
             if (calPanel) calPanel.hidden = !calPanel.hidden;
             if (startMenu) startMenu.hidden = true;
             if (window.closeVolumePanel) window.closeVolumePanel();
+            if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
             return;
         }
 

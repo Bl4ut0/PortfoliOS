@@ -4,8 +4,8 @@
  */
 
 window.appRegistry = window.appRegistry || {};
-window.modularApps = window.modularApps || ["doomsource", "duke32", "diablo", "quake", "files", "webamp", "taskmgr"];
-window.appAssetVersion = "1.0.33";
+window.modularApps = window.modularApps || ["doomsource", "duke32", "diablo", "quake", "files", "webamp", "taskmgr", "local-ai"];
+window.appAssetVersion = "1.0.39";
 window.appLoadPromises = window.appLoadPromises || {};
 
 window.ensureAppLoaded = async function(appId) {

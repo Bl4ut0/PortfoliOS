@@ -2,8 +2,8 @@
 @import "./styles/reset.css?v=1.0.37";
 @import "./styles/layout.css?v=1.0.37";
 @import "./styles/windows.css?v=1.0.37";
-@import "./styles/desktop.css?v=1.0.37";
+@import "./styles/desktop.css?v=1.0.39";
 @import "./styles/mobile.css?v=1.0.37";
 @import "./styles/quick.css?v=1.0.37";
 @import "./styles/boot.css?v=1.0.37";
-@import "./styles/components.css?v=1.0.37";
+@import "./styles/components.css?v=1.0.39";

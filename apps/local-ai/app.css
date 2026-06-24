@@ -1,0 +1,201 @@
+.desktop-window.local-ai-window {
+    display: flex;
+    flex-direction: column;
+    width: min(34rem, calc(100% - 2rem));
+    height: min(31rem, calc(100% - 5rem));
+    min-width: 22rem;
+    min-height: 24rem;
+    left: clamp(1rem, 22vw, 16rem);
+    top: clamp(3rem, 9vh, 6rem);
+}
+
+.local-ai-app {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+    min-height: 0;
+    padding: 1.2rem;
+    overflow: auto;
+}
+
+.local-ai-hero {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.local-ai-hero h2 {
+    margin: 0.15rem 0 0.25rem;
+    font-family: var(--heading);
+    font-size: 1.65rem;
+    color: var(--text);
+}
+
+.local-ai-hero p:last-child {
+    margin: 0;
+    color: var(--text-soft);
+    line-height: 1.45;
+}
+
+.local-ai-orb {
+    display: grid;
+    place-items: center;
+    width: 4rem;
+    height: 4rem;
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    border-radius: 8px;
+    background: rgba(34, 211, 238, 0.08);
+    color: var(--theme-primary);
+    font-size: 1.6rem;
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.1);
+}
+
+.local-ai-orb.loading {
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.32);
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.local-ai-orb.ready {
+    color: var(--theme-accent);
+    border-color: rgba(52, 211, 153, 0.32);
+    background: rgba(52, 211, 153, 0.08);
+}
+
+.local-ai-orb.error {
+    color: #fb7185;
+    border-color: rgba(251, 113, 133, 0.32);
+    background: rgba(251, 113, 133, 0.08);
+}
+
+.local-ai-status-card,
+.local-ai-guidance {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+    padding: 1rem;
+}
+
+.local-ai-status-row,
+.local-ai-metrics {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.local-ai-status-row {
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+}
+
+.local-ai-status-row span,
+.local-ai-metrics span {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.local-ai-status-row strong,
+.local-ai-metrics strong {
+    color: var(--text);
+    font-size: 0.86rem;
+}
+
+.local-ai-progress-track {
+    height: 0.45rem;
+    margin: 0.9rem 0;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.local-ai-progress-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--theme-primary), var(--theme-accent));
+    transition: width 0.25s ease;
+}
+
+.local-ai-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.local-ai-metrics div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.local-ai-error {
+    margin: 0.8rem 0 0;
+    color: #fecdd3;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+}
+
+.local-ai-guidance h3 {
+    margin: 0 0 0.65rem;
+    color: var(--text);
+    font-family: var(--heading);
+    font-size: 0.92rem;
+}
+
+.local-ai-guidance ul {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding-left: 1rem;
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.local-ai-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: auto;
+}
+
+.local-ai-primary,
+.local-ai-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.55rem;
+    padding: 0.65rem 0.95rem;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.local-ai-primary {
+    color: #061014;
+    border-color: rgba(34, 211, 238, 0.55);
+    background: var(--theme-primary);
+}
+
+.local-ai-secondary {
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.local-ai-primary:disabled,
+.local-ai-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+@media (max-width: 560px) {
+    .local-ai-hero,
+    .local-ai-status-row,
+    .local-ai-metrics {
+        grid-template-columns: 1fr;
+    }
+}

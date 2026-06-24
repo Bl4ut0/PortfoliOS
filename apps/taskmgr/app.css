@@ -150,6 +150,11 @@
     color: #c084fc;
 }
 
+.status-indicator.loading {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
 /* Action Buttons */
 .system-badge {
     color: #64748b;

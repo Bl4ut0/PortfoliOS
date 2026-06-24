@@ -307,7 +307,8 @@
 .start-button,
 .taskbar-app,
 .clock-button,
-.volume-button {
+.volume-button,
+.tray-service-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -338,7 +339,8 @@
 .taskbar-app:hover,
 .start-button:hover,
 .clock-button:hover,
-.volume-button:hover {
+.volume-button:hover,
+.tray-service-button:hover {
     color: var(--text);
     background: rgba(255, 255, 255, 0.06);
 }
@@ -422,10 +424,23 @@
 
 .clock-button:hover,
 .volume-button:hover,
-.volume-button[aria-expanded="true"] {
+.volume-button[aria-expanded="true"],
+.tray-service-button[aria-expanded="true"] {
     color: var(--text);
     border-color: rgba(34, 211, 238, 0.26);
     background: rgba(34, 211, 238, 0.08);
+}
+
+.tray-service-button.local-ai-tray-button {
+    color: var(--theme-accent);
+}
+
+.tray-service-button.local-ai-tray-button.is-loading {
+    color: #f59e0b;
+}
+
+.tray-service-button.local-ai-tray-button.is-generating {
+    color: var(--theme-primary);
 }
 
 .calendar-panel {

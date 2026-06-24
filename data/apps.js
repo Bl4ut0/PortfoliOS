@@ -15,6 +15,7 @@ window.desktopApps = [
     { id: "network", title: "Network Map", icon: "fa-solid fa-diagram-project", pinned: true },
     { id: "linux", title: "lab@bl4ut0", icon: "fa-brands fa-linux", pinned: true },
     { id: "cli", title: "Portfolio CLI", icon: "fa-solid fa-terminal", pinned: true },
+    { id: "local-ai", title: "Local AI", icon: "fa-solid fa-brain", pinned: true },
     { id: "store", title: "Store", icon: "fa-solid fa-shop", pinned: true },
     { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", pinned: true },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false },
@@ -106,7 +107,7 @@ window.storeCategories = [
 window.isAppInstalled = function(id) {
     const coreApps = [
         "devhub", "profile", "dossier", "browser", "network", "linux", "cli", 
-        "settings", "store", "files", "addons", "guildcraft", "homelab", "survival-ai", "status", "taskmgr"
+        "settings", "store", "files", "addons", "guildcraft", "homelab", "survival-ai", "status", "taskmgr", "local-ai"
     ];
     if (coreApps.includes(id)) return true;
 

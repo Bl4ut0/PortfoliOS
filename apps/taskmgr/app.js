@@ -74,6 +74,7 @@
         browser: 45,
         store: 20,
         cli: 8,
+        "local-ai": 10,
         taskmgr: 12,
         profile: 10,
         dossier: 10,
@@ -118,11 +119,18 @@
             processList.push({
                 id: appId,
                 name: title,
+                icon: appDef?.icon || "fa-solid fa-window-maximize",
                 status: status,
                 memory: mem,
                 isSystem: false
             });
         });
+
+        const localAiProcess = window.LocalAI?.getProcess?.();
+        if (localAiProcess) {
+            totalMem += localAiProcess.memory;
+            processList.push(localAiProcess);
+        }
 
         // Calculate CPU busy load based on performance diagnostics
         // Long Tasks duration in current sampling window (1200ms)
@@ -239,20 +247,21 @@
         // Update Table Rows
         const tbody = windowEl.querySelector(".taskmgr-tbody");
         if (tbody) {
+            const escapeHtml = window.escapeHtml || ((value) => String(value ?? ""));
             tbody.innerHTML = metrics.processList.map(proc => `
-                <tr data-process-id="${proc.id}">
+                <tr data-process-id="${escapeHtml(proc.id)}">
                     <td>
                         <div class="proc-name-cell">
-                            <i class="${proc.isSystem ? 'fa-solid fa-gears' : 'fa-solid fa-window-maximize'}"></i>
-                            <span>${proc.name}</span>
+                            <i class="${escapeHtml(proc.isSystem ? 'fa-solid fa-gears' : (proc.icon || 'fa-solid fa-window-maximize'))}"></i>
+                            <span>${escapeHtml(proc.name)}</span>
                         </div>
                     </td>
-                    <td><span class="status-indicator ${proc.status.toLowerCase()}">${proc.status}</span></td>
-                    <td>${proc.memory} MB</td>
+                    <td><span class="status-indicator ${escapeHtml(String(proc.status).toLowerCase())}">${escapeHtml(proc.status)}</span></td>
+                    <td>${escapeHtml(proc.memory)} MB</td>
                     <td>
                         ${proc.isSystem 
                             ? '<span class="system-badge">System</span>' 
-                            : `<button class="btn-end-task" data-kill="${proc.id}" title="Force terminate application">End Task</button>`
+                            : `<button class="btn-end-task" data-kill="${escapeHtml(proc.id)}" title="Force terminate application">End Task</button>`
                         }
                     </td>
                 </tr>
@@ -421,6 +430,15 @@
                     if (!killBtn) return;
                     
                     const appId = killBtn.dataset.kill;
+                    if (appId === "local-ai-service" && window.LocalAI) {
+                        window.LocalAI.disable("taskmgr");
+                        if (window.showDesktopToast) {
+                            window.showDesktopToast("Terminated process: Local AI Worker");
+                        }
+                        updateUI(windowEl);
+                        return;
+                    }
+
                     if (window.closeDesktopWindow) {
                         window.closeDesktopWindow(appId);
                         if (window.showDesktopToast) {

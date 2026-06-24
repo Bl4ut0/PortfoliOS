@@ -15,7 +15,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="styles-v1.css?v=1.0.37">
+    <link rel="stylesheet" href="styles-v1.css?v=1.0.39">
 </head>
 
 <body>
@@ -810,6 +810,10 @@
                             </button>
                             <div class="taskbar-pins" id="taskbar-apps"></div>
                             <div class="taskbar-tray">
+                                <button class="tray-service-button local-ai-tray-button" id="local-ai-tray-toggle" type="button"
+                                    title="Local AI" aria-expanded="false" aria-controls="local-ai-tray-panel" hidden>
+                                    <i class="fa-solid fa-brain"></i>
+                                </button>
                                 <button class="volume-button" id="volume-toggle" type="button" title="Adjust volume"
                                     aria-expanded="false" aria-controls="volume-panel">
                                     <i class="fa-solid fa-volume-high" id="taskbar-volume-icon"></i>
@@ -826,6 +830,21 @@
                             </div>
                             <input id="desktop-volume" type="range" min="0" max="100" step="1" value="70"
                                 aria-label="Desktop volume">
+                        </aside>
+                        <aside class="local-ai-tray-panel" id="local-ai-tray-panel" hidden aria-label="Local AI service status">
+                            <div class="local-ai-tray-header">
+                                <span><i class="fa-solid fa-brain"></i> Local AI</span>
+                                <b id="local-ai-tray-status">Off</b>
+                            </div>
+                            <p id="local-ai-tray-detail">Local AI is off.</p>
+                            <div class="local-ai-tray-actions">
+                                <button type="button" data-local-ai-tray-open>
+                                    <i class="fa-solid fa-up-right-from-square"></i> Open
+                                </button>
+                                <button type="button" data-local-ai-tray-stop>
+                                    <i class="fa-solid fa-stop"></i> Stop
+                                </button>
+                            </div>
                         </aside>
                         <aside class="calendar-panel" id="calendar-panel" hidden aria-label="Calendar and clock">
                             <strong id="calendar-time">--:--</strong>
@@ -929,25 +948,26 @@
     <script src="core/utils.js"></script>
     <script src="core/filesystem.js?v=1.0.30"></script>
     <script src="core/gdrive-sync.js?v=1.0.36"></script>
-    <script src="core/app-loader.js?v=1.0.33"></script>
+    <script src="core/app-loader.js?v=1.0.39"></script>
+    <script src="core/local-ai.js?v=1.0.39"></script>
     <script src="core/preferences.js?v=1.0.36"></script>
     <script src="core/window-manager.js?v=1.0.33"></script>
     
     <!-- Shared Data -->
     <script src="data/systems.js"></script>
-    <script src="data/apps.js?v=1.0.37"></script>
+    <script src="data/apps.js?v=1.0.39"></script>
     <script src="data/users.js?v=1.0.37"></script>
     <script src="data/bookmarks.js"></script>
     <script src="data/config.js?v=1.0.36"></script>
     
     <!-- Desktop Components -->
-    <script src="desktop/taskbar.js"></script>
+    <script src="desktop/taskbar.js?v=1.0.39"></script>
     <script src="desktop/start-menu.js?v=1.0.37"></script>
     <script src="desktop/desktop-icons.js"></script>
     <script src="desktop/context-menu.js?v=1.0.36"></script>
     <script src="desktop/dossier.js"></script>
     <script src="desktop/browser.js"></script>
-    <script src="desktop/terminal.js?v=1.0.38"></script>
+    <script src="desktop/terminal.js?v=1.0.39"></script>
     <script src="desktop/network-map.js"></script>
     <script src="desktop/store.js?v=1.0.33"></script>
     <script src="desktop/settings.js?v=1.0.37"></script>
@@ -957,7 +977,7 @@
     <script src="desktop/matrix-rain.js"></script>
     <script src="desktop/boot.js"></script>
     <script src="desktop/wad-inspector.js"></script>
-    <script src="desktop/shell.js?v=1.0.37"></script>
+    <script src="desktop/shell.js?v=1.0.39"></script>
     
     <!-- Mobile & Quick Shells -->
     <script src="mobile/shell.js"></script>
