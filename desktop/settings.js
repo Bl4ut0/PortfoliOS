@@ -374,6 +374,400 @@ window.renderScreensaverOptions = () => {
     `).join("");
 };
 
+// API Key Dialog variables & helpers
+let currentDialogProvider = null;
+
+function openApiKeyDialog(provider) {
+    currentDialogProvider = provider;
+    const backdrop = document.getElementById("ai-key-dialog-backdrop");
+    const title = document.getElementById("ai-key-dialog-title");
+    const label = document.getElementById("ai-key-dialog-label");
+    const input = document.getElementById("ai-key-dialog-input");
+    const getLink = document.getElementById("ai-key-dialog-get-link");
+
+    if (!backdrop) return;
+
+    if (provider === "openai") {
+        if (title) title.innerHTML = '<i class="fa-solid fa-robot"></i> Configure OpenAI API Key';
+        if (label) label.textContent = "OpenAI API Key";
+        if (getLink) getLink.href = "https://platform.openai.com/api-keys";
+        if (input) input.value = localStorage.getItem("settings-openai-api-key") || "";
+    } else if (provider === "gemini") {
+        if (title) title.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Configure Gemini API Key';
+        if (label) label.textContent = "Google Gemini API Key";
+        if (getLink) getLink.href = "https://aistudio.google.com/app/apikey";
+        if (input) input.value = localStorage.getItem("settings-gemini-api-key") || "";
+    }
+
+    backdrop.style.display = "flex";
+    if (input) input.focus();
+}
+
+function closeApiKeyDialog() {
+    const backdrop = document.getElementById("ai-key-dialog-backdrop");
+    if (backdrop) {
+        backdrop.style.display = "none";
+    }
+    currentDialogProvider = null;
+}
+
+// Local AI Settings panel logic
+function initLocalAISettings() {
+    const modelSelect = document.getElementById("settings-local-ai-model-select");
+    const enableBtn = document.getElementById("settings-local-ai-enable-btn");
+    const stopBtn = document.getElementById("settings-local-ai-stop-btn");
+
+    if (modelSelect) {
+        modelSelect.addEventListener("change", (e) => {
+            if (window.LocalAI?.setSelectedModelId) {
+                window.LocalAI.setSelectedModelId(e.target.value);
+                updateLocalAiSettingsUI();
+            }
+        });
+    }
+
+    if (enableBtn) {
+        enableBtn.addEventListener("click", async () => {
+            if (!window.LocalAI) return;
+            enableBtn.disabled = true;
+            enableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Starting...';
+            try {
+                await window.LocalAI.enable("Settings app");
+            } catch (error) {
+                console.error("Local AI start failed.", error);
+                window.showDesktopToast?.("Local AI failed to start.");
+            } finally {
+                updateLocalAiSettingsUI();
+            }
+        });
+    }
+
+    if (stopBtn) {
+        stopBtn.addEventListener("click", async () => {
+            if (!window.LocalAI) return;
+            stopBtn.disabled = true;
+            await window.LocalAI.disable("user-settings");
+            window.showDesktopToast?.("Local AI stopped.");
+            updateLocalAiSettingsUI();
+        });
+    }
+
+    // Wire Configure buttons
+    const configOpenAiBtn = document.getElementById("ai-key-configure-openai");
+    const configGeminiBtn = document.getElementById("ai-key-configure-gemini");
+    const dialogCancelBtn = document.getElementById("ai-key-dialog-cancel");
+    const dialogSaveBtn = document.getElementById("ai-key-dialog-save");
+    const dialogInput = document.getElementById("ai-key-dialog-input");
+    const dialogBackdrop = document.getElementById("ai-key-dialog-backdrop");
+    const aboutToggle = document.getElementById("ai-about-toggle");
+    const aboutContent = document.getElementById("ai-about-content");
+
+    if (configOpenAiBtn) {
+        configOpenAiBtn.addEventListener("click", () => openApiKeyDialog("openai"));
+    }
+    if (configGeminiBtn) {
+        configGeminiBtn.addEventListener("click", () => openApiKeyDialog("gemini"));
+    }
+    if (dialogCancelBtn) {
+        dialogCancelBtn.addEventListener("click", closeApiKeyDialog);
+    }
+    if (dialogSaveBtn) {
+        dialogSaveBtn.addEventListener("click", () => {
+            if (currentDialogProvider === "openai" && dialogInput) {
+                localStorage.setItem("settings-openai-api-key", dialogInput.value.trim());
+                window.showDesktopToast?.("OpenAI API Key saved.");
+            } else if (currentDialogProvider === "gemini" && dialogInput) {
+                localStorage.setItem("settings-gemini-api-key", dialogInput.value.trim());
+                window.showDesktopToast?.("Gemini API Key saved.");
+            }
+            closeApiKeyDialog();
+            updateLocalAiSettingsUI();
+        });
+    }
+    if (dialogInput) {
+        dialogInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                dialogSaveBtn?.click();
+            }
+        });
+    }
+    if (dialogBackdrop) {
+        dialogBackdrop.addEventListener("click", (e) => {
+            if (e.target === dialogBackdrop) {
+                closeApiKeyDialog();
+            }
+        });
+    }
+
+    if (aboutToggle && aboutContent) {
+        aboutToggle.addEventListener("click", () => {
+            const isOpen = aboutContent.classList.toggle("open");
+            aboutToggle.classList.toggle("open", isOpen);
+        });
+    }
+
+    updateLocalAiSettingsUI();
+}
+
+function updateLocalAiSettingsUI() {
+    const modelSelect = document.getElementById("settings-local-ai-model-select");
+    const enableBtn = document.getElementById("settings-local-ai-enable-btn");
+    const stopBtn = document.getElementById("settings-local-ai-stop-btn");
+    const indicator = document.getElementById("settings-local-ai-indicator");
+    const statusText = document.getElementById("settings-local-ai-status-text");
+    const progressContainer = document.getElementById("settings-local-ai-progress-container");
+    const progressBar = document.getElementById("settings-local-ai-progress-bar");
+    const metaModel = document.getElementById("settings-local-ai-meta-model");
+    const metaMemory = document.getElementById("settings-local-ai-meta-memory");
+    const metaDetails = document.getElementById("settings-local-ai-meta-details");
+
+    const pillDot = document.getElementById("ai-status-pill-dot");
+    const pillText = document.getElementById("ai-status-pill-text");
+
+    const status = window.LocalAI?.getStatus ? window.LocalAI.getStatus() : {
+        status: "idle",
+        statusText: "Local AI service is unavailable.",
+        modelLabel: "-",
+        memoryMB: 0,
+        progress: 0,
+        webGpuSupported: false
+    };
+
+    const isCloud = status.modelType && status.modelType.startsWith("cloud-");
+
+    // Populate dropdown options if not loaded
+    if (modelSelect && window.LocalAI) {
+        const models = window.LocalAI.getAvailableModels() || [];
+        const selectedModelId = window.LocalAI.getSelectedModelId() || "";
+
+        const freeCloudModels = models.filter(m => m.type && m.type.startsWith("cloud-") && m.free);
+        const premiumCloudModels = models.filter(m => m.type && m.type.startsWith("cloud-") && !m.free);
+        const localModels = models.filter(m => !m.type || m.type === "local");
+
+        let selectHtml = "";
+        
+        if (freeCloudModels.length > 0) {
+            selectHtml += `<optgroup label="Cloud Models (Free)">`;
+            selectHtml += freeCloudModels.map(m => 
+                `<option value="${m.id}" ${m.id === selectedModelId ? "selected" : ""}>${m.label}</option>`
+            ).join("");
+            selectHtml += `</optgroup>`;
+        }
+        if (premiumCloudModels.length > 0) {
+            selectHtml += `<optgroup label="Cloud Models (API Key Required)">`;
+            selectHtml += premiumCloudModels.map(m => 
+                `<option value="${m.id}" ${m.id === selectedModelId ? "selected" : ""}>${m.label}</option>`
+            ).join("");
+            selectHtml += `</optgroup>`;
+        }
+        if (localModels.length > 0) {
+            selectHtml += `<optgroup label="Local Models (WebGPU)">`;
+            selectHtml += localModels.map(m => 
+                `<option value="${m.id}" ${m.id === selectedModelId ? "selected" : ""}>${m.label}</option>`
+            ).join("");
+            selectHtml += `</optgroup>`;
+        }
+        
+        if (modelSelect.innerHTML !== selectHtml) {
+            modelSelect.innerHTML = selectHtml;
+            if (!modelSelect.dataset.customized && window.createCustomDropdown) {
+                window.createCustomDropdown(modelSelect);
+            } else {
+                modelSelect.updateCustomDropdown?.();
+            }
+        } else if (!modelSelect.dataset.customized && window.createCustomDropdown) {
+            window.createCustomDropdown(modelSelect);
+        } else {
+            modelSelect.updateCustomDropdown?.();
+        }
+        
+        modelSelect.disabled = !isCloud && (status.busy || status.ready);
+    }
+
+    // Update API Key Status Dots
+    const openaiKeyStatus = document.getElementById("ai-key-status-openai");
+    const geminiKeyStatus = document.getElementById("ai-key-status-gemini");
+    if (openaiKeyStatus) {
+        const hasOpenaiKey = !!localStorage.getItem("settings-openai-api-key");
+        openaiKeyStatus.innerHTML = hasOpenaiKey 
+            ? '<span class="status-indicator-dot connected" style="display: inline-block; width: 6px; height: 6px; margin-right: 4px; vertical-align: middle;"></span>Configured' 
+            : '<span class="status-indicator-dot idle" style="display: inline-block; width: 6px; height: 6px; margin-right: 4px; vertical-align: middle;"></span>Not configured';
+    }
+    if (geminiKeyStatus) {
+        const hasGeminiKey = !!localStorage.getItem("settings-gemini-api-key");
+        geminiKeyStatus.innerHTML = hasGeminiKey 
+            ? '<span class="status-indicator-dot connected" style="display: inline-block; width: 6px; height: 6px; margin-right: 4px; vertical-align: middle;"></span>Using custom key' 
+            : '<span class="status-indicator-dot idle" style="display: inline-block; width: 6px; height: 6px; margin-right: 4px; vertical-align: middle;"></span>Using built-in key';
+    }
+
+    // Update Status Indicators (Service Card)
+    if (indicator) {
+        indicator.className = "status-indicator-dot";
+        if (status.ready || status.status === "generating") {
+            if (isCloud) {
+                indicator.classList.add("cloud");
+            } else {
+                indicator.classList.add("connected");
+            }
+        } else if (status.status === "loading") {
+            indicator.classList.add("loading");
+        } else if (status.status === "error") {
+            indicator.classList.add("disconnected");
+        } else {
+            indicator.classList.add("idle");
+        }
+    }
+
+    if (statusText) {
+        statusText.textContent = status.status === "generating"
+            ? "Active"
+            : status.status === "loading"
+                ? "Loading"
+                : status.status === "error"
+                    ? "Error"
+                    : (status.ready ? (isCloud ? "Cloud Ready" : "Local Ready") : "Off");
+    }
+
+    // Update Status Pill (Header)
+    if (pillDot && pillText) {
+        pillDot.className = "status-indicator-dot";
+        if (status.ready || status.status === "generating") {
+            if (isCloud) {
+                pillDot.classList.add("cloud");
+                pillText.textContent = "Cloud";
+            } else {
+                pillDot.classList.add("connected");
+                pillText.textContent = "Local";
+            }
+        } else if (status.status === "loading") {
+            pillDot.classList.add("loading");
+            pillText.textContent = "Loading";
+        } else if (status.status === "error") {
+            pillDot.classList.add("disconnected");
+            pillText.textContent = "Error";
+        } else {
+            pillDot.classList.add("idle");
+            pillText.textContent = "Off";
+        }
+    }
+
+    // Progress Bar
+    if (progressContainer && progressBar) {
+        if (status.status === "loading") {
+            progressContainer.style.display = "block";
+            const pct = Math.round((status.progress || 0) * 100);
+            progressBar.style.width = `${pct}%`;
+        } else {
+            progressContainer.style.display = "none";
+        }
+    }
+
+    // Meta Grid
+    if (metaModel) metaModel.textContent = status.modelLabel || "-";
+    if (metaMemory) metaMemory.textContent = status.memoryMB ? `~${status.memoryMB} MB` : (isCloud ? "Cloud API" : "-");
+    if (metaDetails) {
+        if (status.status === "loading") {
+            const pct = Math.round((status.progress || 0) * 100);
+            metaDetails.textContent = `${status.statusText} (${pct}%)`;
+        } else if (status.status === "error") {
+            metaDetails.textContent = status.lastError || status.statusText;
+        } else {
+            metaDetails.textContent = status.statusText || (isCloud ? "Cloud service is disconnected." : "Service is stopped.");
+        }
+    }
+
+    // Enable/Stop buttons
+    const isAiActive = status.enabled && status.status !== "error";
+    if (enableBtn) {
+        if (isCloud) {
+            enableBtn.disabled = status.busy;
+            enableBtn.innerHTML = '<i class="fa-solid fa-plug"></i> Connect Cloud AI';
+        } else {
+            enableBtn.disabled = !status.webGpuSupported || status.busy;
+            enableBtn.innerHTML = status.status === "error"
+                ? '<i class="fa-solid fa-rotate-right"></i> Retry enabling Local AI'
+                : '<i class="fa-solid fa-bolt"></i> Enable Local AI';
+        }
+        enableBtn.style.display = isAiActive ? "none" : "inline-flex";
+    }
+
+    if (stopBtn) {
+        stopBtn.disabled = !status.enabled;
+        stopBtn.style.display = isAiActive ? "inline-flex" : "none";
+        if (isCloud) {
+            stopBtn.className = "settings-btn btn-danger";
+            stopBtn.innerHTML = '<i class="fa-solid fa-link-slash"></i> Disconnect';
+        } else {
+            stopBtn.className = "settings-btn btn-danger";
+            stopBtn.innerHTML = '<i class="fa-solid fa-stop"></i> Stop Service';
+        }
+    }
+}
+
+function initDebugSettings() {
+    const logContainer = document.getElementById("settings-debug-log-container");
+    const copyBtn = document.getElementById("settings-debug-copy-btn");
+    const clearBtn = document.getElementById("settings-debug-clear-btn");
+
+    if (!logContainer) return;
+
+    const renderLogs = () => {
+        const logs = window.SystemLogs || [];
+        if (logs.length === 0) {
+            logContainer.innerHTML = `<span style="color: var(--text-muted, #6b7280);">No logs recorded. System is running cleanly.</span>`;
+            return;
+        }
+        logContainer.textContent = logs.join("\n");
+        logContainer.scrollTop = logContainer.scrollHeight;
+    };
+
+    renderLogs();
+
+    if (window.EventBus) {
+        window.EventBus.on("system:log-added", () => {
+            const activePanel = document.querySelector(".settings-panel.active");
+            if (activePanel && activePanel.dataset.panel === "debug") {
+                renderLogs();
+            }
+        });
+    }
+
+    const tabs = document.querySelectorAll(".settings-tab-btn, .settings-user-card");
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            if (tab.dataset.tab === "debug") {
+                renderLogs();
+            }
+        });
+    });
+
+    if (copyBtn) {
+        copyBtn.addEventListener("click", () => {
+            const textToCopy = (window.SystemLogs || []).join("\n");
+            if (!textToCopy) {
+                if (window.showDesktopToast) window.showDesktopToast("No logs to copy");
+                return;
+            }
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    if (window.showDesktopToast) window.showDesktopToast("Logs copied to clipboard!");
+                })
+                .catch(err => {
+                    console.error("Failed to copy logs:", err);
+                    if (window.showDesktopToast) window.showDesktopToast("Failed to copy logs");
+                });
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+            window.SystemLogs = [];
+            renderLogs();
+            if (window.showDesktopToast) window.showDesktopToast("Debug logs cleared");
+        });
+    }
+}
+
 // Bootstrap function for Settings App
 function initSettingsApp() {
     initSettingsTabs();
@@ -381,10 +775,19 @@ function initSettingsApp() {
     initResolutionSettings();
     initScreensaverSettings();
     initGDriveSettings();
+    initLocalAISettings();
+    initDebugSettings();
     renderSettingsUser();
     window.renderWallpaperOptions();
     window.renderThemeOptions();
     window.renderScreensaverOptions();
+
+    // Initialize custom dropdowns on load
+    const resSelect = document.getElementById("desktop-resolution-select");
+    if (resSelect && window.createCustomDropdown) window.createCustomDropdown(resSelect);
+
+    const ssDelaySelect = document.getElementById("screensaver-delay-select");
+    if (ssDelaySelect && window.createCustomDropdown) window.createCustomDropdown(ssDelaySelect);
 }
 
 // Run initialization once the DOM is loaded or when settings is opened
@@ -407,6 +810,8 @@ if (window.EventBus) {
     window.EventBus.on("user:changed", () => renderSettingsUser());
     window.EventBus.on("volume:changed", (val) => updateVolumeUI(val));
     window.EventBus.on("state:changed:gdriveConnected", () => updateGDriveUI());
+    window.EventBus.on("local-ai:status", () => updateLocalAiSettingsUI());
+    window.EventBus.on("local-ai:model-changed", () => updateLocalAiSettingsUI());
     window.EventBus.on("app:opened", (name) => {
         if (name === "settings") {
             // refresh data when window is opened
@@ -416,18 +821,31 @@ if (window.EventBus) {
                 const resSelect = document.getElementById("desktop-resolution-select");
                 if (resSelect) {
                     resSelect.value = window.state.desktopResolution;
+                    resSelect.updateCustomDropdown?.();
                 }
 
                 const screensaverDelay = document.getElementById("screensaver-delay-select");
                 if (screensaverDelay) {
                     screensaverDelay.value = String(window.state.screensaverDelay || 5);
+                    screensaverDelay.updateCustomDropdown?.();
                 }
             }
             updateGDriveUI();
+            updateLocalAiSettingsUI();
             renderSettingsUser();
             window.renderWallpaperOptions();
             window.renderThemeOptions();
             window.renderScreensaverOptions();
+            
+            const activePanel = document.querySelector(".settings-panel.active");
+            if (activePanel && activePanel.dataset.panel === "debug") {
+                const logContainer = document.getElementById("settings-debug-log-container");
+                if (logContainer) {
+                    const logs = window.SystemLogs || [];
+                    logContainer.textContent = logs.length === 0 ? "No logs recorded." : logs.join("\n");
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                }
+            }
         }
     });
 }

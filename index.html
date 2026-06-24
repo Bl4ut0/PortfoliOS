@@ -15,7 +15,63 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="styles-v1.css?v=1.0.39">
+    <link rel="stylesheet" href="styles-v1.css?v=1.0.41">
+    <script>
+        // Global System Debug Logger
+        window.SystemLogs = [];
+        window.addSystemLog = (type, message, error = null) => {
+            const timestamp = new Date().toLocaleTimeString();
+            let logMsg = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+            if (error) {
+                if (error.stack) {
+                    logMsg += `\nStack: ${error.stack}`;
+                } else if (error.message) {
+                    logMsg += `\nError: ${error.message}`;
+                } else {
+                    logMsg += `\nError: ${JSON.stringify(error)}`;
+                }
+            }
+            window.SystemLogs.push(logMsg);
+            
+            if (window.SystemLogs.length > 500) {
+                window.SystemLogs.shift();
+            }
+
+            if (window.EventBus) {
+                window.EventBus.emit("system:log-added", logMsg);
+            }
+        };
+
+        window.addEventListener("error", (event) => {
+            window.addSystemLog("error", `Unhandled Error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`, event.error);
+        });
+
+        window.addEventListener("unhandledrejection", (event) => {
+            const reason = event.reason;
+            const message = reason instanceof Error ? reason.message : String(reason);
+            window.addSystemLog("error", `Unhandled Promise Rejection: ${message}`, reason instanceof Error ? reason : null);
+        });
+
+        const originalConsoleError = console.error;
+        console.error = function (...args) {
+            originalConsoleError.apply(console, args);
+            const msg = args.map(arg => {
+                if (arg instanceof Error) return arg.message + (arg.stack ? "\n" + arg.stack : "");
+                if (typeof arg === 'object') {
+                    try { return JSON.stringify(arg); } catch(e) { return String(arg); }
+                }
+                return String(arg);
+            }).join(" ");
+            window.addSystemLog("error", msg);
+        };
+
+        const originalConsoleWarn = console.warn;
+        console.warn = function (...args) {
+            originalConsoleWarn.apply(console, args);
+            const msg = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(" ");
+            window.addSystemLog("warning", msg);
+        };
+    </script>
 </head>
 
 <body>
@@ -514,9 +570,9 @@
                         </div>
 
                         <section class="desktop-window settings-window is-hidden" data-window="settings"
-                            aria-label="Desktop settings window">
+                            aria-label="Settings window">
                             <div class="window-bar">
-                                <span><i class="fa-solid fa-sliders"></i> desktop.settings</span>
+                                <span><i class="fa-solid fa-sliders"></i> settings</span>
                                 <div class="window-actions">
                                     <button type="button" data-minimize-window="settings" title="Minimize settings">
                                         <i class="fa-solid fa-minus"></i>
@@ -558,6 +614,14 @@
                                     <button type="button" class="settings-tab-btn" data-tab="cloud-sync" aria-selected="false">
                                         <i class="fa-solid fa-cloud-arrow-up"></i>
                                         <span>Cloud Sync</span>
+                                    </button>
+                                    <button type="button" class="settings-tab-btn" data-tab="local-ai" aria-selected="false">
+                                        <i class="fa-solid fa-brain"></i>
+                                        <span>AI</span>
+                                    </button>
+                                    <button type="button" class="settings-tab-btn" data-tab="debug" aria-selected="false">
+                                        <i class="fa-solid fa-bug"></i>
+                                        <span>Debug</span>
                                     </button>
                                 </aside>
                                 <main class="settings-main">
@@ -731,23 +795,9 @@
                                                     <span class="status-indicator-dot disconnected" id="settings-gdrive-indicator"></span>
                                                     <span id="settings-gdrive-status-text" class="gdrive-status-label">Not Connected</span>
                                                 </div>
-                                                <p class="settings-info-text">Sign in to link Google Drive for PortfoliOS documents, configuration, and game save backups.</p>
+                                                <p class="settings-info-text" style="margin-bottom: 1rem;">Sign in to link Google Drive for PortfoliOS documents, configuration, and game save backups.</p>
                                                 
-                                                <div class="gdrive-credentials-row" id="gdrive-credentials-row">
-                                                    <label for="settings-gdrive-client-id" class="settings-input-label">OAuth2 Client ID</label>
-                                                    <input type="text" id="settings-gdrive-client-id" class="settings-text-input" readonly placeholder="Enter Google OAuth Client ID">
-                                                </div>
-
-                                                <div class="gdrive-oauth-grid" aria-label="Google OAuth configuration status">
-                                                    <div>
-                                                        <span>Authorized origin</span>
-                                                        <code id="settings-gdrive-origin">https://os.bl4ut0.dev</code>
-                                                    </div>
-                                                    <div>
-                                                        <span>Return mode</span>
-                                                        <code id="settings-gdrive-return-mode">GIS token callback active</code>
-                                                    </div>
-                                                </div>
+                                                <input type="hidden" id="settings-gdrive-client-id">
                                                 
                                                 <div class="gdrive-actions-row">
                                                     <button type="button" id="settings-gdrive-connect-btn" class="settings-btn btn-primary">
@@ -758,26 +808,6 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                        </section>
-
-                                        <section class="settings-section">
-                                            <h3>How to Configure Google OAuth</h3>
-                                            <p class="settings-info-text" style="margin-bottom: 0.5rem;">To connect your personal Google Drive, you need to create a free Web OAuth Client ID on Google Cloud Console:</p>
-                                            <ul class="settings-info-text" style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.35rem; list-style-type: decimal; margin: 0;">
-                                                <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Google Cloud Console</a>.</li>
-                                                <li>Select or create a project, then search for and enable the <strong>Google Drive API</strong>.</li>
-                                                <li>Set up your <strong>OAuth Consent Screen</strong> and add the <code>.../auth/drive.file</code> scope.</li>
-                                                <li>Navigate to <strong>Credentials</strong> &gt; <strong>Create Credentials</strong> &gt; <strong>OAuth client ID</strong>.</li>
-                                                <li>Set the application type to <strong>Web application</strong>.</li>
-                                                <li>In <strong>Authorized JavaScript Origins</strong>, add:
-                                                    <ul style="list-style-type: disc; padding-left: 1.25rem; margin-top: 0.25rem;">
-                                                        <li><code>https://os.bl4ut0.dev</code></li>
-                                                        <li><code>http://localhost:8005</code> (for local testing)</li>
-                                                    </ul>
-                                                </li>
-                                                <li>The Google Identity Services token client returns directly through the JavaScript callback on the authorized origin; PortfoliOS does not use a separate redirect URI for this flow.</li>
-                                                <li>Copy the generated <strong>Client ID</strong> and paste it into the field above.</li>
-                                            </ul>
                                         </section>
 
                                         <section class="settings-section" id="settings-sync-actions-section" style="display: none;">
@@ -797,6 +827,165 @@
                                             </div>
                                         </section>
                                     </div>
+
+                                    <!-- AI PANEL -->
+                                    <div class="settings-panel" data-panel="local-ai">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                                            <h2 style="margin: 0;">AI Settings</h2>
+                                            <span class="ai-status-pill" id="ai-status-pill">
+                                                <span class="status-indicator-dot idle" id="ai-status-pill-dot"></span>
+                                                <span id="ai-status-pill-text">Off</span>
+                                            </span>
+                                        </div>
+
+                                        <!-- MODEL SELECTOR -->
+                                        <section class="settings-section">
+                                            <h3><i class="fa-solid fa-microchip" style="color: var(--theme-primary, #22d3ee); margin-right: 4px;"></i> Model</h3>
+                                            <div class="settings-control-row">
+                                                <select id="settings-local-ai-model-select" class="settings-select" style="width: 100%; color-scheme: dark;" aria-label="AI model selection"></select>
+                                            </div>
+                                        </section>
+
+                                        <!-- SERVICE STATUS CARD -->
+                                        <section class="settings-section" id="settings-ai-status-section">
+                                            <div class="gdrive-status-card">
+                                                <div class="gdrive-status-header">
+                                                    <span class="status-indicator-dot idle" id="settings-local-ai-indicator"></span>
+                                                    <span id="settings-local-ai-status-text" class="gdrive-status-label">Off</span>
+                                                </div>
+                                                <div class="local-ai-progress-track" id="settings-local-ai-progress-container" style="display: none; height: 0.45rem; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, 0.08);">
+                                                    <span id="settings-local-ai-progress-bar" style="display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--theme-primary), var(--theme-accent)); width: 0%; transition: width 0.25s ease;"></span>
+                                                </div>
+                                                <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem;">
+                                                    <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                                                        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #6b7280); font-weight: 700;">Model</span>
+                                                        <strong id="settings-local-ai-meta-model" style="font-size: 0.78rem; color: var(--text, #f3f4f6);">-</strong>
+                                                    </div>
+                                                    <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                                                        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #6b7280); font-weight: 700;">Memory</span>
+                                                        <strong id="settings-local-ai-meta-memory" style="font-size: 0.78rem; color: var(--text, #f3f4f6);">-</strong>
+                                                    </div>
+                                                    <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                                                        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #6b7280); font-weight: 700;">Details</span>
+                                                        <strong id="settings-local-ai-meta-details" style="font-size: 0.78rem; color: var(--text, #f3f4f6);">AI is off.</strong>
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; gap: 0.6rem;">
+                                                    <button type="button" id="settings-local-ai-enable-btn" class="settings-btn btn-primary" style="flex: 1;">
+                                                        <i class="fa-solid fa-bolt"></i> Enable
+                                                    </button>
+                                                    <button type="button" id="settings-local-ai-stop-btn" class="settings-btn btn-danger" style="display: none; flex: 1;">
+                                                        <i class="fa-solid fa-stop"></i> Stop Service
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <!-- CLOUD PROVIDER KEYS -->
+                                        <section class="settings-section" id="settings-cloud-ai-section">
+                                            <h3><i class="fa-solid fa-cloud" style="color: var(--theme-primary, #22d3ee); margin-right: 4px;"></i> API Keys</h3>
+                                            <p class="settings-info-text" style="margin-bottom: 0;">Gemini 2.5 Flash works out-of-the-box. To unlock other cloud models, configure your API keys below.</p>
+                                            <div class="ai-key-config-row">
+                                                <!-- OpenAI Key Card -->
+                                                <div class="ai-key-card">
+                                                    <div class="ai-key-card-info">
+                                                        <i class="fa-solid fa-robot"></i>
+                                                        <div>
+                                                            <div class="ai-key-card-label">OpenAI</div>
+                                                            <div class="ai-key-card-status" id="ai-key-status-openai">No key configured</div>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="settings-btn" id="ai-key-configure-openai">
+                                                        <i class="fa-solid fa-key"></i> Configure
+                                                    </button>
+                                                </div>
+                                                <!-- Gemini Key Card -->
+                                                <div class="ai-key-card">
+                                                    <div class="ai-key-card-info">
+                                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                                        <div>
+                                                            <div class="ai-key-card-label">Google Gemini</div>
+                                                            <div class="ai-key-card-status" id="ai-key-status-gemini">Using built-in key</div>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="settings-btn" id="ai-key-configure-gemini">
+                                                        <i class="fa-solid fa-key"></i> Configure
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <p class="settings-info-text" style="margin: 0;">
+                                                <i class="fa-solid fa-shield-halved" style="color: var(--theme-primary, #22d3ee); margin-right: 3px;"></i>
+                                                All keys stay in your browser's <code>localStorage</code> and are never sent to our server.
+                                            </p>
+                                        </section>
+
+                                        <!-- ABOUT (COLLAPSIBLE) -->
+                                        <div>
+                                            <button type="button" class="ai-about-toggle" id="ai-about-toggle">
+                                                <i class="fa-solid fa-chevron-right"></i> About Local AI
+                                            </button>
+                                            <div class="ai-about-content" id="ai-about-content">
+                                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.6rem;">
+                                                    <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255, 255, 255, 0.04); padding: 0.55rem 0.7rem; border-radius: 6px;">
+                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary, #22d3ee);"><i class="fa-solid fa-download"></i> Weights Download</strong>
+                                                        <span style="font-size: 0.7rem; color: var(--text-muted, #9ca3af); line-height: 1.3; display: block; margin-top: 2px;">First launch downloads model weights to browser cache (200MB – 1.6GB).</span>
+                                                    </div>
+                                                    <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255, 255, 255, 0.04); padding: 0.55rem 0.7rem; border-radius: 6px;">
+                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary, #22d3ee);"><i class="fa-solid fa-microchip"></i> WebGPU Compute</strong>
+                                                        <span style="font-size: 0.7rem; color: var(--text-muted, #9ca3af); line-height: 1.3; display: block; margin-top: 2px;">Runs in a background Web Worker and uses your GPU for inference.</span>
+                                                    </div>
+                                                    <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255, 255, 255, 0.04); padding: 0.55rem 0.7rem; border-radius: 6px;">
+                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary, #22d3ee);"><i class="fa-solid fa-power-off"></i> Full Control</strong>
+                                                        <span style="font-size: 0.7rem; color: var(--text-muted, #9ca3af); line-height: 1.3; display: block; margin-top: 2px;">Stop the AI worker from Task Manager, the tray, or this panel at any time.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- API KEY DIALOG (hidden by default) -->
+                                        <div class="ai-key-dialog-backdrop" id="ai-key-dialog-backdrop" style="display: none;">
+                                            <div class="ai-key-dialog">
+                                                <h3 id="ai-key-dialog-title"><i class="fa-solid fa-key"></i> <span>Configure API Key</span></h3>
+                                                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                                                    <label id="ai-key-dialog-label" class="settings-input-label">API Key</label>
+                                                    <div style="display: flex; gap: 0.5rem;">
+                                                        <input type="password" id="ai-key-dialog-input" class="settings-text-input" style="flex: 1;" placeholder="Paste your key here..." aria-label="API Key">
+                                                        <a id="ai-key-dialog-get-link" href="#" target="_blank" rel="noopener" class="settings-btn" style="padding: 9px 12px; font-size: 0.72rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Get Key
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <p class="ai-key-dialog-privacy">
+                                                    <i class="fa-solid fa-shield-halved"></i> Stored only in your browser's local storage. Never sent to our servers.
+                                                </p>
+                                                <div class="ai-key-dialog-actions">
+                                                    <button type="button" class="settings-btn" id="ai-key-dialog-cancel">Cancel</button>
+                                                    <button type="button" class="settings-btn btn-primary" id="ai-key-dialog-save"><i class="fa-solid fa-check"></i> Save</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- DEBUG PANEL -->
+                                    <div class="settings-panel" data-panel="debug">
+                                        <h2>Debug Log</h2>
+                                        
+                                        <section class="settings-section" style="display: flex; flex-direction: column; height: 350px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                                <h3>System & Error Logs</h3>
+                                                <div style="display: flex; gap: 0.5rem;">
+                                                    <button type="button" id="settings-debug-copy-btn" class="settings-btn" style="padding: 4px 8px; font-size: 0.75rem;">
+                                                        <i class="fa-regular fa-copy"></i> Copy Logs
+                                                    </button>
+                                                    <button type="button" id="settings-debug-clear-btn" class="settings-btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;">
+                                                        <i class="fa-solid fa-trash-can"></i> Clear
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <p class="settings-info-text" style="margin-bottom: 0.5rem;">Below are console errors and system messages logged during this session. Use these details to troubleshoot Local AI and system start issues.</p>
+                                            <div id="settings-debug-log-container" style="flex: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 0.6rem; font-family: monospace; font-size: 0.75rem; color: #f8f8f2; overflow-y: auto; white-space: pre-wrap; word-break: break-all; user-select: text; scrollbar-width: thin;"></div>
+                                        </section>
+                                    </div>
                                 </main>
                             </div>
                         </section>
@@ -811,7 +1000,7 @@
                             <div class="taskbar-pins" id="taskbar-apps"></div>
                             <div class="taskbar-tray">
                                 <button class="tray-service-button local-ai-tray-button" id="local-ai-tray-toggle" type="button"
-                                    title="Local AI" aria-expanded="false" aria-controls="local-ai-tray-panel" hidden>
+                                    title="Local AI" aria-expanded="false" aria-controls="local-ai-tray-panel">
                                     <i class="fa-solid fa-brain"></i>
                                 </button>
                                 <button class="volume-button" id="volume-toggle" type="button" title="Adjust volume"
@@ -837,12 +1026,24 @@
                                 <b id="local-ai-tray-status">Off</b>
                             </div>
                             <p id="local-ai-tray-detail">Local AI is off.</p>
+                            
+                            <!-- Tray model selection dropdown -->
+                            <div class="local-ai-tray-model-selector" style="margin-bottom: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                                <label for="local-ai-tray-model-select" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--theme-primary, #22d3ee); display: flex; align-items: center; gap: 4px;">
+                                    <i class="fa-solid fa-gear"></i> Model:
+                                </label>
+                                <select id="local-ai-tray-model-select" class="local-ai-select" style="padding: 6px 8px; font-size: 0.8rem; width: 100%; color-scheme: dark;" aria-label="Local AI tray model selection"></select>
+                            </div>
+
                             <div class="local-ai-tray-actions">
-                                <button type="button" data-local-ai-tray-open>
-                                    <i class="fa-solid fa-up-right-from-square"></i> Open
+                                <button type="button" data-local-ai-tray-enable>
+                                    <i class="fa-solid fa-bolt"></i> Enable
                                 </button>
-                                <button type="button" data-local-ai-tray-stop>
+                                <button type="button" data-local-ai-tray-stop style="display: none;">
                                     <i class="fa-solid fa-stop"></i> Stop
+                                </button>
+                                <button type="button" data-local-ai-tray-settings title="Configure Settings">
+                                    <i class="fa-solid fa-sliders"></i> Settings
                                 </button>
                             </div>
                         </aside>
@@ -948,8 +1149,8 @@
     <script src="core/utils.js"></script>
     <script src="core/filesystem.js?v=1.0.30"></script>
     <script src="core/gdrive-sync.js?v=1.0.36"></script>
-    <script src="core/app-loader.js?v=1.0.39"></script>
-    <script src="core/local-ai.js?v=1.0.39"></script>
+    <script src="core/app-loader.js?v=1.0.43"></script>
+    <script src="core/local-ai.js?v=1.0.43"></script>
     <script src="core/preferences.js?v=1.0.36"></script>
     <script src="core/window-manager.js?v=1.0.33"></script>
     
@@ -961,13 +1162,13 @@
     <script src="data/config.js?v=1.0.36"></script>
     
     <!-- Desktop Components -->
-    <script src="desktop/taskbar.js?v=1.0.39"></script>
+    <script src="desktop/taskbar.js?v=1.0.43"></script>
     <script src="desktop/start-menu.js?v=1.0.37"></script>
     <script src="desktop/desktop-icons.js"></script>
     <script src="desktop/context-menu.js?v=1.0.36"></script>
     <script src="desktop/dossier.js"></script>
     <script src="desktop/browser.js"></script>
-    <script src="desktop/terminal.js?v=1.0.39"></script>
+    <script src="desktop/terminal.js?v=1.0.43"></script>
     <script src="desktop/network-map.js"></script>
     <script src="desktop/store.js?v=1.0.33"></script>
     <script src="desktop/settings.js?v=1.0.37"></script>
@@ -977,7 +1178,8 @@
     <script src="desktop/matrix-rain.js"></script>
     <script src="desktop/boot.js"></script>
     <script src="desktop/wad-inspector.js"></script>
-    <script src="desktop/shell.js?v=1.0.39"></script>
+    <script src="desktop/brain-helper.js"></script>
+    <script src="desktop/shell.js?v=1.0.41"></script>
     
     <!-- Mobile & Quick Shells -->
     <script src="mobile/shell.js"></script>

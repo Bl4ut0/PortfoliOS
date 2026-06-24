@@ -108,9 +108,9 @@ window.boot = () => {
         if (window.closeDesktopWindow) window.closeDesktopWindow("cli");
     }, true);
 
-    // Stop arrow keys from scrolling the webpage during DOOM play
+    // Stop arrow keys from scrolling the webpage during focused game play
     window.addEventListener("keydown", (e) => {
-        if (state.activeWindow === "doomsource" && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
+        if (["doomsource", "romplayer"].includes(state.activeWindow) && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
             e.preventDefault();
         }
     }, { capture: true, passive: false });
@@ -295,18 +295,52 @@ window.boot = () => {
             return;
         }
 
-        const localAITrayOpen = event.target.closest("[data-local-ai-tray-open]");
-        if (localAITrayOpen) {
-            if (window.openDesktopWindow) window.openDesktopWindow("local-ai");
+        const localAITraySettings = event.target.closest("[data-local-ai-tray-settings]");
+        if (localAITraySettings) {
+            if (window.openDesktopWindow) {
+                window.openDesktopWindow("settings").then(() => {
+                    if (window.openSettingsPanel) {
+                        window.openSettingsPanel("local-ai");
+                    }
+                });
+            }
             if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
+            return;
+        }
+
+        const localAITrayEnable = event.target.closest("[data-local-ai-tray-enable]");
+        if (localAITrayEnable) {
+            if (window.LocalAI) {
+                localAITrayEnable.disabled = true;
+                const status = window.LocalAI.getStatus();
+                const isCloud = status.modelType && status.modelType.startsWith("cloud-");
+                localAITrayEnable.innerHTML = isCloud 
+                    ? '<i class="fa-solid fa-spinner fa-spin"></i> Connecting' 
+                    : '<i class="fa-solid fa-spinner fa-spin"></i> Starting';
+                window.LocalAI.enable("Local AI tray")
+                    .then((status) => {
+                        if (status?.ready) {
+                            window.showDesktopToast?.(isCloud ? "Cloud AI is ready." : "Local AI is ready.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Local AI tray start failed.", error);
+                        window.showDesktopToast?.(isCloud ? "Cloud AI failed to connect." : "Local AI failed to start.");
+                    })
+                    .finally(() => {
+                        window.renderLocalAITray?.();
+                    });
+            }
             return;
         }
 
         const localAITrayStop = event.target.closest("[data-local-ai-tray-stop]");
         if (localAITrayStop) {
             if (window.LocalAI) {
+                const status = window.LocalAI.getStatus();
+                const isCloud = status.modelType && status.modelType.startsWith("cloud-");
                 window.LocalAI.disable("tray");
-                window.showDesktopToast?.("Local AI stopped.");
+                window.showDesktopToast?.(isCloud ? "Cloud AI disconnected." : "Local AI stopped.");
             }
             if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
             return;
