@@ -5,7 +5,7 @@
 
 // Tab Navigation Logic
 function initSettingsTabs() {
-    const tabs = document.querySelectorAll(".settings-tab-btn");
+    const tabs = document.querySelectorAll(".settings-tab-btn, .settings-user-card");
     const panels = document.querySelectorAll(".settings-main .settings-panel");
 
     window.openSettingsPanel = (targetTab = "desktop") => {
@@ -25,6 +25,33 @@ function initSettingsTabs() {
             window.openSettingsPanel(tab.dataset.tab);
         });
     });
+}
+
+function renderSettingsUser() {
+    const user = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!user) return;
+
+    const avatarEls = [
+        document.getElementById("settings-user-avatar"),
+        document.getElementById("account-profile-avatar")
+    ];
+    avatarEls.forEach((avatar) => {
+        if (!avatar) return;
+        avatar.src = user.avatar || "";
+        avatar.alt = `${user.displayName} profile picture`;
+    });
+
+    const settingsName = document.getElementById("settings-user-name");
+    const settingsMeta = document.getElementById("settings-user-meta");
+    const profileName = document.getElementById("account-profile-name");
+    const profileHandle = document.getElementById("account-profile-handle");
+    const profileType = document.getElementById("account-profile-type");
+
+    if (settingsName) settingsName.textContent = user.displayName;
+    if (settingsMeta) settingsMeta.textContent = `${user.handle} / ${user.role}`;
+    if (profileName) profileName.textContent = user.displayName;
+    if (profileHandle) profileHandle.textContent = user.handle;
+    if (profileType) profileType.textContent = user.accountType || user.role;
 }
 
 // Volume Controls & Sync Logic
@@ -354,6 +381,7 @@ function initSettingsApp() {
     initResolutionSettings();
     initScreensaverSettings();
     initGDriveSettings();
+    renderSettingsUser();
     window.renderWallpaperOptions();
     window.renderThemeOptions();
     window.renderScreensaverOptions();
@@ -376,6 +404,7 @@ if (window.EventBus) {
     window.EventBus.on("theme:changed", () => window.renderThemeOptions());
     window.EventBus.on("theme:reset", () => window.renderThemeOptions());
     window.EventBus.on("screensaver:changed", () => window.renderScreensaverOptions());
+    window.EventBus.on("user:changed", () => renderSettingsUser());
     window.EventBus.on("volume:changed", (val) => updateVolumeUI(val));
     window.EventBus.on("state:changed:gdriveConnected", () => updateGDriveUI());
     window.EventBus.on("app:opened", (name) => {
@@ -395,6 +424,7 @@ if (window.EventBus) {
                 }
             }
             updateGDriveUI();
+            renderSettingsUser();
             window.renderWallpaperOptions();
             window.renderThemeOptions();
             window.renderScreensaverOptions();

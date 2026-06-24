@@ -10,6 +10,7 @@
         openApps: new Set(["profile"]),
         minimizedApps: new Set(),
         activeWindow: "profile",
+        currentUserId: "bl4ut0",
         browserBookmark: "devhub",
         mobileActiveId: null,
         quickActiveId: "overview",
@@ -32,6 +33,7 @@
 
     // Load initial values from storage if available
     if (window.Storage) {
+        rawState.currentUserId = window.Storage.local.get("bl4ut0CurrentUser") || "bl4ut0";
         rawState.wallpaper = window.Storage.local.get("bl4ut0Wallpaper") || "aurora";
         rawState.volume = Number(window.Storage.local.get("bl4ut0Volume") || 70);
         rawState.themeId = window.Storage.local.get("bl4ut0ThemeId") || "dark";

@@ -18,6 +18,26 @@ window.getStartMenuNodes = () => {
     return (window.systems || []).filter((item) => window.isAppInstalled(item.id));
 };
 
+window.renderStartUser = () => {
+    const user = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!user) return;
+
+    const avatarEls = [
+        window.byId ? window.byId("start-user-avatar") : document.getElementById("start-user-avatar"),
+        window.byId ? window.byId("start-user-strip-avatar") : document.getElementById("start-user-strip-avatar")
+    ];
+    avatarEls.forEach((avatar) => {
+        if (!avatar) return;
+        avatar.src = user.avatar || "";
+        avatar.alt = `${user.displayName} profile picture`;
+    });
+
+    const name = window.byId ? window.byId("start-user-name") : document.getElementById("start-user-name");
+    const meta = window.byId ? window.byId("start-user-meta") : document.getElementById("start-user-meta");
+    if (name) name.textContent = user.displayName;
+    if (meta) meta.textContent = `${user.handle} / ${user.accountType || user.role}`;
+};
+
 window.renderStartMenu = () => {
     const startPinned = window.byId ? window.byId("start-pinned") : document.getElementById("start-pinned");
     const startGrid = window.byId ? window.byId("start-grid") : document.getElementById("start-grid");
@@ -25,6 +45,8 @@ window.renderStartMenu = () => {
 
     const escapeHtml = window.escapeHtml || ((value) => String(value ?? ""));
     const safeColor = (value) => /^#[0-9a-f]{3,8}$/i.test(String(value || "")) ? value : "#22d3ee";
+
+    window.renderStartUser();
 
     startPinned.innerHTML = window.getStartMenuPinnedApps()
         .map((item) => `
@@ -52,4 +74,5 @@ if (window.EventBus) {
     window.EventBus.on("app:installed", () => window.renderStartMenu());
     window.EventBus.on("app:uninstalled", () => window.renderStartMenu());
     window.EventBus.on("desktop:refresh", () => window.renderStartMenu());
+    window.EventBus.on("user:changed", () => window.renderStartUser());
 }

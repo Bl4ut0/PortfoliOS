@@ -15,7 +15,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="styles-v1.css?v=1.0.36">
+    <link rel="stylesheet" href="styles-v1.css?v=1.0.37">
 </head>
 
 <body>
@@ -456,27 +456,60 @@
 
 
                         <div class="start-menu" id="start-menu" hidden>
-                            <div class="start-header">
-                                <div class="brand-lockup">
-                                    <span class="brand-icon"><i class="fa-solid fa-terminal"></i></span>
-                                    <span>
-                                        <strong>PortfoliOS</strong>
-                                        <small>portfolio network</small>
-                                    </span>
+                            <div class="start-layout">
+                                <nav class="start-rail" aria-label="Start menu shortcuts">
+                                    <button type="button" class="start-rail-btn" title="Menu">
+                                        <i class="fa-solid fa-bars"></i>
+                                    </button>
+                                    <button type="button" class="start-rail-avatar" data-open-settings-panel="accounts" title="Account">
+                                        <img id="start-user-avatar" src="identity-portrait.jpg" alt="">
+                                    </button>
+                                    <span class="start-rail-spacer"></span>
+                                    <button type="button" class="start-rail-btn" data-open-app="files" title="Files">
+                                        <i class="fa-regular fa-folder-open"></i>
+                                    </button>
+                                    <button type="button" class="start-rail-btn" data-open-settings-panel="appearance" title="Appearance">
+                                        <i class="fa-regular fa-image"></i>
+                                    </button>
+                                    <button type="button" class="start-rail-btn" data-open-settings-panel="desktop" title="Settings">
+                                        <i class="fa-solid fa-gear"></i>
+                                    </button>
+                                    <button type="button" class="start-rail-btn" data-start-power title="Power">
+                                        <i class="fa-solid fa-power-off"></i>
+                                    </button>
+                                </nav>
+
+                                <div class="start-main">
+                                    <div class="start-header">
+                                        <div class="brand-lockup">
+                                            <span class="brand-icon"><i class="fa-solid fa-terminal"></i></span>
+                                            <span>
+                                                <strong>PortfoliOS</strong>
+                                                <small>portfolio network</small>
+                                            </span>
+                                        </div>
+                                        <span>Experience launcher</span>
+                                    </div>
+                                    <button type="button" class="start-user-strip" data-open-settings-panel="accounts">
+                                        <img id="start-user-strip-avatar" src="identity-portrait.jpg" alt="">
+                                        <span>
+                                            <strong id="start-user-name">Alex Mammen</strong>
+                                            <small id="start-user-meta">Bl4ut0 / Local administrator</small>
+                                        </span>
+                                    </button>
+                                    <div class="start-search">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        <span>Apps, projects, services, and routes</span>
+                                    </div>
+                                    <div class="start-section">
+                                        <h3>Pinned</h3>
+                                        <div class="start-pinned" id="start-pinned"></div>
+                                    </div>
+                                    <div class="start-section">
+                                        <h3>All nodes</h3>
+                                        <div class="start-grid" id="start-grid"></div>
+                                    </div>
                                 </div>
-                                <span>Experience launcher</span>
-                            </div>
-                            <div class="start-search">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                <span>Apps, projects, services, and routes</span>
-                            </div>
-                            <div class="start-section">
-                                <h3>Pinned</h3>
-                                <div class="start-pinned" id="start-pinned"></div>
-                            </div>
-                            <div class="start-section">
-                                <h3>All nodes</h3>
-                                <div class="start-grid" id="start-grid"></div>
                             </div>
                         </div>
 
@@ -499,6 +532,17 @@
                             </div>
                             <div class="desktop-settings-content">
                                 <aside class="settings-sidebar">
+                                    <button type="button" class="settings-user-card" data-tab="accounts" aria-label="Open account settings">
+                                        <img id="settings-user-avatar" src="identity-portrait.jpg" alt="">
+                                        <span>
+                                            <strong id="settings-user-name">Alex Mammen</strong>
+                                            <small id="settings-user-meta">Bl4ut0 / Owner</small>
+                                        </span>
+                                    </button>
+                                    <button type="button" class="settings-tab-btn" data-tab="accounts" aria-selected="false">
+                                        <i class="fa-solid fa-user"></i>
+                                        <span>Accounts</span>
+                                    </button>
                                     <button type="button" class="settings-tab-btn active" data-tab="desktop" aria-selected="true">
                                         <i class="fa-solid fa-desktop"></i>
                                         <span>Desktop</span>
@@ -517,6 +561,40 @@
                                     </button>
                                 </aside>
                                 <main class="settings-main">
+                                    <!-- ACCOUNTS PANEL -->
+                                    <div class="settings-panel" data-panel="accounts">
+                                        <h2>Accounts</h2>
+
+                                        <section class="settings-section">
+                                            <h3>Current User</h3>
+                                            <div class="account-profile-card">
+                                                <img id="account-profile-avatar" src="identity-portrait.jpg" alt="">
+                                                <div>
+                                                    <strong id="account-profile-name">Alex Mammen</strong>
+                                                    <span id="account-profile-handle">Bl4ut0</span>
+                                                    <small id="account-profile-type">Local administrator</small>
+                                                </div>
+                                            </div>
+                                            <div class="settings-placeholder-grid">
+                                                <div>
+                                                    <i class="fa-solid fa-users"></i>
+                                                    <strong>Multi-user sessions</strong>
+                                                    <span>Planned</span>
+                                                </div>
+                                                <div>
+                                                    <i class="fa-solid fa-id-badge"></i>
+                                                    <strong>Profile picture</strong>
+                                                    <span>Planned</span>
+                                                </div>
+                                                <div>
+                                                    <i class="fa-solid fa-key"></i>
+                                                    <strong>Session security</strong>
+                                                    <span>Planned</span>
+                                                </div>
+                                            </div>
+                                        </section>
+                                    </div>
+
                                     <!-- DESKTOP PANEL -->
                                     <div class="settings-panel active" data-panel="desktop">
                                         <h2>Desktop</h2>
@@ -847,7 +925,7 @@
     <!-- Core Services -->
     <script src="core/event-bus.js"></script>
     <script src="core/storage.js"></script>
-    <script src="core/state.js?v=1.0.36"></script>
+    <script src="core/state.js?v=1.0.37"></script>
     <script src="core/utils.js"></script>
     <script src="core/filesystem.js?v=1.0.30"></script>
     <script src="core/gdrive-sync.js?v=1.0.36"></script>
@@ -857,13 +935,14 @@
     
     <!-- Shared Data -->
     <script src="data/systems.js"></script>
-    <script src="data/apps.js?v=1.0.36"></script>
+    <script src="data/apps.js?v=1.0.37"></script>
+    <script src="data/users.js?v=1.0.37"></script>
     <script src="data/bookmarks.js"></script>
     <script src="data/config.js?v=1.0.36"></script>
     
     <!-- Desktop Components -->
     <script src="desktop/taskbar.js"></script>
-    <script src="desktop/start-menu.js?v=1.0.33"></script>
+    <script src="desktop/start-menu.js?v=1.0.37"></script>
     <script src="desktop/desktop-icons.js"></script>
     <script src="desktop/context-menu.js?v=1.0.36"></script>
     <script src="desktop/dossier.js"></script>
@@ -871,14 +950,14 @@
     <script src="desktop/terminal.js"></script>
     <script src="desktop/network-map.js"></script>
     <script src="desktop/store.js?v=1.0.33"></script>
-    <script src="desktop/settings.js?v=1.0.36"></script>
+    <script src="desktop/settings.js?v=1.0.37"></script>
     <script src="desktop/calendar.js"></script>
     <script src="desktop/toast.js"></script>
     <script src="desktop/canvas-bg.js"></script>
     <script src="desktop/matrix-rain.js"></script>
     <script src="desktop/boot.js"></script>
     <script src="desktop/wad-inspector.js"></script>
-    <script src="desktop/shell.js?v=1.0.36"></script>
+    <script src="desktop/shell.js?v=1.0.37"></script>
     
     <!-- Mobile & Quick Shells -->
     <script src="mobile/shell.js"></script>

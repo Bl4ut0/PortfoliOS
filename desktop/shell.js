@@ -209,6 +209,20 @@ window.boot = () => {
             return;
         }
 
+        const settingsPanelButton = event.target.closest("[data-open-settings-panel]");
+        if (settingsPanelButton) {
+            if (window.openDesktopSettings) window.openDesktopSettings(settingsPanelButton.dataset.openSettingsPanel || "desktop");
+            const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+            if (startMenu) startMenu.hidden = true;
+            return;
+        }
+
+        const startPowerButton = event.target.closest("[data-start-power]");
+        if (startPowerButton) {
+            if (window.showDesktopToast) window.showDesktopToast("Power options are planned.");
+            return;
+        }
+
         const themeChoice = event.target.closest("[data-theme-choice]");
         if (themeChoice) {
             if (window.setPortfolioTheme) window.setPortfolioTheme(themeChoice.dataset.themeChoice);

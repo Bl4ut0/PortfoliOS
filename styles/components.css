@@ -1231,6 +1231,58 @@
     background: rgba(0, 0, 0, 0.15);
 }
 
+.settings-user-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.58rem;
+    width: 100%;
+    min-height: 3.5rem;
+    margin-bottom: 0.55rem;
+    padding: 0.52rem;
+    color: var(--text);
+    text-align: left;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.settings-user-card:hover,
+.settings-user-card.active {
+    background: rgba(34, 211, 238, 0.08);
+    border-color: rgba(34, 211, 238, 0.28);
+}
+
+.settings-user-card img {
+    width: 2.25rem;
+    height: 2.25rem;
+    object-fit: cover;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+}
+
+.settings-user-card strong,
+.settings-user-card small {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-user-card strong {
+    font-family: var(--heading);
+    font-size: 0.82rem;
+    line-height: 1.05;
+}
+
+.settings-user-card small {
+    margin-top: 0.12rem;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+}
+
 .settings-tab-btn {
     display: flex;
     align-items: center;
@@ -1288,6 +1340,56 @@
     font-weight: 700;
     margin: 0 0 0.2rem 0;
     color: var(--text);
+}
+
+.account-profile-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.85rem;
+    min-height: 5.5rem;
+    padding: 0.85rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+.account-profile-card img {
+    width: 4rem;
+    height: 4rem;
+    object-fit: cover;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 16%, transparent);
+}
+
+.account-profile-card strong,
+.account-profile-card span,
+.account-profile-card small {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-profile-card strong {
+    font-family: var(--heading);
+    font-size: 1.05rem;
+}
+
+.account-profile-card span {
+    margin-top: 0.16rem;
+    color: var(--theme-primary);
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.account-profile-card small {
+    margin-top: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
 }
 
 /* Settings section layout */
