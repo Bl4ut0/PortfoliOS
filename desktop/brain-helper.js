@@ -233,6 +233,51 @@
             vertical-align: middle;
         }
 
+        /* Neurons & Synapses */
+        .neuron-connection {
+            stroke: var(--theme-primary, #22d3ee);
+            stroke-width: 1.2;
+            stroke-linecap: round;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .neuron-node {
+            fill: #fff;
+            stroke: var(--theme-primary, #22d3ee);
+            stroke-width: 0.8;
+            r: 2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            transform-origin: center;
+        }
+
+        /* Firing active animations */
+        .brain-helper-mascot.thinking .neuron-connection {
+            opacity: 0.55;
+            stroke-dasharray: 8, 4;
+            animation: synapse-flow 1.2s linear infinite;
+        }
+        .brain-helper-mascot.thinking .neuron-node {
+            opacity: 1;
+            animation: neuron-pulse 1s ease-in-out infinite;
+        }
+
+        .brain-helper-mascot.thinking .neuron-node:nth-child(even) {
+            animation-delay: 0.3s;
+        }
+        .brain-helper-mascot.thinking .neuron-node:nth-child(3n) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes synapse-flow {
+            from { stroke-dashoffset: 12; }
+            to { stroke-dashoffset: 0; }
+        }
+        @keyframes neuron-pulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 1px #fff); }
+            50% { transform: scale(1.5); fill: var(--theme-accent, #ec4899); filter: drop-shadow(0 0 3px var(--theme-primary, #22d3ee)); }
+        }
+
         /* Animations Keyframes */
         @keyframes brain-bob {
             0%, 100% { transform: translateY(0); }
@@ -324,6 +369,27 @@
                 <path d="M 72 48 C 66 50, 62 46, 54 50" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2.5" stroke-linecap="round" />
                 <path d="M 38 60 C 42 62, 45 58, 48 64" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2.5" stroke-linecap="round" />
                 <path d="M 62 60 C 58 62, 55 58, 52 64" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2.5" stroke-linecap="round" />
+
+                <!-- Firing Neurons (glowing nodes & synapses) -->
+                <g class="brain-neurons">
+                    <!-- Synapses / Connection lines -->
+                    <path class="neuron-connection" d="M 35 28 L 25 42" />
+                    <path class="neuron-connection" d="M 25 42 L 38 68" />
+                    <path class="neuron-connection" d="M 65 28 L 75 42" />
+                    <path class="neuron-connection" d="M 75 42 L 62 68" />
+                    <path class="neuron-connection" d="M 50 24 L 35 28" />
+                    <path class="neuron-connection" d="M 50 24 L 65 28" />
+                    <path class="neuron-connection" d="M 38 68 Q 50 72, 62 68" />
+                    
+                    <!-- Neurons / Firing points -->
+                    <circle class="neuron-node" cx="35" cy="28" />
+                    <circle class="neuron-node" cx="25" cy="42" />
+                    <circle class="neuron-node" cx="38" cy="68" />
+                    <circle class="neuron-node" cx="65" cy="28" />
+                    <circle class="neuron-node" cx="75" cy="42" />
+                    <circle class="neuron-node" cx="62" cy="68" />
+                    <circle class="neuron-node" cx="50" cy="24" />
+                </g>
 
                 <!-- Left Eye -->
                 <g class="brain-helper-eye" transform="translate(37, 48)">
