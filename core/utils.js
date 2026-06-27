@@ -47,3 +47,146 @@ window.loadScript = (src) => {
         document.head.appendChild(script);
     });
 };
+
+window.createCustomDropdown = (selectEl) => {
+    if (!selectEl || selectEl.dataset.customized) return;
+    selectEl.dataset.customized = "true";
+
+    // Create custom container
+    const container = document.createElement("div");
+    container.className = "custom-select-container";
+    if (selectEl.id) container.dataset.selectId = selectEl.id;
+
+    // Create trigger button
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "custom-select-trigger";
+    trigger.disabled = selectEl.disabled;
+
+    const triggerText = document.createElement("span");
+    triggerText.className = "custom-select-trigger-text";
+    
+    const arrow = document.createElement("i");
+    arrow.className = "fa-solid fa-chevron-down custom-select-arrow";
+
+    trigger.appendChild(triggerText);
+    trigger.appendChild(arrow);
+    container.appendChild(trigger);
+
+    // Create options list
+    const optionsList = document.createElement("div");
+    optionsList.className = "custom-select-options-list";
+    container.appendChild(optionsList);
+
+    // Hide original select and insert custom container
+    selectEl.style.display = "none";
+    selectEl.parentNode.insertBefore(container, selectEl.nextSibling);
+
+    // Function to rebuild options list
+    const rebuildOptions = () => {
+        optionsList.innerHTML = "";
+        
+        const createOptionItem = (opt) => {
+            const idx = opt.index;
+            const item = document.createElement("div");
+            item.className = "custom-select-option";
+            if (opt.selected) {
+                item.classList.add("selected");
+                triggerText.textContent = opt.textContent;
+            }
+            item.textContent = opt.textContent;
+            item.dataset.value = opt.value;
+            item.dataset.index = idx;
+
+            item.addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectEl.selectedIndex = idx;
+                
+                // Dispatch change event on original select
+                const event = new Event("change", { bubbles: true });
+                selectEl.dispatchEvent(event);
+
+                // Update UI selection
+                Array.from(optionsList.querySelectorAll(".custom-select-option")).forEach(child => child.classList.remove("selected"));
+                item.classList.add("selected");
+                triggerText.textContent = opt.textContent;
+
+                // Close dropdown
+                container.classList.remove("open");
+            });
+
+            optionsList.appendChild(item);
+        };
+
+        const processNode = (node) => {
+            if (node.tagName === "OPTGROUP") {
+                const header = document.createElement("div");
+                header.className = "custom-select-group-header";
+                header.textContent = node.label;
+                optionsList.appendChild(header);
+
+                Array.from(node.children).forEach(child => {
+                    if (child.tagName === "OPTION") {
+                        createOptionItem(child);
+                    }
+                });
+            } else if (node.tagName === "OPTION") {
+                createOptionItem(node);
+            }
+        };
+
+        Array.from(selectEl.children).forEach(processNode);
+
+        // Set fallback trigger text if no option is selected
+        if (selectEl.selectedIndex === -1 && selectEl.options.length > 0) {
+            triggerText.textContent = selectEl.options[0].textContent;
+        }
+    };
+
+    rebuildOptions();
+
+    // Toggle dropdown open state
+    trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        
+        // Close all other custom dropdowns
+        document.querySelectorAll(".custom-select-container").forEach(c => {
+            if (c !== container) {
+                c.classList.remove("open");
+            }
+        });
+
+        // Determine if it should open upwards to prevent falling off the screen
+        const rect = trigger.getBoundingClientRect();
+        const listHeight = optionsList.offsetHeight || 210;
+        // Subtract taskbar height/safety margin (60px) from window.innerHeight
+        const spaceBelow = window.innerHeight - rect.bottom - 60;
+        const spaceAbove = rect.top - 20;
+
+        if (spaceBelow < listHeight && spaceAbove > spaceBelow) {
+            container.classList.add("open-upwards");
+        } else {
+            container.classList.remove("open-upwards");
+        }
+
+        container.classList.toggle("open");
+    });
+
+    // Close on click outside
+    document.addEventListener("click", () => {
+        container.classList.remove("open");
+    });
+
+    // Handle disabled/enabled and programmatically updated values
+    const syncState = () => {
+        trigger.disabled = selectEl.disabled;
+        rebuildOptions();
+    };
+
+    // Watch for class/disabled changes on the original select
+    const observer = new MutationObserver(syncState);
+    observer.observe(selectEl, { attributes: true, attributeFilter: ["disabled"] });
+
+    // Expose a clean update method on the native select
+    selectEl.updateCustomDropdown = syncState;
+};

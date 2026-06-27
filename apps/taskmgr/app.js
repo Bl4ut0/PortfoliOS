@@ -82,6 +82,59 @@
         linux: 14,
         settings: 5
     };
+    const VIRTUAL_RAM_STORAGE_KEY = "bl4ut0TaskmgrVirtualRamMB";
+    const VIRTUAL_RAM_OPTIONS_MB = [1024, 2048, 4096];
+    let virtualRamBudgetMB = readVirtualRamBudget();
+
+    function normalizeVirtualRamBudget(value) {
+        const numeric = Number(value);
+        return VIRTUAL_RAM_OPTIONS_MB.includes(numeric) ? numeric : 1024;
+    }
+
+    function readVirtualRamBudget() {
+        const stored = window.Storage
+            ? window.Storage.local.get(VIRTUAL_RAM_STORAGE_KEY)
+            : window.localStorage?.getItem(VIRTUAL_RAM_STORAGE_KEY);
+        return normalizeVirtualRamBudget(stored);
+    }
+
+    function setVirtualRamBudget(value) {
+        virtualRamBudgetMB = normalizeVirtualRamBudget(value);
+        if (window.Storage) {
+            window.Storage.local.set(VIRTUAL_RAM_STORAGE_KEY, String(virtualRamBudgetMB));
+        } else {
+            try {
+                window.localStorage?.setItem(VIRTUAL_RAM_STORAGE_KEY, String(virtualRamBudgetMB));
+            } catch (error) {
+                console.warn("Task Manager: could not persist virtual RAM budget.", error);
+            }
+        }
+        return virtualRamBudgetMB;
+    }
+
+    function getMemoryMB(value, fallback = 0) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return fallback;
+        return Math.max(0, Math.round(numeric));
+    }
+
+    function formatMemoryMB(value) {
+        return `${getMemoryMB(value)} MB`;
+    }
+
+    function formatBudgetMB(value) {
+        const memory = getMemoryMB(value, 1024);
+        if (memory >= 1024) return `${(memory / 1024).toFixed(2)} GB`;
+        return `${memory} MB`;
+    }
+
+    function renderVirtualRamOptions() {
+        return VIRTUAL_RAM_OPTIONS_MB.map((value) => `
+            <option value="${value}" ${value === virtualRamBudgetMB ? "selected" : ""}>
+                ${formatBudgetMB(value)}
+            </option>
+        `).join("");
+    }
 
     function formatUptime() {
         const diffMs = Date.now() - startTime;
@@ -97,6 +150,7 @@
         const cores = navigator.hardwareConcurrency || 4;
         let totalMem = 55; // Base OS memory
 
+        const virtualRamLimit = virtualRamBudgetMB;
         const processList = [{
             id: "system_kernel",
             name: "System Kernel",
@@ -106,7 +160,7 @@
         }];
 
         openApps.forEach(appId => {
-            const mem = APP_MEM_FOOTPRINT[appId] || 10;
+            const mem = getMemoryMB(APP_MEM_FOOTPRINT[appId], 10);
             totalMem += mem;
 
             const isMinimized = state.minimizedApps?.has(appId);
@@ -128,8 +182,12 @@
 
         const localAiProcess = window.LocalAI?.getProcess?.();
         if (localAiProcess) {
-            totalMem += localAiProcess.memory;
-            processList.push(localAiProcess);
+            const localAiMemory = getMemoryMB(localAiProcess.memory);
+            totalMem += localAiMemory;
+            processList.push({
+                ...localAiProcess,
+                memory: localAiMemory
+            });
         }
 
         // Calculate CPU busy load based on performance diagnostics
@@ -158,7 +216,8 @@
         
         return {
             totalMem,
-            memPercent: Math.min(100, Math.round((totalMem / 1024) * 100)),
+            virtualRamLimit,
+            memPercent: Math.min(100, Math.round((totalMem / virtualRamLimit) * 100)),
             cpuUsage,
             processList
         };
@@ -226,9 +285,17 @@
         const uptimeEl = windowEl.querySelector(".taskmgr-uptime");
 
         if (memPercentEl) memPercentEl.textContent = `${metrics.memPercent}%`;
-        if (memTextEl) memTextEl.textContent = `${metrics.totalMem} MB / 1024 MB`;
+        if (memTextEl) memTextEl.textContent = `${formatMemoryMB(metrics.totalMem)} / ${formatBudgetMB(metrics.virtualRamLimit)}`;
         if (cpuPercentEl) cpuPercentEl.textContent = `${metrics.cpuUsage}%`;
         if (uptimeEl) uptimeEl.textContent = formatUptime();
+
+        const virtualRamLabel = windowEl.querySelector(".taskmgr-virtual-ram-label");
+        if (virtualRamLabel) virtualRamLabel.textContent = `${formatBudgetMB(metrics.virtualRamLimit)} Web Budget`;
+
+        const ramBudgetSelect = windowEl.querySelector(".taskmgr-ram-budget-select");
+        if (ramBudgetSelect && ramBudgetSelect.value !== String(metrics.virtualRamLimit)) {
+            ramBudgetSelect.value = String(metrics.virtualRamLimit);
+        }
 
         // Update progress bar
         const memProgress = windowEl.querySelector(".taskmgr-progress-fill");
@@ -257,7 +324,7 @@
                         </div>
                     </td>
                     <td><span class="status-indicator ${escapeHtml(String(proc.status).toLowerCase())}">${escapeHtml(proc.status)}</span></td>
-                    <td>${escapeHtml(proc.memory)} MB</td>
+                    <td class="taskmgr-memory-cell">${formatMemoryMB(proc.memory)}</td>
                     <td>
                         ${proc.isSystem 
                             ? '<span class="system-badge">System</span>' 
@@ -348,8 +415,13 @@
                                   <strong class="taskmgr-uptime">--:--:--</strong>
                               </div>
                               <div class="hw-item">
-                                  <span>Virtual RAM:</span>
-                                  <strong>1.00 GB Web Buffer</strong>
+                                  <span>Virtual RAM Budget:</span>
+                                  <strong class="taskmgr-virtual-ram-label">${formatBudgetMB(virtualRamBudgetMB)} Web Budget</strong>
+                                  <label class="taskmgr-budget-control" title="Changes the PortfoliOS meter only. Chrome controls real tab memory.">
+                                      <select class="taskmgr-ram-budget-select" aria-label="Virtual RAM budget">
+                                          ${renderVirtualRamOptions()}
+                                      </select>
+                                  </label>
                               </div>
                               <div class="hw-item">
                                   <span>Frame Rate:</span>
@@ -373,7 +445,7 @@
                               <span class="label">Memory (RAM)</span>
                               <div class="stat-value-row">
                                   <strong class="taskmgr-stat-mem-percent">0%</strong>
-                                  <span class="taskmgr-stat-mem-text">0 MB / 1024 MB</span>
+                                  <span class="taskmgr-stat-mem-text">0 MB / 1.00 GB</span>
                               </div>
                           </div>
                      </div>
@@ -425,13 +497,15 @@
 
                 // Event delegation: End Task
                 const tbody = windowEl.querySelector(".taskmgr-tbody");
-                tbody.addEventListener("click", (event) => {
+                tbody.addEventListener("click", async (event) => {
                     const killBtn = event.target.closest("[data-kill]");
                     if (!killBtn) return;
                     
                     const appId = killBtn.dataset.kill;
                     if (appId === "local-ai-service" && window.LocalAI) {
-                        window.LocalAI.disable("taskmgr");
+                        killBtn.disabled = true;
+                        killBtn.textContent = "Ending...";
+                        await window.LocalAI.disable("taskmgr");
                         if (window.showDesktopToast) {
                             window.showDesktopToast("Terminated process: Local AI Worker");
                         }
@@ -484,6 +558,13 @@
                         cpuHistory = Array(30).fill(5); // Temporarily drop CPU load display
                         updateUI(windowEl);
                     }, 1000);
+                });
+
+                const ramBudgetSelect = windowEl.querySelector(".taskmgr-ram-budget-select");
+                ramBudgetSelect?.addEventListener("change", (event) => {
+                    const budget = setVirtualRamBudget(event.target.value);
+                    window.showDesktopToast?.(`Virtual RAM budget set to ${formatBudgetMB(budget)}.`);
+                    updateUI(windowEl);
                 });
             }
         },

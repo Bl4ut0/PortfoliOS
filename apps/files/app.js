@@ -436,6 +436,7 @@
                         <button class="sidebar-shortcut" data-path="/"><i class="fa-solid fa-computer"></i> Root (/)</button>
                         <button class="sidebar-shortcut" data-path="/documents"><i class="fa-solid fa-file-lines"></i> Documents</button>
                         <button class="sidebar-shortcut" data-path="/music"><i class="fa-solid fa-music"></i> Music</button>
+                        <button class="sidebar-shortcut" data-path="/ROMs"><i class="fa-solid fa-gamepad"></i> ROMs</button>
                         <button class="sidebar-shortcut" data-path="/Saved Games"><i class="fa-solid fa-gamepad"></i> Saved Games</button>
                     </aside>
                     <div class="files-grid-container">

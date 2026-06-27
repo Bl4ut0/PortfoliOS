@@ -1,6 +1,6 @@
 /**
  * PortfoliOS: CLI Terminal Component
- * Handles parsing CLI commands, rendering outputs, and simulating streaming AI responses.
+ * Handles parsing CLI commands, rendering outputs, and Local AI command guidance.
  * Implements Unix-like kernel behaviors, multi-user accounts, prompt styling, and filesystem tools.
  */
 
@@ -12,6 +12,7 @@ let activePrompt = null;
 const history = [];
 let historyIndex = -1;
 let currentInputVal = "";
+let terminalJobId = 0;
 
 // SHA-256 Hashing helper
 async function sha256(message) {
@@ -236,8 +237,7 @@ async function handleRedirection(pathStr, text, append) {
 
 // String escape helper
 function escapeHtml(str) {
-    if (typeof str !== "string") return "";
-    return str
+    return String(str ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -699,6 +699,75 @@ async function runRm(args) {
     }
 }
 
+function createTerminalAsyncJob(label, run) {
+    return {
+        __terminalAsyncJob: true,
+        label,
+        run
+    };
+}
+
+function isTerminalAsyncJob(value) {
+    return Boolean(value?.__terminalAsyncJob && typeof value.run === "function");
+}
+
+function createLocalAIChatJob(prompt, context = {}) {
+    return createTerminalAsyncJob(
+        "Local AI queued in background GPU worker. Terminal remains available while it answers.",
+        (onChunk) => window.LocalAI.chat(prompt, context, onChunk)
+    );
+}
+
+async function startTerminalAsyncJob(job, targetFile, append) {
+    const jobId = ++terminalJobId;
+    const statusLine = window.addTerminalLine(`[job ${jobId}] ${job.label}`, "muted");
+
+    try {
+        let aiLine = null;
+        let responseText = "";
+
+        const onChunk = (delta) => {
+            if (targetFile) {
+                responseText += delta;
+                return;
+            }
+
+            if (!aiLine) {
+                if (statusLine) {
+                    statusLine.textContent = `[job ${jobId}] Local AI answering...`;
+                }
+                aiLine = window.addTerminalLine("", "ai-response");
+            }
+            aiLine.textContent += delta;
+            
+            const output = window.byId ? window.byId("terminal-output") : document.getElementById("terminal-output");
+            if (output) output.scrollTop = output.scrollHeight;
+        };
+
+        const result = await job.run(onChunk);
+
+        if (targetFile) {
+            await handleRedirection(targetFile, result, append);
+            if (statusLine) statusLine.textContent = `[job ${jobId}] Local AI response written to ${targetFile}`;
+            return;
+        }
+
+        if (statusLine) statusLine.textContent = `[job ${jobId}] Local AI response ready`;
+        if (aiLine) {
+            aiLine.textContent = result;
+        } else {
+            window.addTerminalLine(result, "ai-response");
+        }
+    } catch (error) {
+        const message = error?.message || "Local AI failed.";
+        if (statusLine) {
+            statusLine.textContent = `[job ${jobId}] Local AI failed: ${message}`;
+        } else {
+            window.addTerminalLine(`[job ${jobId}] Local AI failed: ${message}`, "muted");
+        }
+    }
+}
+
 async function runLocalAICommand(args) {
     if (!window.LocalAI) {
         return "Local AI service is unavailable.";
@@ -715,7 +784,7 @@ async function runLocalAICommand(args) {
         try {
             const status = await window.LocalAI.enable("Portfolio CLI");
             return status.ready
-                ? "Local AI is ready. Try: ai explain ls -l"
+                ? `${status.modelLabel} is ready. Try: ai explain ls -l`
                 : status.statusText;
         } catch (error) {
             return `Local AI failed to start: ${error.message}`;
@@ -731,7 +800,7 @@ async function runLocalAICommand(args) {
         return "Local AI is off. Run ai on or open Local AI from Start to enable conversational guidance.";
     }
 
-    return await window.LocalAI.chat(args.join(" "), {
+    return createLocalAIChatJob(args.join(" "), {
         user: currentUser,
         cwd: currentDir
     });
@@ -933,13 +1002,13 @@ async function executeCommand(command, args, raw) {
     }
 
     if (window.LocalAI?.isReady?.()) {
-        return await window.LocalAI.chat(`The user entered this PortfoliOS CLI input: ${raw}`, {
+        return createLocalAIChatJob(`The user entered this PortfoliOS CLI input: ${raw}`, {
             user: currentUser,
             cwd: currentDir
         });
     }
 
-    return `${command || raw}: command not found. Type help for available commands, or open Local AI from Start to enable conversational command guidance.`;
+    return `${command || raw}: command not found. Type help for available commands, or run ai on to enable conversational command guidance.`;
 }
 
 // Public handleCommand wrapper
@@ -981,6 +1050,10 @@ window.handleCommand = async (rawValue) => {
     try {
         const result = await executeCommand(command, cmdArgs, commandPart);
         if (result !== undefined) {
+            if (isTerminalAsyncJob(result)) {
+                startTerminalAsyncJob(result, targetFile, append);
+                return;
+            }
             if (targetFile) {
                 await handleRedirection(targetFile, result, append);
             } else {
@@ -1012,15 +1085,17 @@ window.streamTextToTerminal = (text, className = "ai-response") => {
                 .replace(/\n/g, '<br>');
             container.innerHTML = currentText + '<span class="ai-cursor"></span>';
             output.scrollTop = output.scrollHeight;
-            index += 1;
-            if (index <= text.length) {
-                window.setTimeout(tick, 10 + Math.random() * 15);
+            index += 2; // Type 2 characters at a time for snappier delivery
+            if (index <= text.length + 1) {
+                window.setTimeout(tick, 2 + Math.random() * 3); // Faster pacing
             } else {
-                container.innerHTML = currentText;
+                container.innerHTML = text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
             }
         }
         tick();
-    }, 400 + Math.random() * 600);
+    }, 100 + Math.random() * 100); // Sub-200ms initial response time
 };
 
 window.simulateAiResponse = (query) => {
@@ -1061,6 +1136,7 @@ window.addTerminalLine = (text, className = "", isHtml = false) => {
     }
     output.appendChild(line);
     output.scrollTop = output.scrollHeight;
+    return line;
 };
 
 window.typeTerminalLine = (text, className = "", speed = 7) => {
@@ -1094,7 +1170,7 @@ window.asciiMotd = `
 </pre>
 <div style="margin-bottom: 0.5rem">System: <strong style="color: var(--text)">PortfoliOS v1.0.0</strong> (x86_64-browser)</div>
 <div style="margin-bottom: 1rem">Access Level: <strong style="color: var(--theme-accent)">GUEST</strong></div>
-<div style="color: var(--text-soft)">Type <strong style="color: var(--theme-primary)">help</strong> for system commands, or type natural language to chat with the AI assistant.</div>
+<div style="color: var(--text-soft)">Type <strong style="color: var(--theme-primary)">help</strong> for system commands, or run <strong style="color: var(--theme-primary)">ai on</strong> to enable local command guidance.</div>
 <br/>
 `;
 

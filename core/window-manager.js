@@ -13,6 +13,14 @@ window.focusNextOpenWindow = () => {
 };
 
 window.openDesktopWindow = async (name) => {
+    if (name === "local-ai") {
+        await window.openDesktopWindow("settings");
+        if (window.openSettingsPanel) {
+            window.openSettingsPanel("local-ai");
+        }
+        return;
+    }
+
     if (window.isAppInstalled && !window.isAppInstalled(name)) {
         if (window.showDesktopToast) {
             window.showDesktopToast(`Application "${name}" is not installed. Please install it from the Store.`);

@@ -71,7 +71,7 @@ window.getContextMenuItems = (event) => {
             } },
             { label: `Copy "${label}"`, icon: "fa-regular fa-copy", action: () => window.copyText(label) },
             { type: "separator" },
-            { label: "Desktop settings", icon: "fa-solid fa-sliders", action: window.openDesktopSettings }
+            { label: "Settings", icon: "fa-solid fa-sliders", action: window.openDesktopSettings }
         ];
     }
 
@@ -127,7 +127,7 @@ window.getContextMenuItems = (event) => {
             if (window.showDesktopToast) window.showDesktopToast("Icon positions reset");
         } },
         { type: "separator" },
-        { label: "Desktop settings", icon: "fa-solid fa-sliders", action: window.openDesktopSettings },
+        { label: "Settings", icon: "fa-solid fa-sliders", action: window.openDesktopSettings },
         { label: "Copy page link", icon: "fa-regular fa-copy", action: () => window.copyText(window.location.href) }
     ];
 };

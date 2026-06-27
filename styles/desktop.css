@@ -435,12 +435,20 @@
     color: var(--theme-accent);
 }
 
+.tray-service-button.local-ai-tray-button.is-idle {
+    color: var(--text-muted);
+}
+
 .tray-service-button.local-ai-tray-button.is-loading {
     color: #f59e0b;
 }
 
 .tray-service-button.local-ai-tray-button.is-generating {
     color: var(--theme-primary);
+}
+
+.tray-service-button.local-ai-tray-button.is-error {
+    color: var(--rose);
 }
 
 .calendar-panel {

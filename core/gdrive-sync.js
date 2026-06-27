@@ -301,6 +301,7 @@ window.GDriveSync = {
         const allPaths = new Set([...remoteMap.keys(), ...localMap.keys()]);
         const sortedPaths = Array.from(allPaths)
             .filter(p => {
+                if (p === "/ROMs" || p.startsWith("/ROMs/")) return false;
                 const parts = p.split("/");
                 return !parts.some(part => part.startsWith("."));
             })

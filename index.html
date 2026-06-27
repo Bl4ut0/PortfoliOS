@@ -728,6 +728,33 @@
                                                 <b id="settings-volume-value" class="settings-value-readout">70%</b>
                                             </div>
                                         </section>
+
+                                        <section class="settings-section">
+                                            <h3>System Reset &amp; Recovery</h3>
+                                            <p class="settings-info-text" style="margin-bottom: 0.8rem;">Troubleshoot desktop issues by resetting your state configurations.</p>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                                <!-- Reset Variables Card -->
+                                                <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.6rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); padding: 0.8rem; border-radius: var(--radius-sm);">
+                                                    <div>
+                                                        <strong style="display: block; font-size: 0.82rem; color: var(--text); margin-bottom: 2px;">Reset Variables</strong>
+                                                        <span style="font-size: 0.7rem; color: var(--text-soft, #9ca3af); line-height: 1.35; display: block;">Resets desktop icon coordinates, custom bookmarks, and uninstalls all added apps.</span>
+                                                    </div>
+                                                    <button type="button" id="settings-reset-variables-btn" class="settings-btn btn-danger" style="align-self: flex-start; padding: 6px 12px; font-size: 0.72rem; margin-top: 0.25rem;">
+                                                        <i class="fa-solid fa-rotate-left"></i> Reset Variables
+                                                    </button>
+                                                </div>
+                                                <!-- Full Reset Card -->
+                                                <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.6rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); padding: 0.8rem; border-radius: var(--radius-sm);">
+                                                    <div>
+                                                        <strong style="display: block; font-size: 0.82rem; color: var(--text); margin-bottom: 2px;">Full Factory Reset</strong>
+                                                        <span style="font-size: 0.7rem; color: var(--text-soft, #9ca3af); line-height: 1.35; display: block;">Wipes local storage, session storage, all local filesystem files, API keys, and reboots.</span>
+                                                    </div>
+                                                    <button type="button" id="settings-full-reset-btn" class="settings-btn btn-danger" style="align-self: flex-start; padding: 6px 12px; font-size: 0.72rem; margin-top: 0.25rem;">
+                                                        <i class="fa-solid fa-trash-can"></i> Full Reset
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </section>
                                     </div>
 
                                     <!-- APPEARANCE PANEL -->

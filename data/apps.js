@@ -4,7 +4,7 @@
  */
 
 window.desktopPinnedIds = [
-    "devhub", "store", "files", "webamp", "doomsource", "duke32", "diablo", "quake", 
+    "devhub", "store", "files", "romplayer", "webamp", "doomsource", "duke32", "diablo", "quake", 
     "addons", "guildcraft", "homelab", "survival-ai", "status", "linux", "cli"
 ];
 
@@ -21,6 +21,7 @@ window.desktopApps = [
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false },
     { id: "settings", title: "Settings", icon: "fa-solid fa-sliders", pinned: true },
+    { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", pinned: true },
     { id: "doomsource", title: "Doom", icon: "doom-icon.png", pinned: false },
     { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", pinned: false },
     { id: "diablo", title: "Diablo", icon: "diablo-icon.png", pinned: false },
@@ -28,6 +29,15 @@ window.desktopApps = [
 ];
 
 window.storeApps = [
+    {
+        id: "romplayer",
+        title: "ROM Player",
+        icon: "fa-solid fa-gamepad",
+        category: "Games",
+        description: "Universal EmulatorJS launcher for browser-friendly console and handheld ROM libraries.",
+        size: "CDN cores",
+        publisher: "EmulatorJS / PortfoliOS",
+    },
     {
         id: "doomsource",
         title: "Doom",
@@ -107,7 +117,7 @@ window.storeCategories = [
 window.isAppInstalled = function(id) {
     const coreApps = [
         "devhub", "profile", "dossier", "browser", "network", "linux", "cli", 
-        "settings", "store", "files", "addons", "guildcraft", "homelab", "survival-ai", "status", "taskmgr", "local-ai"
+        "settings", "store", "files", "romplayer", "addons", "guildcraft", "homelab", "survival-ai", "status", "taskmgr", "local-ai"
     ];
     if (coreApps.includes(id)) return true;
 

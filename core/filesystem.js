@@ -174,6 +174,13 @@ window.SystemFS = {
             await this.writeFile("/music", "music", "/", null, 0, "directory", true, { silent: true });
         }
 
+        if (!await this.readFile("/ROMs")) {
+            await this.writeFile("/ROMs", "ROMs", "/", null, 0, "directory", true, {
+                silent: true,
+                metadata: { sync: false, kind: "rom-root" }
+            });
+        }
+
         if (!await this.readFile(this.savedGamesRoot)) {
             await this.writeFile(this.savedGamesRoot, "Saved Games", "/", null, 0, "directory", true, { silent: true });
         }

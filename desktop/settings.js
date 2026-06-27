@@ -770,6 +770,56 @@ function initDebugSettings() {
     }
 }
 
+// System Reset / Recovery Options
+function initSystemResetSettings() {
+    const resetVarsBtn = document.getElementById("settings-reset-variables-btn");
+    const fullResetBtn = document.getElementById("settings-full-reset-btn");
+
+    if (resetVarsBtn) {
+        resetVarsBtn.addEventListener("click", () => {
+            if (confirm("Are you sure you want to reset all saved variables?\nThis will reset icon positions, custom bookmarks, and uninstall all added programs. The page will reload.")) {
+                // 1. Remove icon coordinates
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith("bl4ut0DesktopIconPos_")) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+
+                // 2. Uninstall custom programs
+                localStorage.removeItem("bl4ut0_installed_apps");
+
+                window.showDesktopToast?.("Saved variables reset. Reloading...");
+                setTimeout(() => window.location.reload(), 1200);
+            }
+        });
+    }
+
+    if (fullResetBtn) {
+        fullResetBtn.addEventListener("click", () => {
+            if (confirm("CRITICAL WARNING: This will completely wipe all settings, wallpapers, volume level, API keys, custom apps, and your local filesystem (IndexedDB files).\n\nAre you sure you want to proceed with a Full Factory Reset?")) {
+                // Clear localStorage & sessionStorage
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // Delete Virtual Filesystem Database (IndexedDB)
+                if (window.indexedDB) {
+                    try {
+                        window.indexedDB.deleteDatabase("PortfoliOS_FS");
+                    } catch (e) {
+                        console.error("Failed to delete IndexedDB database", e);
+                    }
+                }
+
+                window.showDesktopToast?.("Full system reset. Rebooting...");
+                setTimeout(() => window.location.reload(), 1200);
+            }
+        });
+    }
+}
+
 // Bootstrap function for Settings App
 function initSettingsApp() {
     initSettingsTabs();
@@ -779,6 +829,7 @@ function initSettingsApp() {
     initGDriveSettings();
     initLocalAISettings();
     initDebugSettings();
+    initSystemResetSettings();
     renderSettingsUser();
     window.renderWallpaperOptions();
     window.renderThemeOptions();

@@ -122,6 +122,13 @@
     text-align: center;
 }
 
+.taskmgr-memory-cell {
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
 /* Status Indicators */
 .status-indicator {
     font-size: 11px;
@@ -251,6 +258,27 @@
     font-size: 14px;
     font-weight: 500;
     color: #cbd5e1;
+}
+
+.taskmgr-budget-control {
+    display: flex;
+}
+
+.taskmgr-ram-budget-select {
+    width: 100%;
+    min-height: 30px;
+    border: 1px solid rgba(34, 211, 238, 0.22);
+    border-radius: 6px;
+    background: rgba(8, 9, 15, 0.72);
+    color: #e2e8f0;
+    font: 500 12px 'JetBrains Mono', monospace;
+    padding: 5px 8px;
+    outline: none;
+}
+
+.taskmgr-ram-budget-select:focus {
+    border-color: rgba(34, 211, 238, 0.55);
+    box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.14);
 }
 
 .taskmgr-uptime {

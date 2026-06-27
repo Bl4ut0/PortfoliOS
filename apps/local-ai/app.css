@@ -19,6 +19,68 @@
     overflow: auto;
 }
 
+/* Model Selector Styles */
+.local-ai-model-selector {
+    margin-bottom: 1.2rem;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.local-ai-select-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--theme-primary, #22d3ee);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.local-ai-select-desc {
+    font-size: 0.76rem;
+    color: var(--text-soft, #9ca3af);
+    margin: 0;
+    line-height: 1.45;
+}
+
+.local-ai-select {
+    color-scheme: dark; /* Crucial for rendering browser-native dropdown popover in dark theme */
+    background: rgba(15, 17, 26, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+    width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.local-ai-select:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.local-ai-select:focus {
+    border-color: var(--theme-primary, #22d3ee);
+    box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.15);
+}
+
+.local-ai-select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.local-ai-select option {
+    background-color: #0f111a;
+    color: #f3f4f6;
+}
+
 .local-ai-hero {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -135,6 +197,13 @@
     color: #fecdd3;
     font-family: var(--mono);
     font-size: 0.76rem;
+}
+
+.local-ai-note {
+    margin: 0.75rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    line-height: 1.45;
 }
 
 .local-ai-guidance h3 {
