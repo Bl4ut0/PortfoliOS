@@ -99,10 +99,9 @@
 
     let permissionGranted = false;
     let permissionPrompt = null;
-    const isCloudOnLoad = modelInfo.type && modelInfo.type.startsWith("cloud-");
-    let status = isCloudOnLoad ? "ready" : "idle";
+    let status = "idle";
     let progress = 0;
-    let statusText = isCloudOnLoad ? "Cloud AI is ready." : "Local AI is off.";
+    let statusText = (modelInfo.type && modelInfo.type.startsWith("cloud-")) ? "Cloud AI is off." : "Local AI is off.";
     let lastError = "";
     let stopRequested = false;
     let lastStatusEmitAt = 0;
@@ -684,6 +683,33 @@
         ];
     }
 
+    function extractOpenAIResponseText(data) {
+        if (typeof data?.output_text === "string") {
+            return data.output_text.trim();
+        }
+
+        if (!Array.isArray(data?.output)) {
+            return "";
+        }
+
+        return data.output
+            .flatMap((item) => Array.isArray(item?.content) ? item.content : [])
+            .map((part) => {
+                if (typeof part?.text === "string") return part.text;
+                if (typeof part?.refusal === "string") return part.refusal;
+                return "";
+            })
+            .join("")
+            .trim();
+    }
+
+    function getOpenAIErrorMessage(data, fallback) {
+        const error = data?.error || data?.response?.error;
+        if (typeof error?.message === "string") return error.message;
+        if (typeof data?.message === "string") return data.message;
+        return fallback;
+    }
+
     async function chatOpenAI(prompt, context, onChunk) {
         const apiKey = localStorage.getItem("settings-openai-api-key");
         if (!apiKey) {
@@ -695,73 +721,142 @@
 
         const body = {
             model: modelInfo.id,
-            messages: [
-                { role: "system", content: systemMessage },
-                { role: "user", content: userMessage }
-            ],
+            instructions: systemMessage,
+            input: userMessage,
             temperature: 0.35,
-            max_tokens: CHAT_MAX_TOKENS,
-            stream: Boolean(onChunk)
+            max_output_tokens: CHAT_MAX_TOKENS,
+            stream: Boolean(onChunk),
+            store: false
         };
+
+        if (onChunk) {
+            body.stream_options = { include_obfuscation: false };
+        }
 
         const controller = new AbortController();
         currentAbortController = controller;
 
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(body),
-            signal: controller.signal
-        });
+        try {
+            const response = await fetch("https://api.openai.com/v1/responses", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
 
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`OpenAI API error: ${response.status} - ${errText}`);
-        }
+            if (!response.ok) {
+                let errMessage = await response.text();
+                try {
+                    errMessage = getOpenAIErrorMessage(JSON.parse(errMessage), errMessage);
+                } catch (e) {
+                    // Keep the raw response text when OpenAI returns non-JSON errors.
+                }
+                throw new Error(`OpenAI API error: ${response.status} - ${errMessage}`);
+            }
 
-        if (onChunk) {
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let buffer = "";
-            let fullText = "";
+            if (onChunk) {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                let fullText = "";
+                let streamDone = false;
 
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done || stopRequested) break;
+                const handleEvent = (rawData) => {
+                    if (!rawData || rawData === "[DONE]") {
+                        streamDone = true;
+                        return;
+                    }
 
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split("\n");
-                    buffer = lines.pop();
+                    try {
+                        const parsed = JSON.parse(rawData);
+                        const type = parsed.type || "";
 
-                    for (const line of lines) {
-                        const cleanLine = line.trim();
-                        if (!cleanLine) continue;
-                        if (cleanLine === "data: [DONE]") break;
-                        if (cleanLine.startsWith("data: ")) {
-                            try {
-                                const parsed = JSON.parse(cleanLine.slice(6));
-                                const delta = parsed.choices?.[0]?.delta?.content || "";
-                                if (delta) {
-                                    fullText += delta;
-                                    onChunk(delta);
-                                }
-                            } catch (e) {
-                                // Ignore partial or malformed lines
+                        if (type === "response.output_text.delta") {
+                            const delta = parsed.delta || "";
+                            if (delta) {
+                                fullText += delta;
+                                onChunk(delta);
                             }
+                            return;
+                        }
+
+                        if (type === "response.completed") {
+                            streamDone = true;
+                            if (!fullText && parsed.response) {
+                                fullText = extractOpenAIResponseText(parsed.response);
+                                if (fullText) onChunk(fullText);
+                            }
+                            return;
+                        }
+
+                        if (type === "response.failed" || type === "error") {
+                            throw new Error(getOpenAIErrorMessage(parsed, "OpenAI streaming response failed."));
+                        }
+                    } catch (e) {
+                        if (e instanceof Error) throw e;
+                    }
+                };
+
+                try {
+                    while (!streamDone) {
+                        const { done, value } = await reader.read();
+                        if (done || stopRequested) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const events = buffer.split("\n\n");
+                        buffer = events.pop() || "";
+
+                        for (const event of events) {
+                            const dataLines = event
+                                .split("\n")
+                                .map((line) => line.trim())
+                                .filter((line) => line.startsWith("data:"))
+                                .map((line) => line.slice(5).trim());
+
+                            for (const dataLine of dataLines) {
+                                handleEvent(dataLine);
+                                if (streamDone) break;
+                            }
+
+                            if (streamDone) break;
                         }
                     }
+
+                    if (buffer.trim() && !streamDone) {
+                        const dataLines = buffer
+                            .split("\n")
+                            .map((line) => line.trim())
+                            .filter((line) => line.startsWith("data:"))
+                            .map((line) => line.slice(5).trim());
+
+                        for (const dataLine of dataLines) {
+                            handleEvent(dataLine);
+                            if (streamDone) break;
+                        }
+                    }
+
+                    return fullText.trim();
+                } finally {
+                    if (stopRequested && !streamDone) {
+                        try {
+                            await reader.cancel();
+                        } catch (e) {
+                            // The fetch abort path may have already closed the stream.
+                        }
+                    }
+                    reader.releaseLock();
                 }
-                return fullText.trim();
-            } finally {
-                reader.releaseLock();
             }
-        } else {
+
             const data = await response.json();
-            return data.choices?.[0]?.message?.content?.trim() || "";
+            return extractOpenAIResponseText(data);
+        } finally {
+            if (currentAbortController === controller) {
+                currentAbortController = null;
+            }
         }
     }
 
@@ -939,11 +1034,10 @@
         chat,
         isReady: () => {
             const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
-            return isCloud ? true : (status === "ready" && Boolean(engine));
+            return isCloud ? (status === "ready" || status === "generating") : (status === "ready" && Boolean(engine));
         },
         isRunning: () => {
-            const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
-            return isCloud ? true : ["loading", "ready", "generating"].includes(status);
+            return ["loading", "ready", "generating"].includes(status);
         },
         getAvailableModels: () => AVAILABLE_MODELS,
         getSelectedModelId: () => localStorage.getItem(STORAGE_KEY) || PREFERRED_MODEL.id,

@@ -446,8 +446,10 @@ function initLocalAISettings() {
         stopBtn.addEventListener("click", async () => {
             if (!window.LocalAI) return;
             stopBtn.disabled = true;
+            const status = window.LocalAI.getStatus();
+            const isCloud = status.modelType && status.modelType.startsWith("cloud-");
             await window.LocalAI.disable("user-settings");
-            window.showDesktopToast?.("Local AI stopped.");
+            window.showDesktopToast?.(isCloud ? "Cloud AI disconnected." : "Local AI stopped.");
             updateLocalAiSettingsUI();
         });
     }
