@@ -4,7 +4,8 @@
  */
 
 window.renderBrowser = () => {
-    const browserBookmarks = window.browserBookmarks || [];
+    const rawBookmarks = window.browserBookmarks || [];
+    const browserBookmarks = rawBookmarks.filter(b => !window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(b.systemId));
     const bookmarksContainer = window.byId ? window.byId("browser-bookmarks") : document.getElementById("browser-bookmarks");
     if (bookmarksContainer) {
         bookmarksContainer.innerHTML = browserBookmarks.map((bookmark) => `
@@ -19,10 +20,14 @@ window.renderBrowser = () => {
 };
 
 window.renderBrowserPage = (id) => {
-    const browserBookmarks = window.browserBookmarks || [];
+    const rawBookmarks = window.browserBookmarks || [];
+    const browserBookmarks = rawBookmarks.filter(b => !window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(b.systemId));
     const systems = window.systems || [];
     
-    const bookmark = (window.bookmarkById ? window.bookmarkById(id) : null) || browserBookmarks[0];
+    let bookmark = window.bookmarkById ? window.bookmarkById(id) : null;
+    if (!bookmark || !browserBookmarks.some(b => b.id === bookmark.id)) {
+        bookmark = browserBookmarks[0];
+    }
     if (!bookmark) return;
     
     const item = (window.systemById ? window.systemById(bookmark.systemId) : null) || systems[0];
