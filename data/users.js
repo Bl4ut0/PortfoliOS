@@ -41,6 +41,7 @@ window.userAccounts = [
             quake: { col: 1, row: 4 },
             webamp: { col: 1, row: 5 }
         }
+    }
 ];
 
 // Initialize private profile credentials from localStorage if saved
