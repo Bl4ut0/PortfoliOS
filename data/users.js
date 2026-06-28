@@ -62,6 +62,18 @@ window.userAccounts = [
     }
 })();
 
+window.getSavedPrivateProfile = () => {
+    try {
+        const raw = localStorage.getItem("bl4ut0_private_user_profile");
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed && (parsed.name || parsed.email) && parsed.avatar) {
+            return parsed;
+        }
+    } catch (e) {}
+    return null;
+};
+
 window.getUserAccounts = () => window.userAccounts || [];
 
 window.getCurrentUser = () => {

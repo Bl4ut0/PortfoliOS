@@ -119,19 +119,14 @@ window.renderStartUser = () => {
         userAvatarBtn.classList.toggle("active-profile", isPrivate);
         userAvatarBtn.style.opacity = isPrivate ? "1" : "0.55";
 
-        const savedProfileRaw = localStorage.getItem("bl4ut0_private_user_profile");
+        const savedProfile = window.getSavedPrivateProfile ? window.getSavedPrivateProfile() : null;
         if (isPrivate) {
             userAvatarBtn.innerHTML = `<img src="${user.avatar}" alt="${user.displayName}">`;
             userAvatarBtn.title = `${user.displayName} (Active Private Profile)`;
-        } else if (savedProfileRaw) {
-            try {
-                const savedProfile = JSON.parse(savedProfileRaw);
-                userAvatarBtn.innerHTML = `<img src="${savedProfile.avatar}" alt="${savedProfile.email}">`;
-                userAvatarBtn.title = `Switch to ${savedProfile.email}`;
-            } catch (e) {
-                userAvatarBtn.innerHTML = `<i class="fa-solid fa-circle-question" style="font-size: 1.25rem;"></i>`;
-                userAvatarBtn.title = "Sign In";
-            }
+        } else if (savedProfile) {
+            const displayName = savedProfile.name || savedProfile.email || "Private User";
+            userAvatarBtn.innerHTML = `<img src="${savedProfile.avatar}" alt="${displayName}">`;
+            userAvatarBtn.title = `Switch to ${displayName}`;
         } else {
             userAvatarBtn.innerHTML = `<i class="fa-solid fa-circle-question" style="font-size: 1.25rem;"></i>`;
             userAvatarBtn.title = "Sign In";
@@ -145,8 +140,6 @@ window.closeUserProfilePrompt = () => {
 };
 
 window.openUserProfilePrompt = () => {
-    console.log("DEBUG: openUserProfilePrompt called!");
-    if (window.showDesktopToast) window.showDesktopToast("openUserProfilePrompt called!");
     window.closeUserProfilePrompt();
 
     const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
