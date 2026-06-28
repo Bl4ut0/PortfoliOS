@@ -50,9 +50,10 @@ window.userAccounts = [
         if (savedProfileRaw) {
             const savedProfile = JSON.parse(savedProfileRaw);
             const privateAccount = window.userAccounts.find(a => a.id === "private");
-            if (privateAccount && savedProfile.email && savedProfile.avatar) {
-                privateAccount.displayName = savedProfile.email;
-                privateAccount.handle = savedProfile.email.split('@')[0];
+            const displayName = savedProfile.name || savedProfile.email;
+            if (privateAccount && displayName && savedProfile.avatar) {
+                privateAccount.displayName = displayName;
+                privateAccount.handle = displayName.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, "");
                 privateAccount.avatar = savedProfile.avatar;
             }
         }

@@ -185,21 +185,21 @@ window.openUserProfilePrompt = () => {
             <i class="fa-solid fa-cloud-arrow-down"></i>
             <span>
                 <strong>Sign in to Private User</strong>
-                <small>Cloud sync profile download</small>
+                <small>Google Drive Cloud Sync</small>
             </span>
             <button type="button" data-close-user-profile-prompt title="Close">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
         <label class="cloud-sync-field">
-            <span>Cloud Sync ID (Email)</span>
-            <input type="email" id="cloud-sync-id" placeholder="user@example.com" autocomplete="email">
+            <span>Profile Name</span>
+            <input type="text" id="cloud-sync-name" placeholder="e.g. My Workspace" autocomplete="off">
         </label>
-        <p>This switches to a private desktop with owner-specific shortcuts and personal nodes removed.</p>
+        <p>This links your workspace to Google Drive using Google OAuth for cloud backup and file synchronization.</p>
         <div class="user-profile-prompt-actions">
             <button type="button" class="primary" data-sign-in-private-profile>
-                <i class="fa-solid fa-cloud-arrow-down"></i>
-                Sign In & Sync
+                <i class="fa-brands fa-google-drive"></i>
+                Sign In &amp; Sync
             </button>
             <button type="button" data-close-user-profile-prompt>Cancel</button>
         </div>
@@ -209,47 +209,71 @@ window.openUserProfilePrompt = () => {
     prompt.querySelector("input")?.focus({ preventScroll: true });
 };
 
-window.signInPrivateProfile = () => {
-    const emailInput = document.getElementById("cloud-sync-id");
-    const email = emailInput ? emailInput.value.trim() : "";
-    if (!email) {
-        window.showDesktopToast?.("Please enter a valid email.");
-        return;
-    }
-    if (!email.includes("@")) {
-        window.showDesktopToast?.("Please enter a valid email address.");
+window.signInPrivateProfile = async () => {
+    const nameInput = document.getElementById("cloud-sync-name");
+    const profileName = nameInput ? nameInput.value.trim() : "";
+    if (!profileName) {
+        window.showDesktopToast?.("Please enter a profile name.");
         return;
     }
 
     const button = document.querySelector("[data-sign-in-private-profile]");
     if (button) {
         button.disabled = true;
-        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing';
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
     }
 
-    window.setTimeout(() => {
-        // Generate Google-style letter avatar
-        const char = email.charAt(0).toUpperCase();
+    try {
+        const defaultId = window.GDriveSync?.defaultClientId || "";
+        const clientId = localStorage.getItem("bl4ut0_gdrive_client_id") || defaultId;
+        if (!clientId) {
+            throw new Error("Google Client ID is missing. Configure it in Settings first.");
+        }
+
+        // Authenticate with Google OAuth
+        if (window.GDriveSync) {
+            await window.GDriveSync.loadGsiLibrary();
+            await window.GDriveSync.login(clientId);
+        } else {
+            throw new Error("GDriveSync service is unavailable.");
+        }
+
+        // Generate Google-style letter avatar using entered name
+        const char = profileName.charAt(0).toUpperCase();
         const colors = ["#1a73e8", "#ea4335", "#f9ab00", "#34a853"];
         const charCode = char.charCodeAt(0);
         const color = colors[charCode % colors.length];
         const avatar = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='${encodeURIComponent(color)}'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='48' font-weight='bold' fill='%23ffffff'%3E${char}%3C/text%3E%3C/svg%3E`;
 
-        const profile = { email, avatar };
+        const profile = { name: profileName, avatar };
         localStorage.setItem("bl4ut0_private_user_profile", JSON.stringify(profile));
 
         // Update active private user accounts info
         const privateAccount = window.userAccounts?.find(a => a.id === "private");
         if (privateAccount) {
-            privateAccount.displayName = email;
-            privateAccount.handle = email.split('@')[0];
+            privateAccount.displayName = profileName;
+            privateAccount.handle = profileName.toLowerCase().replace(/[^a-z0-9]/g, "");
             privateAccount.avatar = avatar;
         }
 
         if (window.setCurrentUser) window.setCurrentUser("private");
         window.closeUserProfilePrompt();
-        window.showDesktopToast?.("Private cloud profile synced.");
-    }, 420);
+        window.showDesktopToast?.(`Welcome, ${profileName}! Drive synced.`);
+    } catch (err) {
+        console.error("Profile authentication failed:", err);
+        let errorMsg = "Google authentication failed.";
+        if (err instanceof Error) {
+            errorMsg = err.message;
+        } else if (err?.error) {
+            errorMsg = `OAuth error: ${err.error}`;
+        }
+        window.showDesktopToast?.(errorMsg);
+        
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = '<i class="fa-brands fa-google-drive"></i> Sign In &amp; Sync';
+        }
+    }
 };
 
 window.restoreOwnerProfile = () => {
