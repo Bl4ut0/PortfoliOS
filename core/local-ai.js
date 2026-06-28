@@ -478,34 +478,6 @@
                                     model_lib: "https://huggingface.co/llinguini/gemma-3-270m-it-q4f16_1-MLC/resolve/main/libs/gemma-3-270m-it-webgpu.wasm",
                                     vram_requirement_MB: 200,
                                     required_features: ["shader-f16"]
-                                },
-                                {
-                                    model: "https://huggingface.co/mlc-ai/gemma-2-2b-it-q4f16_1-MLC",
-                                    model_id: "gemma-2-2b-it-q4f16_1-MLC",
-                                    model_lib: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/gemma-2-2b-it-q4f16_1-ctx4k_cs1k-webgpu.wasm",
-                                    vram_requirement_MB: 1600,
-                                    required_features: ["shader-f16"]
-                                },
-                                {
-                                    model: "https://huggingface.co/mlc-ai/Llama-3.2-1B-Instruct-q4f16_1-MLC",
-                                    model_id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-                                    model_lib: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Llama-3.2-1B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm",
-                                    vram_requirement_MB: 980,
-                                    required_features: ["shader-f16"]
-                                },
-                                {
-                                    model: "https://huggingface.co/mlc-ai/Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-                                    model_id: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-                                    model_lib: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Qwen2.5-0.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm",
-                                    vram_requirement_MB: 420,
-                                    required_features: ["shader-f16"]
-                                },
-                                {
-                                    model: "https://huggingface.co/mlc-ai/SmolLM2-360M-Instruct-q4f16_1-MLC",
-                                    model_id: "SmolLM2-360M-Instruct-q4f16_1-MLC",
-                                    model_lib: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/SmolLM2-360M-Instruct-q4f16_1-ctx2k-webgpu.wasm",
-                                    vram_requirement_MB: 376,
-                                    required_features: ["shader-f16"]
                                 }
                             ],
                             cacheBackend: "cache"
