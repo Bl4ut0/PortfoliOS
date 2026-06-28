@@ -235,6 +235,8 @@ window.boot = () => {
 
         const privateProfileButton = event.target.closest("[data-open-private-profile]");
         if (privateProfileButton) {
+            console.log("DEBUG: privateProfileButton clicked!", privateProfileButton);
+            if (window.showDesktopToast) window.showDesktopToast("Clicked profile button!");
             const hasSavedProfile = !!localStorage.getItem("bl4ut0_private_user_profile");
             const isPrivate = (window.getCurrentUser ? window.getCurrentUser()?.id : "") === "private";
             

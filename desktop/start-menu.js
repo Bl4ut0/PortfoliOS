@@ -145,6 +145,8 @@ window.closeUserProfilePrompt = () => {
 };
 
 window.openUserProfilePrompt = () => {
+    console.log("DEBUG: openUserProfilePrompt called!");
+    if (window.showDesktopToast) window.showDesktopToast("openUserProfilePrompt called!");
     window.closeUserProfilePrompt();
 
     const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
