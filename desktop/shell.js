@@ -477,7 +477,6 @@ window.boot = async () => {
                 window.LocalAI.disable("tray");
                 window.showDesktopToast?.(isCloud ? "Cloud AI disconnected." : "Local AI stopped.");
             }
-            if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
             return;
         }
 

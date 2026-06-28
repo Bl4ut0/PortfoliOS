@@ -68,12 +68,27 @@ window.renderLocalAITray = () => {
         return;
     }
 
+    const isCloudModel = status.modelType && status.modelType.startsWith("cloud-");
+    const serviceName = isCloudModel ? "Cloud AI" : "Local AI";
+
     toggle.hidden = false;
     toggle.classList.toggle("is-loading", status.status === "loading");
     toggle.classList.toggle("is-generating", status.status === "generating");
     toggle.classList.toggle("is-error", status.status === "error");
     toggle.classList.toggle("is-idle", status.status === "idle");
-    toggle.title = `Local AI: ${status.statusText}`;
+    toggle.title = `${serviceName}: ${status.statusText}`;
+
+    const toggleIcon = toggle.querySelector("i");
+    if (toggleIcon) {
+        toggleIcon.className = isCloudModel ? "fa-solid fa-cloud" : "fa-solid fa-brain";
+    }
+
+    const headerTitle = panel.querySelector(".local-ai-tray-header span");
+    if (headerTitle) {
+        headerTitle.innerHTML = isCloudModel
+            ? '<i class="fa-solid fa-cloud"></i> Cloud AI'
+            : '<i class="fa-solid fa-brain"></i> Local AI';
+    }
 
     const label = panel.querySelector("#local-ai-tray-status");
     const detail = panel.querySelector("#local-ai-tray-detail");
@@ -175,7 +190,6 @@ window.renderLocalAITray = () => {
     }
 
     // Toggle button visibilities so only Stop/Disconnect OR Enable/Connect is shown
-    const isCloudModel = status.modelType && status.modelType.startsWith("cloud-");
     const isAiActive = status.enabled && status.status !== "error";
     if (enableButton) {
         if (isCloudModel) {
@@ -190,7 +204,7 @@ window.renderLocalAITray = () => {
         enableButton.style.display = isAiActive ? "none" : "inline-flex";
     }
     if (stopButton) {
-        stopButton.disabled = !status.enabled;
+        stopButton.disabled = status.busy;
         stopButton.style.display = isAiActive ? "inline-flex" : "none";
         if (isCloudModel) {
             stopButton.innerHTML = '<i class="fa-solid fa-link-slash"></i> Disconnect';

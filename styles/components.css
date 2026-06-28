@@ -3157,19 +3157,29 @@
     justify-content: center;
     gap: 0.4rem;
     min-height: 2.15rem;
-    border: 1px solid var(--line);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 7px;
-    color: var(--text-soft);
-    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: 700;
+    transition: all 0.2s ease;
 }
 
-.local-ai-tray-actions button:hover {
-    color: var(--text);
-    border-color: rgba(34, 211, 238, 0.35);
-    background: rgba(34, 211, 238, 0.08);
+.local-ai-tray-actions button:hover:not(:disabled) {
+    color: #fff;
+    border-color: var(--theme-primary, #22d3ee);
+    background: rgba(34, 211, 238, 0.15);
+}
+
+.local-ai-tray-actions button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.local-ai-tray-actions button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .local-ai-consent-overlay {
