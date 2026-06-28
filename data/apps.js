@@ -190,6 +190,7 @@ window.setInstalledStoreAppIds = function(ids) {
     } else {
         localStorage.setItem(key, serialized);
     }
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
     return list;
 };
 
@@ -200,6 +201,7 @@ window.resetInstalledStoreApps = function() {
     } else {
         localStorage.removeItem(key);
     }
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 
 window.isStoreAppInstalled = function(id) {

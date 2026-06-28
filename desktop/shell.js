@@ -60,9 +60,17 @@ window.renderLinuxInfo = () => {
     }
 };
 
-window.boot = () => {
+window.boot = async () => {
     if (window.SystemFS) {
-        window.SystemFS.init().catch(err => console.error("Filesystem init error:", err));
+        try {
+            await window.SystemFS.init();
+        } catch (err) {
+            console.error("Filesystem init error:", err);
+        }
+    }
+
+    if (window.loadPreferencesFromFilesystem) {
+        await window.loadPreferencesFromFilesystem();
     }
 
     if (window.applyCurrentUserProfile) {
@@ -397,10 +405,11 @@ window.boot = () => {
         const resetResolutionBtn = event.target.closest("#reset-resolution-btn");
         if (resetResolutionBtn) {
             state.desktopResolution = "auto";
+            const key = window.getPreferencesKey ? window.getPreferencesKey("DesktopResolution") : "bl4ut0DesktopResolution";
             if (window.Storage) {
-                window.Storage.local.set("bl4ut0DesktopResolution", "auto");
+                window.Storage.local.set(key, "auto");
             } else {
-                localStorage.setItem("bl4ut0DesktopResolution", "auto");
+                localStorage.setItem(key, "auto");
             }
             const resSelect = window.byId ? window.byId("desktop-resolution-select") : document.getElementById("desktop-resolution-select");
             if (resSelect) resSelect.value = "auto";
@@ -701,10 +710,11 @@ window.boot = () => {
     if (resolutionSelect) {
         resolutionSelect.addEventListener("change", (event) => {
             state.desktopResolution = event.target.value;
+            const key = window.getPreferencesKey ? window.getPreferencesKey("DesktopResolution") : "bl4ut0DesktopResolution";
             if (window.Storage) {
-                window.Storage.local.set("bl4ut0DesktopResolution", event.target.value);
+                window.Storage.local.set(key, event.target.value);
             } else {
-                localStorage.setItem("bl4ut0DesktopResolution", event.target.value);
+                localStorage.setItem(key, event.target.value);
             }
             if (window.applyDesktopResolution) window.applyDesktopResolution();
         });

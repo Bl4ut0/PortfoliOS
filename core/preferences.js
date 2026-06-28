@@ -226,6 +226,11 @@ window.applyDesktopPreferences = () => {
     if (resSelect) resSelect.value = state.desktopResolution;
 };
 
+window.getPreferencesKey = (k, userId = window.state?.currentUserId || "bl4ut0") => {
+    const safeUserId = String(userId || "bl4ut0").replace(/[^a-z0-9_-]/gi, "") || "bl4ut0";
+    return `bl4ut0_${safeUserId}_${k}`;
+};
+
 window.setPortfolioTheme = (themeId, options = {}) => {
     const theme = window.getPortfolioTheme(themeId);
     state.themeId = theme.id;
@@ -234,16 +239,17 @@ window.setPortfolioTheme = (themeId, options = {}) => {
         state.themePrimary = null;
         state.themeAccent = null;
         if (window.Storage) {
-            window.Storage.local.remove("bl4ut0ThemePrimary");
-            window.Storage.local.remove("bl4ut0ThemeAccent");
+            window.Storage.local.remove(window.getPreferencesKey("ThemePrimary"));
+            window.Storage.local.remove(window.getPreferencesKey("ThemeAccent"));
         }
     }
 
     if (window.Storage) {
-        window.Storage.local.set("bl4ut0ThemeId", theme.id);
+        window.Storage.local.set(window.getPreferencesKey("ThemeId"), theme.id);
     }
     window.applyThemeColors();
     if (window.EventBus) window.EventBus.emit("theme:changed", { themeId: theme.id, theme });
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 
 window.setWallpaper = (wallpaperId) => {
@@ -251,10 +257,11 @@ window.setWallpaper = (wallpaperId) => {
     if (!options.some((wallpaper) => wallpaper.id === wallpaperId)) return;
     state.wallpaper = wallpaperId;
     if (window.Storage) {
-        window.Storage.local.set("bl4ut0Wallpaper", wallpaperId);
+        window.Storage.local.set(window.getPreferencesKey("Wallpaper"), wallpaperId);
     }
     window.applyDesktopPreferences();
     if (window.EventBus) window.EventBus.emit("wallpaper:changed", wallpaperId);
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 
 window.renderScreensaverStage = () => {
@@ -395,51 +402,56 @@ window.setScreensaver = (screensaverId) => {
     if (!options.some((option) => option.id === screensaverId)) return;
     state.screensaver = screensaverId;
     if (window.Storage) {
-        window.Storage.local.set("bl4ut0Screensaver", screensaverId);
+        window.Storage.local.set(window.getPreferencesKey("Screensaver"), screensaverId);
     }
     window.applyScreensaverPreferences();
     if (window.EventBus) window.EventBus.emit("screensaver:changed", { screensaverId });
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 
 window.setScreensaverDelay = (minutes) => {
     state.screensaverDelay = Math.max(1, Math.min(60, Number(minutes) || 5));
     if (window.Storage) {
-        window.Storage.local.set("bl4ut0ScreensaverDelay", String(state.screensaverDelay));
+        window.Storage.local.set(window.getPreferencesKey("ScreensaverDelay"), String(state.screensaverDelay));
     }
     window.applyScreensaverPreferences();
     if (window.EventBus) window.EventBus.emit("screensaver:delay-changed", { delay: state.screensaverDelay });
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 
 window.setDesktopVolume = (value) => {
     state.volume = Math.max(0, Math.min(100, Number(value) || 0));
     if (window.Storage) {
-        window.Storage.local.set("bl4ut0Volume", String(state.volume));
+        window.Storage.local.set(window.getPreferencesKey("Volume"), String(state.volume));
     }
     window.applyVolume();
     if (window.EventBus) window.EventBus.emit("volume:changed", state.volume);
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 
 window.setThemeColor = (type, value) => {
     if (type === "primary") {
         state.themePrimary = value;
-        if (window.Storage) window.Storage.local.set("bl4ut0ThemePrimary", value);
+        if (window.Storage) window.Storage.local.set(window.getPreferencesKey("ThemePrimary"), value);
     } else if (type === "accent") {
         state.themeAccent = value;
-        if (window.Storage) window.Storage.local.set("bl4ut0ThemeAccent", value);
+        if (window.Storage) window.Storage.local.set(window.getPreferencesKey("ThemeAccent"), value);
     }
     window.applyThemeColors();
     if (window.EventBus) window.EventBus.emit("theme:changed", { themeId: state.themeId, type, value });
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 
 window.resetThemeColors = () => {
     state.themePrimary = null;
     state.themeAccent = null;
     if (window.Storage) {
-        window.Storage.local.remove("bl4ut0ThemePrimary");
-        window.Storage.local.remove("bl4ut0ThemeAccent");
+        window.Storage.local.remove(window.getPreferencesKey("ThemePrimary"));
+        window.Storage.local.remove(window.getPreferencesKey("ThemeAccent"));
     }
     window.applyThemeColors();
     if (window.EventBus) window.EventBus.emit("theme:reset", { themeId: state.themeId });
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 
 window.showDesktopToast = (message) => {

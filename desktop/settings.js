@@ -132,8 +132,9 @@ function initResolutionSettings() {
         resetBtn.addEventListener("click", () => {
             if (window.state) {
                 window.state.desktopResolution = "auto";
+                const key = window.getPreferencesKey ? window.getPreferencesKey("DesktopResolution") : "bl4ut0DesktopResolution";
                 if (window.Storage) {
-                    window.Storage.local.set("bl4ut0DesktopResolution", "auto");
+                    window.Storage.local.set(key, "auto");
                 }
                 if (resSelect) resSelect.value = "auto";
                 if (window.applyDesktopResolution) window.applyDesktopResolution();
@@ -278,6 +279,9 @@ async function triggerGDriveSync() {
     if (disconnectBtn) disconnectBtn.disabled = true;
 
     try {
+        if (window.savePreferencesToFilesystem) {
+            await window.savePreferencesToFilesystem();
+        }
         await window.GDriveSync.sync((processed, total, path) => {
             if (total === 0) {
                 if (progressText) progressText.textContent = "Syncing... (No files)";
@@ -288,6 +292,9 @@ async function triggerGDriveSync() {
                 if (progressBar) progressBar.style.width = `${percent}%`;
             }
         });
+        if (window.loadPreferencesFromFilesystem) {
+            await window.loadPreferencesFromFilesystem();
+        }
         if (window.showDesktopToast) window.showDesktopToast("File Sync Complete!");
         if (progressText) progressText.textContent = "Sync complete!";
         if (progressBar) progressBar.style.width = "100%";

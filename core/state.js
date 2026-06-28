@@ -34,15 +34,34 @@
 
     // Load initial values from storage if available
     if (window.Storage) {
-        rawState.currentUserId = window.Storage.local.get("bl4ut0CurrentUser") || "bl4ut0";
-        rawState.wallpaper = window.Storage.local.get("bl4ut0Wallpaper") || "aurora";
-        rawState.volume = Number(window.Storage.local.get("bl4ut0Volume") || 70);
-        rawState.themeId = window.Storage.local.get("bl4ut0ThemeId") || "dark";
-        rawState.themePrimary = window.Storage.local.get("bl4ut0ThemePrimary");
-        rawState.themeAccent = window.Storage.local.get("bl4ut0ThemeAccent");
-        rawState.desktopResolution = window.Storage.local.get("bl4ut0DesktopResolution") || "auto";
-        rawState.screensaver = window.Storage.local.get("bl4ut0Screensaver") || "none";
-        rawState.screensaverDelay = Number(window.Storage.local.get("bl4ut0ScreensaverDelay") || 5);
+        const userId = window.Storage.local.get("bl4ut0CurrentUser") || "bl4ut0";
+        rawState.currentUserId = userId;
+        
+        const getKey = (k) => `bl4ut0_${userId}_${k}`;
+        const getPrefVal = (k, legacyKey, defaultVal) => {
+            const scopedKey = getKey(k);
+            const val = window.Storage.local.get(scopedKey);
+            if (val !== null && val !== undefined) return val;
+            
+            // Check and migrate legacy key for Owner user
+            if (userId === "bl4ut0") {
+                const legacyVal = window.Storage.local.get(legacyKey);
+                if (legacyVal !== null && legacyVal !== undefined) {
+                    window.Storage.local.set(scopedKey, String(legacyVal));
+                    return legacyVal;
+                }
+            }
+            return defaultVal;
+        };
+        
+        rawState.wallpaper = getPrefVal("Wallpaper", "bl4ut0Wallpaper", userId === "bl4ut0" ? "aurora" : "ember");
+        rawState.volume = Number(getPrefVal("Volume", "bl4ut0Volume", 70));
+        rawState.themeId = getPrefVal("ThemeId", "bl4ut0ThemeId", "dark");
+        rawState.themePrimary = getPrefVal("ThemePrimary", "bl4ut0ThemePrimary", null);
+        rawState.themeAccent = getPrefVal("ThemeAccent", "bl4ut0ThemeAccent", null);
+        rawState.desktopResolution = getPrefVal("DesktopResolution", "bl4ut0DesktopResolution", "auto");
+        rawState.screensaver = getPrefVal("Screensaver", "bl4ut0Screensaver", "none");
+        rawState.screensaverDelay = Number(getPrefVal("ScreensaverDelay", "bl4ut0ScreensaverDelay", 5));
     }
 
     window.state = new Proxy(rawState, {

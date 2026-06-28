@@ -112,6 +112,25 @@ window.applyCurrentUserProfile = () => {
     const desktop = window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience");
     if (desktop) desktop.dataset.user = user.id;
 
+    // Load user-scoped preferences from localStorage into state
+    if (window.Storage) {
+        const userId = user.id;
+        const getKey = (k) => `bl4ut0_${userId}_${k}`;
+        
+        window.state.wallpaper = window.Storage.local.get(getKey("Wallpaper")) || (userId === "bl4ut0" ? "aurora" : "ember");
+        window.state.volume = Number(window.Storage.local.get(getKey("Volume")) || 70);
+        window.state.themeId = window.Storage.local.get(getKey("ThemeId")) || "dark";
+        window.state.themePrimary = window.Storage.local.get(getKey("ThemePrimary")) || null;
+        window.state.themeAccent = window.Storage.local.get(getKey("ThemeAccent")) || null;
+        window.state.desktopResolution = window.Storage.local.get(getKey("DesktopResolution")) || "auto";
+        window.state.screensaver = window.Storage.local.get(getKey("Screensaver")) || "none";
+        window.state.screensaverDelay = Number(window.Storage.local.get(getKey("ScreensaverDelay")) || 5);
+    }
+
+    if (window.applyDesktopPreferences) {
+        window.applyDesktopPreferences();
+    }
+
     Array.from(window.state.openApps || []).forEach((appId) => {
         if (window.isVisibleForCurrentUser(appId)) return;
         if (window.closeDesktopWindow && document.querySelector(`[data-window="${appId}"]`)) {
@@ -156,5 +175,65 @@ window.setCurrentUser = (userId) => {
     }
     if (window.applyCurrentUserProfile) {
         window.applyCurrentUserProfile();
+    }
+};
+
+window.savePreferencesToFilesystem = async () => {
+    const user = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!user || user.id !== "private") return;
+
+    try {
+        if (!window.SystemFS) return;
+        const userId = user.id;
+        const prefix = `bl4ut0_${userId}_`;
+        const settings = {};
+
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith(prefix) || key === "bl4ut0_private_user_profile" || key === `bl4ut0_installed_apps_${userId}`)) {
+                settings[key] = localStorage.getItem(key);
+            }
+        }
+
+        const jsonStr = JSON.stringify(settings, null, 2);
+        const path = "/home/private/settings.json";
+        const name = "settings.json";
+        const parent = "/home/private";
+        
+        await window.SystemFS.writeFile(path, name, parent, jsonStr, jsonStr.length, "application/json", false, { silent: true });
+        console.log("PortfoliOS: Saved private profile preferences to virtual filesystem.");
+    } catch (e) {
+        console.error("Failed to save preferences to filesystem", e);
+    }
+};
+
+window.loadPreferencesFromFilesystem = async () => {
+    const user = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!user || user.id !== "private") return;
+
+    try {
+        if (!window.SystemFS) return;
+        const record = await window.SystemFS.getFile("/home/private/settings.json");
+        if (record && record.data) {
+            const settings = JSON.parse(record.data);
+            let changed = false;
+            Object.entries(settings).forEach(([key, val]) => {
+                if (val !== null && val !== undefined) {
+                    if (localStorage.getItem(key) !== String(val)) {
+                        localStorage.setItem(key, String(val));
+                        changed = true;
+                    }
+                }
+            });
+
+            if (changed) {
+                console.log("PortfoliOS: Restored private profile preferences from virtual filesystem.");
+                if (window.applyCurrentUserProfile) {
+                    window.applyCurrentUserProfile();
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load preferences from filesystem", e);
     }
 };
