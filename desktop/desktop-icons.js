@@ -58,6 +58,46 @@ window.findNearestFreeCell = (targetCol, targetRow, occupied, maxRows, maxCols) 
     return bestCell;
 };
 
+window.getDesktopIconPositionKey = (item) => {
+    const userId = window.state?.currentUserId === "bl4ut0" ? "" : `${window.state?.currentUserId || "guest"}_`;
+    return item.selectId ? `desktop_pos_${userId}${item.launchApp}_${item.selectId}` : `desktop_pos_${userId}${item.launchApp}`;
+};
+
+window.clearDesktopIconPositions = () => {
+    const prefixes = ["desktop_pos_", "bl4ut0DesktopIconPos_"];
+    let removed = 0;
+
+    [window.localStorage, window.sessionStorage].forEach((storage) => {
+        try {
+            const keys = [];
+            for (let i = 0; i < storage.length; i += 1) {
+                const key = storage.key(i);
+                if (key && prefixes.some((prefix) => key.startsWith(prefix))) {
+                    keys.push(key);
+                }
+            }
+            keys.forEach((key) => {
+                storage.removeItem(key);
+                removed += 1;
+            });
+        } catch (error) {}
+    });
+
+    return removed;
+};
+
+window.getDefaultDesktopIconCell = (item, fallbackIndex, maxRows, maxCols) => {
+    const layout = window.getCurrentDesktopIconLayout ? window.getCurrentDesktopIconLayout() : window.defaultDesktopIconLayout;
+    const savedCell = layout?.[item.id];
+    let col = savedCell ? savedCell.col : Math.floor(fallbackIndex / maxRows);
+    let row = savedCell ? savedCell.row : fallbackIndex % maxRows;
+
+    col = Math.max(0, Math.min(col, maxCols - 1));
+    row = Math.max(0, Math.min(row, maxRows - 1));
+
+    return { col, row };
+};
+
 window.renderDesktopIcons = () => {
     const desktopIcons = window.byId ? window.byId("desktop-icons") : document.getElementById("desktop-icons");
     if (!desktopIcons) return;
@@ -77,7 +117,7 @@ window.renderDesktopIcons = () => {
     }
 
     const apps = window.desktopPinnedIds
-        .filter(id => window.isAppInstalled(id))
+        .filter(id => window.isAppInstalled(id) && id !== "settings" && id !== "local-ai")
         .map(window.getDesktopLauncher)
         .filter(Boolean);
         
@@ -87,7 +127,7 @@ window.renderDesktopIcons = () => {
 
     // Pass 1: Place apps with saved custom positions
     apps.forEach(item => {
-        const key = item.selectId ? `desktop_pos_${item.launchApp}_${item.selectId}` : `desktop_pos_${item.launchApp}`;
+        const key = window.getDesktopIconPositionKey(item);
         let savedRaw = null;
         if (window.Storage) {
             savedRaw = window.Storage.local.get(key);
@@ -122,18 +162,12 @@ window.renderDesktopIcons = () => {
     });
 
     // Pass 2: Place remaining apps in default grid slots
-    appsToPlaceLater.forEach(item => {
-        const index = window.desktopPinnedIds.indexOf(item.id);
-        let col = 0;
-        let row = 0;
-        if (index !== -1) {
-            col = Math.floor(index / maxRows);
-            row = index % maxRows;
-        }
+    appsToPlaceLater.forEach((item, fallbackIndex) => {
+        let { col, row } = window.getDefaultDesktopIconCell(item, fallbackIndex, maxRows, maxCols);
 
         let gridKey = `${col},${row}`;
         if (occupied.has(gridKey)) {
-            const freeCell = window.findFreeGridCell(occupied, maxRows);
+            const freeCell = window.findNearestFreeCell(col, row, occupied, maxRows, maxCols);
             col = freeCell.col;
             row = freeCell.row;
             gridKey = `${col},${row}`;
@@ -209,7 +243,9 @@ window.initDesktopIconDragging = () => {
                 icon.classList.remove("is-dragging");
                 const appName = icon.dataset.openApp;
                 const selectId = icon.dataset.select || "";
-                const key = selectId ? `desktop_pos_${appName}_${selectId}` : `desktop_pos_${appName}`;
+                const key = window.getDesktopIconPositionKey
+                    ? window.getDesktopIconPositionKey({ launchApp: appName, selectId })
+                    : (selectId ? `desktop_pos_${appName}_${selectId}` : `desktop_pos_${appName}`);
                 
                 const finalLeft = parseFloat(icon.style.left);
                 const finalTop = parseFloat(icon.style.top);
@@ -265,4 +301,5 @@ if (window.EventBus) {
     window.EventBus.on("app:installed", () => window.renderDesktopIcons());
     window.EventBus.on("app:uninstalled", () => window.renderDesktopIcons());
     window.EventBus.on("desktop:refresh", () => window.renderDesktopIcons());
+    window.EventBus.on("user:changed", () => window.renderDesktopIcons());
 }

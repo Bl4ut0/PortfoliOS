@@ -262,17 +262,43 @@ window.renderScreensaverStage = () => {
     if (!overlay) return;
 
     const screensaver = state.screensaver || "none";
-    const stars = Array.from({ length: 34 }, (_, index) => {
-        const left = (index * 29) % 100;
-        const top = (index * 47) % 100;
-        const size = 1 + (index % 4);
-        return `<span style="--i:${index}; left:${left}%; top:${top}%; width:${size}px; height:${size}px;"></span>`;
+    const stars = Array.from({ length: 72 }, (_, index) => {
+        const angle = ((index * 137) % 360) * (Math.PI / 180);
+        const distance = 24 + ((index * 19) % 72);
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance * 0.68;
+        const size = 1 + (index % 5);
+        const duration = 2.6 + (index % 7) * 0.2;
+        return `<span style="--i:${index}; --tx:${tx.toFixed(1)}vw; --ty:${ty.toFixed(1)}vh; --size:${size}px; --duration:${duration.toFixed(2)}s;"></span>`;
     }).join("");
-    const lines = Array.from({ length: 5 }, (_, index) => `<span style="--i:${index}"></span>`).join("");
-    const windows = Array.from({ length: 9 }, (_, index) => {
-        const x = -18 - ((index * 11) % 30);
-        const y = 8 + ((index * 17) % 78);
-        return `<span style="--i:${index}; --x:${x}%; --y:${y}%;"><i class="fa-brands fa-windows"></i></span>`;
+    const lines = Array.from({ length: 8 }, (_, index) => {
+        const width = 24 + (index % 4) * 8;
+        const height = 12 + (index % 3) * 7;
+        const x = -16 + (index % 5) * 8;
+        const y = -10 + (index % 4) * 5;
+        return `<span style="--i:${index}; --w:${width}vw; --h:${height}vh; --x:${x}vw; --y:${y}vh;"></span>`;
+    }).join("");
+    const windows = Array.from({ length: 14 }, (_, index) => {
+        const x = -24 - ((index * 13) % 38);
+        const y = 6 + ((index * 19) % 82);
+        const size = 2.6 + (index % 4) * 0.46;
+        return `<span style="--i:${index}; --x:${x}vw; --y:${y}vh; --s:${size}rem;"><i class="fa-brands fa-windows"></i></span>`;
+    }).join("");
+    const pipeTypes = ["horizontal", "vertical", "elbow", "horizontal", "vertical", "tee"];
+    const pipes = Array.from({ length: 28 }, (_, index) => {
+        const type = pipeTypes[index % pipeTypes.length];
+        const x = (index * 23) % 96;
+        const y = (index * 37) % 88;
+        const len = 3.6 + (index % 5) * 1.1;
+        const hue = (index * 41) % 360;
+        return `<span class="pipe pipe-${type}" style="--i:${index}; --x:${x}vw; --y:${y}vh; --len:${len.toFixed(1)}rem; --hue:${hue};"></span>`;
+    }).join("");
+    const mazeWalls = Array.from({ length: 24 }, (_, index) => {
+        const sideName = index % 3 === 0 ? "left" : index % 3 === 1 ? "right" : "block";
+        const top = 10 + (index % 5) * 12;
+        const height = 18 + (index % 4) * 7;
+        const width = sideName === "block" ? 12 + (index % 3) * 5 : 20 + (index % 4) * 5;
+        return `<span class="maze-wall maze-wall-${sideName}" style="--i:${index}; --top:${top}%; --wall-h:${height}vh; --wall-w:${width}vw;"></span>`;
     }).join("");
 
     const templates = {
@@ -280,7 +306,10 @@ window.renderScreensaverStage = () => {
         starfield: `<div class="screensaver-starfield" aria-hidden="true">${stars}</div>`,
         mystify: `<div class="screensaver-mystify" aria-hidden="true">${lines}</div>`,
         "flying-windows": `<div class="screensaver-flying-windows" aria-hidden="true">${windows}</div>`,
-        marquee: '<div class="screensaver-marquee" aria-hidden="true"><span>PortfoliOS // desktop protected // move pointer or press any key</span></div>'
+        "dvd-bounce": '<div class="screensaver-dvd-bounce" aria-hidden="true"><span class="dvd-logo-bouncer"><b>PortfoliOS</b><small>VIDEO</small></span></div>',
+        pipes: `<div class="screensaver-pipes" aria-hidden="true">${pipes}</div>`,
+        maze: `<div class="screensaver-maze" aria-hidden="true"><div class="maze-viewport">${mazeWalls}</div></div>`,
+        marquee: '<div class="screensaver-marquee" aria-hidden="true"><span data-text="PortfoliOS">PortfoliOS</span></div>'
     };
 
     overlay.dataset.screensaver = screensaver;

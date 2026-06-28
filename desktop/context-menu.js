@@ -116,13 +116,7 @@ window.getContextMenuItems = (event) => {
             if (window.showDesktopToast) window.showDesktopToast("Desktop refreshed"); 
         } },
         { label: "Reset icon positions", icon: "fa-solid fa-grip", action: () => {
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith("desktop_pos_")) {
-                    localStorage.removeItem(key);
-                    i--;
-                }
-            }
+            if (window.clearDesktopIconPositions) window.clearDesktopIconPositions();
             if (window.renderDesktopIcons) window.renderDesktopIcons();
             if (window.showDesktopToast) window.showDesktopToast("Icon positions reset");
         } },

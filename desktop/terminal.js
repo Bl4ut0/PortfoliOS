@@ -806,6 +806,46 @@ async function runLocalAICommand(args) {
     });
 }
 
+function isPrivateDesktopProfile() {
+    return (window.getCurrentUser ? window.getCurrentUser()?.id : window.state?.currentUserId) === "private";
+}
+
+function getCliHelpText() {
+    if (!isPrivateDesktopProfile()) return window.cliCommands.help;
+    return [
+        "Commands:",
+        "  whoami          current shell user",
+        "  whoami --info   private profile summary",
+        "  projects        list available private-profile nodes",
+        "  inspect <id>    print an available dossier",
+        "  quick           open direct review mode",
+        "  play / doom     open Doom engine loader",
+        "  workstation     focus desktop workspace",
+        "  links           private profile link policy",
+        "  status          available system status",
+        "  open <target>   open available public targets",
+        "  clear           clear terminal"
+    ].join("\n");
+}
+
+function getCliProfileSummary() {
+    if (!isPrivateDesktopProfile()) return window.cliCommands.whoami;
+    return "Private User - synced PortfoliOS profile with owner-specific project nodes, personal links, and local lab shortcuts removed.";
+}
+
+function getCliLinks() {
+    if (!isPrivateDesktopProfile()) return window.cliCommands.links;
+    return "Private profile mode does not expose owner contact links. Use the Store to install apps or open hosted services.";
+}
+
+function getVisibleCliSystems() {
+    return window.getVisibleSystems ? window.getVisibleSystems() : (window.systems || []);
+}
+
+function isCliSystemVisible(id) {
+    return !window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(id);
+}
+
 // Core execution engine
 async function executeCommand(command, args, raw) {
     if (command === "clear") {
@@ -816,7 +856,7 @@ async function executeCommand(command, args, raw) {
 
     if (command === "help") {
         return [
-            window.cliCommands.help,
+            getCliHelpText(),
             "",
             "Kernel System commands:",
             "  su [user]       switch active user session",
@@ -834,38 +874,37 @@ async function executeCommand(command, args, raw) {
             "  rm [-rf] <path> delete file or directory recursively",
             "  echo <text>     print text (redirect with > or >> to files)",
             "  ai [on|off|text] manage or talk to the Local AI assistant",
-            "  whoami --info   print Alex's developer profile summary"
+            isPrivateDesktopProfile()
+                ? "  whoami --info   print private profile summary"
+                : "  whoami --info   print Alex's developer profile summary"
         ].join("\n");
     }
 
     if (command === "whoami") {
         if (args.includes("--profile") || args.includes("-p") || args.includes("--info") || args.includes("--profile-summary")) {
-            return window.cliCommands.whoami;
+            return getCliProfileSummary();
         }
         return currentUser;
     }
 
     if (command === "whois" || command === "profile") {
-        return window.cliCommands.whoami;
+        return getCliProfileSummary();
     }
 
     if (command === "links") {
-        return window.cliCommands.links;
+        return getCliLinks();
     }
 
     if (command === "projects") {
-        const systems = window.systems || [];
+        const systems = getVisibleCliSystems();
         return systems.map((item) => `${item.id.padEnd(12)} ${item.status.padEnd(8)} ${item.title}`).join("\n");
     }
 
     if (command === "status") {
-        return [
-            "public-site    online   bl4ut0.dev",
-            "guildcraft     dev      dev.guildcraft.io",
-            "doomsource     playable Doom WAD loader",
-            "status-console planned  local module",
-            "wardenit       planned  professional node"
-        ].join("\n");
+        const systems = getVisibleCliSystems().filter((item) => !item.mobileOnly);
+        return systems.length
+            ? systems.map((item) => `${item.id.padEnd(14)} ${item.status.padEnd(8)} ${item.title}`).join("\n")
+            : "No visible system nodes in this profile.";
     }
 
     if (command === "quick") {
@@ -886,10 +925,11 @@ async function executeCommand(command, args, raw) {
     if (command === "linux" || command === "workstation") {
         if (window.switchView) window.switchView("desktop");
         if (command === "linux") {
+            if (!isCliSystemVisible("linux")) return "Linux lab is not available in this profile.";
             if (window.openDesktopWindow) window.openDesktopWindow("linux");
             return "lab@bl4ut0 opened.";
         } else {
-            if (window.openDesktopWindow) window.openDesktopWindow("profile");
+            if (!isPrivateDesktopProfile() && window.openDesktopWindow) window.openDesktopWindow("profile");
             return "Desktop workspace focused.";
         }
     }
@@ -897,7 +937,7 @@ async function executeCommand(command, args, raw) {
     if (command === "inspect") {
         const target = args.join(" ");
         const item = window.systemById ? window.systemById(target) : null;
-        if (!item) {
+        if (!item || !isCliSystemVisible(item.id)) {
             return `No dossier found for "${target}". Try: projects`;
         }
         if (window.renderDossier) window.renderDossier(item.id);
@@ -915,6 +955,9 @@ async function executeCommand(command, args, raw) {
 
     if (command === "open") {
         const target = args.join(" ");
+        if (isPrivateDesktopProfile() && target !== "doomsource") {
+            return `Target "${target}" is unavailable in the private profile.`;
+        }
         const openTargets = window.openTargets || {};
         const href = openTargets[target];
         if (!href) {
@@ -1102,7 +1145,13 @@ window.simulateAiResponse = (query) => {
     const lower = query.toLowerCase();
     let response = "I'm a simulated AI assistant for PortfoliOS. Try asking about **projects**, **skills**, or my **purpose**.";
 
-    if (lower.includes("who") || lower.includes("about") || lower.includes("yourself")) {
+    if (isPrivateDesktopProfile() && (lower.includes("who") || lower.includes("about") || lower.includes("yourself"))) {
+        response = "I am a simulated assistant running inside a private PortfoliOS profile. Owner-specific identity and project links are hidden in this session.";
+    } else if (isPrivateDesktopProfile() && (lower.includes("project") || lower.includes("portfolio") || lower.includes("built"))) {
+        response = "This private profile exposes only the shared desktop shell and available apps. Use `projects` or open the Store to see what is available here.";
+    } else if (isPrivateDesktopProfile() && (lower.includes("contact") || lower.includes("discord") || lower.includes("github"))) {
+        response = "Owner contact links are not exposed in private profile mode.";
+    } else if (lower.includes("who") || lower.includes("about") || lower.includes("yourself")) {
         response = "I am a simulated assistant built into **PortfoliOS**. I can tell you about Alex (Bl4ut0), an infrastructure operator and systems builder focused on connecting self-hosted tools and gaming ecosystems.";
     } else if (lower.includes("project") || lower.includes("portfolio") || lower.includes("built")) {
         response = "There are several active nodes in the portfolio:\n**Bl4ut0.dev** - The main dev portal.\n**GuildCraft** - A gaming community platform.\n**DOOM Source** - An embedded WASM Doom engine.\nType `projects` or `status` to see standard system lists.";
@@ -1181,7 +1230,12 @@ window.startCliIntro = () => {
     output.innerHTML = window.asciiMotd;
     let delay = 120;
 
-    const cliIntroLines = window.cliIntroLines || [];
+    const cliIntroLines = isPrivateDesktopProfile() ? [
+        ["POST OK / loading private.cli", "muted"],
+        ["mount /experience/desktop /apps/store /apps/files /apps/cli", "muted"],
+        ["PortfoliOS private shell ready.", ""],
+        [getCliHelpText(), "muted"]
+    ] : (window.cliIntroLines || []);
     cliIntroLines.forEach(([text, className]) => {
         window.setTimeout(() => window.typeTerminalLine(text, className), delay);
         delay += Math.min(1800, 220 + text.length * 7);

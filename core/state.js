@@ -18,6 +18,7 @@
         quickFilter: "all",
         quickSearch: "",
         storeCategory: "all",
+        storeInstallFilter: "all",
         cliIntroStarted: false,
         systemStarted: false,
         wallpaper: "aurora", // will be updated from storage on boot / preferences load

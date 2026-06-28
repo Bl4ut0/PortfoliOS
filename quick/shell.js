@@ -12,11 +12,12 @@ window.getQuickRouteItems = () => {
     if (!route) return [];
 
     const query = state.quickSearch.trim().toLowerCase();
-    const systems = window.systems || [];
+    const systems = window.getVisibleSystems ? window.getVisibleSystems() : (window.systems || []);
     
     return route.ids
         .map((id) => window.systemById ? window.systemById(id) : systems.find(s => s.id === id))
         .filter(Boolean)
+        .filter((item) => !window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(item.id))
         .filter((item) => {
             if (state.quickFilter === "live") return window.isQuickLiveStatus(item);
             if (state.quickFilter === "planned") return !window.isQuickLiveStatus(item);
@@ -37,14 +38,15 @@ window.getQuickRouteItems = () => {
 };
 
 window.renderQuickOverview = () => {
-    const systems = window.systems || [];
+    const systems = window.getVisibleSystems ? window.getVisibleSystems() : (window.systems || []);
     const quickRoutes = window.quickRoutes || [];
     const liveCount = systems.filter(window.isQuickLiveStatus).length;
     const plannedCount = systems.length - liveCount;
     
     const featured = ["devhub", "addons", "guildcraft", "homelab", "wardenit"]
         .map((id) => window.systemById ? window.systemById(id) : systems.find(s => s.id === id))
-        .filter(Boolean);
+        .filter(Boolean)
+        .filter((item) => !window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(item.id));
 
     return `
         <div class="quick-detail-heading">
@@ -92,7 +94,10 @@ window.renderQuick = () => {
     if (!route) return;
 
     const routeItems = window.getQuickRouteItems();
-    const activeItem = state.quickActiveId === "overview" ? null : (window.systemById ? window.systemById(state.quickActiveId) : null);
+    const requestedActiveItem = state.quickActiveId === "overview" ? null : (window.systemById ? window.systemById(state.quickActiveId) : null);
+    const activeItem = requestedActiveItem && (!window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(requestedActiveItem.id))
+        ? requestedActiveItem
+        : null;
 
     const routesContainer = window.byId ? window.byId("quick-routes") : document.getElementById("quick-routes");
     const filtersContainer = window.byId ? window.byId("quick-filters") : document.getElementById("quick-filters");

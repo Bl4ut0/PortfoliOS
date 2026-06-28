@@ -23,10 +23,13 @@ window.wallpaperOptions = [
 window.screensaverOptions = [
     { id: "none", label: "None", icon: "fa-solid fa-ban", description: "Keep the desktop visible." },
     { id: "blank", label: "Blank Screen", icon: "fa-regular fa-square", description: "Fade to a quiet black display." },
-    { id: "starfield", label: "Starfield", icon: "fa-solid fa-star", description: "Classic flying stars in deep space." },
-    { id: "mystify", label: "Mystify", icon: "fa-solid fa-draw-polygon", description: "Neon line trails inspired by Windows 3.x." },
-    { id: "flying-windows", label: "Flying Windows", icon: "fa-brands fa-windows", description: "Floating window marks across the desktop." },
-    { id: "marquee", label: "Marquee", icon: "fa-solid fa-align-left", description: "Scrolling PortfoliOS status text." }
+    { id: "starfield", label: "3D Starfield", icon: "fa-solid fa-star", description: "Windows 95-style stars rushing from a center vanishing point." },
+    { id: "mystify", label: "Mystify", icon: "fa-solid fa-draw-polygon", description: "Neon line trails inspired by classic Windows Mystify." },
+    { id: "flying-windows", label: "Flying Windows", icon: "fa-brands fa-windows", description: "XP-style window logos drifting through the dark." },
+    { id: "dvd-bounce", label: "DVD Bounce", icon: "fa-solid fa-compact-disc", description: "A PortfoliOS logo bouncing around like the classic DVD idle screen." },
+    { id: "pipes", label: "3D Pipes", icon: "fa-solid fa-cubes-stacked", description: "A glossy pipe network nodding to the Windows 95 classic." },
+    { id: "maze", label: "3D Maze", icon: "fa-solid fa-route", description: "A retro first-person brick maze flythrough." },
+    { id: "marquee", label: "3D Text", icon: "fa-solid fa-font", description: "A chunky glowing PortfoliOS text saver." }
 ];
 
 window.portfolioThemes = [

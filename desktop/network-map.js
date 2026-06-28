@@ -7,7 +7,7 @@ window.renderNetworkMap = () => {
     const map = window.byId ? window.byId("network-map") : document.getElementById("network-map");
     if (!map) return;
 
-    const systems = window.systems || [];
+    const systems = window.getVisibleSystems ? window.getVisibleSystems() : (window.systems || []);
     const desktopApps = systems.filter(item => !item.mobileOnly);
     
     const nodes = desktopApps.map((item) => `
@@ -18,7 +18,7 @@ window.renderNetworkMap = () => {
         </button>
     `).join("");
 
-    const devhub = window.systemById ? window.systemById("devhub") : systems.find(s => s.id === "devhub");
+    const devhub = systems.find(s => s.id === "devhub");
     const center = devhub ? devhub.position : [50, 50];
     
     const lines = desktopApps

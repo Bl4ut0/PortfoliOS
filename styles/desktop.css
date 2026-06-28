@@ -3,9 +3,9 @@
     z-index: 75;
     left: 0.9rem;
     bottom: var(--panel-bottom);
-    width: min(45rem, calc(100% - 2rem));
-    max-height: min(35rem, calc(100% - 6rem));
-    overflow: auto;
+    width: min(47rem, calc(100% - 2rem));
+    height: min(35rem, calc(100% - 6rem));
+    overflow: hidden;
     padding: 0;
     background: rgba(11, 14, 22, 0.86);
     border: 1px solid rgba(255, 255, 255, 0.14);
@@ -17,12 +17,12 @@
 .start-layout {
     display: grid;
     grid-template-columns: 3.25rem minmax(0, 1fr);
-    min-height: 0;
+    height: 100%;
 }
 
 .start-rail {
     display: grid;
-    grid-template-rows: auto auto 1fr repeat(4, auto);
+    grid-template-rows: auto 1fr repeat(6, auto);
     gap: 0.5rem;
     padding: 0.75rem 0.55rem;
     background: rgba(0, 0, 0, 0.22);
@@ -59,12 +59,14 @@
 }
 
 .start-rail-spacer {
-    min-height: 6rem;
+    min-height: 1.5rem;
 }
 
 .start-main {
     min-width: 0;
     padding: 1rem;
+    overflow-y: auto;
+    height: 100%;
 }
 
 .start-header,
@@ -136,6 +138,148 @@
     font-size: 0.72rem;
 }
 
+.user-profile-prompt {
+    position: absolute;
+    left: 4.6rem;
+    bottom: var(--panel-bottom);
+    z-index: 90;
+    display: grid;
+    gap: 0.85rem;
+    width: min(24rem, calc(100% - 2rem));
+    padding: 0.9rem;
+    color: var(--text-soft);
+    background: rgba(9, 13, 20, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(24px);
+}
+
+.user-profile-prompt-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.user-profile-prompt-head > i {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--theme-primary);
+    background: rgba(34, 211, 238, 0.09);
+    border: 1px solid rgba(34, 211, 238, 0.22);
+    border-radius: 8px;
+}
+
+.user-profile-prompt-head strong,
+.user-profile-prompt-head small {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-profile-prompt-head strong {
+    color: var(--text);
+    font-family: var(--heading);
+    line-height: 1.1;
+}
+
+.user-profile-prompt-head small {
+    margin-top: 0.12rem;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+}
+
+.user-profile-prompt-head button,
+.user-profile-prompt-actions button {
+    min-height: 2rem;
+    padding: 0.42rem 0.62rem;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.user-profile-prompt-head button {
+    width: 2rem;
+    padding: 0;
+}
+
+.user-profile-prompt-head button:hover,
+.user-profile-prompt-actions button:hover {
+    color: var(--text);
+    border-color: rgba(34, 211, 238, 0.28);
+    background: rgba(34, 211, 238, 0.08);
+}
+
+.user-profile-prompt p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.cloud-sync-field {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.cloud-sync-field span {
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.cloud-sync-field input {
+    width: 100%;
+    min-height: 2.35rem;
+    padding: 0.48rem 0.65rem;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    outline: none;
+}
+
+.cloud-sync-field input:focus {
+    border-color: rgba(34, 211, 238, 0.36);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
+}
+
+.user-profile-prompt-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.user-profile-prompt-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-width: 6.5rem;
+    font-weight: 700;
+}
+
+.user-profile-prompt-actions button.primary {
+    color: #031016;
+    background: var(--theme-primary);
+    border-color: transparent;
+}
+
+.user-profile-prompt-actions button.primary:hover {
+    color: #031016;
+    background: #06b6d4;
+}
+
 .store-content {
     flex: 1;
     overflow-y: auto;
@@ -179,9 +323,10 @@
 .start-pin {
     display: grid;
     justify-items: center;
-    gap: 0.4rem;
-    min-height: 4.9rem;
-    padding: 0.6rem;
+    align-content: center;
+    gap: 0.25rem;
+    min-height: 5.35rem;
+    padding: 0.55rem;
     color: var(--text-soft);
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid var(--line);
@@ -203,8 +348,57 @@
 .start-pin span {
     font-size: 0.76rem;
     text-align: center;
+    line-height: 1.15;
 }
 
+.start-pin small {
+    max-width: 100%;
+    color: var(--text-muted);
+    font-size: 0.62rem;
+    line-height: 1.1;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.start-groups {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.start-menu-group {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.start-group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.start-group-title h4 {
+    margin: 0;
+    color: var(--text-soft);
+    font-family: var(--heading);
+    font-size: 0.83rem;
+}
+
+.start-group-title b {
+    display: inline-grid;
+    min-width: 1.55rem;
+    height: 1.55rem;
+    place-items: center;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.7rem;
+}
+
+.start-group-grid,
 .start-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -520,3 +714,86 @@
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
     backdrop-filter: blur(22px);
 }
+
+/* Active Profile styling in Start Menu */
+.start-rail-avatar.active-profile {
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.45);
+}
+
+.start-rail-avatar i {
+    color: var(--text-soft);
+    transition: color 0.15s ease;
+}
+
+.start-rail-avatar:hover i {
+    color: var(--text);
+}
+
+/* Power Options Menu */
+.power-options-menu {
+    position: absolute;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background: rgba(15, 20, 32, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 0.35rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+}
+
+.power-option-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.8rem;
+    color: var(--text-soft);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.power-option-item:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.power-option-item i {
+    width: 1rem;
+    text-align: center;
+}
+
+/* Shutdown Overlay */
+.shutdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.shutdown-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.shutdown-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+

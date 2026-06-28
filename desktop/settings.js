@@ -777,19 +777,19 @@ function initSystemResetSettings() {
 
     if (resetVarsBtn) {
         resetVarsBtn.addEventListener("click", () => {
-            if (confirm("Are you sure you want to reset all saved variables?\nThis will reset icon positions, custom bookmarks, and uninstall all added programs. The page will reload.")) {
-                // 1. Remove icon coordinates
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith("bl4ut0DesktopIconPos_")) {
-                        keysToRemove.push(key);
-                    }
+            if (confirm("Are you sure you want to reset saved desktop variables?\nThis will reset icon positions and uninstall Store-downloaded apps. The page will reload.")) {
+                if (window.clearDesktopIconPositions) {
+                    window.clearDesktopIconPositions();
                 }
-                keysToRemove.forEach(key => localStorage.removeItem(key));
 
-                // 2. Uninstall custom programs
-                localStorage.removeItem("bl4ut0_installed_apps");
+                if (window.resetInstalledStoreApps) {
+                    window.resetInstalledStoreApps();
+                } else if (window.Storage) {
+                    window.Storage.local.remove("bl4ut0_installed_apps");
+                } else {
+                    localStorage.removeItem("bl4ut0_installed_apps");
+                    sessionStorage.removeItem("bl4ut0_installed_apps");
+                }
 
                 window.showDesktopToast?.("Saved variables reset. Reloading...");
                 setTimeout(() => window.location.reload(), 1200);

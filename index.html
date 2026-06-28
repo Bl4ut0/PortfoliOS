@@ -15,7 +15,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="styles-v1.css?v=1.0.41">
+    <link rel="stylesheet" href="styles-v1.css?v=1.0.49">
     <script>
         // Global System Debug Logger
         window.SystemLogs = [];
@@ -517,10 +517,18 @@
                                     <button type="button" class="start-rail-btn" title="Menu">
                                         <i class="fa-solid fa-bars"></i>
                                     </button>
-                                    <button type="button" class="start-rail-avatar" data-open-settings-panel="accounts" title="Account">
-                                        <img id="start-user-avatar" src="identity-portrait.jpg" alt="">
-                                    </button>
                                     <span class="start-rail-spacer"></span>
+
+                                    <!-- Owner Profile (Alex Mammen) -->
+                                    <button type="button" class="start-rail-avatar" id="start-rail-avatar-owner" data-restore-owner-profile title="Alex Mammen (Owner)">
+                                        <img src="identity-portrait.jpg" alt="Alex Mammen">
+                                    </button>
+
+                                    <!-- Custom User / Sign-in ? Button -->
+                                    <button type="button" class="start-rail-avatar" id="start-rail-avatar-user" data-open-private-profile title="Sign In">
+                                        <i class="fa-solid fa-circle-question" style="font-size: 1.25rem;"></i>
+                                    </button>
+
                                     <button type="button" class="start-rail-btn" data-open-app="files" title="Files">
                                         <i class="fa-regular fa-folder-open"></i>
                                     </button>
@@ -546,7 +554,7 @@
                                         </div>
                                         <span>Experience launcher</span>
                                     </div>
-                                    <button type="button" class="start-user-strip" data-open-settings-panel="accounts">
+                                    <button type="button" class="start-user-strip" data-open-private-profile>
                                         <img id="start-user-strip-avatar" src="identity-portrait.jpg" alt="">
                                         <span>
                                             <strong id="start-user-name">Alex Mammen</strong>
@@ -562,8 +570,8 @@
                                         <div class="start-pinned" id="start-pinned"></div>
                                     </div>
                                     <div class="start-section">
-                                        <h3>All nodes</h3>
-                                        <div class="start-grid" id="start-grid"></div>
+                                        <h3>Browse</h3>
+                                        <div class="start-groups" id="start-grid"></div>
                                     </div>
                                 </div>
                             </div>
@@ -982,7 +990,7 @@
                                                 <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.6rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); padding: 0.8rem; border-radius: var(--radius-sm);">
                                                     <div>
                                                         <strong style="display: block; font-size: 0.82rem; color: var(--text); margin-bottom: 2px;">Reset Saved Variables</strong>
-                                                        <span style="font-size: 0.7rem; color: var(--text-soft, #9ca3af); line-height: 1.35; display: block;">Resets desktop icon positions, custom bookmarks, and uninstalls all added apps.</span>
+                                                        <span style="font-size: 0.7rem; color: var(--text-soft, #9ca3af); line-height: 1.35; display: block;">Resets desktop icon positions and uninstalls Store-downloaded apps.</span>
                                                     </div>
                                                     <button type="button" id="settings-reset-variables-btn" class="settings-btn btn-danger" style="align-self: flex-start; padding: 6px 12px; font-size: 0.72rem; margin-top: 0.25rem;">
                                                         <i class="fa-solid fa-rotate-left"></i> Reset Variables
@@ -1181,33 +1189,33 @@
     <!-- Core Services -->
     <script src="core/event-bus.js"></script>
     <script src="core/storage.js"></script>
-    <script src="core/state.js?v=1.0.37"></script>
+    <script src="core/state.js?v=1.0.47"></script>
     <script src="core/utils.js"></script>
     <script src="core/filesystem.js?v=1.0.30"></script>
     <script src="core/gdrive-sync.js?v=1.0.36"></script>
     <script src="core/app-loader.js?v=1.0.43"></script>
     <script src="core/local-ai.js?v=1.0.43"></script>
-    <script src="core/preferences.js?v=1.0.36"></script>
+    <script src="core/preferences.js?v=1.0.45"></script>
     <script src="core/window-manager.js?v=1.0.33"></script>
     
     <!-- Shared Data -->
     <script src="data/systems.js"></script>
-    <script src="data/apps.js?v=1.0.39"></script>
-    <script src="data/users.js?v=1.0.37"></script>
+    <script src="data/apps.js?v=1.0.49"></script>
+    <script src="data/users.js?v=1.0.49"></script>
     <script src="data/bookmarks.js"></script>
-    <script src="data/config.js?v=1.0.36"></script>
+    <script src="data/config.js?v=1.0.45"></script>
     
     <!-- Desktop Components -->
     <script src="desktop/taskbar.js?v=1.0.43"></script>
-    <script src="desktop/start-menu.js?v=1.0.37"></script>
-    <script src="desktop/desktop-icons.js"></script>
-    <script src="desktop/context-menu.js?v=1.0.36"></script>
-    <script src="desktop/dossier.js"></script>
+    <script src="desktop/start-menu.js?v=1.0.49"></script>
+    <script src="desktop/desktop-icons.js?v=1.0.47"></script>
+    <script src="desktop/context-menu.js?v=1.0.46"></script>
+    <script src="desktop/dossier.js?v=1.0.47"></script>
     <script src="desktop/browser.js"></script>
-    <script src="desktop/terminal.js?v=1.0.43"></script>
-    <script src="desktop/network-map.js"></script>
-    <script src="desktop/store.js?v=1.0.33"></script>
-    <script src="desktop/settings.js?v=1.0.37"></script>
+    <script src="desktop/terminal.js?v=1.0.47"></script>
+    <script src="desktop/network-map.js?v=1.0.47"></script>
+    <script src="desktop/store.js?v=1.0.48"></script>
+    <script src="desktop/settings.js?v=1.0.46"></script>
     <script src="desktop/calendar.js"></script>
     <script src="desktop/toast.js"></script>
     <script src="desktop/canvas-bg.js"></script>
@@ -1215,11 +1223,11 @@
     <script src="desktop/boot.js"></script>
     <script src="desktop/wad-inspector.js"></script>
     <script src="desktop/brain-helper.js"></script>
-    <script src="desktop/shell.js?v=1.0.41"></script>
+    <script src="desktop/shell.js?v=1.0.48"></script>
     
     <!-- Mobile & Quick Shells -->
-    <script src="mobile/shell.js"></script>
-    <script src="quick/shell.js"></script>
+    <script src="mobile/shell.js?v=1.0.47"></script>
+    <script src="quick/shell.js?v=1.0.47"></script>
     
     <!-- Main Entry Point -->
     <script src="main.js"></script>

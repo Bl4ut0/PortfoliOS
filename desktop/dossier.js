@@ -4,8 +4,11 @@
  */
 
 window.renderDossier = (id) => {
-    const systems = window.systems || [];
-    const item = (window.systemById ? window.systemById(id) : null) || systems[0];
+    const systems = window.getVisibleSystems ? window.getVisibleSystems() : (window.systems || []);
+    const requested = window.systemById ? window.systemById(id) : systems.find((system) => system.id === id);
+    const item = (requested && (!window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(requested.id)))
+        ? requested
+        : systems[0];
     if (!item) return;
 
     state.activeId = item.id;

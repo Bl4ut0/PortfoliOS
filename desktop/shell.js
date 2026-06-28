@@ -65,6 +65,10 @@ window.boot = () => {
         window.SystemFS.init().catch(err => console.error("Filesystem init error:", err));
     }
 
+    if (window.applyCurrentUserProfile) {
+        window.applyCurrentUserProfile();
+    }
+
     if (window.modularApps && window.ensureAppLoaded) {
         window.modularApps.forEach(appId => {
             if (window.isAppInstalled && window.isAppInstalled(appId)) {
@@ -164,7 +168,15 @@ window.boot = () => {
         if (startMenu && !event.target.closest("#start-menu") && !event.target.closest("#start-toggle")) {
             startMenu.hidden = true;
         }
-        
+
+        const userPrompt = window.byId ? window.byId("user-profile-prompt") : document.getElementById("user-profile-prompt");
+        if (userPrompt && !event.target.closest("#user-profile-prompt") && !event.target.closest("[data-open-private-profile]")) {
+            window.closeUserProfilePrompt?.();
+        }
+        const powerMenu = document.getElementById("power-options-menu");
+        if (powerMenu && !powerMenu.hidden && !event.target.closest("#power-options-menu") && !event.target.closest("[data-start-power]")) {
+            powerMenu.hidden = true;
+        }
         const calPanel = window.byId ? window.byId("calendar-panel") : document.getElementById("calendar-panel");
         if (calPanel && !event.target.closest("#calendar-panel") && !event.target.closest("#clock-toggle")) {
             calPanel.hidden = true;
@@ -221,9 +233,123 @@ window.boot = () => {
             return;
         }
 
+        const privateProfileButton = event.target.closest("[data-open-private-profile]");
+        if (privateProfileButton) {
+            const hasSavedProfile = !!localStorage.getItem("bl4ut0_private_user_profile");
+            const isPrivate = (window.getCurrentUser ? window.getCurrentUser()?.id : "") === "private";
+            
+            if (isPrivate) {
+                if (window.openUserProfilePrompt) window.openUserProfilePrompt();
+            } else if (hasSavedProfile) {
+                if (window.setCurrentUser) window.setCurrentUser("private");
+            } else {
+                if (window.openUserProfilePrompt) window.openUserProfilePrompt();
+            }
+            const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+            if (startMenu) startMenu.hidden = true;
+            return;
+        }
+
+        const deleteProfileBtn = event.target.closest("#btn-delete-profile");
+        if (deleteProfileBtn) {
+            localStorage.removeItem("bl4ut0_private_user_profile");
+            
+            // Reset active private user accounts info
+            const privateAccount = window.userAccounts?.find(a => a.id === "private");
+            if (privateAccount) {
+                privateAccount.displayName = "Private User";
+                privateAccount.handle = "Cloud Sync";
+                privateAccount.avatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='%23090d14'/%3E%3Ccircle cx='48' cy='37' r='16' fill='%2322d3ee'/%3E%3Cpath d='M22 78c4-18 18-28 26-28s22 10 26 28' fill='%232dd4bf'/%3E%3C/svg%3E";
+            }
+
+            if (window.setCurrentUser) window.setCurrentUser("bl4ut0");
+            if (window.closeUserProfilePrompt) window.closeUserProfilePrompt();
+            window.showDesktopToast?.("Private profile deleted.");
+            return;
+        }
+
+        const privateProfileSignIn = event.target.closest("[data-sign-in-private-profile]");
+        if (privateProfileSignIn) {
+            if (window.signInPrivateProfile) window.signInPrivateProfile();
+            return;
+        }
+
+        const restoreOwnerProfile = event.target.closest("[data-restore-owner-profile]");
+        if (restoreOwnerProfile) {
+            const isOwner = (window.getCurrentUser ? window.getCurrentUser()?.id : "") === "bl4ut0";
+            if (!isOwner) {
+                if (window.restoreOwnerProfile) window.restoreOwnerProfile();
+                const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+                if (startMenu) startMenu.hidden = true;
+            }
+            return;
+        }
+
+        const closeUserProfilePrompt = event.target.closest("[data-close-user-profile-prompt]");
+        if (closeUserProfilePrompt) {
+            if (window.closeUserProfilePrompt) window.closeUserProfilePrompt();
+            return;
+        }
+
         const startPowerButton = event.target.closest("[data-start-power]");
         if (startPowerButton) {
-            if (window.showDesktopToast) window.showDesktopToast("Power options are planned.");
+            event.stopPropagation();
+            let powerMenu = document.getElementById("power-options-menu");
+            if (!powerMenu) {
+                powerMenu = document.createElement("div");
+                powerMenu.id = "power-options-menu";
+                powerMenu.className = "power-options-menu";
+                powerMenu.innerHTML = `
+                    <button type="button" class="power-option-item" id="power-restart-btn">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Restart</span>
+                    </button>
+                    <button type="button" class="power-option-item" id="power-shutdown-btn">
+                        <i class="fa-solid fa-power-off"></i>
+                        <span>Shut Down</span>
+                    </button>
+                `;
+                document.body.appendChild(powerMenu);
+                
+                powerMenu.querySelector("#power-restart-btn").addEventListener("click", () => {
+                    window.showDesktopToast?.("Restarting system...");
+                    setTimeout(() => window.location.reload(), 800);
+                });
+                
+                powerMenu.querySelector("#power-shutdown-btn").addEventListener("click", () => {
+                    powerMenu.hidden = true;
+                    let shutdownOverlay = document.getElementById("shutdown-overlay");
+                    if (!shutdownOverlay) {
+                        shutdownOverlay = document.createElement("div");
+                        shutdownOverlay.id = "shutdown-overlay";
+                        shutdownOverlay.className = "shutdown-overlay";
+                        shutdownOverlay.innerHTML = `
+                            <div class="shutdown-content">
+                                <i class="fa-solid fa-power-off" style="font-size: 3rem; color: #ea4335; cursor: pointer;" id="power-on-btn" title="Turn On"></i>
+                                <p style="margin-top: 1rem; color: #9ca3af; font-family: monospace; font-size: 0.9rem;">System is shut down.</p>
+                            </div>
+                        `;
+                        document.body.appendChild(shutdownOverlay);
+                        
+                        shutdownOverlay.querySelector("#power-on-btn").addEventListener("click", () => {
+                            shutdownOverlay.classList.remove("active");
+                            setTimeout(() => {
+                                shutdownOverlay.remove();
+                                window.location.reload();
+                            }, 500);
+                        });
+                    }
+                    setTimeout(() => {
+                        shutdownOverlay.classList.add("active");
+                    }, 50);
+                });
+            }
+            
+            const rect = startPowerButton.getBoundingClientRect();
+            const scale = window.getDesktopScale ? window.getDesktopScale() : 1;
+            powerMenu.style.left = `${rect.left / scale}px`;
+            powerMenu.style.bottom = `${(window.innerHeight - rect.top) / scale + 8}px`;
+            powerMenu.hidden = !powerMenu.hidden;
             return;
         }
 
@@ -486,6 +612,14 @@ window.boot = () => {
         const storeCategoryBtn = event.target.closest("[data-store-category]");
         if (storeCategoryBtn) {
             state.storeCategory = storeCategoryBtn.dataset.storeCategory;
+            if (window.renderStore) window.renderStore();
+            return;
+        }
+
+        const storeInstallFilterBtn = event.target.closest("[data-store-install-filter]");
+        if (storeInstallFilterBtn) {
+            state.storeInstallFilter = storeInstallFilterBtn.dataset.storeInstallFilter;
+            state.storeCategory = "all";
             if (window.renderStore) window.renderStore();
             return;
         }

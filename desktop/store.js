@@ -9,23 +9,64 @@ window.renderStore = () => {
 
     if (!state.installingApps) state.installingApps = {};
     const activeCategory = state.storeCategory || "all";
+    const activeInstallFilter = state.storeInstallFilter || "all";
     const storeApps = window.storeApps || [];
     const storeCategories = window.storeCategories || [];
     const escapeHtml = window.escapeHtml || ((value) => String(value ?? ""));
-    
+    const normalizedInstallFilter = ["all", "installed", "not-installed"].includes(activeInstallFilter)
+        ? activeInstallFilter
+        : "all";
+
+    const isInstalled = (app) => window.isStoreAppInstalled
+        ? window.isStoreAppInstalled(app.id)
+        : (window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds().includes(app.id) : false);
+
+    const matchesInstallFilter = (app) => {
+        const installed = isInstalled(app);
+        if (normalizedInstallFilter === "installed") return installed;
+        if (normalizedInstallFilter === "not-installed") return !installed;
+        return true;
+    };
+
+    const appsMatchingInstallFilter = storeApps.filter(matchesInstallFilter);
+
     const visibleApps = storeApps.filter((app) => {
         if (activeCategory === "all") return true;
         return app.category.toLowerCase() === activeCategory;
-    });
+    }).filter(matchesInstallFilter);
+
+    const installFilters = [
+        { id: "all", label: "All", icon: "fa-solid fa-border-all" },
+        { id: "installed", label: "Installed", icon: "fa-solid fa-circle-check" },
+        { id: "not-installed", label: "Not Installed", icon: "fa-solid fa-cloud-arrow-down" }
+    ];
+
+    const installFilterHtml = installFilters.map((filter) => {
+        const count = storeApps.filter((app) => {
+            if (filter.id === "installed") return isInstalled(app);
+            if (filter.id === "not-installed") return !isInstalled(app);
+            return true;
+        }).length;
+        return `
+            <button type="button" class="store-filter ${normalizedInstallFilter === filter.id ? "is-active" : ""}"
+                data-store-install-filter="${escapeHtml(filter.id)}"
+                aria-pressed="${normalizedInstallFilter === filter.id ? "true" : "false"}">
+                <i class="${escapeHtml(filter.icon)}"></i>
+                <span>${escapeHtml(filter.label)}</span>
+                <b>${count}</b>
+            </button>
+        `;
+    }).join("");
 
     const categoryHtml = storeCategories.map((category) => {
         const count = category.id === "all"
-            ? storeApps.length
-            : storeApps.filter((app) => app.category.toLowerCase() === category.id).length;
+            ? appsMatchingInstallFilter.length
+            : appsMatchingInstallFilter.filter((app) => app.category.toLowerCase() === category.id).length;
         const categoryId = escapeHtml(category.id);
         return `
-            <button type="button" class="store-category ${activeCategory === category.id ? "active" : ""}"
-                data-store-category="${categoryId}">
+            <button type="button" class="store-category ${activeCategory === category.id ? "is-active" : ""}"
+                data-store-category="${categoryId}"
+                aria-pressed="${activeCategory === category.id ? "true" : "false"}">
                 <i class="${escapeHtml(category.icon)}"></i>
                 <span>${escapeHtml(category.label)}</span>
                 <b>${count}</b>
@@ -34,10 +75,11 @@ window.renderStore = () => {
     }).join("");
 
     const cardsHtml = visibleApps.map((app) => {
-        const installed = window.isAppInstalled ? window.isAppInstalled(app.id) : false;
+        const installed = isInstalled(app);
         const installingProgress = state.installingApps[app.id];
         const isInstalling = installingProgress !== undefined;
         const installable = app.installable !== false;
+        const stateLabel = !installable ? "Hosted" : installed ? "Installed" : "Not installed";
         const appId = escapeHtml(app.id);
         const title = escapeHtml(app.title);
         const category = escapeHtml(app.category);
@@ -88,6 +130,7 @@ window.renderStore = () => {
                         <h3>${title}</h3>
                         <span>${category}</span>
                     </div>
+                    <b class="store-app-state">${escapeHtml(stateLabel)}</b>
                 </div>
                 <p class="store-app-card-desc">${description}</p>
                 <div class="store-app-card-footer">
@@ -111,6 +154,9 @@ window.renderStore = () => {
                 <p>Install games, launch hosted services, and stage future productivity apps.</p>
             </div>
         </div>
+        <div class="store-toolbar" aria-label="Store install filters">
+            ${installFilterHtml}
+        </div>
         <div class="store-body">
             <aside class="store-category-list" aria-label="Store categories">
                 ${categoryHtml}
@@ -119,7 +165,7 @@ window.renderStore = () => {
                 ${cardsHtml || `
                     <div class="store-empty">
                         <i class="fa-solid fa-box-open"></i>
-                        <span>No apps in this category yet.</span>
+                        <span>No apps match this filter yet.</span>
                     </div>
                 `}
             </div>
@@ -152,16 +198,13 @@ window.installApp = (id) => {
             clearInterval(interval);
             delete state.installingApps[id];
 
-            let list = ["doomsource"];
-            if (window.Storage) {
-                const saved = window.Storage.local.get("bl4ut0_installed_apps");
-                list = saved ? JSON.parse(saved) : ["doomsource"];
-                if (!list.includes(id)) list.push(id);
+            const list = window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : [];
+            if (!list.includes(id)) list.push(id);
+            if (window.setInstalledStoreAppIds) {
+                window.setInstalledStoreAppIds(list);
+            } else if (window.Storage) {
                 window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
             } else {
-                const saved = localStorage.getItem("bl4ut0_installed_apps");
-                list = saved ? JSON.parse(saved) : ["doomsource"];
-                if (!list.includes(id)) list.push(id);
                 localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
             }
 
@@ -185,16 +228,12 @@ window.installApp = (id) => {
 };
 
 window.uninstallApp = (id) => {
-    let list = ["doomsource"];
-    if (window.Storage) {
-        const saved = window.Storage.local.get("bl4ut0_installed_apps");
-        list = saved ? JSON.parse(saved) : ["doomsource"];
-        list = list.filter((item) => item !== id);
+    const list = (window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : []).filter((item) => item !== id);
+    if (window.setInstalledStoreAppIds) {
+        window.setInstalledStoreAppIds(list);
+    } else if (window.Storage) {
         window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
     } else {
-        const saved = localStorage.getItem("bl4ut0_installed_apps");
-        list = saved ? JSON.parse(saved) : ["doomsource"];
-        list = list.filter((item) => item !== id);
         localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
     }
 
