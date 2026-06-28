@@ -867,7 +867,8 @@
         };
 
         let apiKey = localStorage.getItem("settings-gemini-api-key");
-        if (!apiKey && modelInfo.free) {
+        const isOwner = !window.getCurrentUser || window.getCurrentUser()?.id === "bl4ut0";
+        if (!apiKey && modelInfo.free && isOwner) {
             apiKey = atob("QVEuQWI4Uk42SkNLR0dYN2twNDBvemFPVE9rMU5KLWd6ZWg1dDNPdy1mcDVWdHZlWTdLUkE=");
         }
 
@@ -1042,9 +1043,12 @@
         getAvailableModels: () => {
             const hasOpenaiKey = !!localStorage.getItem("settings-openai-api-key");
             const hasGeminiKey = !!localStorage.getItem("settings-gemini-api-key");
+            const isOwner = !window.getCurrentUser || window.getCurrentUser()?.id === "bl4ut0";
             return AVAILABLE_MODELS.filter(m => {
                 if (m.type === "cloud-openai") return hasOpenaiKey;
-                if (m.type === "cloud-gemini") return hasGeminiKey;
+                if (m.type === "cloud-gemini") {
+                    return m.free ? (isOwner || hasGeminiKey) : hasGeminiKey;
+                }
                 return true;
             });
         },
@@ -1052,9 +1056,12 @@
             const saved = localStorage.getItem(STORAGE_KEY);
             const hasOpenaiKey = !!localStorage.getItem("settings-openai-api-key");
             const hasGeminiKey = !!localStorage.getItem("settings-gemini-api-key");
+            const isOwner = !window.getCurrentUser || window.getCurrentUser()?.id === "bl4ut0";
             const isModelAllowed = (m) => {
                 if (m.type === "cloud-openai") return hasOpenaiKey;
-                if (m.type === "cloud-gemini") return hasGeminiKey;
+                if (m.type === "cloud-gemini") {
+                    return m.free ? (isOwner || hasGeminiKey) : hasGeminiKey;
+                }
                 return true;
             };
 
