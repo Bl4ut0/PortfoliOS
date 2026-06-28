@@ -639,9 +639,13 @@
         const dataset = getPortfolioContext();
         let systemPrompt = "";
         
+        const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
+        const runtimeType = isCloud ? `a cloud-hosted model (${modelInfo.label})` : `a local on-device WebGPU model (${modelInfo.label})`;
+
         if (isChat) {
             systemPrompt = [
                 "You are 'Lobe', a helpful, chatty cartoon brain mascot assistant built into PortfoliOS.",
+                `You are currently running on ${runtimeType} executing fully in the client browser.`,
                 "You help users learn about Alex (Bl4ut0), navigate the portfolio, play games (DOOM, Diablo), or understand shell commands.",
                 "Answer questions in a friendly, conversational, and informative tone.",
                 "Utilize the Portfolio Dataset below to provide accurate answers about projects, tech stacks, status, and links.",
@@ -655,7 +659,8 @@
             ].join("\n");
         } else {
             systemPrompt = [
-                "You are the Local AI assistant inside PortfoliOS CLI.",
+                "You are the AI assistant inside PortfoliOS CLI.",
+                `You are currently running on ${runtimeType} executing fully in the client browser.`,
                 "Keep answers concise and practical.",
                 "Do not claim you executed commands.",
                 "You can understand ordinary typed English. If asked whether you understand the user, answer yes and briefly explain what you can help with.",
