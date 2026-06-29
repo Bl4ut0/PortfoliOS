@@ -66,6 +66,7 @@
     // Map of apps to their simulated memory footprints (in MB)
     const APP_MEM_FOOTPRINT = {
         doomsource: 128,
+        openrct2: 96,
         diablo: 256,
         quake: 180,
         duke32: 160,
@@ -199,7 +200,7 @@
         // Base CPU load based on open applications (weighted by cores)
         let baseCpu = 2; // idle load
         openApps.forEach(appId => {
-            const isHeavy = ["doomsource", "diablo", "quake", "duke32"].includes(appId);
+            const isHeavy = ["doomsource", "openrct2", "diablo", "quake", "duke32"].includes(appId);
             baseCpu += isHeavy ? (40 / cores) : (5 / cores);
         });
 

@@ -11,5 +11,6 @@ window.browserBookmarks = [
     { id: "guildcraft", label: "GuildCraft", url: "https://dev.guildcraft.io", icon: "fa-solid fa-cubes", systemId: "guildcraft", embeddable: true },
     { id: "discord", label: "Discord", url: "https://discord.gg/fEwanmFR9m", icon: "fa-brands fa-discord", systemId: "guildcraft", embeddable: false },
     { id: "doomsource", label: "Doom", url: "https://github.com/id-Software/DOOM", icon: "doom-icon.png", systemId: "doomsource", embeddable: false },
+    { id: "openrct2", label: "OpenRCT2", url: "https://openrct2.io/downloads", icon: "fa-solid fa-train", systemId: "openrct2", embeddable: false },
     { id: "status", label: "Status", url: "experience://status", icon: "fa-solid fa-signal", systemId: "status" }
 ];

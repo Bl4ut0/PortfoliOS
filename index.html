@@ -190,7 +190,7 @@
 
                         <div class="desktop-icons" id="desktop-icons" aria-label="Desktop icons"></div>
 
-                        <section class="desktop-window profile-window active" data-window="profile"
+                        <section class="desktop-window profile-window is-hidden" data-window="profile"
                             aria-label="Profile window">
                             <div class="window-bar">
                                 <span><i class="fa-solid fa-id-card"></i> identity.sys</span>
@@ -333,7 +333,7 @@
                             </div>
                         </section>
 
-                        <section class="desktop-window dossier-window active" data-window="dossier" aria-live="polite">
+                        <section class="desktop-window dossier-window is-hidden" data-window="dossier" aria-live="polite">
                             <div class="window-bar">
                                 <span id="dossier-file">dossier/devhub.md</span>
                                 <div class="window-actions">
@@ -428,7 +428,7 @@
                         <section class="desktop-window cli-window is-hidden" data-window="cli"
                             aria-label="CLI terminal app window">
                             <div class="window-bar">
-                                <span><i class="fa-solid fa-terminal"></i> bl4ut0@portfolio:~</span>
+                                <span id="cli-window-title"><i class="fa-solid fa-terminal"></i> bl4ut0@portfolio:~</span>
                                 <div class="window-actions">
                                     <button type="button" data-minimize-window="cli" title="Minimize CLI">
                                         <i class="fa-solid fa-minus"></i>
@@ -1192,30 +1192,31 @@
     <script src="core/state.js?v=1.0.47"></script>
     <script src="core/utils.js"></script>
     <script src="core/filesystem.js?v=1.0.30"></script>
-    <script src="core/gdrive-sync.js?v=1.0.36"></script>
-    <script src="core/app-loader.js?v=1.0.43"></script>
-    <script src="core/local-ai.js?v=1.0.43"></script>
+    <script src="core/gdrive-sync.js?v=1.0.58"></script>
+    <script src="core/app-loader.js?v=1.0.58"></script>
+    <script src="core/local-ai.js?v=1.0.63"></script>
+    <script src="core/simple-brain.js"></script>
     <script src="core/preferences.js?v=1.0.45"></script>
     <script src="core/window-manager.js?v=1.0.33"></script>
     
     <!-- Shared Data -->
-    <script src="data/systems.js"></script>
-    <script src="data/apps.js?v=1.0.49"></script>
-    <script src="data/users.js?v=1.0.49"></script>
-    <script src="data/bookmarks.js"></script>
-    <script src="data/config.js?v=1.0.45"></script>
+    <script src="data/systems.js?v=1.0.54"></script>
+    <script src="data/apps.js?v=1.0.54"></script>
+    <script src="data/users.js?v=1.0.58"></script>
+    <script src="data/bookmarks.js?v=1.0.51"></script>
+    <script src="data/config.js?v=1.0.51"></script>
     
     <!-- Desktop Components -->
     <script src="desktop/taskbar.js?v=1.0.43"></script>
-    <script src="desktop/start-menu.js?v=1.0.49"></script>
+    <script src="desktop/start-menu.js?v=1.0.58"></script>
     <script src="desktop/desktop-icons.js?v=1.0.47"></script>
     <script src="desktop/context-menu.js?v=1.0.46"></script>
     <script src="desktop/dossier.js?v=1.0.47"></script>
     <script src="desktop/browser.js"></script>
-    <script src="desktop/terminal.js?v=1.0.47"></script>
+    <script src="desktop/terminal.js?v=1.0.51"></script>
     <script src="desktop/network-map.js?v=1.0.47"></script>
     <script src="desktop/store.js?v=1.0.48"></script>
-    <script src="desktop/settings.js?v=1.0.46"></script>
+    <script src="desktop/settings.js?v=1.0.59"></script>
     <script src="desktop/calendar.js"></script>
     <script src="desktop/toast.js"></script>
     <script src="desktop/canvas-bg.js"></script>
@@ -1223,7 +1224,7 @@
     <script src="desktop/boot.js"></script>
     <script src="desktop/wad-inspector.js"></script>
     <script src="desktop/brain-helper.js"></script>
-    <script src="desktop/shell.js?v=1.0.48"></script>
+    <script src="desktop/shell.js?v=1.0.57"></script>
     
     <!-- Mobile & Quick Shells -->
     <script src="mobile/shell.js?v=1.0.47"></script>

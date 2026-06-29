@@ -302,6 +302,22 @@
     `;
     document.head.appendChild(style);
 
+    function getWelcomeMessage(isCloud) {
+        if (isCloud) {
+            return `Hi there! I am your Cloud AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Running on a cloud-hosted model. You can switch models or manage connection settings in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI app</a>.</span>`;
+        }
+        return `Hi there! I am your Local AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Tip: Running slow? You can select lighter models like Gemma 3 270M inside the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Local AI app</a>.</span>`;
+    }
+
+    function getClearChatMessage(isCloud) {
+        if (isCloud) {
+            return `Clear screen. What would you like to know?<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Running on a cloud-hosted model. You can switch models or manage connection settings in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI app</a>.</span>`;
+        }
+        return `Clear screen. What would you like to know?<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Tip: You can select other local AI models in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Local AI app</a>.</span>`;
+    }
+
+    const initialIsCloud = window.LocalAI && window.LocalAI.getStatus ? window.LocalAI.getStatus().modelType?.startsWith("cloud-") : false;
+
     // Create Mascot SVG & HTML Structure
     const container = document.createElement("div");
     container.className = "brain-helper-container";
@@ -316,7 +332,7 @@
                 </button>
             </div>
             <div class="brain-helper-output" id="brain-helper-text">
-                Hi there! I am your Local AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Tip: Running slow? You can select lighter models like Gemma 3 270M inside the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Local AI app</a>.</span>
+                ${getWelcomeMessage(initialIsCloud)}
             </div>
             <form class="brain-helper-form" id="brain-helper-form">
                 <div class="brain-helper-input-wrapper">
@@ -331,7 +347,7 @@
                 </div>
             </form>
         </div>
-        <div class="brain-helper-mascot idle" id="brain-helper-mascot" title="Click to chat with Local AI">
+        <div class="brain-helper-mascot idle" id="brain-helper-mascot" title="Click to chat with ${initialIsCloud ? 'Cloud AI' : 'Local AI'}">
             <svg class="brain-helper-svg" viewBox="0 0 100 100" width="100%" height="100%">
                 <!-- Gradient for Brain Shape -->
                 <defs>
@@ -449,7 +465,8 @@
     // Clear Chat
     clearBtn.addEventListener("click", (e) => {
         e.preventDefault();
-        textOutput.innerHTML = 'Clear screen. What would you like to know?<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Tip: You can select other local AI models in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Local AI app</a>.</span>';
+        const isCloud = window.LocalAI && window.LocalAI.getStatus ? window.LocalAI.getStatus().modelType?.startsWith("cloud-") : false;
+        textOutput.innerHTML = getClearChatMessage(isCloud);
         input.value = "";
         input.focus();
     });
@@ -481,6 +498,17 @@
             form.requestSubmit();
         }
     });
+
+    function updateHelperMode(isCloud) {
+        if (mascot) {
+            mascot.title = isCloud ? "Click to chat with Cloud AI" : "Click to chat with Local AI";
+        }
+        const welcomeTextLocal = "Hi there! I am your Local AI brain helper.";
+        const welcomeTextCloud = "Hi there! I am your Cloud AI brain helper.";
+        if (textOutput && (textOutput.innerHTML.includes(welcomeTextLocal) || textOutput.innerHTML.includes(welcomeTextCloud) || textOutput.innerHTML === "")) {
+            textOutput.innerHTML = getWelcomeMessage(isCloud);
+        }
+    }
 
     // Set Mascot Visibility State
     function setMascotVisibility(visible) {
@@ -522,7 +550,31 @@
 
         // Check if Local AI is ready
         if (!window.LocalAI || !window.LocalAI.isReady()) {
-            textOutput.innerHTML = 'Local AI is currently off. Please enable it to chat.<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Tip: You can change the local AI model (like Gemma 3) inside the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Local AI app</a>.</span>';
+            if (window.SimpleBrain) {
+                const answer = window.SimpleBrain.query(prompt);
+                if (answer) {
+                    input.disabled = true;
+                    sendBtn.disabled = true;
+                    textOutput.innerHTML = "";
+                    mascot.classList.remove("idle");
+                    mascot.classList.add("thinking");
+                    mouth.setAttribute("d", "M 46 60 Q 50 60, 54 60");
+                    
+                    setTimeout(() => {
+                        mascot.classList.remove("thinking");
+                        mascot.classList.add("idle");
+                        mouth.setAttribute("d", "M 45 58 Q 50 63, 55 58");
+                        textOutput.innerHTML = answer.replace(/\n/g, '<br>');
+                        input.disabled = false;
+                        sendBtn.disabled = false;
+                        textOutput.scrollTop = textOutput.scrollHeight;
+                        input.focus();
+                    }, 400); // 400ms thinking delay for realism
+                    return;
+                }
+            }
+
+            textOutput.innerHTML = `I'm a basic offline helper. I can answer questions about Alex's <strong>profile</strong>, <strong>projects</strong>, <strong>skills</strong>, <strong>contacts</strong>, or <strong>games</strong>.<br><br>For complex questions like "${escapeHtml(prompt)}", please enable a higher-tier AI model in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI app</a>.`;
             return;
         }
 
@@ -583,7 +635,8 @@
             if (cursorSpan.parentNode) {
                 cursorSpan.parentNode.removeChild(cursorSpan);
             }
-            textOutput.innerHTML = `<span style="color: var(--rose, #f43f5e);">Error: ${escapeHtml(error?.message || "Local AI failed to generate response.")}</span>`;
+            const isCloud = window.LocalAI && window.LocalAI.getStatus ? window.LocalAI.getStatus().modelType?.startsWith("cloud-") : false;
+            textOutput.innerHTML = `<span style="color: var(--rose, #f43f5e);">Error: ${escapeHtml(error?.message || (isCloud ? "Cloud AI failed to generate response." : "Local AI failed to generate response."))}</span>`;
         } finally {
             activeGenerations--;
             if (activeGenerations <= 0) {
@@ -616,6 +669,9 @@
             // Hide it if it's idle or off.
             const isReady = status.ready || status.status === "generating";
             setMascotVisibility(isReady);
+            
+            const isCloud = status.modelType && status.modelType.startsWith("cloud-");
+            updateHelperMode(isCloud);
         });
 
         // Initialize visibility based on current status
@@ -623,6 +679,9 @@
             const currentStatus = window.LocalAI.getStatus();
             const isReady = currentStatus.ready || currentStatus.status === "generating";
             setMascotVisibility(isReady);
+            
+            const isCloud = currentStatus.modelType && currentStatus.modelType.startsWith("cloud-");
+            updateHelperMode(isCloud);
         }
     }
 })();

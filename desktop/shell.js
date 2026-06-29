@@ -11,7 +11,7 @@ window.setTopDockOpen = (isOpen, autoDismissMs = 0) => {
     }
     const advisory = window.byId ? window.byId("mobile-advisory") : document.getElementById("mobile-advisory");
     const topbarTab = window.byId ? window.byId("topbar-tab") : document.getElementById("topbar-tab");
-    
+
     document.body.classList.toggle("top-dock-open", isOpen);
     document.body.classList.remove("top-dock-carry");
     if (topbarTab) topbarTab.setAttribute("aria-expanded", String(isOpen));
@@ -96,6 +96,16 @@ window.boot = async () => {
     if (window.renderTaskbar) window.renderTaskbar();
     if (window.applyDesktopPreferences) window.applyDesktopPreferences();
     if (window.initWindowManagement) window.initWindowManagement();
+
+    // Programmatically open default windows from state
+    if (state.openApps) {
+        Array.from(state.openApps).forEach((appId) => {
+            if (window.openDesktopWindow) {
+                window.openDesktopWindow(appId);
+            }
+        });
+    }
+
     if (window.initDesktopIconDragging) window.initDesktopIconDragging();
     if (window.updateClock) window.updateClock();
     
@@ -122,7 +132,7 @@ window.boot = async () => {
 
     // Stop arrow keys from scrolling the webpage during focused game play
     window.addEventListener("keydown", (e) => {
-        if (["doomsource", "romplayer"].includes(state.activeWindow) && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
+        if (["doomsource", "openrct2", "romplayer"].includes(state.activeWindow) && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
             e.preventDefault();
         }
     }, { capture: true, passive: false });
@@ -200,7 +210,7 @@ window.boot = async () => {
     });
 
     // Global click delegation
-    document.addEventListener("click", (event) => {
+    document.addEventListener("click", async (event) => {
         const topbarTab = event.target.closest("#topbar-tab");
         if (topbarTab) {
             window.setTopDockOpen(!document.body.classList.contains("top-dock-open"));
@@ -260,16 +270,11 @@ window.boot = async () => {
 
         const deleteProfileBtn = event.target.closest("#btn-delete-profile");
         if (deleteProfileBtn) {
-            localStorage.removeItem("bl4ut0_private_user_profile");
-            
-            // Reset active private user accounts info
-            const privateAccount = window.userAccounts?.find(a => a.id === "private");
-            if (privateAccount) {
-                privateAccount.displayName = "Private User";
-                privateAccount.handle = "Cloud Sync";
-                privateAccount.avatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='%23090d14'/%3E%3Ccircle cx='48' cy='37' r='16' fill='%2322d3ee'/%3E%3Cpath d='M22 78c4-18 18-28 26-28s22 10 26 28' fill='%232dd4bf'/%3E%3C/svg%3E";
+            if (window.clearPrivateProfileData) {
+                await window.clearPrivateProfileData();
+            } else {
+                localStorage.removeItem("bl4ut0_private_user_profile");
             }
-
             if (window.setCurrentUser) window.setCurrentUser("bl4ut0");
             if (window.closeUserProfilePrompt) window.closeUserProfilePrompt();
             window.showDesktopToast?.("Private profile deleted.");

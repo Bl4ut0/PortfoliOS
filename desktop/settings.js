@@ -194,7 +194,8 @@ function updateGDriveUI() {
         indicator.className = `status-indicator-dot ${isConnected ? "connected" : "disconnected"}`;
     }
     if (statusText) {
-        statusText.textContent = isConnected ? "Connected to Google Drive" : "Not Connected";
+        const folderLabel = window.GDriveSync?.getCurrentFolderLabel ? window.GDriveSync.getCurrentFolderLabel() : "Google Drive";
+        statusText.textContent = isConnected ? `Connected to ${folderLabel}` : "Not Connected";
     }
     if (connectBtn) {
         connectBtn.style.display = isConnected ? "none" : "inline-flex";
@@ -295,7 +296,8 @@ async function triggerGDriveSync() {
         if (window.loadPreferencesFromFilesystem) {
             await window.loadPreferencesFromFilesystem();
         }
-        if (window.showDesktopToast) window.showDesktopToast("File Sync Complete!");
+        const folderLabel = window.GDriveSync?.getCurrentFolderLabel ? window.GDriveSync.getCurrentFolderLabel() : "Google Drive";
+        if (window.showDesktopToast) window.showDesktopToast(`Synced ${folderLabel}`);
         if (progressText) progressText.textContent = "Sync complete!";
         if (progressBar) progressBar.style.width = "100%";
     } catch (err) {
@@ -720,13 +722,40 @@ function initDebugSettings() {
 
     if (!logContainer) return;
 
+    const getLocalAIDebugLines = () => {
+        const snapshot = window.LocalAI?.getDebugSnapshot?.() || window.LocalAI?.getStatus?.();
+        if (!snapshot) return [];
+
+        const pct = Math.round((Number(snapshot.progress) || 0) * 100);
+        const progressLabel = snapshot.progressLabel || (Number.isFinite(pct) ? `${pct}%` : "-");
+        const fields = [
+            `status=${snapshot.status || "-"}`,
+            `progress=${progressLabel}`,
+            `model=${snapshot.modelId || snapshot.modelLabel || "-"}`,
+            `type=${snapshot.modelType || "-"}`,
+            `webgpu=${snapshot.webGpuSupported ?? snapshot.webGpu ?? "-"}`,
+            `mirror=${snapshot.mirror ?? "-"}`,
+            `worker=${snapshot.workerUrl || "-"}`
+        ];
+
+        const lines = [
+            `[LocalAI Snapshot] ${fields.join(" ")}`,
+            `[LocalAI Detail] ${snapshot.statusText || "-"}`
+        ];
+        if (snapshot.lastError) {
+            lines.push(`[LocalAI Last Error] ${snapshot.lastError}`);
+        }
+        return lines;
+    };
+
     const renderLogs = () => {
         const logs = window.SystemLogs || [];
-        if (logs.length === 0) {
+        const localAiLines = getLocalAIDebugLines();
+        if (logs.length === 0 && localAiLines.length === 0) {
             logContainer.innerHTML = `<span style="color: var(--text-muted, #6b7280);">No logs recorded. System is running cleanly.</span>`;
             return;
         }
-        logContainer.textContent = logs.join("\n");
+        logContainer.textContent = [...localAiLines, ...logs].join("\n");
         logContainer.scrollTop = logContainer.scrollHeight;
     };
 
@@ -734,6 +763,12 @@ function initDebugSettings() {
 
     if (window.EventBus) {
         window.EventBus.on("system:log-added", () => {
+            const activePanel = document.querySelector(".settings-panel.active");
+            if (activePanel && activePanel.dataset.panel === "debug") {
+                renderLogs();
+            }
+        });
+        window.EventBus.on("local-ai:status", () => {
             const activePanel = document.querySelector(".settings-panel.active");
             if (activePanel && activePanel.dataset.panel === "debug") {
                 renderLogs();
@@ -872,6 +907,7 @@ if (window.EventBus) {
     window.EventBus.on("state:changed:gdriveConnected", () => updateGDriveUI());
     window.EventBus.on("local-ai:status", () => updateLocalAiSettingsUI());
     window.EventBus.on("local-ai:model-changed", () => updateLocalAiSettingsUI());
+    window.EventBus.on("local-ai:mirror-changed", () => updateLocalAiSettingsUI());
     window.EventBus.on("app:opened", (name) => {
         if (name === "settings") {
             // refresh data when window is opened

@@ -155,6 +155,8 @@ window.renderLocalAITray = () => {
         };
     }
 
+
+
     if (label) {
         label.textContent = status.status === "generating"
             ? "Active"
@@ -204,7 +206,7 @@ window.renderLocalAITray = () => {
         enableButton.style.display = isAiActive ? "none" : "inline-flex";
     }
     if (stopButton) {
-        stopButton.disabled = status.busy;
+        stopButton.disabled = false; // Always allow stop/disconnect even when busy
         stopButton.style.display = isAiActive ? "inline-flex" : "none";
         if (isCloudModel) {
             stopButton.innerHTML = '<i class="fa-solid fa-link-slash"></i> Disconnect';
@@ -222,4 +224,5 @@ if (window.EventBus) {
     window.EventBus.on("app:maximized", () => window.renderTaskbar());
     window.EventBus.on("desktop:refresh", () => window.renderTaskbar());
     window.EventBus.on("local-ai:status", () => window.renderLocalAITray());
+    window.EventBus.on("local-ai:mirror-changed", () => window.renderLocalAITray());
 }

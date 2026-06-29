@@ -3,16 +3,18 @@
  * Keeps account identity separate from shell rendering so future multi-user support can grow cleanly.
  */
 
+const DEFAULT_PRIVATE_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='%23090d14'/%3E%3Ccircle cx='48' cy='37' r='16' fill='%2322d3ee'/%3E%3Cpath d='M22 78c4-18 18-28 26-28s22 10 26 28' fill='%232dd4bf'/%3E%3C/svg%3E";
+
 window.userAccounts = [
     {
         id: "bl4ut0",
-        displayName: "Alex Mammen",
-        handle: "Bl4ut0",
-        role: "Owner",
-        accountType: "Local administrator",
+        displayName: "Guest Access",
+        handle: "Bl4ut0 Owner Account",
+        role: "Guest",
+        accountType: "Public portfolio session",
         avatar: "identity-portrait.jpg",
         accent: "#22d3ee",
-        status: "Active session",
+        status: "Guest session",
         privateProfile: false
     },
     {
@@ -20,8 +22,8 @@ window.userAccounts = [
         displayName: "Private User",
         handle: "Cloud Sync",
         role: "User",
-        accountType: "Private synced profile",
-        avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='%23090d14'/%3E%3Ccircle cx='48' cy='37' r='16' fill='%2322d3ee'/%3E%3Cpath d='M22 78c4-18 18-28 26-28s22 10 26 28' fill='%232dd4bf'/%3E%3C/svg%3E",
+        accountType: "Private Account",
+        avatar: DEFAULT_PRIVATE_AVATAR,
         accent: "#2dd4bf",
         status: "Synced profile",
         privateProfile: true,
@@ -35,17 +37,25 @@ window.userAccounts = [
             files: { col: 0, row: 1 },
             cli: { col: 0, row: 2 },
             romplayer: { col: 1, row: 0 },
-            doomsource: { col: 1, row: 1 },
-            duke32: { col: 1, row: 2 },
-            diablo: { col: 1, row: 3 },
-            quake: { col: 1, row: 4 },
-            webamp: { col: 1, row: 5 }
+            openrct2: { col: 1, row: 1 },
+            doomsource: { col: 1, row: 2 },
+            duke32: { col: 1, row: 3 },
+            diablo: { col: 1, row: 4 },
+            quake: { col: 1, row: 5 },
+            webamp: { col: 2, row: 0 }
         }
     }
 ];
 
-// Initialize private profile credentials from localStorage if saved
-(function() {
+window.resetPrivateAccountDisplay = () => {
+    const privateAccount = window.userAccounts?.find(a => a.id === "private");
+    if (!privateAccount) return;
+    privateAccount.displayName = "Private User";
+    privateAccount.handle = "Cloud Sync";
+    privateAccount.avatar = DEFAULT_PRIVATE_AVATAR;
+};
+
+window.syncPrivateAccountFromSavedProfile = () => {
     try {
         const savedProfileRaw = localStorage.getItem("bl4ut0_private_user_profile");
         if (savedProfileRaw) {
@@ -56,12 +66,18 @@ window.userAccounts = [
                 privateAccount.displayName = displayName;
                 privateAccount.handle = displayName.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, "");
                 privateAccount.avatar = savedProfile.avatar;
+                return;
             }
         }
+        window.resetPrivateAccountDisplay();
     } catch (e) {
         console.error("Failed to load private user profile", e);
+        window.resetPrivateAccountDisplay();
     }
-})();
+};
+
+// Initialize private profile credentials from localStorage if saved
+window.syncPrivateAccountFromSavedProfile();
 
 window.getSavedPrivateProfile = () => {
     try {
@@ -178,30 +194,74 @@ window.setCurrentUser = (userId) => {
     }
 };
 
+window.readFilesystemRecordText = async (record) => {
+    if (!record || record.data === null || record.data === undefined) return "";
+    if (typeof record.data === "string") return record.data;
+    if (record.data instanceof Blob) return record.data.text();
+    if (record.data instanceof ArrayBuffer) return new TextDecoder().decode(record.data);
+    return String(record.data);
+};
+
+window.clearPrivateProfileData = async () => {
+    const shouldRemoveKey = (key) => {
+        if (!key) return false;
+        return key === "bl4ut0_private_user_profile"
+            || key === "bl4ut0_installed_apps_private"
+            || key.startsWith("bl4ut0_private_")
+            || key.startsWith("desktop_pos_private_")
+            || key.startsWith("bl4ut0_sync_manifest_private-")
+            || key.startsWith("bl4ut0_last_sync_time_private-");
+    };
+
+    [window.localStorage, window.sessionStorage].forEach((storage) => {
+        try {
+            const keys = [];
+            for (let i = 0; i < storage.length; i += 1) {
+                const key = storage.key(i);
+                if (shouldRemoveKey(key)) keys.push(key);
+            }
+            keys.forEach((key) => storage.removeItem(key));
+        } catch (error) {}
+    });
+
+    window.GDriveSync?.clearScopedSyncState?.("private");
+
+    if (window.SystemFS) {
+        try {
+            await window.SystemFS.deleteFile("/home/private/settings.json", { silent: true });
+        } catch (error) {}
+    }
+
+    window.resetPrivateAccountDisplay();
+};
+
 window.savePreferencesToFilesystem = async () => {
     const user = window.getCurrentUser ? window.getCurrentUser() : null;
-    if (!user || user.id !== "private") return;
+    if (!user) return;
 
     try {
         if (!window.SystemFS) return;
         const userId = user.id;
         const prefix = `bl4ut0_${userId}_`;
+        const installedAppsKey = window.getInstalledStoreAppsKey
+            ? window.getInstalledStoreAppsKey(userId)
+            : (userId === "bl4ut0" ? "bl4ut0_installed_apps" : `bl4ut0_installed_apps_${userId}`);
         const settings = {};
 
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && (key.startsWith(prefix) || key === "bl4ut0_private_user_profile" || key === `bl4ut0_installed_apps_${userId}`)) {
+            if (key && (key.startsWith(prefix) || key === installedAppsKey || (userId === "private" && key === "bl4ut0_private_user_profile"))) {
                 settings[key] = localStorage.getItem(key);
             }
         }
 
         const jsonStr = JSON.stringify(settings, null, 2);
-        const path = "/home/private/settings.json";
+        const path = `/home/${userId}/settings.json`;
         const name = "settings.json";
-        const parent = "/home/private";
+        const parent = `/home/${userId}`;
         
         await window.SystemFS.writeFile(path, name, parent, jsonStr, jsonStr.length, "application/json", false, { silent: true });
-        console.log("PortfoliOS: Saved private profile preferences to virtual filesystem.");
+        console.log(`PortfoliOS: Saved ${userId} profile preferences to virtual filesystem.`);
     } catch (e) {
         console.error("Failed to save preferences to filesystem", e);
     }
@@ -209,13 +269,14 @@ window.savePreferencesToFilesystem = async () => {
 
 window.loadPreferencesFromFilesystem = async () => {
     const user = window.getCurrentUser ? window.getCurrentUser() : null;
-    if (!user || user.id !== "private") return;
+    if (!user) return;
 
     try {
         if (!window.SystemFS) return;
-        const record = await window.SystemFS.getFile("/home/private/settings.json");
+        const record = await window.SystemFS.readFile(`/home/${user.id}/settings.json`);
         if (record && record.data) {
-            const settings = JSON.parse(record.data);
+            const settingsText = await window.readFilesystemRecordText(record);
+            const settings = JSON.parse(settingsText);
             let changed = false;
             Object.entries(settings).forEach(([key, val]) => {
                 if (val !== null && val !== undefined) {
@@ -227,7 +288,8 @@ window.loadPreferencesFromFilesystem = async () => {
             });
 
             if (changed) {
-                console.log("PortfoliOS: Restored private profile preferences from virtual filesystem.");
+                window.syncPrivateAccountFromSavedProfile?.();
+                console.log(`PortfoliOS: Restored ${user.id} profile preferences from virtual filesystem.`);
                 if (window.applyCurrentUserProfile) {
                     window.applyCurrentUserProfile();
                 }

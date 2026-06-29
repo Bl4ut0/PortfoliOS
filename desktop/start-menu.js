@@ -19,7 +19,8 @@ window.getStartMenuLauncher = (id) => {
             linux: "Lab shell",
             network: "Topology view",
             profile: "Identity",
-            dossier: "Project files"
+            dossier: "Project files",
+            openrct2: "Theme park engine"
         };
 
         return {
@@ -179,7 +180,7 @@ window.openUserProfilePrompt = () => {
         <div class="user-profile-prompt-head">
             <i class="fa-solid fa-cloud-arrow-down"></i>
             <span>
-                <strong>Sign in to Private User</strong>
+                <strong>Sign in to Private Account</strong>
                 <small>Google Drive Cloud Sync</small>
             </span>
             <button type="button" data-close-user-profile-prompt title="Close">
@@ -188,9 +189,9 @@ window.openUserProfilePrompt = () => {
         </div>
         <label class="cloud-sync-field">
             <span>Profile Name</span>
-            <input type="text" id="cloud-sync-name" placeholder="e.g. My Workspace" autocomplete="off">
+            <input type="text" id="cloud-sync-name" placeholder="Uses your Google name if blank" autocomplete="off">
         </label>
-        <p>This links your workspace to Google Drive using Google OAuth for cloud backup and file synchronization.</p>
+        <p>This links your private workspace to Google Drive and uses your Google account name and picture for the desktop profile.</p>
         <div class="user-profile-prompt-actions">
             <button type="button" class="primary" data-sign-in-private-profile>
                 <i class="fa-brands fa-google-drive"></i>
@@ -206,11 +207,7 @@ window.openUserProfilePrompt = () => {
 
 window.signInPrivateProfile = async () => {
     const nameInput = document.getElementById("cloud-sync-name");
-    const profileName = nameInput ? nameInput.value.trim() : "";
-    if (!profileName) {
-        window.showDesktopToast?.("Please enter a profile name.");
-        return;
-    }
+    const requestedProfileName = nameInput ? nameInput.value.trim() : "";
 
     const button = document.querySelector("[data-sign-in-private-profile]");
     if (button) {
@@ -233,25 +230,52 @@ window.signInPrivateProfile = async () => {
             throw new Error("GDriveSync service is unavailable.");
         }
 
-        // Generate Google-style letter avatar using entered name
+        const googleProfile = await window.GDriveSync.getGoogleProfile?.();
+        const profileName = requestedProfileName || googleProfile?.name || googleProfile?.email || "Private Account";
+        const profileEmail = googleProfile?.email || "";
+
+        // Google profile picture is preferred; generated letter avatar is the fallback.
         const char = profileName.charAt(0).toUpperCase();
         const colors = ["#1a73e8", "#ea4335", "#f9ab00", "#34a853"];
         const charCode = char.charCodeAt(0);
         const color = colors[charCode % colors.length];
-        const avatar = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='${encodeURIComponent(color)}'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='48' font-weight='bold' fill='%23ffffff'%3E${char}%3C/text%3E%3C/svg%3E`;
+        const generatedAvatar = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='${encodeURIComponent(color)}'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='48' font-weight='bold' fill='%23ffffff'%3E${char}%3C/text%3E%3C/svg%3E`;
+        const avatar = googleProfile?.picture || generatedAvatar;
 
-        const profile = { name: profileName, avatar };
+        const profile = {
+            name: profileName,
+            email: profileEmail,
+            avatar,
+            picture: googleProfile?.picture || "",
+            source: googleProfile?.picture ? "google" : "generated"
+        };
         localStorage.setItem("bl4ut0_private_user_profile", JSON.stringify(profile));
 
         // Update active private user accounts info
         const privateAccount = window.userAccounts?.find(a => a.id === "private");
         if (privateAccount) {
             privateAccount.displayName = profileName;
-            privateAccount.handle = profileName.toLowerCase().replace(/[^a-z0-9]/g, "");
+            privateAccount.handle = (profileEmail || profileName).split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
             privateAccount.avatar = avatar;
         }
 
+        if (window.GDriveSync?.clearScopedSyncState) {
+            window.GDriveSync.clearScopedSyncState("private");
+        }
+
         if (window.setCurrentUser) window.setCurrentUser("private");
+        if (window.savePreferencesToFilesystem) {
+            await window.savePreferencesToFilesystem();
+        }
+        if (window.GDriveSync?.sync) {
+            if (button) {
+                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing...';
+            }
+            await window.GDriveSync.sync();
+            if (window.loadPreferencesFromFilesystem) {
+                await window.loadPreferencesFromFilesystem();
+            }
+        }
         window.closeUserProfilePrompt();
         window.showDesktopToast?.(`Welcome, ${profileName}! Drive synced.`);
     } catch (err) {

@@ -480,7 +480,7 @@
 
 .terminal-input-row {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto 1fr;
     gap: 0.45rem;
     align-items: center;
     padding: 0 1rem 1rem;
@@ -3157,10 +3157,10 @@
     justify-content: center;
     gap: 0.4rem;
     min-height: 2.15rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 7px;
-    color: var(--text);
-    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: 700;
@@ -3170,7 +3170,7 @@
 .local-ai-tray-actions button:hover:not(:disabled) {
     color: #fff;
     border-color: var(--theme-primary, #22d3ee);
-    background: rgba(34, 211, 238, 0.15);
+    background: rgba(34, 211, 238, 0.2);
 }
 
 .local-ai-tray-actions button:active:not(:disabled) {
@@ -3178,8 +3178,11 @@
 }
 
 .local-ai-tray-actions button:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-soft, #9ca3af);
 }
 
 .local-ai-consent-overlay {
@@ -3708,7 +3711,7 @@
     }
 
     .terminal-input-row {
-        grid-template-columns: auto 1fr auto;
+        grid-template-columns: auto 1fr;
     }
 
     .terminal-input-row label {

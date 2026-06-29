@@ -38,6 +38,26 @@ window.systems = [
         position: [39, 31]
     },
     {
+        id: "openrct2",
+        title: "OpenRCT2",
+        type: "Open-source theme park engine",
+        status: "Runtime packaged",
+        icon: "fa-solid fa-train",
+        color: "#22c55e",
+        summary: "A PortfoliOS runtime shell for the open-source RollerCoaster Tycoon 2 engine, staged as a Store-installed desktop game.",
+        signal: "The app hosts the official Emscripten bootstrap, opens it as an isolated top-level runtime, and includes the packaged engine, OpenRCT2 support data, and server-hosted RCT.zip game data.",
+        tech: ["GPLv3", "C++", "WebAssembly", "Emscripten", "Server assets"],
+        links: [
+            ["Web Runtime", "apps/openrct2/runtime/index.php", "fa-solid fa-play"],
+            ["OpenRCT2 Downloads", "https://openrct2.io/downloads", "fa-solid fa-download"],
+            ["GitHub", "https://github.com/OpenRCT2/OpenRCT2", "fa-brands fa-github"],
+            ["Install Guide", "https://docs.openrct2.io/en/latest/installing/installing-on-windows.html", "fa-solid fa-book"]
+        ],
+        launchApp: "openrct2",
+        desktopOnly: true,
+        position: [51, 31]
+    },
+    {
         id: "duke32",
         title: "Duke Nukem 3D",
         type: "Browser port",

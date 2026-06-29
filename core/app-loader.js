@@ -4,8 +4,8 @@
  */
 
 window.appRegistry = window.appRegistry || {};
-window.modularApps = window.modularApps || ["doomsource", "duke32", "diablo", "quake", "romplayer", "files", "webamp", "taskmgr"];
-window.appAssetVersion = "1.0.43";
+window.modularApps = window.modularApps || ["doomsource", "openrct2", "duke32", "diablo", "quake", "romplayer", "files", "webamp", "taskmgr"];
+window.appAssetVersion = "1.0.58";
 window.appLoadPromises = window.appLoadPromises || {};
 
 window.ensureAppLoaded = async function(appId) {

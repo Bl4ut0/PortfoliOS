@@ -11,7 +11,7 @@ window.standardInstalledAppIds = [
 
 window.desktopPinnedIds = [
     "store", "files", "cli", "devhub",
-    "romplayer", "doomsource", "duke32", "diablo", "quake", "webamp"
+    "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "webamp"
 ];
 
 window.startMenuPinnedIds = [
@@ -34,7 +34,7 @@ window.startMenuGroups = [
     {
         id: "installed",
         label: "Installed Store Apps",
-        ids: ["romplayer", "webamp", "doomsource", "duke32", "diablo", "quake"]
+        ids: ["romplayer", "openrct2", "webamp", "doomsource", "duke32", "diablo", "quake"]
     }
 ];
 
@@ -44,11 +44,12 @@ window.defaultDesktopIconLayout = {
     cli: { col: 0, row: 2 },
     devhub: { col: 0, row: 3 },
     romplayer: { col: 1, row: 0 },
-    doomsource: { col: 1, row: 1 },
-    duke32: { col: 1, row: 2 },
-    diablo: { col: 1, row: 3 },
-    quake: { col: 1, row: 4 },
-    webamp: { col: 1, row: 5 }
+    openrct2: { col: 1, row: 1 },
+    doomsource: { col: 1, row: 2 },
+    duke32: { col: 1, row: 3 },
+    diablo: { col: 1, row: 4 },
+    quake: { col: 1, row: 5 },
+    webamp: { col: 2, row: 0 }
 };
 
 window.desktopApps = [
@@ -65,6 +66,7 @@ window.desktopApps = [
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false },
     { id: "settings", title: "Settings", icon: "fa-solid fa-sliders", pinned: false },
     { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", pinned: true },
+    { id: "openrct2", title: "OpenRCT2", icon: "fa-solid fa-train", pinned: false },
     { id: "doomsource", title: "Doom", icon: "doom-icon.png", pinned: false },
     { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", pinned: false },
     { id: "diablo", title: "Diablo", icon: "diablo-icon.png", pinned: false },
@@ -89,6 +91,15 @@ window.storeApps = [
         description: "Classic 1993 first-person shooter running on a compiled WebAssembly engine.",
         size: "11.8 MB",
         publisher: "id Software / emscripten port"
+    },
+    {
+        id: "openrct2",
+        title: "OpenRCT2",
+        icon: "fa-solid fa-train",
+        category: "Games",
+        description: "Open-source RollerCoaster Tycoon 2 WebAssembly runtime with staged engine, support data, and game assets.",
+        size: "608.8 MiB runtime",
+        publisher: "OpenRCT2 project"
     },
     {
         id: "duke32",

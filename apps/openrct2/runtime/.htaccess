@@ -1,0 +1,24 @@
+Options -Indexes
+DirectoryIndex index.php index.html
+
+<IfModule mod_mime.c>
+    AddType text/javascript .js
+    AddType application/wasm .wasm
+    AddType application/zip .zip
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Embedder-Policy "require-corp"
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Robots-Tag "noindex, nofollow, nosnippet, noarchive"
+    Header always set Cache-Control "private, max-age=86400"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} ^/apps/openrct2/runtime/(openrct2\.zip|openrct2\.js|openrct2\.wasm|assets\.zip|RCT\.zip)$ [NC]
+    RewriteCond %{HTTP_REFERER} !^https?://os\.bl4ut0\.dev/apps/openrct2/runtime/ [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>

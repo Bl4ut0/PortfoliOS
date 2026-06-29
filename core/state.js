@@ -34,7 +34,8 @@
 
     // Load initial values from storage if available
     if (window.Storage) {
-        const userId = window.Storage.local.get("bl4ut0CurrentUser") || "bl4ut0";
+        const hasPersonalProfile = localStorage.getItem("bl4ut0_private_user_profile") !== null;
+        const userId = hasPersonalProfile ? "private" : "bl4ut0";
         rawState.currentUserId = userId;
         
         const getKey = (k) => `bl4ut0_${userId}_${k}`;

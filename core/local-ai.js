@@ -37,46 +37,79 @@
         },
         // ── Local Models (WebGPU) ──────────────────────────────────
         {
-            id: "gemma-3-270m-it-q4f16_1-MLC",
-            label: "Gemma 3 270M (Hyper-light, 200MB)",
-            memoryMB: 200,
+            id: "SmolLM2-135M-Instruct-q4f16_1-MLC",
+            label: "SmolLM2 135M (Hyper-light, 360MB VRAM)",
+            memoryMB: 360,
             type: "local"
         },
         {
+            id: "gemma-3-270m-it-q4f16_1-MLC",
+            label: "Gemma 3 270M (Hyper-light, 380MB VRAM - shader-f16 required)",
+            memoryMB: 380,
+            type: "local",
+            required_features: ["shader-f16"]
+        },
+        {
             id: "SmolLM2-360M-Instruct-q4f16_1-MLC",
-            label: "SmolLM2 360M (Ultra-light, 376MB)",
-            memoryMB: 376,
+            label: "SmolLM2 360M (Ultra-light, 520MB VRAM)",
+            memoryMB: 520,
             type: "local"
         },
         {
             id: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-            label: "Qwen 2.5 0.5B (Light, 420MB)",
-            memoryMB: 420,
+            label: "Qwen 2.5 0.5B (Light, 700MB VRAM)",
+            memoryMB: 700,
             type: "local"
         },
         {
             id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-            label: "Llama 3.2 1B (Balanced, 980MB)",
-            memoryMB: 980,
+            label: "Llama 3.2 1B (Balanced, 1.4GB VRAM)",
+            memoryMB: 1400,
             type: "local"
         },
         {
-            id: "gemma-3-1b-it-q4f16_1-MLC",
-            label: "Gemma 3 1B (Google, 600MB)",
-            memoryMB: 600,
+            id: "gemma3-1b-it-q4f16_1-MLC",
+            label: "Gemma 3 1B (Fast, 1.2GB VRAM - shader-f16 required)",
+            memoryMB: 1200,
+            type: "local"
+        },
+        {
+            id: "gemma-2b-it-q4f16_1-MLC-1k",
+            label: "Gemma 2B Fast (1K, 1.5GB VRAM)",
+            memoryMB: 1500,
             type: "local"
         },
         {
             id: "gemma-2-2b-it-q4f16_1-MLC",
-            label: "Gemma 2 2B (High Quality, 1.6GB)",
-            memoryMB: 1600,
+            label: "Gemma 2 2B (High Quality, 2.4GB VRAM - shader-f16 required)",
+            memoryMB: 2400,
             type: "local"
         }
     ];
 
-    const PREFERRED_MODEL = AVAILABLE_MODELS[0];
-    const FALLBACK_MODEL_IDS = AVAILABLE_MODELS.map(m => m.id);
-    const WORKER_URL = "core/local-ai-worker.js?v=1.0.39";
+    const DEFAULT_LOCAL_MODEL_ID = "SmolLM2-135M-Instruct-q4f16_1-MLC";
+    const LEGACY_MODEL_ALIASES = {
+        "gemma-3-1b-it-q4f16_1-MLC": "gemma3-1b-it-q4f16_1-MLC"
+    };
+    const CUSTOM_WEBLLM_MODELS = [
+        {
+            model: "https://huggingface.co/Aadeshisdoingsomething/gemma-3-270m-it-q4f16_1-mlc",
+            model_id: "gemma-3-270m-it-q4f16_1-MLC",
+            model_lib: "https://huggingface.co/Aadeshisdoingsomething/gemma-3-270m-it-q4f16_1-mlc/resolve/main/gemma-3-270m-it-q4f16_1-webgpu.wasm",
+            vram_requirement_MB: 200,
+            required_features: ["shader-f16"],
+            overrides: {
+                sliding_window_size: -1
+            }
+        }
+    ];
+    const PREFERRED_MODEL = AVAILABLE_MODELS.find(m => m.id === DEFAULT_LOCAL_MODEL_ID) ||
+        AVAILABLE_MODELS.find(m => m.type === "local") ||
+        AVAILABLE_MODELS[0];
+    const FALLBACK_MODEL_IDS = AVAILABLE_MODELS
+        .filter(m => m.type === "local")
+        .map(m => m.id);
+    const WORKER_URL = "core/local-ai-worker.php?v=1.0.63";
     const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm";
     const STATUS_EMIT_MIN_MS = 220;
     const CHAT_MAX_TOKENS = 120;
@@ -87,26 +120,133 @@
     let webllmModule = null;
     let runtimeImportPromise = null;
     let loadPromise = null;
-    // Initialize modelInfo from localStorage preference if available, matching the user's choice
-    const savedIdOnLoad = localStorage.getItem(STORAGE_KEY);
-    const initialModel = (savedIdOnLoad && AVAILABLE_MODELS.find(m => m.id === savedIdOnLoad)) || PREFERRED_MODEL;
+    function normalizeModelId(modelId) {
+        return LEGACY_MODEL_ALIASES[modelId] || modelId || "";
+    }
+
+    function isCloudModel(model) {
+        return Boolean(model?.type && model.type.startsWith("cloud-"));
+    }
+
+    function getCatalogModel(modelId) {
+        const normalizedId = normalizeModelId(modelId);
+        return AVAILABLE_MODELS.find(m => m.id === normalizedId);
+    }
+
+    function persistNormalizedModelId(rawModelId, normalizedModelId) {
+        if (rawModelId && normalizedModelId && rawModelId !== normalizedModelId) {
+            localStorage.setItem(STORAGE_KEY, normalizedModelId);
+        }
+    }
+
+    let autodetectedMirror = null;
+
+    async function checkMirrorSupport() {
+        if (autodetectedMirror !== null) return autodetectedMirror;
+        
+        emitAIDebug("Testing connection to huggingface.co...", getAIDebugSnapshot());
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        try {
+            await fetch("https://huggingface.co/api/quick", {
+                method: "HEAD",
+                mode: "no-cors",
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            autodetectedMirror = false;
+            emitAIDebug("huggingface.co connection test succeeded.", getAIDebugSnapshot());
+        } catch (err) {
+            clearTimeout(timeoutId);
+            autodetectedMirror = true;
+            emitAIDebug("huggingface.co connection test failed/timed out. Automatically enabling mirror.", getAIDebugSnapshot({ error: err?.message || "timeout" }));
+            console.warn("[LocalAI] huggingface.co is unreachable. Automatically routing via hf-mirror.com.");
+        }
+        return autodetectedMirror;
+    }
+
+    function getUseMirrorValue() {
+        const stored = localStorage.getItem("bl4ut0LocalAiUseMirror");
+        if (stored !== null) {
+            return stored === "true";
+        }
+        return autodetectedMirror === true;
+    }
+
+    function mapRuntimeUrl(url, useMirror = getUseMirrorValue()) {
+        if (!url) return url;
+        if (useMirror) {
+            return url.replace("https://huggingface.co/", "https://hf-mirror.com/");
+        }
+        return url;
+    }
+
+    function getRuntimeModelList(webllm) {
+        const useMirror = getUseMirrorValue();
+        const prebuiltModels = (webllm?.prebuiltAppConfig?.model_list || []).map(m => {
+            if (useMirror && m.model) {
+                return {
+                    ...m,
+                    model: mapRuntimeUrl(m.model, useMirror),
+                    model_lib: mapRuntimeUrl(m.model_lib, useMirror)
+                };
+            }
+            return m;
+        });
+        const customModels = CUSTOM_WEBLLM_MODELS.map(m => ({
+            ...m,
+            model: mapRuntimeUrl(m.model, useMirror),
+            model_lib: mapRuntimeUrl(m.model_lib, useMirror)
+        }));
+        return [...prebuiltModels, ...customModels];
+    }
+
+    // Initialize modelInfo from localStorage preference or fallback
+    const storedIdOnLoad = localStorage.getItem(STORAGE_KEY);
+    const savedIdOnLoad = normalizeModelId(storedIdOnLoad);
+    persistNormalizedModelId(storedIdOnLoad, savedIdOnLoad);
+    const hasOpenaiKeyOnLoad = !!localStorage.getItem("settings-openai-api-key");
+    const hasGeminiKeyOnLoad = !!localStorage.getItem("settings-gemini-api-key");
+    const isOwnerOnLoad = !window.getCurrentUser || window.getCurrentUser()?.id === "bl4ut0";
+    const isModelAllowedOnLoad = (m) => {
+        if (m.type === "cloud-openai") return hasOpenaiKeyOnLoad;
+        if (m.type === "cloud-gemini") {
+            return m.free ? (isOwnerOnLoad || hasGeminiKeyOnLoad) : hasGeminiKeyOnLoad;
+        }
+        return true;
+    };
+
+    const initialModelId = (savedIdOnLoad && getCatalogModel(savedIdOnLoad) && isModelAllowedOnLoad(getCatalogModel(savedIdOnLoad)) ? savedIdOnLoad : "") ||
+        AVAILABLE_MODELS.find(m => m.type === "local" && isModelAllowedOnLoad(m))?.id ||
+        DEFAULT_LOCAL_MODEL_ID;
+
+    const initialModel = getCatalogModel(initialModelId) || PREFERRED_MODEL;
     let modelInfo = {
         ...initialModel,
-        source: savedIdOnLoad ? "user-preference" : "preferred",
+        source: savedIdOnLoad ? (storedIdOnLoad !== savedIdOnLoad ? "legacy-fallback" : "user-preference") : "fallback-local",
         confirmed: false,
-        note: savedIdOnLoad ? "" : "Preferred low-memory model. Availability is confirmed when WebLLM loads."
+        note: ""
     };
 
     let permissionGranted = false;
     let permissionPrompt = null;
     let status = "idle";
     let progress = 0;
-    let statusText = (modelInfo.type && modelInfo.type.startsWith("cloud-")) ? "Cloud AI is off." : "Local AI is off.";
+    let statusText = isCloudModel(modelInfo) ? "Cloud AI is off." : "Local AI is off.";
     let lastError = "";
     let stopRequested = false;
     let lastStatusEmitAt = 0;
     let statusEmitTimer = null;
     let statusEmitFrame = null;
+    let aiDebugWatchdogTimer = null;
+    let aiDebugLastChangeAt = Date.now();
+    let aiDebugLastProgressLogAt = 0;
+    let aiDebugLastLoggedPct = -1;
+    let aiDebugLastLoggedText = "";
+    let aiDebugLastStatus = "";
+    const AI_DEBUG_STALL_MS = 15000;
+    const AI_DEBUG_PROGRESS_STEP = 5;
 
     const escapeHtml = window.escapeHtml || ((value) => String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -114,6 +254,107 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;"));
+
+    function getAIDebugSnapshot(extra = {}) {
+        return {
+            status,
+            progress,
+            progressLabel: `${Math.round((progress || 0) * 100)}%`,
+            statusText,
+            modelId: modelInfo?.id || "",
+            modelLabel: modelInfo?.label || "",
+            modelType: modelInfo?.type || "local",
+            modelSource: modelInfo?.source || "",
+            mirror: localStorage.getItem("bl4ut0LocalAiUseMirror") === "true",
+            webGpu: Boolean(navigator.gpu),
+            crossOriginIsolated: Boolean(window.crossOriginIsolated),
+            workerUrl: WORKER_URL,
+            runtimeUrl: WEBLLM_URL,
+            userAgent: navigator.userAgent,
+            ...extra
+        };
+    }
+
+    function serializeDebugValue(value) {
+        if (!value) return "";
+        if (value instanceof Error) {
+            return value.stack || value.message;
+        }
+        try {
+            return JSON.stringify(value);
+        } catch (error) {
+            return String(value);
+        }
+    }
+
+    function emitAIDebug(message, detail = null) {
+        const detailText = detail ? ` ${serializeDebugValue(detail)}` : "";
+        const line = `[LocalAI] ${message}${detailText}`;
+        if (window.addSystemLog) {
+            window.addSystemLog("ai", line);
+        } else {
+            console.info(line);
+        }
+    }
+
+    function stopAIDebugWatchdog() {
+        if (!aiDebugWatchdogTimer) return;
+        window.clearInterval(aiDebugWatchdogTimer);
+        aiDebugWatchdogTimer = null;
+    }
+
+    function startAIDebugWatchdog() {
+        if (aiDebugWatchdogTimer) return;
+        aiDebugWatchdogTimer = window.setInterval(() => {
+            if (status !== "loading") {
+                stopAIDebugWatchdog();
+                return;
+            }
+
+            const idleMs = Date.now() - aiDebugLastChangeAt;
+            if (idleMs < AI_DEBUG_STALL_MS) return;
+
+            emitAIDebug("Load watchdog: still waiting for Local AI progress.", getAIDebugSnapshot({
+                idleSeconds: Math.round(idleMs / 1000),
+                hint: progress <= 0.05
+                    ? "Stuck near 4% usually means the worker was created and WebLLM has not emitted model init progress yet. Check worker import, model URL, WebGPU adapter, cache, and network access."
+                    : "Progress callback has not advanced recently."
+            }));
+            aiDebugLastChangeAt = Date.now();
+        }, AI_DEBUG_STALL_MS);
+    }
+
+    function trackAIDebugStatus(previousStatus, previousText, previousProgress, options = {}) {
+        const pct = Math.round((progress || 0) * 100);
+        const previousPct = Math.round((previousProgress || 0) * 100);
+        const changed = previousStatus !== status || previousText !== statusText || previousPct !== pct;
+
+        if (changed) {
+            aiDebugLastChangeAt = Date.now();
+        }
+
+        if (status === "loading") {
+            startAIDebugWatchdog();
+            const now = Date.now();
+            const crossedStep = pct !== aiDebugLastLoggedPct && (pct <= 5 || pct % AI_DEBUG_PROGRESS_STEP === 0);
+            const textChanged = statusText !== aiDebugLastLoggedText && now - aiDebugLastProgressLogAt > 1200;
+            if (options.force || crossedStep || textChanged) {
+                aiDebugLastProgressLogAt = now;
+                aiDebugLastLoggedPct = pct;
+                aiDebugLastLoggedText = statusText;
+                emitAIDebug("Loading progress update.", getAIDebugSnapshot());
+            }
+            return;
+        }
+
+        stopAIDebugWatchdog();
+
+        const statusKey = `${status}:${statusText}`;
+        if (statusKey !== aiDebugLastStatus || options.force) {
+            aiDebugLastStatus = statusKey;
+            emitAIDebug("Status changed.", getAIDebugSnapshot({ lastError }));
+        }
+    }
 
     function flushStatus() {
         if (statusEmitTimer) {
@@ -160,9 +401,13 @@
     }
 
     function setStatus(nextStatus, nextText = statusText, nextProgress = progress, options = {}) {
+        const previousStatus = status;
+        const previousText = statusText;
+        const previousProgress = progress;
         status = nextStatus;
         statusText = nextText;
         progress = Math.max(0, Math.min(1, Number(nextProgress) || 0));
+        trackAIDebugStatus(previousStatus, previousText, previousProgress, options);
         emitStatus(options);
     }
 
@@ -173,7 +418,7 @@
     }
 
     function getStatus() {
-        const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
+        const isCloud = isCloudModel(modelInfo);
         if (isCloud) {
             const isReady = status === "ready" || status === "generating";
             return {
@@ -228,7 +473,7 @@
     }
 
     function getProcess() {
-        const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
+        const isCloud = isCloudModel(modelInfo);
         if (isCloud) return null;
         if (!["loading", "ready", "generating"].includes(status)) return null;
         return {
@@ -253,7 +498,7 @@
     }
 
     function getModelMemoryMB(record, fallback = PREFERRED_MODEL.memoryMB) {
-        const raw = Number(record?.vram_required_MB || record?.memoryMB || fallback);
+        const raw = Number(record?.vram_required_MB || record?.vram_requirement_MB || record?.memoryMB || fallback);
         return Math.max(1, Math.round(raw));
     }
 
@@ -268,10 +513,13 @@
     }
 
     function modelFromRecord(record, source, note = "") {
+        const catalogModel = getCatalogModel(record.model_id);
         return {
+            ...(catalogModel || {}),
             id: record.model_id,
-            label: humanizeModelId(record.model_id),
-            memoryMB: getModelMemoryMB(record),
+            label: catalogModel?.label || humanizeModelId(record.model_id),
+            memoryMB: catalogModel?.memoryMB || getModelMemoryMB(record),
+            type: "local",
             source,
             confirmed: true,
             note
@@ -279,27 +527,28 @@
     }
 
     function selectModel(webllm) {
-        const modelList = Array.isArray(webllm?.prebuiltAppConfig?.model_list)
-            ? webllm.prebuiltAppConfig.model_list
-            : [];
+        const prebuiltModelCount = Array.isArray(webllm?.prebuiltAppConfig?.model_list)
+            ? webllm.prebuiltAppConfig.model_list.length
+            : 0;
+        const modelList = getRuntimeModelList(webllm);
 
-        const savedId = localStorage.getItem(STORAGE_KEY) || PREFERRED_MODEL.id;
-        
-        // If the user's selected model is in our custom AVAILABLE_MODELS list, respect it!
-        const customModel = AVAILABLE_MODELS.find(m => m.id === savedId);
-        if (customModel) {
-            const savedRecord = modelList.find((item) => item?.model_id === savedId);
-            return {
-                ...customModel,
-                source: savedRecord ? "user-preference" : "custom-choice",
-                confirmed: true,
-                note: savedRecord ? "" : "Selected model is hosted on MLC/HuggingFace."
-            };
-        }
+        const storedId = localStorage.getItem(STORAGE_KEY);
+        const savedId = normalizeModelId(storedId) || (isCloudModel(modelInfo) ? DEFAULT_LOCAL_MODEL_ID : modelInfo.id) || DEFAULT_LOCAL_MODEL_ID;
+        const savedSource = storedId ? (storedId !== savedId ? "legacy-fallback" : "user-preference") : "fallback-local";
+        persistNormalizedModelId(storedId, savedId);
 
         const savedRecord = modelList.find((item) => item?.model_id === savedId);
         if (savedRecord && isTextGenerationModel(savedRecord, webllm)) {
-            return modelFromRecord(savedRecord, "user-preference");
+            return modelFromRecord(savedRecord, savedSource);
+        }
+
+        const savedModel = getCatalogModel(savedId);
+        if (savedModel && savedModel.type === "local") {
+            emitAIDebug("Selected local model is not in WebLLM prebuilt list; selecting fallback.", getAIDebugSnapshot({
+                requestedModelId: savedId,
+                prebuiltModelCount,
+                runtimeModelCount: modelList.length
+            }));
         }
 
         const preferredRecord = modelList.find((item) => item?.model_id === PREFERRED_MODEL.id);
@@ -344,12 +593,22 @@
         if (webllmModule) return webllmModule;
         if (runtimeImportPromise) return runtimeImportPromise;
 
+        emitAIDebug("Importing WebLLM runtime.", getAIDebugSnapshot());
         runtimeImportPromise = import(WEBLLM_URL)
             .then((webllm) => {
                 webllmModule = webllm;
                 modelInfo = selectModel(webllm);
+                emitAIDebug("WebLLM runtime imported and model selected.", getAIDebugSnapshot({
+                    prebuiltModelCount: Array.isArray(webllm?.prebuiltAppConfig?.model_list)
+                        ? webllm.prebuiltAppConfig.model_list.length
+                        : 0
+                }));
                 emitStatus({ force: true });
                 return webllm;
+            })
+            .catch((error) => {
+                emitAIDebug("WebLLM runtime import failed.", getAIDebugSnapshot({ error: serializeDebugValue(error) }));
+                throw error;
             })
             .finally(() => {
                 runtimeImportPromise = null;
@@ -370,29 +629,82 @@
         if (permissionGranted) return Promise.resolve(true);
         if (permissionPrompt) return permissionPrompt.promise;
 
+        const isCloud = isCloudModel(modelInfo);
+        const isFreeCloud = isCloud && modelInfo.free;
+
         const overlay = document.createElement("div");
         overlay.className = "local-ai-consent-overlay";
         overlay.setAttribute("role", "dialog");
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "local-ai-consent-title");
-        overlay.innerHTML = `
-            <div class="local-ai-consent-dialog">
-                <div class="local-ai-consent-icon"><i class="fa-solid fa-brain"></i></div>
-                <div class="local-ai-consent-copy">
-                    <p class="eyebrow">Local AI Permission</p>
-                    <h2 id="local-ai-consent-title">Run ${escapeHtml(modelInfo.label)}?</h2>
-                    <p>${escapeHtml(source)} wants to start the Local AI assistant. It runs in your browser using WebGPU, downloads model assets on first use, and reserves about <strong>${modelInfo.memoryMB} MB</strong> of GPU/browser memory while active.</p>
-                    <p>You can stop it any time from Task Manager or the Local AI tray indicator.</p>
-                </div>
-                <div class="local-ai-consent-actions">
-                    <button type="button" class="local-ai-consent-secondary" data-local-ai-consent="deny">Not now</button>
-                    <button type="button" class="local-ai-consent-primary" data-local-ai-consent="allow">
-                        <i class="fa-solid fa-bolt"></i> Enable Local AI
-                    </button>
-                </div>
-            </div>
-        `;
 
+        let dialogHtml = "";
+
+        if (isCloud) {
+            if (isFreeCloud) {
+                dialogHtml = `
+                    <div class="local-ai-consent-dialog">
+                        <div class="local-ai-consent-icon" style="background: rgba(34, 211, 238, 0.1); color: var(--theme-primary, #22d3ee);"><i class="fa-solid fa-cloud"></i></div>
+                        <div class="local-ai-consent-copy">
+                            <p class="eyebrow">Cloud AI Notice</p>
+                            <h2 id="local-ai-consent-title">Connect to ${escapeHtml(modelInfo.label)}?</h2>
+                            <p>This is a <strong>free, collectively shared tier</strong> of Gemini Cloud available to all users of PortfoliOS. Response limits are shared.</p>
+                            <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.85;">
+                                💡 <strong>Tips:</strong><br>
+                                • For unlimited, private responses, choose a <strong>Local WebGPU model</strong> (which runs entirely on your device).<br>
+                                • To bypass shared limits, insert your own Gemini API key in settings.
+                            </p>
+                        </div>
+                        <div class="local-ai-consent-actions">
+                            <button type="button" class="local-ai-consent-secondary" data-local-ai-consent="deny">Cancel</button>
+                            <button type="button" class="local-ai-consent-primary" data-local-ai-consent="allow">
+                                <i class="fa-solid fa-plug"></i> Connect to Cloud AI
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                dialogHtml = `
+                    <div class="local-ai-consent-dialog">
+                        <div class="local-ai-consent-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="fa-solid fa-key"></i></div>
+                        <div class="local-ai-consent-copy">
+                            <p class="eyebrow">API Key Required</p>
+                            <h2 id="local-ai-consent-title">Use ${escapeHtml(modelInfo.label)}?</h2>
+                            <p>To use this premium cloud model, you must configure your own API key in settings.</p>
+                        </div>
+                        <div class="local-ai-consent-actions">
+                            <button type="button" class="local-ai-consent-secondary" data-local-ai-consent="deny">Cancel</button>
+                            <button type="button" class="local-ai-consent-primary" data-local-ai-consent="settings">
+                                <i class="fa-solid fa-sliders"></i> Open Settings
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            dialogHtml = `
+                <div class="local-ai-consent-dialog">
+                    <div class="local-ai-consent-icon"><i class="fa-solid fa-brain"></i></div>
+                    <div class="local-ai-consent-copy">
+                        <p class="eyebrow">Local AI Permission</p>
+                        <h2 id="local-ai-consent-title">Run ${escapeHtml(modelInfo.label)}?</h2>
+                        <p>${escapeHtml(source)} wants to start the Local AI assistant. It runs in your browser using WebGPU, downloads model assets on first use, and reserves about <strong>${modelInfo.memoryMB} MB</strong> of GPU/browser memory while active.</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.85;">
+                            💡 <strong>Note:</strong><br>
+                            Local models run entirely on your device for 100% privacy. The lower the memory footprint, the faster the performance, but response quality may vary.
+                        </p>
+                    </div>
+                    <div class="local-ai-consent-actions">
+                        <button type="button" class="local-ai-consent-secondary" data-local-ai-consent="deny">Cancel</button>
+                        <button type="button" class="local-ai-consent-primary" data-local-ai-consent="allow">
+                            <i class="fa-solid fa-bolt"></i> Enable Local AI
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        overlay.innerHTML = dialogHtml;
         const host = document.querySelector(".desktop-wallpaper") || document.body;
         host.appendChild(overlay);
 
@@ -405,12 +717,23 @@
         overlay.addEventListener("click", (event) => {
             const action = event.target.closest("[data-local-ai-consent]")?.dataset.localAiConsent;
             if (!action) return;
+            if (action === "settings") {
+                removePermissionPrompt(false);
+                if (window.openDesktopWindow) {
+                    window.openDesktopWindow("settings").then(() => {
+                        if (window.openSettingsPanel) window.openSettingsPanel("local-ai");
+                    });
+                }
+                return;
+            }
             const allowed = action === "allow";
+            emitAIDebug(allowed ? "Permission granted." : "Permission denied.", getAIDebugSnapshot({ source }));
             permissionGranted = allowed;
             removePermissionPrompt(allowed);
         });
 
         overlay.querySelector("[data-local-ai-consent='allow']")?.focus({ preventScroll: true });
+        emitAIDebug("Permission prompt shown.", getAIDebugSnapshot({ source }));
         return promise;
     }
 
@@ -420,6 +743,7 @@
 
         if (!navigator.gpu) {
             lastError = "WebGPU is not available in this browser.";
+            emitAIDebug("WebGPU unavailable before Local AI load.", getAIDebugSnapshot({ error: lastError }));
             setStatus("error", lastError, 0, { force: true });
             throw new Error(lastError);
         }
@@ -429,9 +753,14 @@
             const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
             if (adapter) {
                 const info = await adapter.requestAdapterInfo?.() || {};
+                emitAIDebug("WebGPU adapter selected.", getAIDebugSnapshot({
+                    vendor: info.vendor || "unknown",
+                    device: info.device || info.description || "unknown"
+                }));
                 console.log(`[LocalAI] GPU adapter: ${info.vendor || "unknown"} — ${info.device || info.description || "unknown"}`);
             }
         } catch (gpuErr) {
+            emitAIDebug("Could not request high-performance GPU adapter.", getAIDebugSnapshot({ error: serializeDebugValue(gpuErr) }));
             console.warn("[LocalAI] Could not request high-performance GPU adapter:", gpuErr);
         }
 
@@ -440,6 +769,7 @@
         loadPromise = (async () => {
             try {
                 stopRequested = false;
+                await checkMirrorSupport();
                 const webllm = await loadWebLLMModule();
                 if (stopRequested) {
                     setStatus("idle", "Local AI is off.", 0, { force: true });
@@ -451,7 +781,22 @@
                 setStatus("loading", modelLoadText, 0.04);
                 await yieldToBrowser();
 
+                emitAIDebug("Creating Local AI worker.", getAIDebugSnapshot());
                 worker = new Worker(WORKER_URL, { type: "module" });
+                worker.addEventListener("error", (event) => {
+                    emitAIDebug("Worker error event.", getAIDebugSnapshot({
+                        message: event.message,
+                        filename: event.filename,
+                        lineno: event.lineno,
+                        colno: event.colno
+                    }));
+                });
+                worker.addEventListener("messageerror", (event) => {
+                    emitAIDebug("Worker messageerror event.", getAIDebugSnapshot({
+                        data: serializeDebugValue(event.data)
+                    }));
+                });
+                emitAIDebug("Starting WebLLM worker engine initialization.", getAIDebugSnapshot());
                 engine = await webllm.CreateWebWorkerMLCEngine(
                     worker,
                     modelInfo.id,
@@ -463,23 +808,18 @@
                         },
                         appConfig: {
                             ...webllm.prebuiltAppConfig,
-                            model_list: [
-                                ...(webllm.prebuiltAppConfig.model_list || []),
-                                {
-                                    model: "https://huggingface.co/mlc-ai/gemma-3-1b-it-q4f16_1-MLC",
-                                    model_id: "gemma-3-1b-it-q4f16_1-MLC",
-                                    model_lib: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/gemma-3-1b-it-q4f16_1-ctx4k_cs1k-webgpu.wasm",
-                                    vram_requirement_MB: 600,
-                                    required_features: ["shader-f16"]
-                                },
-                                {
-                                    model: "https://huggingface.co/llinguini/gemma-3-270m-it-q4f16_1-MLC",
-                                    model_id: "gemma-3-270m-it-q4f16_1-MLC",
-                                    model_lib: "https://huggingface.co/llinguini/gemma-3-270m-it-q4f16_1-MLC/resolve/main/libs/gemma-3-270m-it-webgpu.wasm",
-                                    vram_requirement_MB: 200,
-                                    required_features: ["shader-f16"]
-                                }
-                            ],
+                            model_list: (() => {
+                                const useMirror = getUseMirrorValue();
+                                const resolvedModelList = getRuntimeModelList(webllm);
+                                const selectedModelConfig = resolvedModelList.find((item) => item?.model_id === modelInfo.id);
+                                emitAIDebug("Resolved WebLLM model list.", getAIDebugSnapshot({
+                                    modelUrl: selectedModelConfig?.model || "",
+                                    modelLib: selectedModelConfig?.model_lib || "",
+                                    modelListCount: resolvedModelList.length,
+                                    mirror: useMirror
+                                }));
+                                return resolvedModelList;
+                            })(),
                             cacheBackend: "cache"
                         }
                     }
@@ -489,6 +829,7 @@
                     return null;
                 }
                 lastError = "";
+                emitAIDebug("Local AI engine ready.", getAIDebugSnapshot());
                 setStatus("ready", `${modelInfo.label} is ready.`, 1, { force: true });
                 return engine;
             } catch (error) {
@@ -497,6 +838,7 @@
                     return null;
                 }
                 lastError = error?.message || "Local AI failed to start.";
+                emitAIDebug("Local AI load failed.", getAIDebugSnapshot({ error: serializeDebugValue(error) }));
                 await disable("error", { preserveError: true });
                 setStatus("error", lastError, 0, { force: true });
                 throw error;
@@ -509,9 +851,40 @@
     }
 
     async function enable(source = "PortfoliOS") {
-        const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
+        emitAIDebug("Enable requested.", getAIDebugSnapshot({ source }));
+
+        const isCloud = isCloudModel(modelInfo);
+        if (!isCloud && modelInfo.required_features?.includes("shader-f16")) {
+            if (!navigator.gpu) {
+                lastError = "WebGPU is not available in this browser.";
+                setStatus("error", lastError, 0, { force: true });
+                throw new Error(lastError);
+            }
+            try {
+                const adapter = await navigator.gpu.requestAdapter();
+                const hasF16 = adapter?.features?.has("shader-f16");
+                if (!hasF16) {
+                    const featErr = `Your GPU or browser doesn't support the 'shader-f16' feature required by Gemma models. Please select a compatible model like SmolLM2 135M.`;
+                    lastError = featErr;
+                    setStatus("error", lastError, 0, { force: true });
+                    throw new Error(featErr);
+                }
+            } catch (e) {
+                console.warn("[LocalAI] Proactive feature check error:", e);
+            }
+        }
+
+        const allowed = await requestPermission(source);
+        if (!allowed) {
+            emitAIDebug("Enable cancelled before load.", getAIDebugSnapshot({ source }));
+            setStatus("idle", "Local AI is off.", 0, { force: true });
+            return getStatus();
+        }
+
         if (isCloud) {
             status = "ready";
+            emitAIDebug("Cloud AI enabled.", getAIDebugSnapshot({ source }));
+            setStatus("ready", `Cloud AI is ready.`, 1, { force: true });
             emitStatus({ force: true });
             return getStatus();
         }
@@ -524,6 +897,7 @@
 
         if (!navigator.gpu) {
             lastError = "WebGPU is not available in this browser.";
+            emitAIDebug("WebGPU unavailable during enable.", getAIDebugSnapshot({ error: lastError, source }));
             setStatus("error", lastError, 0, { force: true });
             throw new Error(lastError);
         }
@@ -532,14 +906,9 @@
             await loadWebLLMModule();
         } catch (error) {
             lastError = error?.message || "Local AI runtime failed to load.";
+            emitAIDebug("Local AI runtime failed during enable.", getAIDebugSnapshot({ error: serializeDebugValue(error), source }));
             setStatus("error", lastError, 0, { force: true });
             throw error;
-        }
-
-        const allowed = await requestPermission(source);
-        if (!allowed) {
-            setStatus("idle", "Local AI is off.", 0, { force: true });
-            return getStatus();
         }
 
         await loadEngine();
@@ -547,6 +916,7 @@
     }
 
     async function disable(reason = "user", options = {}) {
+        emitAIDebug("Disable requested.", getAIDebugSnapshot({ reason, preserveError: Boolean(options.preserveError) }));
         stopRequested = true;
         permissionGranted = false;
         if (permissionPrompt) removePermissionPrompt(false);
@@ -558,7 +928,7 @@
             currentAbortController = null;
         }
 
-        const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
+        const isCloud = isCloudModel(modelInfo);
         if (isCloud) {
             status = "idle";
             if (!options.preserveError) {
@@ -630,6 +1000,101 @@
         
         return contextText;
     }
+    const SYSTEM_SKILLS = {
+        openApp: {
+            description: "Open a PortfoliOS application window.",
+            run: async (args) => {
+                if (window.openDesktopWindow) {
+                    await window.openDesktopWindow(args.appId);
+                    return `Successfully opened application window: ${args.appId}`;
+                }
+                return "Failed: openDesktopWindow function is not available.";
+            }
+        },
+        closeApp: {
+            description: "Close a PortfoliOS application window.",
+            run: async (args) => {
+                if (window.closeDesktopWindow) {
+                    window.closeDesktopWindow(args.appId);
+                    return `Successfully closed application window: ${args.appId}`;
+                }
+                return "Failed: closeDesktopWindow function is not available.";
+            }
+        },
+        notify: {
+            description: "Show a temporary desktop toast notification alert.",
+            run: async (args) => {
+                if (window.showDesktopToast) {
+                    window.showDesktopToast(args.message);
+                    return `Notification toast shown: "${args.message}"`;
+                }
+                return "Failed: showDesktopToast function is not available.";
+            }
+        },
+        say: {
+            description: "Speak a message aloud using text-to-speech synthesis.",
+            run: async (args) => {
+                if (window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(args.text);
+                    window.speechSynthesis.speak(utterance);
+                    return `Spoke aloud: "${args.text}"`;
+                }
+                return "Failed: SpeechSynthesis is not supported on this device.";
+            }
+        },
+        getFileSystemList: {
+            description: "List files and directories in a path.",
+            run: async (args) => {
+                if (window.SystemFS) {
+                    try {
+                        const items = await window.SystemFS.readDir(args.path || "/");
+                        const list = items.map(item => `${item.isDirectory || item.type === "directory" ? "[DIR] " : ""}${item.name} (${item.size || 0} bytes)`).join("\n");
+                        return list || "(directory is empty)";
+                    } catch (e) {
+                        return `Error listing directory: ${e.message}`;
+                    }
+                }
+                return "Failed: SystemFS is not available.";
+            }
+        },
+        readFile: {
+            description: "Read text file content.",
+            run: async (args) => {
+                if (window.SystemFS) {
+                    try {
+                        const record = await window.SystemFS.readFile(args.path);
+                        if (!record) return `File not found: ${args.path}`;
+                        if (record.type === "directory" || record.isDirectory) return `${args.path} is a directory.`;
+                        
+                        if (typeof record.data === "string") return record.data;
+                        if (record.data instanceof Blob) return await record.data.text();
+                        return `[Binary file: ${record.size} bytes]`;
+                    } catch (e) {
+                        return `Error reading file: ${e.message}`;
+                    }
+                }
+                return "Failed: SystemFS is not available.";
+            }
+        },
+        writeFile: {
+            description: "Create or write content to a text file.",
+            run: async (args) => {
+                if (window.SystemFS) {
+                    try {
+                        const pathParts = args.path.split("/");
+                        const name = pathParts.pop();
+                        const parent = pathParts.join("/") || "/";
+                        await window.SystemFS.writeFile(args.path, name, parent, args.content || "", (args.content || "").length, "text/plain", false);
+                        return `Successfully wrote file: ${args.path}`;
+                    } catch (e) {
+                        return `Error writing file: ${e.message}`;
+                    }
+                }
+                return "Failed: SystemFS is not available.";
+            }
+        }
+    };
 
     function buildSystemMessages(prompt, context = {}) {
         const cwd = context.cwd || "/";
@@ -639,8 +1104,33 @@
         const dataset = getPortfolioContext();
         let systemPrompt = "";
         
-        const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
+        const isCloud = isCloudModel(modelInfo);
         const runtimeType = isCloud ? `a cloud-hosted model (${modelInfo.label})` : `a local on-device WebGPU model (${modelInfo.label})`;
+
+        const skillsSection = [
+            "",
+            "### SYSTEM SKILLS (TOOLS) ###",
+            "You can control PortfoliOS and execute actions on behalf of the user by writing a JSON block inside ```action ... ``` code fences.",
+            "Example:",
+            "```action",
+            "{",
+            "  \"action\": \"openApp\",",
+            "  \"appId\": \"settings\"",
+            "}",
+            "```",
+            "Supported actions:",
+            "• openApp: Opens a desktop application window. Parameter: { \"action\": \"openApp\", \"appId\": string } (e.g., 'settings', 'terminal', 'identity', 'flappy', 'duke3d', 'doom').",
+            "• closeApp: Closes a desktop application window. Parameter: { \"action\": \"closeApp\", \"appId\": string }.",
+            "• notify: Shows a temporary desktop alert/toast. Parameter: { \"action\": \"notify\", \"message\": string }.",
+            "• say: Speaks text aloud using text-to-speech. Parameter: { \"action\": \"say\", \"text\": string }.",
+            "• getFileSystemList: Lists files in a folder. Parameter: { \"action\": \"getFileSystemList\", \"path\": string }.",
+            "• readFile: Reads a text file. Parameter: { \"action\": \"readFile\", \"path\": string }.",
+            "• writeFile: Writes content to a text file. Parameters: { \"action\": \"writeFile\", \"path\": string, \"content\": string }.",
+            "IMPORTANT:",
+            "1. Output only ONE action block at a time. If you write an action, do not write another one until you receive the System Observation feedback.",
+            "2. Always explain to the user what you are doing (e.g. \"I will open the settings for you...\") before outputting the action block.",
+            "#############################"
+        ].join("\n");
 
         if (isChat) {
             systemPrompt = [
@@ -650,6 +1140,7 @@
                 "Answer questions in a friendly, conversational, and informative tone.",
                 "Utilize the Portfolio Dataset below to provide accurate answers about projects, tech stacks, status, and links.",
                 "Keep answers relatively concise (1-3 small paragraphs max) so they fit nicely in your speech bubble. Always use bolding to emphasize project names.",
+                skillsSection,
                 "",
                 "### PORTFOLIO DATASET ###",
                 dataset,
@@ -667,6 +1158,7 @@
                 "If a prompt is unclear, ask one short clarifying question instead of saying you cannot understand language.",
                 "When a user enters an invalid command, explain the likely intent and suggest one or two valid PortfoliOS commands.",
                 "Known shell commands include: help, clear, whoami, whoami --info, links, projects, status, quick, play doom, inspect <id>, open <target>, pwd, cd, ls, ls -l, cat, touch, mkdir, rm, echo, su, passwd, useradd, userdel, groups, id, ai on, ai off.",
+                skillsSection,
                 "",
                 "### PORTFOLIO DATASET ###",
                 dataset,
@@ -960,15 +1452,8 @@
         }
     }
 
-    async function chat(prompt, context = {}, onChunk = null) {
-        const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
-        if (status !== "ready" && status !== "generating") {
-            throw new Error(isCloud ? "Cloud AI is not enabled." : "Local AI is not enabled.");
-        }
-
-        stopRequested = false;
-        setStatus("generating", isCloud ? "Cloud AI is answering..." : "Local AI is answering in a background GPU worker...", 1, { force: true });
-        await yieldToBrowser();
+    async function generateCompletion(prompt, context = {}, onChunk = null) {
+        const isCloud = isCloudModel(modelInfo);
         try {
             if (isCloud) {
                 if (modelInfo.type === "cloud-openai") {
@@ -1019,6 +1504,54 @@
                 return "AI query was stopped.";
             }
             throw err;
+        }
+    }
+
+    async function runAgentLoop(prompt, context = {}, onChunk = null) {
+        const reply = await generateCompletion(prompt, context, onChunk);
+        if (stopRequested) return reply;
+
+        const actionRegex = /```action\s*([\s\S]*?)\s*```/;
+        const match = reply.match(actionRegex);
+        if (match) {
+            let actionConfig = null;
+            try {
+                actionConfig = JSON.parse(match[1].trim());
+                const actionName = actionConfig?.action;
+                const skill = SYSTEM_SKILLS[actionName];
+                if (skill) {
+                    if (onChunk) {
+                        onChunk(`\n[Executing Action: ${actionName}...]\n`);
+                    }
+                    
+                    const observation = await skill.run(actionConfig);
+                    const cleanedReply = reply.replace(actionRegex, `\n\n*(${observation})*`);
+                    return cleanedReply;
+                }
+            } catch (e) {
+                console.error("[LocalAI] Skill execution error:", e);
+                return reply.replace(actionRegex, `\n\n*(Error running action: ${e.message})*`);
+            }
+        }
+
+        return reply;
+    }
+
+    async function chat(prompt, context = {}, onChunk = null) {
+        const isCloud = isCloudModel(modelInfo);
+        if (status !== "ready" && status !== "generating") {
+            throw new Error(isCloud ? "Cloud AI is not enabled." : "Local AI is not enabled.");
+        }
+
+        stopRequested = false;
+        setStatus("generating", isCloud ? "Cloud AI is answering..." : "Local AI is answering in a background GPU worker...", 1, { force: true });
+        await yieldToBrowser();
+        try {
+            return await runAgentLoop(prompt, context, onChunk);
+        } catch (error) {
+            await disable("error", { preserveError: true });
+            setStatus("error", error?.message || "Local AI failed to generate response.", 0, { force: true });
+            throw error;
         } finally {
             if (!stopRequested && (isCloud || (worker && engine))) {
                 setStatus("ready", isCloud ? "Cloud AI is ready." : `${modelInfo.label} is ready.`, 1, { force: true });
@@ -1033,13 +1566,14 @@
         get MODEL_LABEL() { return modelInfo.label; },
         get MEMORY_MB() { return modelInfo.memoryMB; },
         getStatus,
+        getDebugSnapshot: () => getAIDebugSnapshot({ lastError }),
         getProcess,
         requestPermission,
         enable,
         disable,
         chat,
         isReady: () => {
-            const isCloud = modelInfo.type && modelInfo.type.startsWith("cloud-");
+            const isCloud = isCloudModel(modelInfo);
             return isCloud ? (status === "ready" || status === "generating") : (status === "ready" && Boolean(engine));
         },
         isRunning: () => {
@@ -1058,7 +1592,9 @@
             });
         },
         getSelectedModelId: () => {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            const stored = localStorage.getItem(STORAGE_KEY);
+            const saved = normalizeModelId(stored);
+            persistNormalizedModelId(stored, saved);
             const hasOpenaiKey = !!localStorage.getItem("settings-openai-api-key");
             const hasGeminiKey = !!localStorage.getItem("settings-gemini-api-key");
             const isOwner = !window.getCurrentUser || window.getCurrentUser()?.id === "bl4ut0";
@@ -1070,42 +1606,44 @@
                 return true;
             };
 
-            const model = AVAILABLE_MODELS.find(m => m.id === saved);
+            const model = getCatalogModel(saved);
             if (model && isModelAllowed(model)) return saved;
 
             // Fallback to the first allowed local model
-            const allowed = AVAILABLE_MODELS.filter(m => m.type !== "cloud-openai" && m.type !== "cloud-gemini").find(isModelAllowed);
-            return allowed ? allowed.id : "gemma-3-270m-it-q4f16_1-MLC";
+            const allowed = AVAILABLE_MODELS.find(m => m.type === "local" && isModelAllowed(m));
+            return allowed ? allowed.id : DEFAULT_LOCAL_MODEL_ID;
         },
         setSelectedModelId: (modelId) => {
-            const model = AVAILABLE_MODELS.find(m => m.id === modelId);
+            const normalizedModelId = normalizeModelId(modelId);
+            const model = getCatalogModel(normalizedModelId);
             if (model) {
-                const wasRunningLocal = !modelInfo.type?.startsWith("cloud-") && (status === "ready" || status === "loading" || status === "generating");
+                const wasRunning = status === "ready" || status === "loading" || status === "generating";
                 
-                localStorage.setItem(STORAGE_KEY, modelId);
+                localStorage.setItem(STORAGE_KEY, normalizedModelId);
                 modelInfo = {
                     ...model,
                     source: "user-preference",
-                    confirmed: true,
-                    note: model.type && model.type.startsWith("cloud-") ? "Cloud-hosted model via API." : ""
+                    confirmed: false,
+                    note: ""
                 };
                 
-                if (model.type && model.type.startsWith("cloud-")) {
-                    if (wasRunningLocal) {
-                        disable("user");
-                    }
-                    status = "ready";
-                } else {
-                    if (wasRunningLocal) {
-                        disable("user");
-                    } else if (!engine) {
-                        status = "idle";
-                    }
+                if (wasRunning) {
+                    disable("user");
                 }
+                
+                status = "idle";
+                permissionGranted = false;
 
                 if (window.EventBus) {
                     window.EventBus.emit("local-ai:status", getStatus());
                 }
+            }
+        },
+        getUseMirror: () => getUseMirrorValue(),
+        setUseMirror: (val) => {
+            localStorage.setItem("bl4ut0LocalAiUseMirror", String(val));
+            if (window.EventBus) {
+                window.EventBus.emit("local-ai:mirror-changed", val);
             }
         }
     };

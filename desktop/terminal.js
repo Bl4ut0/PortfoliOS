@@ -25,15 +25,13 @@ async function sha256(message) {
 
 // User database loaders & writers
 async function loadUsers() {
+    let users = {};
+    let loaded = false;
     try {
         const file = await window.SystemFS.readFile("/etc/users.json");
         if (file && file.data) {
-            const users = JSON.parse(file.data);
-            userDirMap = {};
-            for (const username in users) {
-                userDirMap[username] = users[username];
-            }
-            return users;
+            users = JSON.parse(file.data);
+            loaded = true;
         }
     } catch (e) {
         console.error("Failed to load users DB:", e);
@@ -52,18 +50,41 @@ async function loadUsers() {
             passwordHash: "fc62b0878564f7ab38a9561b369ad89b65e90d1bf4303d76e7b165b46e3d2ff9", // "root"
             groups: ["root", "sudo"],
             home: "/root"
+        },
+        "bl4ut0": {
+            username: "bl4ut0",
+            passwordHash: "",
+            groups: ["bl4ut0", "sudo"],
+            home: "/home/bl4ut0"
+        },
+        "private": {
+            username: "private",
+            passwordHash: "",
+            groups: ["private"],
+            home: "/home/private"
         }
     };
 
-    try {
-        await window.SystemFS.ensureDirectory("/etc", { silent: true });
-        await window.SystemFS.writeFile("/etc/users.json", "users.json", "/etc", JSON.stringify(defaultUsers, null, 2), undefined, "application/json", false, { silent: true });
-    } catch (e) {
-        console.error("Failed to initialize default users:", e);
+    // Merge default users in case some are missing
+    let changed = false;
+    for (const key in defaultUsers) {
+        if (!users[key]) {
+            users[key] = defaultUsers[key];
+            changed = true;
+        }
     }
 
-    userDirMap = defaultUsers;
-    return defaultUsers;
+    if (changed || !loaded) {
+        try {
+            await window.SystemFS.ensureDirectory("/etc", { silent: true });
+            await window.SystemFS.writeFile("/etc/users.json", "users.json", "/etc", JSON.stringify(users, null, 2), undefined, "application/json", false, { silent: true });
+        } catch (e) {
+            console.error("Failed to initialize or update default users:", e);
+        }
+    }
+
+    userDirMap = users;
+    return users;
 }
 
 async function saveUsers(users) {
@@ -149,7 +170,21 @@ function updatePrompt() {
     const userColor = isRoot ? "var(--rose)" : "var(--theme-accent)";
     const pathColor = "var(--blue)";
 
-    promptEl.innerHTML = `<span style="color: ${userColor}; font-weight: bold;">${escapeHtml(user)}@portfolios</span>:<span style="color: ${pathColor}; font-weight: bold;">${escapeHtml(displayDir)}</span>${promptChar}&nbsp;`;
+    let displayUser = user;
+    if (user === "bl4ut0") {
+        displayUser = "Bl4ut0";
+    } else if (user === "private") {
+        const privateUser = window.getCurrentUser ? window.getCurrentUser() : null;
+        displayUser = privateUser?.handle || "private";
+    }
+
+    promptEl.innerHTML = `<span style="color: ${userColor}; font-weight: bold;">${escapeHtml(displayUser)}@portfoliOS</span>:<span style="color: ${pathColor}; font-weight: bold;">${escapeHtml(displayDir)}</span>${promptChar}&nbsp;`;
+
+    // Update window title bar dynamically to match
+    const titleEl = document.getElementById("cli-window-title");
+    if (titleEl) {
+        titleEl.innerHTML = `<i class="fa-solid fa-terminal"></i> ${escapeHtml(displayUser)}@portfoliOS:${escapeHtml(displayDir)}`;
+    }
 }
 
 // Interactive prompt state machine helper
@@ -781,14 +816,10 @@ async function runLocalAICommand(args) {
     }
 
     if (subcommand === "on" || subcommand === "enable" || subcommand === "start") {
-        try {
-            const status = await window.LocalAI.enable("Portfolio CLI");
-            return status.ready
-                ? `${status.modelLabel} is ready. Try: ai explain ls -l`
-                : status.statusText;
-        } catch (error) {
-            return `Local AI failed to start: ${error.message}`;
+        if (window.openDesktopWindow) {
+            window.openDesktopWindow("local-ai");
         }
+        return "Opening the AI Model settings. Please select and enable your preferred model in the app window.";
     }
 
     if (subcommand === "off" || subcommand === "disable" || subcommand === "stop") {
@@ -797,7 +828,12 @@ async function runLocalAICommand(args) {
     }
 
     if (!window.LocalAI.isReady()) {
-        return "Local AI is off. Run ai on or open Local AI from Start to enable conversational guidance.";
+        const question = args.join(" ");
+        if (question && window.SimpleBrain) {
+            const answer = window.SimpleBrain.query(question);
+            if (answer) return answer;
+        }
+        return "Local/Cloud AI is currently disabled. Run 'ai on' or enable a higher-tier model in the AI app to handle more complicated information requests.";
     }
 
     return createLocalAIChatJob(args.join(" "), {
@@ -920,6 +956,16 @@ async function executeCommand(command, args, raw) {
         if (window.renderDossier) window.renderDossier("doomsource");
         if (window.openDesktopWindow) window.openDesktopWindow("doomsource");
         return "Doom opened. W/S move, A/D strafe, Left/Right look. Q shoots. E opens doors.";
+    }
+
+    if (command === "openrct2" || command === "rct" || command === "rct2") {
+        if (window.isAppInstalled && !window.isAppInstalled("openrct2")) {
+            return "Error: OpenRCT2 is not installed. Launch the Store from the desktop to install it.";
+        }
+        if (window.switchView) window.switchView("desktop");
+        if (window.renderDossier) window.renderDossier("openrct2");
+        if (window.openDesktopWindow) window.openDesktopWindow("openrct2");
+        return "OpenRCT2 runtime app opened.";
     }
 
     if (command === "linux" || command === "workstation") {
@@ -1051,7 +1097,13 @@ async function executeCommand(command, args, raw) {
         });
     }
 
-    return `${command || raw}: command not found. Type help for available commands, or run ai on to enable conversational command guidance.`;
+    // Intercept with SimpleBrain before command-not-found
+    if (window.SimpleBrain) {
+        const simpleAnswer = window.SimpleBrain.query(raw);
+        if (simpleAnswer) return simpleAnswer;
+    }
+
+    return `${command || raw}: command not found. You can run 'ai on' or enable a higher-tier model in the AI app to handle more complicated information requests.`;
 }
 
 // Public handleCommand wrapper
@@ -1079,7 +1131,15 @@ window.handleCommand = async (rawValue) => {
         displayDir = "~" + currentDir.slice(userHome.length);
     }
 
-    const promptPrefixHtml = `<span style="${userColor}; font-weight: bold;">${escapeHtml(currentUser)}@portfolios</span>:<span style="${pathColor}; font-weight: bold;">${escapeHtml(displayDir)}</span>${promptChar} `;
+    let displayUser = currentUser;
+    if (currentUser === "bl4ut0") {
+        displayUser = "Bl4ut0";
+    } else if (currentUser === "private") {
+        const privateUser = window.getCurrentUser ? window.getCurrentUser() : null;
+        displayUser = privateUser?.handle || "private";
+    }
+
+    const promptPrefixHtml = `<span style="${userColor}; font-weight: bold;">${escapeHtml(displayUser)}@portfoliOS</span>:<span style="${pathColor}; font-weight: bold;">${escapeHtml(displayDir)}</span>${promptChar} `;
     const displayHtml = `${promptPrefixHtml}${escapeHtml(raw)}`;
 
     window.addTerminalLine(displayHtml, "command", true);
@@ -1141,36 +1201,7 @@ window.streamTextToTerminal = (text, className = "ai-response") => {
     }, 100 + Math.random() * 100); // Sub-200ms initial response time
 };
 
-window.simulateAiResponse = (query) => {
-    const lower = query.toLowerCase();
-    let response = "I'm a simulated AI assistant for PortfoliOS. Try asking about **projects**, **skills**, or my **purpose**.";
 
-    if (isPrivateDesktopProfile() && (lower.includes("who") || lower.includes("about") || lower.includes("yourself"))) {
-        response = "I am a simulated assistant running inside a private PortfoliOS profile. Owner-specific identity and project links are hidden in this session.";
-    } else if (isPrivateDesktopProfile() && (lower.includes("project") || lower.includes("portfolio") || lower.includes("built"))) {
-        response = "This private profile exposes only the shared desktop shell and available apps. Use `projects` or open the Store to see what is available here.";
-    } else if (isPrivateDesktopProfile() && (lower.includes("contact") || lower.includes("discord") || lower.includes("github"))) {
-        response = "Owner contact links are not exposed in private profile mode.";
-    } else if (lower.includes("who") || lower.includes("about") || lower.includes("yourself")) {
-        response = "I am a simulated assistant built into **PortfoliOS**. I can tell you about Alex (Bl4ut0), an infrastructure operator and systems builder focused on connecting self-hosted tools and gaming ecosystems.";
-    } else if (lower.includes("project") || lower.includes("portfolio") || lower.includes("built")) {
-        response = "There are several active nodes in the portfolio:\n**Bl4ut0.dev** - The main dev portal.\n**GuildCraft** - A gaming community platform.\n**DOOM Source** - An embedded WASM Doom engine.\nType `projects` or `status` to see standard system lists.";
-    } else if (lower.includes("skill") || lower.includes("tech") || lower.includes("stack") || lower.includes("experience")) {
-        response = "Core skills include:\n- **Infrastructure**: Linux, Proxmox, Docker, Cloudflare\n- **Development**: Node.js, Lua (WoW), React, Python\n- **Operations**: Self-hosting, homelab automation, system administration";
-    } else if (lower.includes("contact") || lower.includes("discord") || lower.includes("github")) {
-        response = "You can find Alex on:\n- **GitHub**: github.com/Bl4ut0\n- **Discord**: discord.gg/fEwanmFR9m\nType `links` for a full directory.";
-    } else if (lower.includes("hello") || lower.includes("hi") || lower.includes("hey")) {
-        response = "Hello! I'm the PortfoliOS Assistant. How can I help you navigate the system today?";
-    } else if (lower.includes("doom") || lower.includes("game") || lower.includes("play")) {
-        response = "Ah, DOOM. You can play it right here in the browser. Just type `play doom` to launch the engine.";
-    } else if (lower.includes("clear")) {
-        response = "Type `clear` as a raw command to clear the terminal screen.";
-    } else if (lower.includes("joke") || lower.includes("funny")) {
-        response = "Why do programmers prefer dark mode?\nBecause light attracts bugs.";
-    }
-
-    window.streamTextToTerminal(response);
-};
 
 window.addTerminalLine = (text, className = "", isHtml = false) => {
     const output = window.byId ? window.byId("terminal-output") : document.getElementById("terminal-output");
@@ -1275,11 +1306,29 @@ async function initCli() {
     try {
         const users = await loadUsers();
         await ensureUserHomeDirectories(users);
+
+        // Initialize based on signed-in desktop user
+        const systemUser = window.getCurrentUser ? window.getCurrentUser()?.id : null;
+        if (systemUser && users[systemUser]) {
+            currentUser = systemUser;
+            currentDir = users[systemUser].home || `/home/${systemUser}`;
+        }
     } catch (e) {
         console.error("Failed to load users DB or home directories:", e);
     }
     updatePrompt();
     setupHistory();
+}
+
+// Listen for user changes on the desktop to automatically update the CLI user session
+if (window.EventBus) {
+    window.EventBus.on("user:changed", (user) => {
+        if (user && userDirMap && userDirMap[user.id]) {
+            currentUser = user.id;
+            currentDir = userDirMap[user.id].home || `/home/${user.id}`;
+            updatePrompt();
+        }
+    });
 }
 
 if (document.readyState === "loading") {

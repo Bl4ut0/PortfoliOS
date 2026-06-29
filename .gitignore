@@ -16,3 +16,8 @@ Thumbs.db
 # Game Assets (proprietary/large)
 diablo/*.MPQ
 diablo/*.mpq
+apps/openrct2/runtime/openrct2.zip
+apps/openrct2/runtime/openrct2.js
+apps/openrct2/runtime/openrct2.wasm
+apps/openrct2/runtime/assets.zip
+apps/openrct2/runtime/RCT.zip

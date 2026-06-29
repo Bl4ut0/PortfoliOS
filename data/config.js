@@ -247,9 +247,9 @@ window.portfolioThemes = [
 
 window.quickRoutes = [
     { id: "overview", label: "Overview", icon: "fa-solid fa-table-cells-large", get ids() { return window.systems ? window.systems.map((item) => item.id) : []; } },
-    { id: "build", label: "Build", icon: "fa-solid fa-code-branch", ids: ["devhub", "addons", "guildcraft", "automation", "media", "doomsource", "duke32", "diablo", "quake"] },
+    { id: "build", label: "Build", icon: "fa-solid fa-code-branch", ids: ["devhub", "addons", "guildcraft", "automation", "media", "doomsource", "openrct2", "duke32", "diablo", "quake"] },
     { id: "operate", label: "Operate", icon: "fa-solid fa-server", ids: ["homelab", "status", "automation", "devhub"] },
-    { id: "research", label: "Research", icon: "fa-solid fa-brain", ids: ["survival-ai", "doomsource", "duke32", "diablo", "quake", "homelab"] },
+    { id: "research", label: "Research", icon: "fa-solid fa-brain", ids: ["survival-ai", "doomsource", "openrct2", "duke32", "diablo", "quake", "homelab"] },
     { id: "connect", label: "Connect", icon: "fa-solid fa-link", ids: ["devhub", "guildcraft", "wardenit", "status", "addons"] }
 ];
 
@@ -297,5 +297,6 @@ window.openTargets = {
     discord: "https://discord.gg/fEwanmFR9m",
     guildcraft: "https://dev.guildcraft.io",
     curseforge: "https://www.curseforge.com/members/bl4ut0/projects",
-    doomsource: "https://github.com/id-Software/DOOM"
+    doomsource: "https://github.com/id-Software/DOOM",
+    openrct2: "https://github.com/OpenRCT2/OpenRCT2"
 };

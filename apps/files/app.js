@@ -355,7 +355,8 @@
         clientIdInput.value = localStorage.getItem("bl4ut0_gdrive_client_id") || defaultId;
 
         if (isConnected) {
-            statusText.textContent = "Connected to Google Drive";
+            const folderLabel = window.GDriveSync?.getCurrentFolderLabel ? window.GDriveSync.getCurrentFolderLabel() : "Google Drive";
+            statusText.textContent = `Connected to ${folderLabel}`;
             indicator.className = "status-indicator connected";
             connectBtn.style.display = "none";
             disconnectBtn.style.display = "inline-flex";
@@ -381,6 +382,9 @@
         disconnectBtn.disabled = true;
 
         try {
+            if (window.savePreferencesToFilesystem) {
+                await window.savePreferencesToFilesystem();
+            }
             await window.GDriveSync.sync((processed, total, path) => {
                 if (total === 0) {
                     progressText.textContent = "Syncing... (No files)";
@@ -391,7 +395,11 @@
                     progressBar.style.width = `${percent}%`;
                 }
             });
-            window.showDesktopToast?.("File Sync Complete!");
+            if (window.loadPreferencesFromFilesystem) {
+                await window.loadPreferencesFromFilesystem();
+            }
+            const folderLabel = window.GDriveSync?.getCurrentFolderLabel ? window.GDriveSync.getCurrentFolderLabel() : "Google Drive";
+            window.showDesktopToast?.(`Synced ${folderLabel}`);
             progressText.textContent = "Sync complete!";
             progressBar.style.width = "100%";
             renderFilesGrid(windowEl);
