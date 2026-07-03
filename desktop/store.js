@@ -173,10 +173,175 @@ window.renderStore = () => {
     `;
 };
 
-window.installApp = (id) => {
-    if (!state.installingApps) state.installingApps = {};
-    if (state.installingApps[id] !== undefined) return;
+const GAME_INSTALL_CONFIGS = {
+    ut99: {
+        totalSize: 13800000,
+        files: [
+            { path: "/apps/ut99/runtime/index.html", url: "/apps/ut99/runtime/index.php/index.html", type: "text/html" },
+            { path: "/apps/ut99/runtime/index.js", url: "/apps/ut99/runtime/index.php/index.js", type: "text/javascript" },
+            { path: "/apps/ut99/runtime/index.wasm", url: "/apps/ut99/runtime/index.php/index.wasm", type: "application/wasm" },
+            { path: "/apps/ut99/runtime/index.data", url: "/apps/ut99/runtime/index.php/index.data", type: "application/octet-stream" }
+        ]
+    },
+    doomsource: {
+        totalSize: 13800000,
+        files: [
+            { path: "/apps/doomsource/doom.js", url: "/doom.js?v=1.0.27", type: "text/javascript" },
+            { path: "/apps/doomsource/doom.wasm", url: "/doom.wasm?v=1.0.27", type: "application/wasm" },
+            { path: "/apps/doomsource/DOOM.WAD", url: "/DOOM.WAD", type: "application/octet-stream" }
+        ]
+    },
+    duke32: {
+        totalSize: 16100000,
+        files: [
+            { path: "/apps/duke32/index.html", url: "/duke32/index.html?v=1.0.25", type: "text/html" },
+            { path: "/apps/duke32/duke3d.zip", url: "/duke32/duke3d.zip", type: "application/zip" }
+        ]
+    },
+    quake: {
+        totalSize: 18800000,
+        files: [
+            { path: "/apps/quake/index.html", url: "/quake/index.html?v=1.0.22", type: "text/html" },
+            { path: "/apps/quake/id1/pak0.pak", url: "/quake/id1/pak0.pak", type: "application/octet-stream" },
+            ...["CDAudio.js", "Chase.js", "CL.js", "Cmd.js", "COM.js", "Console.js", "CRC.js", "Cvar.js", "Def.js", "Draw.js", "ED.js", "GL.js", "Host.js", "IN.js", "Key.js", "M.js", "Mod.js", "MSG.js", "NET.js", "NET_Loop.js", "NET_WEBS.js", "PF.js", "PR.js", "Protocol.js", "Q.js", "R.js", "S.js", "Sbar.js", "SCR.js", "SV.js", "Sys.js", "SZ.js", "V.js", "Vec.js", "VID.js", "W.js"].map(name => ({
+                path: `/apps/quake/WebQuake/${name}`,
+                url: `/quake/WebQuake/${name}`,
+                type: "text/javascript"
+            }))
+        ]
+    },
+    diablo: {
+        totalSize: 26600000,
+        files: [
+            { path: "/apps/diablo/index.html", url: "/diablo/index.html?v=1.0.24", type: "text/html" },
+            { path: "/apps/diablo/spawn.mpq", url: "/diablo/spawn.mpq", type: "application/octet-stream" },
+            { path: "/apps/diablo/8acc76fdb6ee253c485e.worker.js", url: "/diablo/8acc76fdb6ee253c485e.worker.js", type: "text/javascript" },
+            { path: "/apps/diablo/d2271be9a67638d3642f.worker.js", url: "/diablo/d2271be9a67638d3642f.worker.js", type: "text/javascript" },
+            { path: "/apps/diablo/storage.html", url: "/diablo/storage.html", type: "text/html" },
+            { path: "/apps/diablo/portfolio-diablo-autostart.js", url: "/diablo/portfolio-diablo-autostart.js", type: "text/javascript" },
+            { path: "/apps/diablo/static/js/0.aaa06a1e.chunk.js", url: "/diablo/static/js/0.aaa06a1e.chunk.js", type: "text/javascript" },
+            { path: "/apps/diablo/static/js/main.0a18bc0c.chunk.js", url: "/diablo/static/js/main.0a18bc0c.chunk.js", type: "text/javascript" }
+        ]
+    },
+    openrct2: {
+        totalSize: 76000000,
+        files: [
+            { path: "/apps/openrct2/runtime/index.html", url: "/apps/openrct2/runtime/index.html?v=1.0.56", type: "text/html" },
+            { path: "/apps/openrct2/runtime/index.js", url: "/apps/openrct2/runtime/index.js?v=1.0.56", type: "text/javascript" },
+            { path: "/apps/openrct2/runtime/openrct2.zip", url: "/apps/openrct2/runtime/openrct2.zip", type: "application/zip" },
+            { path: "/apps/openrct2/runtime/assets.zip", url: "/apps/openrct2/runtime/assets.zip", type: "application/zip" }
+        ]
+    }
+};
 
+const installAppFiles = async (id) => {
+    if (!state.installingApps) state.installingApps = {};
+    state.installingApps[id] = 0;
+    window.renderStore();
+
+    const config = GAME_INSTALL_CONFIGS[id];
+    if (!config) {
+        runFakeInstall(id);
+        return;
+    }
+
+    try {
+        const totalSize = config.totalSize;
+        let loadedBytesMap = {};
+
+        const downloadFileWithProgress = async (fileEntry) => {
+            const response = await fetch(fileEntry.url);
+            if (!response.ok) throw new Error(`HTTP error ${response.status} for ${fileEntry.url}`);
+            
+            const contentLength = response.headers.get("content-length");
+            const fileTotal = contentLength ? parseInt(contentLength, 10) : 0;
+            
+            const reader = response.body.getReader();
+            const chunks = [];
+            let fileLoaded = 0;
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+                fileLoaded += value.length;
+                
+                loadedBytesMap[fileEntry.path] = fileLoaded;
+                const sumLoaded = Object.values(loadedBytesMap).reduce((a, b) => a + b, 0);
+                const percent = Math.round((sumLoaded / totalSize) * 100);
+                state.installingApps[id] = Math.max(5, Math.min(95, percent));
+                
+                const progressEl = document.querySelector(`[data-progress-bar="${id}"]`);
+                if (progressEl) progressEl.style.width = `${state.installingApps[id]}%`;
+                const textEl = document.querySelector(`[data-progress-text="${id}"]`);
+                if (textEl) {
+                    textEl.textContent = `Installing (${state.installingApps[id]}%)...`;
+                }
+            }
+            
+            const blob = new Blob(chunks, { type: fileEntry.type });
+            const arrayBuffer = await blob.arrayBuffer();
+            
+            if (window.SystemFS) {
+                await window.SystemFS.writeFile(
+                    fileEntry.path,
+                    window.SystemFS.getName(fileEntry.path),
+                    window.SystemFS.getParentPath(fileEntry.path),
+                    arrayBuffer,
+                    arrayBuffer.byteLength,
+                    fileEntry.type,
+                    false,
+                    { silent: true }
+                );
+            }
+        };
+
+        for (const fileEntry of config.files) {
+            const textEl = document.querySelector(`[data-progress-text="${id}"]`);
+            if (textEl) {
+                textEl.textContent = `Downloading ${window.SystemFS.getName(fileEntry.path)}...`;
+            }
+            await downloadFileWithProgress(fileEntry);
+        }
+
+        state.installingApps[id] = 100;
+        const progressEl = document.querySelector(`[data-progress-bar="${id}"]`);
+        if (progressEl) progressEl.style.width = "100%";
+        
+        setTimeout(() => {
+            delete state.installingApps[id];
+            const list = window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : [];
+            if (!list.includes(id)) list.push(id);
+            if (window.setInstalledStoreAppIds) {
+                window.setInstalledStoreAppIds(list);
+            } else if (window.Storage) {
+                window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
+            } else {
+                localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
+            }
+
+            if (window.modularApps && window.modularApps.includes(id) && window.ensureAppLoaded) {
+                window.ensureAppLoaded(id);
+            }
+
+            if (window.EventBus) window.EventBus.emit("app:installed", id);
+            if (window.renderDesktopIcons) window.renderDesktopIcons();
+            if (window.renderStartMenu) window.renderStartMenu();
+            if (window.renderTaskbar) window.renderTaskbar();
+            window.renderStore();
+
+            if (window.showDesktopToast) window.showDesktopToast("Installation complete.");
+        }, 500);
+
+    } catch (error) {
+        console.error(`${id} installation failed:`, error);
+        delete state.installingApps[id];
+        window.renderStore();
+        if (window.showDesktopToast) window.showDesktopToast(`${id} installation failed: ${error.message}`);
+    }
+};
+
+const runFakeInstall = (id) => {
     state.installingApps[id] = 0;
     window.renderStore();
 
@@ -213,8 +378,6 @@ window.installApp = (id) => {
             }
 
             if (window.EventBus) window.EventBus.emit("app:installed", id);
-            
-            // Re-render everything
             if (window.renderDesktopIcons) window.renderDesktopIcons();
             if (window.renderStartMenu) window.renderStartMenu();
             if (window.renderTaskbar) window.renderTaskbar();
@@ -227,6 +390,13 @@ window.installApp = (id) => {
     }, 150);
 };
 
+window.installApp = (id) => {
+    if (!state.installingApps) state.installingApps = {};
+    if (state.installingApps[id] !== undefined) return;
+
+    installAppFiles(id);
+};
+
 window.uninstallApp = (id) => {
     const list = (window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : []).filter((item) => item !== id);
     if (window.setInstalledStoreAppIds) {
@@ -237,13 +407,26 @@ window.uninstallApp = (id) => {
         localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
     }
 
+    const localCleanupDirs = {
+        ut99: "/apps/ut99/runtime",
+        doomsource: "/apps/doomsource",
+        duke32: "/apps/duke32",
+        quake: "/apps/quake",
+        diablo: "/apps/diablo",
+        openrct2: "/apps/openrct2/runtime"
+    };
+
+    if (localCleanupDirs[id] && window.SystemFS) {
+        window.SystemFS.deleteFileRecursive(localCleanupDirs[id], { silent: true })
+            .catch(err => console.error(`Failed to clean up ${id} local files:`, err));
+    }
+
     if (state.openApps.has(id) && window.closeDesktopWindow) {
         window.closeDesktopWindow(id);
     }
 
     if (window.EventBus) window.EventBus.emit("app:uninstalled", id);
 
-    // Re-render everything
     if (window.renderDesktopIcons) window.renderDesktopIcons();
     if (window.renderStartMenu) window.renderStartMenu();
     if (window.renderTaskbar) window.renderTaskbar();

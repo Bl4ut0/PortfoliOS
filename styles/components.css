@@ -206,6 +206,37 @@
     text-transform: uppercase;
 }
 
+/* Profile Sidebar Identity Portrait Layout Overrides to prevent cramming */
+.profile-sidebar .identity-portrait {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    min-height: auto;
+    padding-block: 1.25rem;
+}
+
+.profile-sidebar .identity-portrait::before {
+    display: none;
+}
+
+.profile-sidebar .identity-portrait img {
+    width: 85%;
+    height: auto;
+    max-height: 12rem;
+    object-fit: contain;
+    border-radius: 6px;
+    clip-path: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.profile-sidebar .identity-portrait figcaption {
+    align-items: center;
+    justify-items: center;
+    padding-bottom: 0;
+}
+
 .person-dossier-grid {
     display: grid;
     gap: 0.7rem;
@@ -4577,6 +4608,40 @@ body[data-view].top-dock-carry .topbar-dock {
     height: 100%;
     border: none;
     display: block;
+}
+
+.ut99-stage:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+}
+
+.desktop-window.is-runtime-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1000 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+}
+
+.desktop-window.is-runtime-fullscreen > .window-bar {
+    display: none !important;
+}
+
+.ut99-stage:fullscreen .ut99-frame,
+.desktop-window.is-runtime-fullscreen .ut99-frame,
+.desktop-window.is-runtime-fullscreen .ut99-shell,
+.desktop-window.is-runtime-fullscreen .ut99-stage {
+    width: 100%;
+    height: 100%;
+}
+
+.desktop-window.is-runtime-fullscreen .resize-handle {
+    display: none;
 }
 .duke32-window, .diablo-window, .quake-window {
     width: min(54rem, calc(100% - 2rem));

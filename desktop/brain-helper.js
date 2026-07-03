@@ -684,4 +684,17 @@
             updateHelperMode(isCloud);
         }
     }
+    // Expose BrainHelper globally to tie separate systems (like CLI) together
+    window.BrainHelper = {
+        show: () => setMascotVisibility(true),
+        hide: () => setMascotVisibility(false),
+        openBubble: () => setBubbleVisibility(true),
+        closeBubble: () => setBubbleVisibility(false),
+        ask: (promptText) => {
+            setMascotVisibility(true);
+            setBubbleVisibility(true);
+            input.value = promptText;
+            form.requestSubmit();
+        }
+    };
 })();

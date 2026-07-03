@@ -1,0 +1,22 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.+)$ index.php/$1 [L,QSA,B]
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/wasm .wasm
+    AddType text/javascript .js
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Embedder-Policy "require-corp"
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+    Header always set Permissions-Policy "cross-origin-isolated=(self)"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Robots-Tag "noindex, nofollow, nosnippet, noarchive"
+</IfModule>

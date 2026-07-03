@@ -100,6 +100,7 @@ window.openDesktopWindow = async (name) => {
     document.querySelectorAll(".desktop-window").forEach((item) => item.classList.remove("active"));
     windowEl.classList.add("active");
     windowEl.style.zIndex = String(++state.zIndex);
+    window.clampDesktopWindowToBounds?.(windowEl);
     
     if (window.renderTaskbar) window.renderTaskbar();
     if (window.EventBus) window.EventBus.emit("app:opened", name);
@@ -176,12 +177,22 @@ window.closeDesktopWindow = (name) => {
     });
 };
 
-window.toggleMaximizeWindow = (name) => {
+window.toggleMaximizeWindow = async (name) => {
+    await window.openDesktopWindow(name);
     const windowEl = document.querySelector(`[data-window="${name}"]`);
     if (!windowEl) return;
-    window.openDesktopWindow(name);
-    windowEl.classList.toggle("is-maximized");
-    window.runAppLifecycleHook?.(name, "onMaximize", windowEl);
+
+    const surface = document.querySelector(".desktop-wallpaper") || windowEl.parentElement || document.body;
+    const willMaximize = !windowEl.classList.contains("is-maximized");
+    if (willMaximize) {
+        window.freezeWindowGeometry(windowEl, surface);
+        windowEl.classList.add("is-maximized");
+    } else {
+        windowEl.classList.remove("is-maximized");
+        window.clampDesktopWindowToBounds?.(windowEl, surface);
+    }
+
+    window.runAppLifecycleHook?.(name, "onMaximize", windowEl, { isMaximized: willMaximize });
     if (window.EventBus) window.EventBus.emit("app:maximized", name);
 };
 
@@ -247,6 +258,49 @@ window.freezeWindowGeometry = (windowEl, surface) => {
     windowEl.style.height = `${rect.height / scale}px`;
     windowEl.style.right = "auto";
     windowEl.style.bottom = "auto";
+};
+
+window.clampDesktopWindowToBounds = (windowEl, surface = null) => {
+    if (!windowEl || windowEl.classList.contains("is-hidden") || windowEl.classList.contains("is-maximized")) return;
+
+    const desktopSurface = surface
+        || document.querySelector(".desktop-wallpaper")
+        || windowEl.parentElement
+        || document.body;
+    const bounds = window.getDesktopBounds(desktopSurface);
+    const scale = window.getDesktopScale ? window.getDesktopScale() : 1;
+    const rect = windowEl.getBoundingClientRect();
+    const surfaceRect = desktopSurface.getBoundingClientRect();
+    const currentLeft = Number.isFinite(parseFloat(windowEl.style.left))
+        ? parseFloat(windowEl.style.left)
+        : (rect.left - surfaceRect.left) / scale;
+    const currentTop = Number.isFinite(parseFloat(windowEl.style.top))
+        ? parseFloat(windowEl.style.top)
+        : (rect.top - surfaceRect.top) / scale;
+    const currentWidth = rect.width / scale;
+    const currentHeight = rect.height / scale;
+    const maxWidth = Math.max(240, bounds.width - 16);
+    const maxHeight = Math.max(180, bounds.usableHeight - 16);
+    const nextWidth = Math.min(currentWidth, maxWidth);
+    const nextHeight = Math.min(currentHeight, maxHeight);
+    const maxLeft = Math.max(8, bounds.width - nextWidth - 8);
+    const maxTop = Math.max(8, bounds.usableHeight - nextHeight);
+    const nextLeft = Math.max(8, Math.min(maxLeft, currentLeft));
+    const nextTop = Math.max(8, Math.min(maxTop, currentTop));
+
+    if (Math.abs(nextLeft - currentLeft) > 0.5) windowEl.style.left = `${nextLeft}px`;
+    if (Math.abs(nextTop - currentTop) > 0.5) windowEl.style.top = `${nextTop}px`;
+    if (Math.abs(nextWidth - currentWidth) > 0.5) windowEl.style.width = `${nextWidth}px`;
+    if (Math.abs(nextHeight - currentHeight) > 0.5) windowEl.style.height = `${nextHeight}px`;
+    if (
+        Math.abs(nextLeft - currentLeft) > 0.5
+        || Math.abs(nextTop - currentTop) > 0.5
+        || Math.abs(nextWidth - currentWidth) > 0.5
+        || Math.abs(nextHeight - currentHeight) > 0.5
+    ) {
+        windowEl.style.right = "auto";
+        windowEl.style.bottom = "auto";
+    }
 };
 
 window.setupSingleWindowManagement = (windowEl, surface, mobileQuery) => {

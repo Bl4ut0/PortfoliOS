@@ -51,12 +51,14 @@ window.showGameControls = (windowEl) => {
 
 window.handleGameRuntimeMessage = (event) => {
     const data = event.data || {};
-    if (data.type !== "game-pointer-release") return;
+    if (data.type !== "game-pointer-release" && data.type !== "game-pointer-release-hint") return;
 
     const now = Date.now();
     if (now - (window.handleGameRuntimeMessage.lastShown || 0) < 900) return;
     window.handleGameRuntimeMessage.lastShown = now;
-    window.showDesktopToast("Cursor released to PortfoliOS.");
+    window.showDesktopToast(data.type === "game-pointer-release-hint"
+        ? "Press Ctrl+Alt to release cursor."
+        : "Cursor released to PortfoliOS.");
 };
 
 window.applyVolume = () => {

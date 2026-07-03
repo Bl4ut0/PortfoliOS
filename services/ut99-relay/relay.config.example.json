@@ -1,0 +1,36 @@
+{
+  "listen": {
+    "host": "127.0.0.1",
+    "port": 8787
+  },
+  "allowedOrigins": [
+    "https://os.bl4ut0.dev",
+    "http://localhost:4173"
+  ],
+  "tokenSecretEnv": "UT99_RELAY_TOKEN_SECRET",
+  "targets": [
+    {
+      "id": "local-test",
+      "label": "Local OldUnreal test server",
+      "host": "127.0.0.1",
+      "ports": [7777],
+      "allowPrivate": true
+    },
+    {
+      "id": "portfolios-ut99",
+      "label": "PortfoliOS controlled UT99 server",
+      "host": "ut99-relay-target.example.com",
+      "ports": [7777]
+    }
+  ],
+  "limits": {
+    "maxConnectionsPerIp": 4,
+    "maxSessionsPerMinutePerIp": 10,
+    "openTimeoutMs": 5000,
+    "sessionTtlMs": 1800000,
+    "idleTimeoutMs": 60000,
+    "maxPayloadBytes": 1400,
+    "clientBytesPerSecond": 65536,
+    "serverBytesPerSecond": 131072
+  }
+}

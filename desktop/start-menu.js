@@ -20,7 +20,8 @@ window.getStartMenuLauncher = (id) => {
             network: "Topology view",
             profile: "Identity",
             dossier: "Project files",
-            openrct2: "Theme park engine"
+            openrct2: "Theme park engine",
+            musicmini: "Streaming hub"
         };
 
         return {

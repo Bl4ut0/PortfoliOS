@@ -836,9 +836,26 @@ async function runLocalAICommand(args) {
         return "Local/Cloud AI is currently disabled. Run 'ai on' or enable a higher-tier model in the AI app to handle more complicated information requests.";
     }
 
-    return createLocalAIChatJob(args.join(" "), {
+    const questionText = args.join(" ");
+    
+    // Check if the query asks for system actions (open app, close app, speak, toast)
+    // If so, redirect it directly to Lobe (the mascot) to execute agentically.
+    if (window.BrainHelper && (
+        questionText.toLowerCase().includes("open ") || 
+        questionText.toLowerCase().includes("close ") || 
+        questionText.toLowerCase().includes("say ") || 
+        questionText.toLowerCase().includes("speak ") || 
+        questionText.toLowerCase().includes("notify ") ||
+        questionText.toLowerCase().includes("toast ")
+    )) {
+        window.BrainHelper.ask(questionText);
+        return "Redirecting action request to Lobe mascot helper...";
+    }
+
+    return createLocalAIChatJob(questionText, {
         user: currentUser,
-        cwd: currentDir
+        cwd: currentDir,
+        mode: "cli" // Run simple question answering without agent/tool execution loops
     });
 }
 
@@ -1090,10 +1107,36 @@ async function executeCommand(command, args, raw) {
         return await runLocalAICommand(args);
     }
 
+    if (command === "lobe") {
+        if (!window.BrainHelper) {
+            return "Lobe mascot helper is not loaded.";
+        }
+        const action = (args[0] || "").toLowerCase();
+        if (action === "show" || action === "open") {
+            window.BrainHelper.show();
+            return "Lobe mascot helper displayed.";
+        }
+        if (action === "hide" || action === "close") {
+            window.BrainHelper.hide();
+            return "Lobe mascot helper hidden.";
+        }
+        if (action === "ask" || action === "chat") {
+            const promptText = args.slice(1).join(" ");
+            if (!promptText) return "Usage: lobe ask <prompt>";
+            window.BrainHelper.ask(promptText);
+            return `Passing query to Lobe mascot: "${promptText}"`;
+        }
+        // Default: toggle bubble visibility
+        window.BrainHelper.show();
+        window.BrainHelper.openBubble();
+        return "Lobe helper opened.";
+    }
+
     if (window.LocalAI?.isReady?.()) {
         return createLocalAIChatJob(`The user entered this PortfoliOS CLI input: ${raw}`, {
             user: currentUser,
-            cwd: currentDir
+            cwd: currentDir,
+            mode: "cli" // Bypass agent loop
         });
     }
 

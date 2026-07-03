@@ -3,6 +3,17 @@
  * Definitions for wallpaper themes, CLI options, command mappings, and Quick review routes.
  */
 
+window.musicMiniConfig = window.musicMiniConfig || {
+    spotify: {
+        clientId: "",
+        redirectUri: "",
+        market: "US"
+    },
+    apple: {
+        developerTokenEndpoint: ""
+    }
+};
+
 window.wallpaperOptions = [
     { id: "aurora", label: "Aurora", icon: "fa-solid fa-wand-magic-sparkles" },
     { id: "grid", label: "Grid", icon: "fa-solid fa-border-all" },

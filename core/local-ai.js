@@ -37,59 +37,47 @@
         },
         // ── Local Models (WebGPU) ──────────────────────────────────
         {
-            id: "SmolLM2-135M-Instruct-q4f16_1-MLC",
-            label: "SmolLM2 135M (Hyper-light, 360MB VRAM)",
-            memoryMB: 360,
+            id: "gemma-3-270m-it-q4f16_1-MLC",
+            label: "Gemma 3 270M (Hyper-light, 200MB)",
+            memoryMB: 200,
             type: "local"
         },
         {
-            id: "gemma-3-270m-it-q4f16_1-MLC",
-            label: "Gemma 3 270M (Hyper-light, 380MB VRAM - shader-f16 required)",
-            memoryMB: 380,
-            type: "local",
-            required_features: ["shader-f16"]
-        },
-        {
             id: "SmolLM2-360M-Instruct-q4f16_1-MLC",
-            label: "SmolLM2 360M (Ultra-light, 520MB VRAM)",
-            memoryMB: 520,
+            label: "SmolLM2 360M (Ultra-light, 376MB)",
+            memoryMB: 376,
             type: "local"
         },
         {
             id: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-            label: "Qwen 2.5 0.5B (Light, 700MB VRAM)",
-            memoryMB: 700,
+            label: "Qwen 2.5 0.5B (Light, 420MB)",
+            memoryMB: 420,
             type: "local"
         },
         {
             id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-            label: "Llama 3.2 1B (Balanced, 1.4GB VRAM)",
-            memoryMB: 1400,
+            label: "Llama 3.2 1B (Balanced, 980MB)",
+            memoryMB: 980,
             type: "local"
         },
         {
-            id: "gemma3-1b-it-q4f16_1-MLC",
-            label: "Gemma 3 1B (Fast, 1.2GB VRAM - shader-f16 required)",
-            memoryMB: 1200,
-            type: "local"
-        },
-        {
-            id: "gemma-2b-it-q4f16_1-MLC-1k",
-            label: "Gemma 2B Fast (1K, 1.5GB VRAM)",
-            memoryMB: 1500,
+            id: "gemma-3-1b-it-q4f16_1-MLC",
+            label: "Gemma 3 1B (Google, 600MB)",
+            memoryMB: 600,
             type: "local"
         },
         {
             id: "gemma-2-2b-it-q4f16_1-MLC",
-            label: "Gemma 2 2B (High Quality, 2.4GB VRAM - shader-f16 required)",
-            memoryMB: 2400,
+            label: "Gemma 2 2B (High Quality, 1.6GB)",
+            memoryMB: 1600,
             type: "local"
         }
     ];
 
-    const DEFAULT_LOCAL_MODEL_ID = "SmolLM2-135M-Instruct-q4f16_1-MLC";
+    const DEFAULT_LOCAL_MODEL_ID = "SmolLM2-360M-Instruct-q4f16_1-MLC";
     const LEGACY_MODEL_ALIASES = {
-        "gemma-3-1b-it-q4f16_1-MLC": "gemma3-1b-it-q4f16_1-MLC"
+        "gemma-3-1b-it-q4f16_1-MLC": "gemma3-1b-it-q4f16_1-MLC",
+        "SmolLM2-135M-Instruct-q4f16_1-MLC": "SmolLM2-360M-Instruct-q4f16_1-MLC"
     };
     const CUSTOM_WEBLLM_MODELS = [
         {
@@ -139,31 +127,13 @@
         }
     }
 
-    let autodetectedMirror = null;
+    let autodetectedMirror = false;
 
     async function checkMirrorSupport() {
-        if (autodetectedMirror !== null) return autodetectedMirror;
-        
-        emitAIDebug("Testing connection to huggingface.co...", getAIDebugSnapshot());
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-        
-        try {
-            await fetch("https://huggingface.co/api/quick", {
-                method: "HEAD",
-                mode: "no-cors",
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-            autodetectedMirror = false;
-            emitAIDebug("huggingface.co connection test succeeded.", getAIDebugSnapshot());
-        } catch (err) {
-            clearTimeout(timeoutId);
-            autodetectedMirror = true;
-            emitAIDebug("huggingface.co connection test failed/timed out. Automatically enabling mirror.", getAIDebugSnapshot({ error: err?.message || "timeout" }));
-            console.warn("[LocalAI] huggingface.co is unreachable. Automatically routing via hf-mirror.com.");
-        }
-        return autodetectedMirror;
+        // Mirror autodetection disabled: hf-mirror.com is a China-only CDN
+        // that does not work from other regions. HuggingFace direct works fine.
+        autodetectedMirror = false;
+        return false;
     }
 
     function getUseMirrorValue() {
@@ -171,7 +141,7 @@
         if (stored !== null) {
             return stored === "true";
         }
-        return autodetectedMirror === true;
+        return false;
     }
 
     function mapRuntimeUrl(url, useMirror = getUseMirrorValue()) {
@@ -974,25 +944,31 @@
     }
 
     function getPortfolioContext() {
+        const isSmallLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) < 500;
         const systems = window.systems || [];
         const bookmarks = window.bookmarks || [];
         
         let contextText = "Developer Profile:\nAlex (Bl4ut0) is an infrastructure operator, systems builder, and developer.\n\nKey Projects/Systems:\n";
         
         systems.forEach(sys => {
-            contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary}\n`;
-            if (sys.tech && sys.tech.length > 0) {
-                contextText += `  Tech Stack: ${sys.tech.join(", ")}\n`;
+            if (isSmallLocal) {
+                // Highly minified representation for small local models to avoid token limit overload
+                contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary.slice(0, 90)}...\n`;
+            } else {
+                contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary}\n`;
+                if (sys.tech && sys.tech.length > 0) {
+                    contextText += `  Tech Stack: ${sys.tech.join(", ")}\n`;
+                }
+                if (sys.links && sys.links.length > 0) {
+                    const linkStrs = sys.links.map(l => `${l[0]}: ${l[1]}`);
+                    contextText += `  Links: ${linkStrs.join(" | ")}\n`;
+                }
+                contextText += "\n";
             }
-            if (sys.links && sys.links.length > 0) {
-                const linkStrs = sys.links.map(l => `${l[0]}: ${l[1]}`);
-                contextText += `  Links: ${linkStrs.join(" | ")}\n`;
-            }
-            contextText += "\n";
         });
         
-        if (bookmarks.length > 0) {
-            contextText += "System Bookmarks:\n";
+        if (bookmarks.length > 0 && !isSmallLocal) {
+            contextText += "\nSystem Bookmarks:\n";
             bookmarks.forEach(b => {
                 contextText += `- ${b.title}: ${b.url}\n`;
             });
@@ -1158,7 +1134,6 @@
                 "If a prompt is unclear, ask one short clarifying question instead of saying you cannot understand language.",
                 "When a user enters an invalid command, explain the likely intent and suggest one or two valid PortfoliOS commands.",
                 "Known shell commands include: help, clear, whoami, whoami --info, links, projects, status, quick, play doom, inspect <id>, open <target>, pwd, cd, ls, ls -l, cat, touch, mkdir, rm, echo, su, passwd, useradd, userdel, groups, id, ai on, ai off.",
-                skillsSection,
                 "",
                 "### PORTFOLIO DATASET ###",
                 dataset,
@@ -1547,7 +1522,11 @@
         setStatus("generating", isCloud ? "Cloud AI is answering..." : "Local AI is answering in a background GPU worker...", 1, { force: true });
         await yieldToBrowser();
         try {
-            return await runAgentLoop(prompt, context, onChunk);
+            if (context.mode === "chat") {
+                return await runAgentLoop(prompt, context, onChunk);
+            } else {
+                return await generateCompletion(prompt, context, onChunk);
+            }
         } catch (error) {
             await disable("error", { preserveError: true });
             setStatus("error", error?.message || "Local AI failed to generate response.", 0, { force: true });

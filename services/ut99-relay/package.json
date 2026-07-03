@@ -1,0 +1,19 @@
+{
+  "name": "@portfolios/ut99-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Locked-down WebSocket-to-UDP relay for controlled UT99/OldUnreal bridge sessions.",
+  "main": "src/server.mjs",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "check": "node --check src/server.mjs",
+    "mint-token": "node src/server.mjs --mint-token"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

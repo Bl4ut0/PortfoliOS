@@ -6,17 +6,17 @@
 window.standardInstalledAppIds = [
     "devhub", "profile", "dossier", "browser", "network", "linux", "cli",
     "settings", "store", "files", "addons", "guildcraft", "homelab",
-    "survival-ai", "status", "taskmgr", "local-ai"
+    "survival-ai", "status", "taskmgr", "local-ai", "musicmini"
 ];
 
 window.desktopPinnedIds = [
     "store", "files", "cli", "devhub",
-    "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "webamp"
+    "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "ut99", "webamp", "musicmini"
 ];
 
 window.startMenuPinnedIds = [
     "store", "settings", "files", "browser",
-    "cli", "local-ai", "profile", "dossier",
+    "cli", "local-ai", "musicmini", "profile", "dossier",
     "network", "taskmgr", "linux", "devhub"
 ];
 
@@ -24,7 +24,7 @@ window.startMenuGroups = [
     {
         id: "system",
         label: "System",
-        ids: ["store", "files", "settings", "browser", "cli", "local-ai", "taskmgr", "linux"]
+        ids: ["store", "files", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
     },
     {
         id: "portfolio",
@@ -34,7 +34,7 @@ window.startMenuGroups = [
     {
         id: "installed",
         label: "Installed Store Apps",
-        ids: ["romplayer", "openrct2", "webamp", "doomsource", "duke32", "diablo", "quake"]
+        ids: ["romplayer", "openrct2", "webamp", "doomsource", "duke32", "diablo", "quake", "ut99"]
     }
 ];
 
@@ -49,7 +49,9 @@ window.defaultDesktopIconLayout = {
     duke32: { col: 1, row: 3 },
     diablo: { col: 1, row: 4 },
     quake: { col: 1, row: 5 },
-    webamp: { col: 2, row: 0 }
+    ut99: { col: 2, row: 0 },
+    webamp: { col: 2, row: 1 },
+    musicmini: { col: 2, row: 2 }
 };
 
 window.desktopApps = [
@@ -64,13 +66,15 @@ window.desktopApps = [
     { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", pinned: true },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false },
+    { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", pinned: true },
     { id: "settings", title: "Settings", icon: "fa-solid fa-sliders", pinned: false },
     { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", pinned: true },
     { id: "openrct2", title: "OpenRCT2", icon: "fa-solid fa-train", pinned: false },
     { id: "doomsource", title: "Doom", icon: "doom-icon.png", pinned: false },
     { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", pinned: false },
     { id: "diablo", title: "Diablo", icon: "diablo-icon.png", pinned: false },
-    { id: "quake", title: "Quake", icon: "quake-icon.png", pinned: false }
+    { id: "quake", title: "Quake", icon: "quake-icon.png", pinned: false },
+    { id: "ut99", title: "UT99", icon: "fa-solid fa-crosshairs", pinned: false }
 ];
 
 window.storeApps = [
@@ -127,6 +131,15 @@ window.storeApps = [
         description: "WebQuake native JavaScript/WebGL port of the original Quake 1.",
         size: "18.2 MB",
         publisher: "id Software / WebQuake"
+    },
+    {
+        id: "ut99",
+        title: "Unreal Tournament 99",
+        icon: "fa-solid fa-crosshairs",
+        category: "Games",
+        description: "Browser-hosted Unreal Tournament 99 flyby runtime with OldUnreal multiplayer links and relay prep.",
+        size: "Remote WASM",
+        publisher: "OldUnreal / icculus.org"
     },
     {
         id: "webamp",

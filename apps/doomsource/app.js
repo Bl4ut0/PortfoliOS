@@ -356,7 +356,7 @@
                 setDoomRuntimeState("CHECK FS", "Checking local storage for DOOM.WAD...");
                 let wadRecord = null;
                 try {
-                    wadRecord = await window.SystemFS.readFile("/.DOOM.WAD");
+                    wadRecord = await window.SystemFS.readFile("/apps/doomsource/DOOM.WAD");
                 } catch (e) {
                     console.warn("Could not read DOOM.WAD from local storage", e);
                 }
@@ -378,11 +378,11 @@
                     const wadBuffer = await downloadWadWithProgress("DOOM.WAD", statusEl, progressBar);
                     window.doomWadBuffer = wadBuffer;
 
-                    // Save it to SystemFS so subsequent boots are instant (hidden Unix dotfile)
+                    // Save it to SystemFS so subsequent boots are instant
                     try {
                         const blob = new Blob([wadBuffer], { type: "application/octet-stream" });
-                        await window.SystemFS.writeFile("/.DOOM.WAD", ".DOOM.WAD", "/", blob, blob.size, "application/octet-stream", false);
-                        console.log("PortfoliOS: DOOM.WAD saved to SystemFS as hidden asset.");
+                        await window.SystemFS.writeFile("/apps/doomsource/DOOM.WAD", "DOOM.WAD", "/apps/doomsource", blob, blob.size, "application/octet-stream", false);
+                        console.log("PortfoliOS: DOOM.WAD saved to SystemFS.");
                     } catch (err) {
                         console.error("Failed to save DOOM.WAD to SystemFS", err);
                     }

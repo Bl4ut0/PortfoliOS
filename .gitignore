@@ -8,6 +8,8 @@ node_modules/
 deploy.js
 package.json
 package-lock.json
+!services/*/package.json
+!services/*/package-lock.json
 
 # OS files
 .DS_Store
