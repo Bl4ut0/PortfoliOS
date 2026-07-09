@@ -38,9 +38,11 @@
         // ── Local Models (WebGPU) ──────────────────────────────────
         {
             id: "gemma-3-270m-it-q4f16_1-MLC",
-            label: "Gemma 3 270M (Hyper-light, 200MB)",
+            label: "Gemma 3 270M (Experimental/basic, 200MB)",
             memoryMB: 200,
-            type: "local"
+            type: "local",
+            chatProfile: "experimental-basic",
+            usageNote: "Experimental ultra-small model. Best for basic command intent tests; use SmolLM2 360M, Qwen 0.5B, or Gemma 3 1B for normal chat."
         },
         {
             id: "SmolLM2-360M-Instruct-q4f16_1-MLC",
@@ -76,7 +78,7 @@
 
     const DEFAULT_LOCAL_MODEL_ID = "SmolLM2-360M-Instruct-q4f16_1-MLC";
     const LEGACY_MODEL_ALIASES = {
-        "gemma-3-1b-it-q4f16_1-MLC": "gemma3-1b-it-q4f16_1-MLC",
+        "gemma3-1b-it-q4f16_1-MLC": "gemma-3-1b-it-q4f16_1-MLC",
         "SmolLM2-135M-Instruct-q4f16_1-MLC": "SmolLM2-360M-Instruct-q4f16_1-MLC"
     };
     const CUSTOM_WEBLLM_MODELS = [
@@ -101,6 +103,9 @@
     const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm";
     const STATUS_EMIT_MIN_MS = 220;
     const CHAT_MAX_TOKENS = 120;
+    const INTERNAL_SPECIAL_TOKEN_RE = /<image_soft_token>|<start_of_turn>|<end_of_turn>|<bos>|<eos>|<pad>|<unused\d+>|<\|(?:begin_of_text|end_of_text|eot_id|start_header_id|end_header_id)\|>/gi;
+    const INTERNAL_SPECIAL_TOKEN_TEST_RE = /<image_soft_token>|<start_of_turn>|<end_of_turn>|<bos>|<eos>|<pad>|<unused\d+>|<\|(?:begin_of_text|end_of_text|eot_id|start_header_id|end_header_id)\|>/i;
+    const STREAM_SANITIZER_TAIL_CHARS = 32;
 
     let engine = null;
     let worker = null;
@@ -110,6 +115,138 @@
     let loadPromise = null;
     function normalizeModelId(modelId) {
         return LEGACY_MODEL_ALIASES[modelId] || modelId || "";
+    }
+
+    function stripInternalSpecialTokens(value) {
+        return String(value ?? "").replace(INTERNAL_SPECIAL_TOKEN_RE, "");
+    }
+
+    function getCoreSystemOverview() {
+        return [
+            "PortfoliOS is Alex Mammen / Bl4ut0's browser-based desktop portfolio OS at os.bl4ut0.dev.",
+            "It presents a temporary desktop-like container with draggable windows, a taskbar, Start menu, tray services, and modular apps.",
+            "Core apps include Identity, Portfolio CLI, Store, Files, Browser, Local AI / Lobe, Music Mini, Task Manager, and retro game launchers such as DOOM, Diablo, Quake, UT99, Duke3D, and OpenRCT2.",
+            "Storage is browser-local first: localStorage/sessionStorage preferences, IndexedDB file helpers, browser cache for model/assets, and optional Google Drive sync for persistence across sessions.",
+            "AI support includes local WebGPU models running in a worker plus optional cloud model connections configured from Settings."
+        ].join(" ");
+    }
+
+    function collapseRepeatedPhrases(line) {
+        const parts = String(line || "").split(/,\s*/);
+        if (parts.length < 4) return line;
+
+        const seen = new Set();
+        const deduped = [];
+
+        for (const part of parts) {
+            const normalized = part
+                .replace(/\s+/g, " ")
+                .replace(/[.;:]+$/g, "")
+                .trim()
+                .toLowerCase();
+
+            if (normalized && seen.has(normalized)) continue;
+            if (normalized) seen.add(normalized);
+            deduped.push(part.trim());
+        }
+
+        return deduped.join(", ");
+    }
+
+    function collapseRepeatedLines(value) {
+        const seenCounts = new Map();
+        let previousNorm = "";
+        let consecutiveCount = 0;
+
+        return String(value || "")
+            .split("\n")
+            .map(collapseRepeatedPhrases)
+            .filter((line) => {
+                const normalized = line
+                    .replace(/^[\s*.\-0-9)]+/, "")
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .toLowerCase();
+
+                if (!normalized) {
+                    previousNorm = "";
+                    consecutiveCount = 0;
+                    return true;
+                }
+
+                consecutiveCount = normalized === previousNorm ? consecutiveCount + 1 : 1;
+                previousNorm = normalized;
+                if (consecutiveCount > 2) return false;
+
+                const count = seenCounts.get(normalized) || 0;
+                seenCounts.set(normalized, count + 1);
+                return count < 2;
+            })
+            .join("\n");
+    }
+
+    function repairKnownMetadataRequest(value, prompt = "") {
+        const text = String(value || "");
+        const promptLooksLikeSystemQuestion = /system|portfolios?|portfolio|instance|about|information|details?/i.test(prompt);
+        const asksForKnownMetadata = /(please provide|following information|complete the query|i need)/i.test(text) &&
+            /(user name|portfolio name|portfolio url|profile url|portfolio description)/i.test(text);
+
+        if (!promptLooksLikeSystemQuestion || !asksForKnownMetadata) return text;
+
+        return [
+            getCoreSystemOverview(),
+            "",
+            "In short: it is a browser-hosted portfolio desktop with temporary session behavior where that makes sense, persistence helpers where useful, and optional local/cloud AI integrations for CLI and Lobe assistance."
+        ].join("\n");
+    }
+
+    function finalizeModelOutput(value, options = {}) {
+        const fallbackMessage = typeof options === "string"
+            ? options
+            : options.fallbackMessage || "Local AI did not return a response.";
+        const prompt = typeof options === "object" ? options.prompt || "" : "";
+        const raw = String(value ?? "");
+        const cleaned = collapseRepeatedLines(stripInternalSpecialTokens(raw))
+            .replace(/[ \t]+\n/g, "\n")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+
+        if (cleaned) return repairKnownMetadataRequest(cleaned, prompt);
+
+        if (INTERNAL_SPECIAL_TOKEN_TEST_RE.test(raw)) {
+            emitAIDebug("Model output contained only internal special tokens.", getAIDebugSnapshot({
+                rawLength: raw.length
+            }));
+            if (modelInfo.chatProfile === "experimental-basic") {
+                return `${modelInfo.label} is too small for reliable free-form chat in this browser build. It is best kept for basic command/intent tests. Switch to SmolLM2 360M, Qwen 0.5B, or Gemma 3 1B for normal chat.`;
+            }
+            return "The selected model returned only internal control tokens. Please retry once, or switch to SmolLM2 360M / Qwen 0.5B if it keeps happening.";
+        }
+
+        return fallbackMessage;
+    }
+
+    function createOutputStreamSanitizer(onChunk) {
+        let pending = "";
+
+        return {
+            push(delta) {
+                if (typeof onChunk !== "function") return;
+                pending = stripInternalSpecialTokens(pending + String(delta ?? ""));
+                const emitLength = Math.max(0, pending.length - STREAM_SANITIZER_TAIL_CHARS);
+                if (emitLength === 0) return;
+
+                const emitText = pending.slice(0, emitLength);
+                pending = pending.slice(emitLength);
+                if (emitText) onChunk(emitText);
+            },
+            flush() {
+                if (typeof onChunk !== "function") return;
+                const emitText = stripInternalSpecialTokens(pending);
+                pending = "";
+                if (emitText) onChunk(emitText);
+            }
+        };
     }
 
     function isCloudModel(model) {
@@ -370,6 +507,59 @@
         }
     }
 
+    function emitModelChanged(previousModelId, source = "user") {
+        const snapshot = getStatus();
+        emitAIDebug("Model selection changed.", getAIDebugSnapshot({
+            previousModelId,
+            source
+        }));
+        emitStatus({ force: true });
+
+        if (window.EventBus) {
+            window.EventBus.emit("local-ai:model-changed", {
+                previousModelId,
+                modelId: snapshot.modelId,
+                modelLabel: snapshot.modelLabel,
+                modelType: snapshot.modelType,
+                status: snapshot,
+                source
+            });
+        }
+    }
+
+    function stopActiveRuntimeForModelChange() {
+        stopRequested = true;
+        permissionGranted = false;
+        if (permissionPrompt) removePermissionPrompt(false);
+
+        if (currentAbortController) {
+            try {
+                currentAbortController.abort();
+            } catch (err) {}
+            currentAbortController = null;
+        }
+
+        if (worker) {
+            try {
+                worker.terminate();
+            } catch (err) {
+                console.warn("Worker termination failed", err);
+            }
+            worker = null;
+        }
+
+        try {
+            if (engine && typeof engine.unload === "function") {
+                engine.unload().catch(() => {});
+            }
+        } catch (error) {
+            // Ignore cleanup errors while switching models.
+        }
+
+        engine = null;
+        loadPromise = null;
+    }
+
     function setStatus(nextStatus, nextText = statusText, nextProgress = progress, options = {}) {
         const previousStatus = status;
         const previousText = statusText;
@@ -427,7 +617,7 @@
             memoryMB: modelInfo.memoryMB,
             modelSource: modelInfo.source,
             modelConfirmed: modelInfo.confirmed,
-            modelNote: modelInfo.note,
+            modelNote: modelInfo.note || modelInfo.usageNote || "",
             preferredModelId: PREFERRED_MODEL.id,
             preferredModelLabel: PREFERRED_MODEL.label,
             progress,
@@ -852,6 +1042,7 @@
         }
 
         if (isCloud) {
+            stopRequested = false;
             status = "ready";
             emitAIDebug("Cloud AI enabled.", getAIDebugSnapshot({ source }));
             setStatus("ready", `Cloud AI is ready.`, 1, { force: true });
@@ -945,15 +1136,30 @@
 
     function getPortfolioContext() {
         const isSmallLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) < 500;
+        const isConstrainedLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) <= 1000;
         const systems = window.systems || [];
         const bookmarks = window.bookmarks || [];
         
-        let contextText = "Developer Profile:\nAlex (Bl4ut0) is an infrastructure operator, systems builder, and developer.\n\nKey Projects/Systems:\n";
-        
-        systems.forEach(sys => {
+        let contextText = [
+            "Core PortfoliOS Facts:",
+            getCoreSystemOverview(),
+            "",
+            "Developer Profile:",
+            "Alex (Bl4ut0) is an infrastructure operator, systems builder, addon porter, automation tinkerer, and developer.",
+            "",
+            "Key Projects/Systems:"
+        ].join("\n");
+        contextText += "\n";
+
+        const maxSystems = isSmallLocal ? 8 : (isConstrainedLocal ? 10 : systems.length);
+        const summaryLimit = isSmallLocal ? 90 : (isConstrainedLocal ? 130 : 0);
+
+        systems.slice(0, maxSystems).forEach(sys => {
             if (isSmallLocal) {
                 // Highly minified representation for small local models to avoid token limit overload
                 contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary.slice(0, 90)}...\n`;
+            } else if (isConstrainedLocal) {
+                contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary.slice(0, summaryLimit)}...\n`;
             } else {
                 contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary}\n`;
                 if (sys.tech && sys.tech.length > 0) {
@@ -966,8 +1172,12 @@
                 contextText += "\n";
             }
         });
+
+        if (systems.length > maxSystems) {
+            contextText += `- Additional project nodes are available in the Store, Network Map, and desktop app catalog.\n`;
+        }
         
-        if (bookmarks.length > 0 && !isSmallLocal) {
+        if (bookmarks.length > 0 && !isConstrainedLocal) {
             contextText += "\nSystem Bookmarks:\n";
             bookmarks.forEach(b => {
                 contextText += `- ${b.title}: ${b.url}\n`;
@@ -1081,9 +1291,22 @@
         let systemPrompt = "";
         
         const isCloud = isCloudModel(modelInfo);
+        const isConstrainedLocal = !isCloud && (modelInfo.memoryMB || 0) <= 1000;
         const runtimeType = isCloud ? `a cloud-hosted model (${modelInfo.label})` : `a local on-device WebGPU model (${modelInfo.label})`;
+        const tokenHygiene = "Write normal text only. Never output internal model tokens such as <image_soft_token>, <start_of_turn>, <end_of_turn>, <bos>, or <eos>.";
+        const modelCapabilityRule = modelInfo.chatProfile === "experimental-basic"
+            ? "This selected model is experimental and very small. For open-ended chat, answer briefly and recommend switching to SmolLM2 360M, Qwen 0.5B, or Gemma 3 1B for better conversation."
+            : "";
+        const groundingRules = [
+            "Use the provided PortfoliOS facts directly. The user is asking about this system unless they clearly say otherwise.",
+            "Do not ask for portfolio name, portfolio URL, profile URL, user name, or description; those facts are already provided.",
+            "If asked about the system or instance, explain PortfoliOS itself: browser desktop shell, modular apps, storage helpers, sync options, and local/cloud AI.",
+            "Do not describe the generic browser account as the system unless the user specifically asks about the browser.",
+            modelCapabilityRule,
+            "Avoid repeated bullets or checklist loops. Stop after a useful concise answer."
+        ].filter(Boolean).join("\n");
 
-        const skillsSection = [
+        const fullSkillsSection = [
             "",
             "### SYSTEM SKILLS (TOOLS) ###",
             "You can control PortfoliOS and execute actions on behalf of the user by writing a JSON block inside ```action ... ``` code fences.",
@@ -1107,6 +1330,14 @@
             "2. Always explain to the user what you are doing (e.g. \"I will open the settings for you...\") before outputting the action block.",
             "#############################"
         ].join("\n");
+        const compactSkillsSection = [
+            "",
+            "### SYSTEM SKILLS (TOOLS) ###",
+            "If the user explicitly asks you to open or control an app, you may output one JSON action block inside a ```action ... ``` fenced block.",
+            "For ordinary questions, do not output action JSON; just answer normally.",
+            "#############################"
+        ].join("\n");
+        const skillsSection = isConstrainedLocal ? compactSkillsSection : fullSkillsSection;
 
         if (isChat) {
             systemPrompt = [
@@ -1116,6 +1347,8 @@
                 "Answer questions in a friendly, conversational, and informative tone.",
                 "Utilize the Portfolio Dataset below to provide accurate answers about projects, tech stacks, status, and links.",
                 "Keep answers relatively concise (1-3 small paragraphs max) so they fit nicely in your speech bubble. Always use bolding to emphasize project names.",
+                tokenHygiene,
+                groundingRules,
                 skillsSection,
                 "",
                 "### PORTFOLIO DATASET ###",
@@ -1129,6 +1362,8 @@
                 "You are the AI assistant inside PortfoliOS CLI.",
                 `You are currently running on ${runtimeType} executing fully in the client browser.`,
                 "Keep answers concise and practical.",
+                tokenHygiene,
+                groundingRules,
                 "Do not claim you executed commands.",
                 "You can understand ordinary typed English. If asked whether you understand the user, answer yes and briefly explain what you can help with.",
                 "If a prompt is unclear, ask one short clarifying question instead of saying you cannot understand language.",
@@ -1427,6 +1662,23 @@
         }
     }
 
+    function getLocalGenerationOptions() {
+        if (modelInfo.chatProfile === "experimental-basic") {
+            return {
+                temperature: 0.15,
+                top_p: 0.65,
+                max_tokens: 64
+            };
+        }
+
+        const isConstrainedLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) <= 1000;
+        return {
+            temperature: isConstrainedLocal ? 0.2 : 0.35,
+            top_p: isConstrainedLocal ? 0.75 : 0.9,
+            max_tokens: isConstrainedLocal ? 96 : CHAT_MAX_TOKENS
+        };
+    }
+
     async function generateCompletion(prompt, context = {}, onChunk = null) {
         const isCloud = isCloudModel(modelInfo);
         try {
@@ -1441,11 +1693,13 @@
             }
 
             if (typeof onChunk === "function") {
+                const outputStream = createOutputStreamSanitizer(onChunk);
+                const generationOptions = getLocalGenerationOptions();
                 const chunks = await engine.chat.completions.create({
                     messages: buildSystemMessages(prompt, context),
-                    temperature: 0.35,
-                    top_p: 0.9,
-                    max_tokens: CHAT_MAX_TOKENS,
+                    temperature: generationOptions.temperature,
+                    top_p: generationOptions.top_p,
+                    max_tokens: generationOptions.max_tokens,
                     stream: true
                 });
                 let fullText = "";
@@ -1456,23 +1710,28 @@
                     const delta = chunk.choices[0]?.delta?.content || "";
                     if (delta) {
                         fullText += delta;
-                        onChunk(delta);
+                        outputStream.push(delta);
                     }
                     await yieldToBrowser();
                 }
-                return fullText.trim();
+                outputStream.flush();
+                if (stopRequested) {
+                    return "Local AI was stopped.";
+                }
+                return finalizeModelOutput(fullText, { prompt });
             } else {
+                const generationOptions = getLocalGenerationOptions();
                 const reply = await engine.chat.completions.create({
                     messages: buildSystemMessages(prompt, context),
-                    temperature: 0.35,
-                    top_p: 0.9,
-                    max_tokens: CHAT_MAX_TOKENS
+                    temperature: generationOptions.temperature,
+                    top_p: generationOptions.top_p,
+                    max_tokens: generationOptions.max_tokens
                 });
                 if (stopRequested) {
                     return "Local AI was stopped.";
                 }
                 await yieldToBrowser();
-                return reply?.choices?.[0]?.message?.content?.trim() || "Local AI did not return a response.";
+                return finalizeModelOutput(reply?.choices?.[0]?.message?.content, { prompt });
             }
         } catch (err) {
             if (err.name === "AbortError") {
@@ -1595,28 +1854,40 @@
         setSelectedModelId: (modelId) => {
             const normalizedModelId = normalizeModelId(modelId);
             const model = getCatalogModel(normalizedModelId);
-            if (model) {
-                const wasRunning = status === "ready" || status === "loading" || status === "generating";
-                
-                localStorage.setItem(STORAGE_KEY, normalizedModelId);
-                modelInfo = {
-                    ...model,
-                    source: "user-preference",
-                    confirmed: false,
-                    note: ""
-                };
-                
-                if (wasRunning) {
-                    disable("user");
-                }
-                
-                status = "idle";
-                permissionGranted = false;
-
-                if (window.EventBus) {
-                    window.EventBus.emit("local-ai:status", getStatus());
-                }
+            if (!model) {
+                emitAIDebug("Ignored unknown model selection.", getAIDebugSnapshot({
+                    requestedModelId: modelId,
+                    normalizedModelId
+                }));
+                return getStatus();
             }
+
+            const previousModelId = modelInfo.id;
+            const wasRunning = status === "ready" || status === "loading" || status === "generating";
+
+            if (wasRunning) {
+                stopActiveRuntimeForModelChange();
+            } else {
+                stopRequested = false;
+                permissionGranted = false;
+                if (permissionPrompt) removePermissionPrompt(false);
+            }
+
+            localStorage.setItem(STORAGE_KEY, normalizedModelId);
+            modelInfo = {
+                ...model,
+                source: "user-preference",
+                confirmed: false,
+                note: ""
+            };
+
+            status = "idle";
+            progress = 0;
+            lastError = "";
+            statusText = isCloudModel(modelInfo) ? "Cloud AI is off." : "Local AI is off.";
+
+            emitModelChanged(previousModelId, "user");
+            return getStatus();
         },
         getUseMirror: () => getUseMirrorValue(),
         setUseMirror: (val) => {

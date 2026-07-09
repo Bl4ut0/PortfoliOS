@@ -94,6 +94,7 @@ window.renderLocalAITray = () => {
     const detail = panel.querySelector("#local-ai-tray-detail");
     const enableButton = panel.querySelector("[data-local-ai-tray-enable]");
     const stopButton = panel.querySelector("[data-local-ai-tray-stop]");
+    const settingsButton = panel.querySelector("[data-local-ai-tray-settings]");
     const modelSelect = panel.querySelector("#local-ai-tray-model-select");
 
     // Populate model select in tray
@@ -146,12 +147,7 @@ window.renderLocalAITray = () => {
         modelSelect.disabled = !isCloud && (status.busy || status.ready);
         modelSelect.onchange = (event) => {
             window.LocalAI.setSelectedModelId(event.target.value);
-            // Re-render taskbar tray status to reflect new model memory
             window.renderLocalAITray();
-            // Also notify Settings app if it is open
-            if (window.EventBus) {
-                window.EventBus.emit("local-ai:model-changed", event.target.value);
-            }
         };
     }
 
@@ -213,6 +209,38 @@ window.renderLocalAITray = () => {
         } else {
             stopButton.innerHTML = '<i class="fa-solid fa-stop"></i> Stop';
         }
+        stopButton.onclick = async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!window.LocalAI) return;
+
+            const currentStatus = window.LocalAI.getStatus();
+            const currentIsCloud = currentStatus.modelType && currentStatus.modelType.startsWith("cloud-");
+            stopButton.disabled = true;
+            stopButton.innerHTML = currentIsCloud
+                ? '<i class="fa-solid fa-spinner fa-spin"></i> Disconnecting'
+                : '<i class="fa-solid fa-spinner fa-spin"></i> Stopping';
+
+            try {
+                await window.LocalAI.disable("tray");
+                window.showDesktopToast?.(currentIsCloud ? "Cloud AI disconnected." : "Local AI stopped.");
+            } finally {
+                window.renderLocalAITray?.();
+            }
+        };
+    }
+
+    if (settingsButton) {
+        settingsButton.onclick = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (window.openDesktopWindow) {
+                Promise.resolve(window.openDesktopWindow("settings")).then(() => {
+                    window.openSettingsPanel?.("local-ai");
+                });
+            }
+            window.closeLocalAITrayPanel?.();
+        };
     }
 };
 
@@ -224,5 +252,6 @@ if (window.EventBus) {
     window.EventBus.on("app:maximized", () => window.renderTaskbar());
     window.EventBus.on("desktop:refresh", () => window.renderTaskbar());
     window.EventBus.on("local-ai:status", () => window.renderLocalAITray());
+    window.EventBus.on("local-ai:model-changed", () => window.renderLocalAITray());
     window.EventBus.on("local-ai:mirror-changed", () => window.renderLocalAITray());
 }

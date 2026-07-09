@@ -23,7 +23,9 @@
         const progressPct = Math.round((status.progress || 0) * 100);
         
         const isCloudModel = status.modelType && status.modelType.startsWith("cloud-");
-        const canStart = !isCloudModel && status.webGpuSupported && !status.busy && !status.ready;
+        const canStart = isCloudModel
+            ? !status.busy && !status.ready
+            : status.webGpuSupported && !status.busy && !status.ready;
 
         const modelNote = status.modelNote
             ? `<p class="local-ai-note">${esc(status.modelNote)}</p>`
@@ -108,7 +110,7 @@
                         </div>
                         <div>
                             <span>Memory</span>
-                            <strong>~${status.memoryMB} MB</strong>
+                            <strong>${isCloudModel ? "Cloud API" : `~${status.memoryMB} MB`}</strong>
                         </div>
                         <div>
                             <span>Runtime</span>
@@ -132,12 +134,12 @@
 
                 <div class="local-ai-actions">
                     <button type="button" class="local-ai-primary" data-local-ai-enable ${canStart ? "" : "disabled"}>
-                        <i class="fa-solid fa-bolt"></i>
-                        ${status.webGpuSupported ? "Enable Local AI" : "WebGPU Unavailable"}
+                        <i class="fa-solid ${isCloudModel ? "fa-plug" : "fa-bolt"}"></i>
+                        ${isCloudModel ? "Connect Cloud AI" : (status.webGpuSupported ? "Enable Local AI" : "WebGPU Unavailable")}
                     </button>
                     <button type="button" class="local-ai-secondary" data-local-ai-stop ${status.enabled ? "" : "disabled"}>
-                        <i class="fa-solid fa-stop"></i>
-                        Stop AI Task
+                        <i class="fa-solid ${isCloudModel ? "fa-link-slash" : "fa-stop"}"></i>
+                        ${isCloudModel ? "Disconnect AI" : "Stop AI Task"}
                     </button>
                 </div>
             </div>
@@ -214,13 +216,19 @@
             if (windowEl.dataset.localAiBound) return;
             windowEl.dataset.localAiBound = "true";
             const unsubscribe = window.EventBus?.on("local-ai:status", () => renderWindow(windowEl));
+            const unsubscribeModel = window.EventBus?.on("local-ai:model-changed", () => renderWindow(windowEl));
             windowEl.dataset.localAiHasUnsubscribe = unsubscribe ? "true" : "";
             windowEl.localAiUnsubscribe = unsubscribe;
+            windowEl.localAiModelUnsubscribe = unsubscribeModel;
         },
         onClose: (windowEl) => {
             if (typeof windowEl.localAiUnsubscribe === "function") {
                 windowEl.localAiUnsubscribe();
                 windowEl.localAiUnsubscribe = null;
+            }
+            if (typeof windowEl.localAiModelUnsubscribe === "function") {
+                windowEl.localAiModelUnsubscribe();
+                windowEl.localAiModelUnsubscribe = null;
             }
         }
     };
