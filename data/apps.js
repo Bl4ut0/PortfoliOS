@@ -6,16 +6,16 @@
 window.standardInstalledAppIds = [
     "devhub", "profile", "dossier", "browser", "network", "linux", "cli",
     "settings", "store", "files", "addons", "guildcraft", "homelab",
-    "survival-ai", "status", "taskmgr", "local-ai", "musicmini"
+    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office"
 ];
 
 window.desktopPinnedIds = [
-    "store", "files", "cli", "devhub",
+    "store", "files", "cli", "devhub", "office",
     "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "ut99", "webamp", "musicmini"
 ];
 
 window.startMenuPinnedIds = [
-    "store", "settings", "files", "browser",
+    "store", "settings", "files", "office", "browser",
     "cli", "local-ai", "musicmini", "profile", "dossier",
     "network", "taskmgr", "linux", "devhub"
 ];
@@ -24,7 +24,7 @@ window.startMenuGroups = [
     {
         id: "system",
         label: "System",
-        ids: ["store", "files", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
+        ids: ["store", "files", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
     },
     {
         id: "portfolio",
@@ -43,6 +43,7 @@ window.defaultDesktopIconLayout = {
     files: { col: 0, row: 1 },
     cli: { col: 0, row: 2 },
     devhub: { col: 0, row: 3 },
+    office: { col: 0, row: 4 },
     romplayer: { col: 1, row: 0 },
     openrct2: { col: 1, row: 1 },
     doomsource: { col: 1, row: 2 },
@@ -64,6 +65,7 @@ window.desktopApps = [
     { id: "local-ai", title: "Local AI", icon: "fa-solid fa-brain", pinned: false },
     { id: "store", title: "Store", icon: "fa-solid fa-shop", pinned: true },
     { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", pinned: true },
+    { id: "office", title: "LibreOffice WASM", icon: "fa-solid fa-file-signature", pinned: true },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false },
     { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", pinned: true },

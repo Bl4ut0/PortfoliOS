@@ -12,7 +12,7 @@ window.focusNextOpenWindow = () => {
     }
 };
 
-window.openDesktopWindow = async (name) => {
+window.openDesktopWindow = async (name, params = null) => {
     if (name === "local-ai") {
         await window.openDesktopWindow("settings");
         if (window.openSettingsPanel) {
@@ -120,6 +120,11 @@ window.openDesktopWindow = async (name) => {
         }
         const termInput = window.byId ? window.byId("terminal-input") : document.getElementById("terminal-input");
         window.setTimeout(() => termInput?.focus({ preventScroll: true }), 50);
+    }
+
+    if (windowEl && params) {
+        windowEl.launchParams = params;
+        windowEl.dispatchEvent(new CustomEvent("launch-params", { detail: params }));
     }
 
     window.runAppLifecycleHook?.(name, "onOpen", windowEl);

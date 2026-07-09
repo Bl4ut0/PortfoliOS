@@ -218,9 +218,12 @@
     }
 
     function openFile(item, windowEl) {
-        if (item.type.startsWith("text/") || item.name.endsWith(".txt") || item.name.endsWith(".json") || item.name.endsWith(".md") || item.name.endsWith(".js") || item.name.endsWith(".css")) {
+        const lowerName = item.name.toLowerCase();
+        if (lowerName.endsWith(".odt") || lowerName.endsWith(".doc") || lowerName.endsWith(".docx") || lowerName.endsWith(".ods") || lowerName.endsWith(".xls") || lowerName.endsWith(".xlsx")) {
+            window.openDesktopWindow("office", item);
+        } else if (item.type.startsWith("text/") || lowerName.endsWith(".txt") || lowerName.endsWith(".json") || lowerName.endsWith(".md") || lowerName.endsWith(".js") || lowerName.endsWith(".css")) {
             openTextEditor(item, windowEl);
-        } else if (item.type.startsWith("audio/") || item.name.endsWith(".mp3") || item.name.endsWith(".wav") || item.name.endsWith(".ogg")) {
+        } else if (item.type.startsWith("audio/") || lowerName.endsWith(".mp3") || lowerName.endsWith(".wav") || lowerName.endsWith(".ogg")) {
             playAudioInWebamp(item);
         } else {
             downloadFileToHost(item);
