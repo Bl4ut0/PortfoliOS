@@ -4,14 +4,7 @@
  */
 
 window.musicMiniConfig = window.musicMiniConfig || {
-    spotify: {
-        clientId: "",
-        redirectUri: "",
-        market: "US"
-    },
-    apple: {
-        developerTokenEndpoint: ""
-    }
+    mode: "local-files"
 };
 
 window.wallpaperOptions = [

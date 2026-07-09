@@ -1,21 +1,10 @@
 /**
- * Example owner configuration for Music Mini.
+ * Music Mini owner configuration note.
  *
- * Copy the relevant values into data/config.js or inject window.musicMiniConfig
- * before apps/musicmini/app.js loads.
- *
- * Spotify uses browser-only Authorization Code + PKCE. Client IDs are public
- * OAuth identifiers, and this flow does not use a client secret. Apple Music
- * developer tokens should usually come from a small backend endpoint because
- * they are signed with your Apple private key.
+ * Music Mini is local-file first. Users upload audio into the browser-backed
+ * /music folder and can play it in Music Mini or send a selected track to Webamp.
+ * Streaming OAuth/provider SDK configuration has been removed from the app.
  */
 window.musicMiniConfig = {
-    spotify: {
-        clientId: "YOUR_SPOTIFY_CLIENT_ID",
-        redirectUri: "https://os.bl4ut0.dev/",
-        market: "US"
-    },
-    apple: {
-        developerTokenEndpoint: "https://example.com/api/apple-music-token"
-    }
+    mode: "local-files"
 };

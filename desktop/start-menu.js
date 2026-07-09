@@ -21,7 +21,7 @@ window.getStartMenuLauncher = (id) => {
             profile: "Identity",
             dossier: "Project files",
             openrct2: "Theme park engine",
-            musicmini: "Streaming hub"
+            musicmini: "Local music player"
         };
 
         return {
