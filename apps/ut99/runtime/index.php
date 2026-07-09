@@ -71,7 +71,7 @@ function fail_runtime_fetch($message) {
 function prepare_runtime_html($html, $baseHref) {
     $base = "<base href=\"" . htmlspecialchars($baseHref, ENT_QUOTES, "UTF-8") . "\">";
     $favicon = "<link rel=\"icon\" href=\"data:,\">";
-    $volumeHook = "<script src=\"/volume-hook.js?v=1.0.90\"></script>";
+    $volumeHook = "<script src=\"/volume-hook.js?v=1.0.93\"></script>";
     $errorBridge = <<<'HTML'
 <script>
 (function() {
@@ -207,7 +207,7 @@ HTML;
     );
     $html = str_replace(
         "var dbname = 'ut99flyby';",
-        "var dbname = 'ut99flyby-portfolios-v2';",
+        "var dbname = 'ut99flyby-portfolios-v3';",
         $html
     );
     $html = str_replace(
@@ -346,9 +346,60 @@ HTML;
                               console.warn("PortfoliOS: failed to prepare " + target, error);
                             }
                           }
+                          function verifyRequiredAsset(path, minSize) {
+                            try {
+                              var stat = FS.stat(path);
+                              var size = stat && Number(stat.size);
+                              return Number.isFinite(size) && size >= minSize ? size : -1;
+                            } catch (error) {
+                              return -1;
+                            }
+                          }
+                          function verifyBrowserAssetCache() {
+                            var checks = [
+                              ["/System/BotPack.u", 1000000, "BotPack core classes"],
+                              ["/Textures/BossSkins.utx", 1000000, "Boss player skin"],
+                              ["/Textures/Soldierskins.utx", 1000000, "Iron Guard/SoldierSkins team package"],
+                              ["/System/SoldierSkins.int", 200, "SoldierSkins metadata"]
+                            ];
+                            var bad = [];
+                            for (var i = 0; i < checks.length; i += 1) {
+                              if (verifyRequiredAsset(checks[i][0], checks[i][1]) < 0) {
+                                bad.push(checks[i][2] + " at " + checks[i][0]);
+                              }
+                            }
+                            if (!bad.length) {
+                              try {
+                                window.sessionStorage.removeItem("portfolios-ut99-cache-refresh-v3");
+                              } catch (error) {}
+                              console.log("PortfoliOS: verified UT99 browser cache includes Iron Guard/SoldierSkins assets.");
+                              return;
+                            }
+
+                            var message = "PortfoliOS: UT99 cache is missing or corrupt required asset(s): " + bad.join(", ");
+                            try {
+                              if (window.sessionStorage.getItem("portfolios-ut99-cache-refresh-v3") !== "done" && window.indexedDB) {
+                                window.sessionStorage.setItem("portfolios-ut99-cache-refresh-v3", "done");
+                                console.warn(message + ". Clearing UT99 cache once and reloading.");
+                                var request = window.indexedDB.deleteDatabase("ut99flyby-portfolios-v3");
+                                request.onsuccess = request.onerror = request.onblocked = function() {
+                                  window.location.reload();
+                                };
+                                window.setTimeout(function() {
+                                  window.location.reload();
+                                }, 1200);
+                                throw new Error("UT99 cache refresh requested for missing assets.");
+                              }
+                            } catch (error) {
+                              if (String(error && error.message || error).indexOf("cache refresh requested") !== -1) throw error;
+                            }
+                            console.error(message + ". Cache refresh already attempted; aborting before engine crash.");
+                            throw new Error(message);
+                          }
                           ensureDir("/Logs");
                           ensureDir("/Save");
                           ensureDir("/Cache");
+                          console.log("PortfoliOS: UT99 runtime cache namespace ut99flyby-portfolios-v3.");
                           copyIfMissing("/System/Default.ini", "/System/UnrealTournament.ini");
                           copyIfMissing("/System/DefUser.ini", "/System/User.ini");
                           copyIfMissing("/System/Default.ini", "/UnrealTournament.ini");
@@ -357,6 +408,7 @@ HTML;
                           prepareConfig("/System/DefUser.ini", "/System/User.ini", patchUserIni);
                           prepareConfig("/System/Default.ini", "/UnrealTournament.ini", patchGameIni);
                           prepareConfig("/System/DefUser.ini", "/User.ini", patchUserIni);
+                          verifyBrowserAssetCache();
                         })();
                         try {
                           Module["callMain"]();

@@ -111,7 +111,7 @@ async function fetchFromNetwork(relativePath, request) {
 function prepareRuntimeHtml(html) {
     const base = '<base href="/apps/ut99/runtime/index.php/">';
     const favicon = '<link rel="icon" href="data:,">';
-    const volumeHook = '<script src="/volume-hook.js?v=1.0.90"></script>';
+    const volumeHook = '<script src="/volume-hook.js?v=1.0.93"></script>';
     const errorBridge = `
 <script>
 (function() {

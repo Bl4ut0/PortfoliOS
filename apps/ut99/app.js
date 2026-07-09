@@ -1,6 +1,6 @@
 (function() {
     const APP_ID = "ut99";
-    const RUNTIME_URL = "/apps/ut99/runtime/index.php/?v=1.0.90";
+    const RUNTIME_URL = "/apps/ut99/runtime/index.php/?v=1.0.93";
     const MANIFEST_URL = "/apps/ut99/runtime/index.php/gamedata/manifest.json";
     const PRACTICE_MAPS = [
         "Maps/DM-Deck16][.unr",
