@@ -5,7 +5,7 @@
 
 window.appRegistry = window.appRegistry || {};
 window.modularApps = window.modularApps || ["doomsource", "openrct2", "duke32", "diablo", "quake", "ut99", "romplayer", "files", "webamp", "musicmini", "taskmgr", "office"];
-window.appAssetVersion = "1.0.95";
+window.appAssetVersion = "1.0.98";
 window.appLoadPromises = window.appLoadPromises || {};
 
 window.ensureAppLoaded = async function(appId) {

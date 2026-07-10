@@ -204,8 +204,9 @@
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 12px 0 color-mix(in srgb, var(--active-color, var(--theme-primary)) 15%, transparent);
 }
 
-.desktop-window.is-hidden {
-    display: none;
+.desktop-window.is-hidden,
+.desktop-window.is-minimized {
+    display: none !important;
 }
 
 .desktop-window.is-maximized {
