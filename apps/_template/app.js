@@ -1,7 +1,7 @@
 /**
  * PortfoliOS utility app template.
- * Copy this folder, rename APP_ID/windowClass/CSS selectors, and add the ID to
- * window.modularApps in core/app-loader.js plus the Store/Desktop catalog.
+ * Copy this folder, rename APP_ID/windowClass/CSS selectors, and add one
+ * desktopApps entry with modular: true in data/apps.js.
  */
 (function() {
     const APP_ID = "myapp";
@@ -32,6 +32,12 @@
         `,
         onOpen: (windowEl) => {
             unregisterAudio = window.registerAppAudioAdapter?.(APP_ID, { setVolume }) || null;
+            windowEl.querySelector(".myapp-body")?.focus({ preventScroll: true });
+        },
+        onRestore: (windowEl) => {
+            windowEl.querySelector(".myapp-body")?.focus({ preventScroll: true });
+        },
+        onFocus: (windowEl) => {
             windowEl.querySelector(".myapp-body")?.focus({ preventScroll: true });
         },
         onMinimize: () => {

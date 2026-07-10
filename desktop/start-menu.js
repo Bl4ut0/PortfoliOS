@@ -31,7 +31,7 @@ window.getStartMenuLauncher = (id) => {
             color: app.id === "linux" ? "#34d399" : (app.id === "store" ? "#a78bfa" : "#22d3ee"),
             launchApp: app.id,
             selectId: "",
-            meta: metaById[app.id] || "Installed app",
+            meta: app.meta || metaById[app.id] || "Installed app",
             kind: "app"
         };
     }
@@ -83,12 +83,24 @@ window.getStartMenuGroups = () => {
             { id: "portfolio", label: "Portfolio", ids: (window.systems || []).map((item) => item.id) }
         ];
 
-    return configuredGroups.map((group) => ({
+    const groups = configuredGroups.map((group) => ({
         ...group,
         items: (group.ids || [])
             .map((id) => window.getStartMenuLauncher(id))
             .filter(window.isStartMenuLauncherAvailable)
     })).filter((group) => group.items.length);
+
+    const configuredIds = new Set(configuredGroups.flatMap((group) => group.ids || []));
+    const ungroupedItems = (window.desktopApps || [])
+        .filter((app) => !configuredIds.has(app.id))
+        .map((app) => window.getStartMenuLauncher(app.id))
+        .filter(window.isStartMenuLauncherAvailable);
+
+    if (ungroupedItems.length) {
+        groups.push({ id: "other-apps", label: "Other Apps", items: ungroupedItems });
+    }
+
+    return groups;
 };
 
 window.renderStartUser = () => {

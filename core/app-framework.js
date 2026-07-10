@@ -5,7 +5,10 @@
  */
 (function() {
     const requiredFields = ["title", "icon", "windowClass", "renderBody"];
-    const lifecycleHooks = ["onOpen", "onClose", "onMinimize", "onMaximize"];
+    const lifecycleHooks = ["onOpen", "onRestore", "onFocus", "onMinimize", "onMaximize", "onClose"];
+    const windowPresets = ["app-window", "utility-window", "service-window", "document-window", "media-window", "game-window"];
+    const appIdPattern = /^[a-z0-9][a-z0-9-]*$/;
+    const classListPattern = /^[a-z0-9_-]+(?:\s+[a-z0-9_-]+)*$/i;
     const audioAdapters = new Map();
 
     function escapeHtml(value) {
@@ -42,6 +45,11 @@
     }
 
     function validateAppRegistration(appId, app = window.appRegistry?.[appId]) {
+        if (!appIdPattern.test(String(appId || ""))) {
+            console.error(`PortfoliOS: App ID "${appId}" must contain only lowercase letters, numbers, and hyphens.`);
+            return false;
+        }
+
         if (!app || typeof app !== "object") {
             console.error(`PortfoliOS: App "${appId}" did not register an app object.`);
             return false;
@@ -55,6 +63,28 @@
 
         if (typeof app.renderBody !== "function") {
             console.error(`PortfoliOS: App "${appId}" renderBody must be a function.`);
+            return false;
+        }
+
+        const invalidTextFields = ["title", "icon", "windowClass"]
+            .filter((field) => typeof app[field] !== "string" || !app[field].trim());
+        if (invalidTextFields.length) {
+            console.error(`PortfoliOS: App "${appId}" has invalid text field(s): ${invalidTextFields.join(", ")}.`);
+            return false;
+        }
+
+        if (!classListPattern.test(app.windowClass.trim())) {
+            console.error(`PortfoliOS: App "${appId}" windowClass contains an invalid class token.`);
+            return false;
+        }
+
+        const classNames = app.windowClass.trim().split(/\s+/);
+        if (!classNames.some((className) => windowPresets.includes(className))) {
+            console.error(`PortfoliOS: App "${appId}" must use a shared window preset: ${windowPresets.join(", ")}.`);
+            return false;
+        }
+        if (!classNames.some((className) => className.endsWith("-window") && !windowPresets.includes(className))) {
+            console.error(`PortfoliOS: App "${appId}" must include an app-specific *-window class.`);
             return false;
         }
 
@@ -72,14 +102,16 @@
         const hook = app?.[hookName];
         if (typeof hook !== "function") return Promise.resolve();
 
+        const { rethrow = false, ...context } = options;
+
         try {
-            return Promise.resolve(hook(windowEl)).catch((error) => {
+            return Promise.resolve(hook(windowEl, context)).catch((error) => {
                 console.error(`PortfoliOS: ${appId}.${hookName} failed.`, error);
-                if (options.rethrow) throw error;
+                if (rethrow) throw error;
             });
         } catch (error) {
             console.error(`PortfoliOS: ${appId}.${hookName} failed.`, error);
-            return options.rethrow ? Promise.reject(error) : Promise.resolve();
+            return rethrow ? Promise.reject(error) : Promise.resolve();
         }
     }
 
@@ -96,6 +128,8 @@
         if (styleEl) styleEl.remove();
         if (window.appRegistry) delete window.appRegistry[appId];
         if (window.appLoadPromises) delete window.appLoadPromises[appId];
+        if (window.appLoadErrors) delete window.appLoadErrors[appId];
+        if (window.appLifecyclePromises) delete window.appLifecyclePromises[appId];
         audioAdapters.delete(appId);
     }
 
@@ -139,6 +173,7 @@
     window.PortfolioOSAppFramework = {
         requiredFields,
         lifecycleHooks,
+        windowPresets,
         escapeHtml,
         getIframeTargetOrigin,
         postMessageToIframe,

@@ -13,8 +13,11 @@ Copy a template to `apps/<app-id>/`, then update:
 
 - `APP_ID` in `app.js`
 - `.desktop-window.<app-id>-window` selectors in `app.css`
-- `window.modularApps` in `../core/app-loader.js`
-- `window.desktopApps` and optionally `window.storeApps` in `../data/apps.js`
+- `window.desktopApps` in `../data/apps.js` with `modular: true`
+- `window.storeApps` only if the app should be installable from the Store
+
+The desktop catalog is the single source for `window.modularApps`; do not edit the loader for each app.
+Also make the app reachable by adding it to `standardInstalledAppIds` or giving it an installable Store entry.
 
 ## Required App Shape
 
@@ -28,6 +31,8 @@ Copy a template to `apps/<app-id>/`, then update:
         windowClass: "myapp-window utility-window",
         renderBody: () => `<div class="myapp-shell">...</div>`,
         onOpen: (windowEl) => {},
+        onRestore: (windowEl) => {},
+        onFocus: (windowEl) => {},
         onClose: async (windowEl) => {},
         onMinimize: (windowEl) => {},
         onMaximize: (windowEl) => {}
@@ -36,6 +41,9 @@ Copy a template to `apps/<app-id>/`, then update:
 ```
 
 Use `utility-window`, `service-window`, `document-window`, `media-window`, or `game-window` as the shared sizing preset.
+
+`onOpen` runs once for each mounted window, and `openDesktopWindow()` waits for a returned Promise. Put resume work in `onRestore` and lightweight activation work in `onFocus` so focusing an app cannot duplicate listeners or restart it.
+Cancel long startup fetches, timers, workers, and pending runtime work in `onClose`; late completions must not update a detached window.
 
 ## Window Sizing
 
@@ -51,6 +59,7 @@ App CSS should set variables, not fixed pixels:
 ```
 
 The window body should use `flex: 1 1 auto` and `min-height: 0` so it can shrink inside the desktop surface.
+The shared preset owns the root `display`; app CSS must not override it.
 
 ## Game Apps
 
@@ -73,3 +82,5 @@ Provide:
 - Iframe apps should listen for `{ type: "volume", value }` messages from PortfoliOS.
 - Persistent game files should use `window.SystemFS.ensureSavedGameDirectory(gameName)`.
 - Hidden runtime assets and OAuth tokens should not be cloud-synced by default.
+
+Run `node scripts/check-app-contracts.js` before browser testing. It verifies catalog wiring, registration fields, preset classes, root CSS ownership, Store references, loader retries, window lifecycle transitions, templates, and first-party JavaScript syntax.

@@ -109,9 +109,27 @@
         "Bootstrapping LibreOffice WASM Framework... SUCCESS!",
         "Staging office environment... Welcome!"
     ];
+    const officeBootTimers = new Set();
+    let officeBootRun = 0;
+
+    function cancelOfficeBoot() {
+        officeBootRun++;
+        officeBootTimers.forEach((timer) => clearTimeout(timer));
+        officeBootTimers.clear();
+    }
+
+    function scheduleOfficeBoot(runId, callback, delay) {
+        const timer = setTimeout(() => {
+            officeBootTimers.delete(timer);
+            if (runId === officeBootRun) callback();
+        }, delay);
+        officeBootTimers.add(timer);
+    }
 
     // Trigger WASM simulated boot loader
     function bootOfficeWasm(windowEl, onComplete) {
+        cancelOfficeBoot();
+        const runId = officeBootRun;
         if (window.isOfficeWasmBooted) {
             // Already booted in this session, skip long boot
             const splash = windowEl.querySelector(".office-splash");
@@ -132,9 +150,9 @@
         function step() {
             if (currentStep >= totalSteps) {
                 progressBar.style.width = "100%";
-                setTimeout(() => {
+                scheduleOfficeBoot(runId, () => {
                     splash.classList.add("fade-out");
-                    setTimeout(() => {
+                    scheduleOfficeBoot(runId, () => {
                         splash.remove();
                         window.isOfficeWasmBooted = true; // Set session global
                         officeState.isWasmBooted = true;
@@ -157,10 +175,10 @@
             currentStep++;
             // Slightly random delay to feel like a real network/compilation phase
             const delay = 100 + Math.random() * 200;
-            setTimeout(step, delay);
+            scheduleOfficeBoot(runId, step, delay);
         }
 
-        setTimeout(step, 100);
+        scheduleOfficeBoot(runId, step, 100);
     }
 
     // Spreadsheet formula evaluation engine
@@ -1082,6 +1100,7 @@
             });
         },
         onClose: (windowEl) => {
+            cancelOfficeBoot();
             // reset state
             officeState.activeCell = null;
             officeState.currentFile = null;

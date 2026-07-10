@@ -6,6 +6,18 @@
 
 window.createIframeGameApp = (config) => {
     const { id, title, icon, windowClass, iframeSrc, controlsHtml, saveDelay = 600 } = config;
+    let openGeneration = 0;
+    let openAbortController = null;
+
+    function cancelPendingOpen() {
+        openGeneration++;
+        openAbortController?.abort();
+        openAbortController = null;
+    }
+
+    function isOpenCurrent(generation, signal, windowEl) {
+        return generation === openGeneration && !signal.aborted && windowEl?.isConnected;
+    }
     
     function releasePointerLock(windowEl) {
         const iframe = windowEl?.querySelector("iframe.game-frame");
@@ -34,29 +46,56 @@ window.createIframeGameApp = (config) => {
             </div>
         `,
         onOpen: async (windowEl) => {
+            cancelPendingOpen();
+            const generation = openGeneration;
+            const abortController = new AbortController();
+            openAbortController = abortController;
+            const { signal } = abortController;
             const iframe = windowEl.querySelector("iframe");
             if (typeof config.beforeLoad === "function" && iframe && (!iframe.src || iframe.src === "about:blank")) {
                 try {
-                    await config.beforeLoad(windowEl);
+                    await config.beforeLoad(windowEl, { signal });
                 } catch (error) {
+                    if (signal.aborted) return;
                     console.warn(`PortfoliOS: ${id} beforeLoad hook failed`, error);
                 }
             }
+            if (!isOpenCurrent(generation, signal, windowEl)) return;
             if (iframe && (!iframe.src || iframe.src === "about:blank")) {
                 iframe.src = iframe.dataset.src;
             }
             window.syncGameIframe?.(windowEl);
             window.showGameControls?.(windowEl);
-            if (typeof config.onOpen === "function") {
-                await config.onOpen(windowEl);
+            try {
+                if (typeof config.onOpen === "function") {
+                    await config.onOpen(windowEl, { signal });
+                }
+            } finally {
+                if (openAbortController === abortController) {
+                    openAbortController = null;
+                }
             }
         },
         onMinimize: releasePointerLock,
+        onRestore: async (windowEl) => {
+            window.syncGameIframe?.(windowEl);
+            window.showGameControls?.(windowEl);
+            if (typeof config.onRestore === "function") {
+                await config.onRestore(windowEl);
+            }
+        },
+        onFocus: async (windowEl) => {
+            window.syncGameIframe?.(windowEl);
+            if (typeof config.onFocus === "function") {
+                await config.onFocus(windowEl);
+            }
+        },
         onMaximize: (windowEl) => {
             window.syncGameIframe?.(windowEl);
             window.showGameControls?.(windowEl);
         },
         onClose: async (windowEl) => {
+            cancelPendingOpen();
             releasePointerLock(windowEl);
             const iframe = windowEl.querySelector("iframe");
             if (iframe) {

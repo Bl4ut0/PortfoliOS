@@ -4,6 +4,7 @@
     let unsubscribeFs = null;
     let unsubscribeFsReady = null;
     let searchTimeout = null;
+    let renderGeneration = 0;
 
     function escapeHtml(value) {
         return String(value)
@@ -97,6 +98,7 @@
     }
 
     async function renderFilesGrid(windowEl) {
+        const generation = ++renderGeneration;
         const grid = windowEl.querySelector(".files-grid");
         if (!grid) return;
 
@@ -106,6 +108,7 @@
 
         try {
             let items = await window.SystemFS.readDir(currentPath);
+            if (generation !== renderGeneration || !windowEl.isConnected) return;
             
             // Build the new grid items off-screen using a fragment
             const fragment = document.createDocumentFragment();
@@ -208,6 +211,7 @@
             grid.innerHTML = "";
             grid.appendChild(fragment);
         } catch (err) {
+            if (generation !== renderGeneration || !windowEl.isConnected) return;
             console.error("Failed to render files grid:", err);
             grid.innerHTML = `<div class="empty-state-container"><div class="empty-state">Filesystem unavailable. Try reopening File Explorer.</div></div>`;
         }
@@ -282,15 +286,13 @@
     }
 
     async function playAudioInWebamp(item) {
-        if (!window.state.openApps.has("webamp")) {
-            await openDesktopWindow("webamp");
+        await window.openDesktopWindow?.("webamp");
+        const webampApp = window.appRegistry?.webamp;
+        if (!webampApp || typeof webampApp.playTrack !== "function") {
+            window.showDesktopToast?.("Install Webamp from the Store to play this file there.");
+            return;
         }
-        setTimeout(() => {
-            const webampApp = window.appRegistry.webamp;
-            if (webampApp && typeof webampApp.playTrack === "function") {
-                webampApp.playTrack(item.data, item.name);
-            }
-        }, 400);
+        await webampApp.playTrack(item.data, item.name);
     }
 
     function downloadFileToHost(item) {
@@ -423,7 +425,7 @@
     window.appRegistry.files = {
         title: "File Explorer",
         icon: "fa-solid fa-folder-open",
-        windowClass: "files-window",
+        windowClass: "files-window utility-window",
         renderBody: () => `
             <div class="files-shell">
                 <div class="files-toolbar">
@@ -487,10 +489,10 @@
         `,
         onOpen: (windowEl) => {
             if (!currentPath) currentPath = "/";
-            renderFilesGrid(windowEl);
+            const initialRender = renderFilesGrid(windowEl);
 
             if (windowEl.dataset.filesInitialized === "1") {
-                return;
+                return initialRender;
             }
 
             windowEl.dataset.filesInitialized = "1";
@@ -633,8 +635,14 @@
                 // Set initial UI state
                 updateSyncPanelUI(syncPanel);
             }
+            return initialRender;
         },
         onClose: (windowEl) => {
+            renderGeneration++;
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+                searchTimeout = null;
+            }
             if (unsubscribeFs) {
                 unsubscribeFs();
                 unsubscribeFs = null;

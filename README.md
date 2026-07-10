@@ -19,6 +19,12 @@ The shell runs independently in each visitor's browser. Server-side pieces can b
 
 ## Test Locally
 
+Run the modular app contract and first-party syntax audit:
+
+```powershell
+node scripts/check-app-contracts.js
+```
+
 Open `index.html` directly in a browser for most shell work. Use a local server when testing same-origin assets such as `DOOM.WAD`.
 
 Optional local server:

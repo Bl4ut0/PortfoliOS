@@ -27,11 +27,12 @@ bl4ut0-portfolio-os/
 - **[state.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/state.js)**: Global state object (`window.state`) wrapped in an ES6 Proxy. Intercepts writes and automatically fires EventBus state changed triggers.
 - **[filesystem.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/filesystem.js)**: Virtual File System (`SystemFS`) backed by IndexedDB. Includes an index on the `parent` field for fast directory traversal.
 - **[storage.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/storage.js)**: Clean unified interface for persistent (`localStorage`) and session (`sessionStorage`) storage.
-- **[app-loader.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-loader.js)**: Manages dynamic script/style loading for modular apps.
+- **[app-framework.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-framework.js)**: Defines modular registration, window presets, lifecycle hooks, teardown, iframe messaging, and audio integration.
+- **[app-loader.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-loader.js)**: Lazily loads modular app scripts/styles and exposes retryable validation failures.
 
 ### B. Shared Data (`/data`)
 - **[systems.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/data/systems.js)**: Portfolio projects node definitions. Read by Dossier, Network Map, Mobile grid, and Quick views.
-- **[apps.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/data/apps.js)**: Desktop pinned app and store catalog definitions.
+- **[apps.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/data/apps.js)**: Desktop and Store catalogs. Entries marked `modular: true` are the single source for the lazy-loader's app list.
 - **[config.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/data/config.js)**: Static command configurations, routes, and wallpaper choices.
 
 ### C. Interface Shells

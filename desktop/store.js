@@ -320,10 +320,6 @@ const installAppFiles = async (id) => {
                 localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
             }
 
-            if (window.modularApps && window.modularApps.includes(id) && window.ensureAppLoaded) {
-                window.ensureAppLoaded(id);
-            }
-
             if (window.EventBus) window.EventBus.emit("app:installed", id);
             if (window.renderDesktopIcons) window.renderDesktopIcons();
             if (window.renderStartMenu) window.renderStartMenu();
@@ -371,10 +367,6 @@ const runFakeInstall = (id) => {
                 window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
             } else {
                 localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
-            }
-
-            if (window.modularApps && window.modularApps.includes(id) && window.ensureAppLoaded) {
-                window.ensureAppLoaded(id);
             }
 
             if (window.EventBus) window.EventBus.emit("app:installed", id);

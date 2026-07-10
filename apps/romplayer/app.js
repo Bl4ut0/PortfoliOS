@@ -667,6 +667,17 @@
 
             await render(windowEl);
         },
+        onMinimize: (windowEl) => {
+            window.postMessageToIframe?.(windowEl.querySelector(".romplayer-frame"), { type: "release-pointer-lock" });
+        },
+        onRestore: (windowEl) => {
+            const iframe = windowEl.querySelector(".romplayer-frame");
+            window.focusGameIframe?.(iframe);
+            window.PortfolioOSAppFramework?.applyVolumeToRegisteredApps();
+        },
+        onFocus: (windowEl) => {
+            window.focusGameIframe?.(windowEl.querySelector(".romplayer-frame"));
+        },
         onClose: (windowEl) => {
             stopRuntime(windowEl);
             if (runtimeMessageHandler) {

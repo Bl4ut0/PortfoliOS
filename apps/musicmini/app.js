@@ -540,6 +540,7 @@
             render();
             if (ownsBusyState) setBusy(false);
         } catch (error) {
+            if (generation !== libraryLoadGeneration) return;
             setNotice(error.message || "Music library could not be loaded.", true);
             setBusy(false);
         }
@@ -1493,6 +1494,7 @@
             rootEl?.querySelector("[data-mm-search], button")?.focus({ preventScroll: true });
         },
         onClose: () => {
+            libraryLoadGeneration++;
             rootEl?.removeEventListener("click", handleClick);
             rootEl?.removeEventListener("submit", handleSubmit);
             rootEl?.removeEventListener("input", handleInput);

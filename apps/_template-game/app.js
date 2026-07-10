@@ -1,15 +1,16 @@
 /**
  * PortfoliOS iframe game template.
- * Copy this folder and wire iframeSrc, controls, save import/export hooks, and
- * any game-specific postMessage protocol.
+ * Copy this folder, add a desktopApps entry with modular: true, and wire
+ * iframeSrc, controls, save hooks, and any game-specific postMessage protocol.
  */
 (function() {
     const APP_ID = "mygame";
     const SAVE_DIR_NAME = "My Game";
 
-    async function restoreSavesFromSystemFS() {
+    async function restoreSavesFromSystemFS(windowEl, { signal } = {}) {
         if (!window.SystemFS) return;
         await window.SystemFS.ensureSavedGameDirectory(SAVE_DIR_NAME);
+        if (signal?.aborted) return;
 
         // Read /Saved Games/My Game here and inject saves before iframe.src is set.
     }

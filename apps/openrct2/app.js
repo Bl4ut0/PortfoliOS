@@ -7,6 +7,7 @@
         github: "https://github.com/OpenRCT2/OpenRCT2",
         docs: "https://docs.openrct2.io/en/latest/installing/installing-on-windows.html"
     };
+    let openGeneration = 0;
 
     async function ensureSaveWorkspace() {
         if (!window.SystemFS) return;
@@ -112,20 +113,32 @@
             </div>
         `,
         onOpen: async (windowEl) => {
+            const generation = ++openGeneration;
             bindOpenRCT2Window(windowEl);
             try {
                 await ensureSaveWorkspace();
             } catch (error) {
+                if (generation !== openGeneration || !windowEl.isConnected) return;
                 console.warn("OpenRCT2 workspace setup failed.", error);
             }
+            if (generation !== openGeneration || !windowEl.isConnected) return;
             window.syncGameIframe?.(windowEl);
             loadEmbeddedRuntime(windowEl);
             focusRuntime(windowEl);
         },
         onClose: (windowEl) => {
+            openGeneration++;
             const iframe = getFrame(windowEl);
             if (iframe) iframe.src = "about:blank";
         },
+        onMinimize: (windowEl) => {
+            window.postMessageToIframe?.(getFrame(windowEl), { type: "release-pointer-lock" });
+        },
+        onRestore: (windowEl) => {
+            window.syncGameIframe?.(windowEl);
+            focusRuntime(windowEl);
+        },
+        onFocus: focusRuntime,
         onMaximize: focusRuntime
     };
 })();

@@ -64,20 +64,24 @@ window.desktopApps = [
     { id: "cli", title: "Portfolio CLI", icon: "fa-solid fa-terminal", pinned: true },
     { id: "local-ai", title: "Local AI", icon: "fa-solid fa-brain", pinned: false },
     { id: "store", title: "Store", icon: "fa-solid fa-shop", pinned: true },
-    { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", pinned: true },
-    { id: "office", title: "LibreOffice WASM", icon: "fa-solid fa-file-signature", pinned: true },
-    { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false },
-    { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false },
-    { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", pinned: true },
+    { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", pinned: true, modular: true, meta: "File manager" },
+    { id: "office", title: "LibreOffice WASM", icon: "fa-solid fa-file-signature", pinned: true, modular: true, meta: "Document workspace" },
+    { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false, modular: true, meta: "System monitor" },
+    { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false, modular: true, meta: "Classic media player" },
+    { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", pinned: true, modular: true, meta: "Local music player" },
     { id: "settings", title: "Settings", icon: "fa-solid fa-sliders", pinned: false },
-    { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", pinned: true },
-    { id: "openrct2", title: "OpenRCT2", icon: "fa-solid fa-train", pinned: false },
-    { id: "doomsource", title: "Doom", icon: "doom-icon.png", pinned: false },
-    { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", pinned: false },
-    { id: "diablo", title: "Diablo", icon: "diablo-icon.png", pinned: false },
-    { id: "quake", title: "Quake", icon: "quake-icon.png", pinned: false },
-    { id: "ut99", title: "UT99", icon: "fa-solid fa-crosshairs", pinned: false }
+    { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", pinned: true, modular: true, meta: "Emulator launcher" },
+    { id: "openrct2", title: "OpenRCT2", icon: "fa-solid fa-train", pinned: false, modular: true, meta: "Theme park engine" },
+    { id: "doomsource", title: "Doom", icon: "doom-icon.png", pinned: false, modular: true, meta: "WASM game" },
+    { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", pinned: false, modular: true, meta: "Browser game" },
+    { id: "diablo", title: "Diablo", icon: "diablo-icon.png", pinned: false, modular: true, meta: "Browser game" },
+    { id: "quake", title: "Quake", icon: "quake-icon.png", pinned: false, modular: true, meta: "Browser game" },
+    { id: "ut99", title: "UT99", icon: "fa-solid fa-crosshairs", pinned: false, modular: true, meta: "Browser game" }
 ];
+
+window.modularApps = window.desktopApps
+    .filter((app) => app.modular === true)
+    .map((app) => app.id);
 
 window.storeApps = [
     {

@@ -13,7 +13,7 @@ This directory houses the foundational services that drive PortfoliOS. These ser
      - `EventBus.off(event, cb)`: Unsubscribes from an event.
      - `EventBus.emit(event, data)`: Emits an event to all subscribers.
    - **Key Events**:
-     - `app:opened` / `app:closed` (with appId)
+     - `app:opened` / `app:restored` / `app:focused` / `app:closed` (with appId)
      - `app:installed` / `app:uninstalled` (with appId)
      - `fs:changed` (with path details)
      - `state:changed:${key}` (with newValue, oldValue)
@@ -34,11 +34,11 @@ This directory houses the foundational services that drive PortfoliOS. These ser
    - **Features**: Database upgrades to v2 to create an index on `parent` path, optimizing directory scanning. Emits `fs:changed` events on write/delete.
 
 5. **[app-loader.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-loader.js)**
-   - **Role**: Lazy-loader for modular applications. Injects scripts and links dynamically, resolving load promises.
+   - **Role**: Retryable lazy-loader for modular applications derived from `data/apps.js`. Injects scripts and styles only when an app is opened and rejects invalid registrations.
 
 6. **[app-framework.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-framework.js)**
    - **Role**: Shared modular app contract helpers.
-   - **Features**: App registration validation, safe iframe `postMessage` targeting, lifecycle hook execution, modular teardown, and audio adapter registration.
+   - **Features**: App registration and window-preset validation, safe iframe `postMessage` targeting, distinct open/restore/focus/minimize/maximize/close hooks, modular teardown, and audio adapter registration.
 
 7. **[preferences.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/preferences.js)**
    - **Role**: Applies user selections (volume percentages, color pickers, wallpaper choices, scaling adjustments). Handles volume updates for nested iframe runtimes.

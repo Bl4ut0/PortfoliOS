@@ -3,14 +3,8 @@
     --app-window-height: min(40rem, calc(100% - 5.5rem));
     --app-window-left: clamp(2rem, 8vw, 7rem);
     --app-window-top: 4.6rem;
-    display: flex;
-    flex-direction: column;
-    width: var(--app-window-width);
-    height: var(--app-window-height);
-    left: var(--app-window-left);
-    top: var(--app-window-top);
-    min-width: min(100%, 22rem);
-    min-height: 28rem;
+    --app-window-min-height: 28rem;
+    min-width: 22rem;
 }
 
 .musicmini-shell {

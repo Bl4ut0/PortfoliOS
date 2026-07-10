@@ -9,6 +9,38 @@
     let audioConnectPatched = false;
     let audioConnectOriginal = null;
     let isDownloading = false;
+    let doomLoadPromise = null;
+    let doomLoadGeneration = 0;
+    let doomLoadAbortController = null;
+
+    function createDoomAbortError() {
+        const error = new Error("DOOM initialization was cancelled.");
+        error.name = "AbortError";
+        return error;
+    }
+
+    function assertDoomLoadActive(generation, signal) {
+        if (generation !== doomLoadGeneration || signal.aborted) {
+            throw createDoomAbortError();
+        }
+    }
+
+    function cancelDoomLoad() {
+        doomLoadGeneration++;
+        doomLoadAbortController?.abort();
+        doomLoadAbortController = null;
+    }
+
+    function startDoomLoad() {
+        if (doomLoadPromise) return doomLoadPromise;
+        const trackedPromise = loadDoomEngine().finally(() => {
+            if (doomLoadPromise === trackedPromise) {
+                doomLoadPromise = null;
+            }
+        });
+        doomLoadPromise = trackedPromise;
+        return trackedPromise;
+    }
 
     // ── Save persistence constants ──
     const DOOM_SAVE_DIR = "/Saved Games";
@@ -280,11 +312,11 @@
         if (canvasEl) canvasEl.style.display = "none";
     }
 
-    async function downloadWadWithProgress(url, statusEl, progressBarEl) {
+    async function downloadWadWithProgress(url, statusEl, progressBarEl, signal) {
         statusEl.textContent = "Downloading DOOM.WAD...";
         progressBarEl.style.width = "0%";
 
-        const response = await fetch(url);
+        const response = await fetch(url, { signal });
         if (!response.ok) {
             throw new Error(`Failed to fetch WAD: ${response.statusText}`);
         }
@@ -332,6 +364,10 @@
 
         if (isDownloading) return;
         isDownloading = true;
+        const generation = ++doomLoadGeneration;
+        const abortController = new AbortController();
+        doomLoadAbortController = abortController;
+        const { signal } = abortController;
 
         try {
             if (loader) loader.classList.remove("is-hidden");
@@ -357,7 +393,9 @@
                 let wadRecord = null;
                 try {
                     wadRecord = await window.SystemFS.readFile("/apps/doomsource/DOOM.WAD");
+                    assertDoomLoadActive(generation, signal);
                 } catch (e) {
+                    if (e?.name === "AbortError") throw e;
                     console.warn("Could not read DOOM.WAD from local storage", e);
                 }
 
@@ -366,6 +404,7 @@
                     const data = wadRecord.data;
                     if (data instanceof Blob) {
                         window.doomWadBuffer = await data.arrayBuffer();
+                        assertDoomLoadActive(generation, signal);
                     } else if (typeof data === "string") {
                         const encoder = new TextEncoder();
                         window.doomWadBuffer = encoder.encode(data);
@@ -375,15 +414,18 @@
                 } else {
                     setDoomRuntimeState("FETCH WAD", "Downloading DOOM.WAD from server...");
                     if (progressBar) progressBar.style.width = "5%";
-                    const wadBuffer = await downloadWadWithProgress("DOOM.WAD", statusEl, progressBar);
+                    const wadBuffer = await downloadWadWithProgress("DOOM.WAD", statusEl, progressBar, signal);
+                    assertDoomLoadActive(generation, signal);
                     window.doomWadBuffer = wadBuffer;
 
                     // Save it to SystemFS so subsequent boots are instant
                     try {
                         const blob = new Blob([wadBuffer], { type: "application/octet-stream" });
                         await window.SystemFS.writeFile("/apps/doomsource/DOOM.WAD", "DOOM.WAD", "/apps/doomsource", blob, blob.size, "application/octet-stream", false);
+                        assertDoomLoadActive(generation, signal);
                         console.log("PortfoliOS: DOOM.WAD saved to SystemFS.");
                     } catch (err) {
+                        if (err?.name === "AbortError") throw err;
                         console.error("Failed to save DOOM.WAD to SystemFS", err);
                     }
                 }
@@ -398,16 +440,34 @@
                     const script = document.createElement("script");
                     script.id = "doom-engine-script";
                     script.src = "doom.js?v=1.0.27";
+                    const cleanup = () => signal.removeEventListener("abort", handleAbort);
+                    const handleAbort = () => {
+                        script.remove();
+                        cleanup();
+                        reject(createDoomAbortError());
+                    };
                     script.onload = () => {
+                        cleanup();
                         if (typeof window.Module !== "function") {
+                            script.remove();
                             reject(new Error("doom.js loaded, but no Module factory found."));
                             return;
                         }
                         resolve();
                     };
-                    script.onerror = () => reject(new Error("Failed to load doom.js program wrapper."));
+                    script.onerror = () => {
+                        script.remove();
+                        cleanup();
+                        reject(new Error("Failed to load doom.js program wrapper."));
+                    };
+                    if (signal.aborted) {
+                        handleAbort();
+                        return;
+                    }
+                    signal.addEventListener("abort", handleAbort, { once: true });
                     document.head.appendChild(script);
                 });
+                assertDoomLoadActive(generation, signal);
             }
 
             // 3. Initialize module options
@@ -421,7 +481,9 @@
             // Pre-load saved games from SystemFS so they're ready for the preRun step
             setDoomRuntimeState("SAVES", "Restoring saved games...");
             await migrateOldSaves();
+            assertDoomLoadActive(generation, signal);
             const pendingSaves = await readSavesFromSystemFS();
+            assertDoomLoadActive(generation, signal);
 
             const moduleOpts = {
                 preRun: [],
@@ -537,7 +599,14 @@
             startSaveListener();
 
             const doomModule = window.Module;
-            doomInstance = await doomModule(moduleOpts);
+            const nextDoomInstance = await doomModule(moduleOpts);
+            if (generation !== doomLoadGeneration || signal.aborted) {
+                try {
+                    nextDoomInstance?.pauseMainLoop?.();
+                } catch (error) {}
+                throw createDoomAbortError();
+            }
+            doomInstance = nextDoomInstance;
             isDoomActive = true;
 
             if (loader) loader.classList.add("is-hidden");
@@ -549,14 +618,33 @@
             window.setTimeout(focusDoomCanvas, 150);
 
         } catch (err) {
-            console.error("Error loading DOOM:", err);
-            showDoomRuntimeError(err.message || "DOOM failed to launch.");
+            stopSaveListener();
+            if (err?.name !== "AbortError") {
+                console.error("Error loading DOOM:", err);
+                showDoomRuntimeError(err.message || "DOOM failed to launch.");
+            }
         } finally {
-            isDownloading = false;
+            if (generation === doomLoadGeneration) {
+                isDownloading = false;
+                if (doomLoadAbortController === abortController) {
+                    doomLoadAbortController = null;
+                }
+            }
         }
     }
 
     async function cleanupDoomGame() {
+        cancelDoomLoad();
+        window.clearTimeout(setDoomRuntimeState.dismissTimer);
+        setDoomRuntimeState.dismissTimer = null;
+        window.clearTimeout(topDockDismissTimer);
+        topDockDismissTimer = null;
+        if (doomLoadPromise) {
+            try {
+                await doomLoadPromise;
+            } catch (error) {}
+        }
+
         // Pause audio and engine immediately so the game is silent and frozen during save sync
         if (doomAudioContext && doomAudioContext.state === "running") {
             try { doomAudioContext.suspend(); } catch (e) {}
@@ -620,7 +708,7 @@
     window.appRegistry.doomsource = {
         title: "doom.exe",
         icon: "doom-icon.png",
-        windowClass: "doom-source-window",
+        windowClass: "doom-source-window game-window",
         renderBody: () => `
             <div class="doom-source-shell">
                 <div class="doom-source-container" id="doom-source-container">
@@ -651,7 +739,7 @@
             if (isDoomActive) {
                 resumeDoomGame();
             } else {
-                loadDoomEngine();
+                return startDoomLoad();
             }
         },
         onClose: (windowEl) => {
@@ -660,6 +748,12 @@
         onMinimize: (windowEl) => {
             pauseDoomGame();
         },
+        onRestore: () => {
+            resumeDoomGame();
+        },
+        onFocus: () => {
+            focusDoomCanvas();
+        },
         onMaximize: (windowEl) => {
             focusDoomCanvas();
         },
@@ -667,7 +761,7 @@
         resumeDoomGame: resumeDoomGame,
         pauseDoomGame: pauseDoomGame,
         focusDoomCanvas: focusDoomCanvas,
-        loadDoomEngine: loadDoomEngine,
+        loadDoomEngine: startDoomLoad,
         setVolume: setVolume
     };
 })();

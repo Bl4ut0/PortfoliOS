@@ -77,14 +77,6 @@ window.boot = async () => {
         window.applyCurrentUserProfile();
     }
 
-    if (window.modularApps && window.ensureAppLoaded) {
-        window.modularApps.forEach(appId => {
-            if (window.isAppInstalled && window.isAppInstalled(appId)) {
-                window.ensureAppLoaded(appId);
-            }
-        });
-    }
-
     if (window.renderDesktopIcons) window.renderDesktopIcons();
     if (window.renderStartMenu) window.renderStartMenu();
     if (window.renderDossier) window.renderDossier(state.activeId);

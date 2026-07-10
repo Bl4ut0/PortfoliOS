@@ -622,6 +622,15 @@
             releaseUt99PointerCapture("minimize", { silent: true });
             window.postMessageToIframe?.(iframe, { type: "release-pointer-lock" });
         },
+        onRestore: (windowEl) => {
+            window.syncGameIframe?.(windowEl);
+            focusRuntimeFrame(windowEl, 120);
+            postRuntimeVolume(windowEl);
+        },
+        onFocus: (windowEl) => {
+            focusRuntimeFrame(windowEl, 80);
+            postRuntimeVolume(windowEl);
+        },
         onMaximize: (windowEl) => {
             window.syncGameIframe?.(windowEl);
             window.clampDesktopWindowToBounds?.(windowEl);

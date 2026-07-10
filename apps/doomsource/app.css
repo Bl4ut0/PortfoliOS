@@ -1,4 +1,11 @@
 /* --- DOOM SOURCE GAME WINDOW STYLE PASS --- */
+.desktop-window.doom-source-window {
+    --app-window-left: clamp(6rem, 12vw, 11rem);
+    --app-window-top: 4.25rem;
+    --app-window-width: min(56rem, calc(100% - 2rem));
+    --app-window-height: min(35.5rem, calc(100% - 6rem));
+}
+
 .doom-source-window .window-bar {
     flex: 0 0 auto;
 }

@@ -4,14 +4,11 @@
  */
 
 .desktop-window.taskmgr-window {
-    display: flex;
-    flex-direction: column;
-    width: 620px;
-    height: 480px;
-    min-width: 480px;
-    min-height: 380px;
-    left: clamp(10rem, 20vw, 15rem);
-    top: 5.5rem;
+    --app-window-width: min(38.75rem, calc(100% - 2rem));
+    --app-window-height: min(30rem, calc(100% - 6rem));
+    --app-window-left: clamp(3rem, 20vw, 15rem);
+    --app-window-top: 5.5rem;
+    --app-window-min-height: 23.75rem;
 }
 
 .taskmgr-container {
@@ -74,7 +71,7 @@
 /* Processes Tab Table */
 .taskmgr-table-wrapper {
     flex: 1;
-    overflow-y: auto;
+    overflow: auto;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
     background: rgba(8, 9, 15, 0.4);

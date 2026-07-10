@@ -1,10 +1,8 @@
 .desktop-window.webamp-window {
-    display: flex;
-    flex-direction: column;
-    width: min(20rem, calc(100% - 2rem));
-    height: min(28rem, calc(100% - 6rem));
-    left: clamp(2rem, 5vw, 4rem);
-    top: 5rem;
+    --app-window-width: min(20rem, calc(100% - 2rem));
+    --app-window-height: min(28rem, calc(100% - 6rem));
+    --app-window-left: clamp(2rem, 5vw, 4rem);
+    --app-window-top: 5rem;
     background: #000;
 }
 

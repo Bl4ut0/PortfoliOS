@@ -190,7 +190,6 @@
 .desktop-window.service-window,
 .desktop-window.document-window,
 .desktop-window.media-window,
-.desktop-window.doom-source-window,
 .desktop-window.settings-window,
 .desktop-window.browser-window,
 .desktop-window.store-window {
@@ -499,15 +498,6 @@
     width: var(--app-window-width, min(54rem, calc(100% - 2rem)));
     height: var(--app-window-height, min(38rem, calc(100% - 6rem)));
     min-height: var(--app-window-min-height, 24rem);
-}
-
-.desktop-window.doom-source-window {
-    left: clamp(6rem, 12vw, 11rem);
-    top: 4.25rem;
-    bottom: auto;
-    width: min(56rem, calc(100% - 2rem));
-    height: min(35.5rem, calc(100% - 6rem));
-    min-height: 24rem;
 }
 
 .desktop-window.store-window {

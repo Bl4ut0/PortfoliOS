@@ -893,6 +893,42 @@ if (document.readyState === "loading") {
     initSettingsApp();
 }
 
+function refreshSettingsOnActivation(name) {
+    if (name !== "settings") return;
+
+    if (window.state) {
+        updateVolumeUI(window.state.volume);
+
+        const resSelect = document.getElementById("desktop-resolution-select");
+        if (resSelect) {
+            resSelect.value = window.state.desktopResolution;
+            resSelect.updateCustomDropdown?.();
+        }
+
+        const screensaverDelay = document.getElementById("screensaver-delay-select");
+        if (screensaverDelay) {
+            screensaverDelay.value = String(window.state.screensaverDelay || 5);
+            screensaverDelay.updateCustomDropdown?.();
+        }
+    }
+    updateGDriveUI();
+    updateLocalAiSettingsUI();
+    renderSettingsUser();
+    window.renderWallpaperOptions();
+    window.renderThemeOptions();
+    window.renderScreensaverOptions();
+
+    const activePanel = document.querySelector(".settings-panel.active");
+    if (activePanel?.dataset.panel === "debug") {
+        const logContainer = document.getElementById("settings-debug-log-container");
+        if (logContainer) {
+            const logs = window.SystemLogs || [];
+            logContainer.textContent = logs.length === 0 ? "No logs recorded." : logs.join("\n");
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+    }
+}
+
 // EventBus bindings
 if (window.EventBus) {
     window.EventBus.on("wallpaper:changed", () => window.renderWallpaperOptions());
@@ -908,40 +944,7 @@ if (window.EventBus) {
     window.EventBus.on("local-ai:status", () => updateLocalAiSettingsUI());
     window.EventBus.on("local-ai:model-changed", () => updateLocalAiSettingsUI());
     window.EventBus.on("local-ai:mirror-changed", () => updateLocalAiSettingsUI());
-    window.EventBus.on("app:opened", (name) => {
-        if (name === "settings") {
-            // refresh data when window is opened
-            if (window.state) {
-                updateVolumeUI(window.state.volume);
-                
-                const resSelect = document.getElementById("desktop-resolution-select");
-                if (resSelect) {
-                    resSelect.value = window.state.desktopResolution;
-                    resSelect.updateCustomDropdown?.();
-                }
-
-                const screensaverDelay = document.getElementById("screensaver-delay-select");
-                if (screensaverDelay) {
-                    screensaverDelay.value = String(window.state.screensaverDelay || 5);
-                    screensaverDelay.updateCustomDropdown?.();
-                }
-            }
-            updateGDriveUI();
-            updateLocalAiSettingsUI();
-            renderSettingsUser();
-            window.renderWallpaperOptions();
-            window.renderThemeOptions();
-            window.renderScreensaverOptions();
-            
-            const activePanel = document.querySelector(".settings-panel.active");
-            if (activePanel && activePanel.dataset.panel === "debug") {
-                const logContainer = document.getElementById("settings-debug-log-container");
-                if (logContainer) {
-                    const logs = window.SystemLogs || [];
-                    logContainer.textContent = logs.length === 0 ? "No logs recorded." : logs.join("\n");
-                    logContainer.scrollTop = logContainer.scrollHeight;
-                }
-            }
-        }
-    });
+    window.EventBus.on("app:opened", refreshSettingsOnActivation);
+    window.EventBus.on("app:restored", refreshSettingsOnActivation);
+    window.EventBus.on("app:focused", refreshSettingsOnActivation);
 }

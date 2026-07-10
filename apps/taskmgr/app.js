@@ -63,6 +63,21 @@
         }
     }
 
+    function stopMonitoring() {
+        stopDiagnosticsLoop();
+        if (statsInterval) {
+            clearInterval(statsInterval);
+            statsInterval = null;
+        }
+    }
+
+    function startMonitoring(windowEl) {
+        stopMonitoring();
+        startDiagnosticsLoop();
+        updateUI(windowEl);
+        statsInterval = setInterval(() => updateUI(windowEl), 1200);
+    }
+
     // Map of apps to their simulated memory footprints (in MB)
     const APP_MEM_FOOTPRINT = {
         doomsource: 128,
@@ -343,7 +358,7 @@
     window.appRegistry.taskmgr = {
         title: "Task Manager",
         icon: "fa-solid fa-microchip",
-        windowClass: "taskmgr-window",
+        windowClass: "taskmgr-window utility-window",
         renderBody: () => `
             <div class="taskmgr-container">
                 <nav class="taskmgr-tabs">
@@ -460,23 +475,7 @@
         `,
 
         onOpen: (windowEl) => {
-            // Clean up any existing intervals/loops to prevent duplicates/leaks
-            stopDiagnosticsLoop();
-            if (statsInterval) {
-                clearInterval(statsInterval);
-                statsInterval = null;
-            }
-
-            // Start diagnostics loops
-            startDiagnosticsLoop();
-
-            // Setup initial render
-            updateUI(windowEl);
-
-            // Interval to keep stats updating
-            statsInterval = setInterval(() => {
-                updateUI(windowEl);
-            }, 1200);
+            startMonitoring(windowEl);
 
             // Guard event listeners so they are only bound once
             if (!windowEl.dataset.taskmgrInitialized) {
@@ -570,14 +569,10 @@
             }
         },
 
-        onClose: () => {
-            // Stop diagnostics loops
-            stopDiagnosticsLoop();
+        onRestore: startMonitoring,
+        onFocus: updateUI,
+        onMinimize: stopMonitoring,
 
-            if (statsInterval) {
-                clearInterval(statsInterval);
-                statsInterval = null;
-            }
-        }
+        onClose: stopMonitoring
     };
 })();

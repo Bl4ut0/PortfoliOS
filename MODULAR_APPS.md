@@ -30,11 +30,15 @@ apps/_template/
 apps/_template-game/
 ```
 
-After copying a template, add the new app ID to:
+After copying a template, add one entry to `window.desktopApps` in `data/apps.js` and set `modular: true`:
 
-- `core/app-loader.js` in `window.modularApps`
-- `data/apps.js` in `window.desktopApps`
-- `data/apps.js` in `window.storeApps` if it should appear in the Store
+```javascript
+{ id: "myapp", title: "My App", icon: "fa-solid fa-window-restore", modular: true }
+```
+
+`window.modularApps` is derived from that catalog. Add a `window.storeApps` entry only when the app should be installable from the Store. Start automatically places installed apps that are not in a configured group under **Other Apps**.
+
+Every modular app must be reachable: include its ID in `window.standardInstalledAppIds` for a built-in app, or add an installable Store entry.
 
 ## App Registration Contract
 
@@ -50,6 +54,8 @@ Each `app.js` registers itself on `window.appRegistry[appId]`:
         windowClass: "myapp-window utility-window",
         renderBody: () => `<div class="myapp-shell">...</div>`,
         onOpen: (windowEl) => {},
+        onRestore: (windowEl) => {},
+        onFocus: (windowEl) => {},
         onMinimize: (windowEl) => {},
         onMaximize: (windowEl) => {},
         onClose: async (windowEl) => {}
@@ -66,10 +72,14 @@ Required fields:
 
 Lifecycle hooks:
 
-- `onOpen(windowEl)`: called after the window is created and shown. It may return a Promise; the window manager catches failures but does not block initial display.
+- `onOpen(windowEl)`: called once after a mounted window is created and shown. Bind listeners and initialize persistent app state here. It may return a Promise; `openDesktopWindow()` resolves after that work finishes while the window remains visible.
+- `onRestore(windowEl)`: called when a minimized window becomes visible. Resume paused loops, media, or runtime input here.
+- `onFocus(windowEl)`: called when an already visible window becomes active. Use it for lightweight refresh or focus work, not initialization.
 - `onClose(windowEl)`: called before modular teardown. It may return a Promise; teardown waits for it so save sync and cleanup can finish.
 - `onMinimize(windowEl)`: pause timers, loops, animations, or audio.
-- `onMaximize(windowEl)`: re-measure canvas/editor/game surfaces.
+- `onMaximize(windowEl, context)`: re-measure canvas/editor/game surfaces. `context.isMaximized` reports the new state.
+
+Long `onOpen` work must be cancellable. Keep its `AbortController`, timer IDs, or initialization promise in module scope, cancel them in `onClose`, and prevent late completions from touching a detached window.
 
 ## Adaptive Window Sizing
 
@@ -83,6 +93,8 @@ Do not hard-code fixed `width: 800px` or `height: 600px` on app windows. Use a p
     --app-window-top: 4.8rem;
 }
 ```
+
+The framework owns the root window's `display`, `width`, `height`, `left`, and `top` behavior. Do not set `display` on the app root, and express custom geometry through the `--app-window-*` variables.
 
 Framework presets:
 
@@ -125,7 +137,7 @@ window.appRegistry.mygame = window.createIframeGameApp({
         <li><kbd>WASD</kbd><span>move</span></li>
         <li><kbd>Ctrl</kbd><kbd>Alt</kbd><span>release cursor</span></li>
     `,
-    beforeLoad: restoreSavesFromSystemFS,
+    beforeLoad: restoreSavesFromSystemFS, // receives (windowEl, { signal })
     onSaveSync: syncSavesToSystemFS
 });
 ```
@@ -139,9 +151,10 @@ Game windows should import the shared CSS:
 The game helper:
 
 - Renders a standard `.game-shell` and `.game-frame`.
-- Delays assigning `iframe.src` until `beforeLoad` finishes.
+- Delays assigning `iframe.src` until `beforeLoad` finishes and passes it an abort signal for close-during-startup cancellation.
 - Posts `release-pointer-lock`, `focus-game`, `volume`, and `save-sync` using the iframe's resolved origin.
 - Shows a controls card that includes the standard `Ctrl` + `Alt` cursor release hint.
+- Resynchronizes volume, focus, and controls on restore and focus.
 
 ## Audio Layer
 
@@ -240,12 +253,20 @@ For hosted services, set:
 
 ## Verification Checklist
 
+Run the automated contract and syntax audit first:
+
+```powershell
+node scripts/check-app-contracts.js
+```
+
 For every new modular app:
 
 - App opens, closes, reopens, minimizes, maximizes, drags, and resizes.
+- Closing during startup cancels pending fetches, timers, workers, and runtime initialization without reviving the app later.
 - Window fits at 390 x 844, 768 x 1024, 1366 x 768, and 1920 x 1080.
 - Text and controls do not overflow at narrow sizes.
 - `onClose` releases timers, event listeners, iframes, audio contexts, and pointer lock.
 - Audio follows the PortfoliOS volume slider or clearly documents why it cannot.
 - Saves restore on first launch and sync back into `/Saved Games` on close.
 - Console has no uncaught hook errors, missing registration errors, or cross-origin message warnings.
+- A loader failure shows a useful error and the app can retry without reloading PortfoliOS.
