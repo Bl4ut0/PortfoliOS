@@ -614,8 +614,12 @@ async function run() {
         if (!fs.existsSync(jsPath) || !fs.existsSync(cssPath)) return;
 
         let registration = null;
+        const source = fs.readFileSync(jsPath, "utf8");
+        if (/window\.GDriveSync\b/.test(source) || /bl4ut0_gdrive_client_id/.test(source)) {
+            fail(appId, "app-level cloud sync is forbidden; save through SystemFS and route users to Settings > Cloud Sync");
+        }
         try {
-            registration = evaluateRegistration(appId, fs.readFileSync(jsPath, "utf8"));
+            registration = evaluateRegistration(appId, source);
         } catch (error) {
             fail(appId, `app.js could not register in the audit sandbox: ${error.message}`);
         }

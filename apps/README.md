@@ -86,5 +86,6 @@ Provide:
 - Iframe apps should listen for `{ type: "volume", value }` messages from PortfoliOS.
 - Persistent game files should use `window.SystemFS.ensureSavedGameDirectory(gameName)`.
 - Hidden runtime assets and OAuth tokens should not be cloud-synced by default.
+- Apps save to `SystemFS` and never call `window.GDriveSync`; optional backup is managed only in **Settings > Cloud Sync**.
 
 Run `node scripts/check-app-contracts.js` before browser testing. It verifies catalog wiring, registration fields, preset classes, root CSS ownership, Store references, loader retries, window lifecycle transitions, templates, and first-party JavaScript syntax.

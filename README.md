@@ -77,7 +77,7 @@ To allow visitors to connect their Google Drive and backup their filesystem:
 3. **Authorized Origins**: Under **Authorized JavaScript origins**, you **must** add:
    * Local address for testing: `http://localhost:8080` (or your local port).
    * Your production domain: `https://os.yourdomain.com`.
-4. **Client ID Input**: Enter this Client ID into the **Cloud Sync** panel settings inside the File Explorer.
+4. **Client ID Input**: Configure this Client ID only in the **Cloud Sync** panel of the Settings app. Individual apps always save to local `SystemFS` and do not own cloud authentication or synchronization.
 5. **Security Scopes**: The sync engine requires the `drive.file` scope. This is a secure scope that restricts the app's access to only read/write files that *this specific application* created.
 
 ## Useful CLI Commands

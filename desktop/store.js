@@ -291,7 +291,10 @@ const installAppFiles = async (id) => {
                     arrayBuffer.byteLength,
                     fileEntry.type,
                     false,
-                    { silent: true }
+                    {
+                        silent: true,
+                        metadata: { sync: false, kind: "app-runtime", app: id }
+                    }
                 );
             }
         };

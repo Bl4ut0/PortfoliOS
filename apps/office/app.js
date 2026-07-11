@@ -261,7 +261,6 @@
             header.style.display = "none";
             windowEl.querySelector(".office-dashboard").hidden = false;
             renderRecentDocsList(windowEl);
-            renderDashboardGDriveStatus(windowEl);
         } else if (targetView === "writer") {
             header.style.display = "block";
             windowEl.querySelector(".writer-container").hidden = false;
@@ -463,7 +462,7 @@
             officeState.currentFile = record;
             updateDocumentTitle(windowEl);
             saveRecentDocs(record);
-            window.showDesktopToast?.(`Saved ${name} successfully!`);
+            window.showDesktopToast?.(`Saved ${name} locally.`);
         } catch (err) {
             console.error("Save failed:", err);
             alert("Failed to save file: " + err.message);
@@ -655,89 +654,6 @@
         selectCalcCell(windowEl, cellRef);
     }
 
-    // Google Drive integration
-    function renderDashboardGDriveStatus(windowEl) {
-        const syncSection = windowEl.querySelector(".dashboard-sync-status");
-        if (!syncSection) return;
-
-        const isConnected = window.GDriveSync && window.GDriveSync.getToken() !== null;
-        
-        if (isConnected) {
-            const folder = window.GDriveSync.getCurrentFolderLabel();
-            const profile = window.GDriveSync.getSavedGoogleProfile();
-            const userName = profile?.name || "Connected User";
-            
-            syncSection.innerHTML = `
-                <div class="dashboard-sync-header">
-                    <strong><i class="fa-solid fa-cloud"></i> Cloud Sync</strong>
-                    <span class="status-dot connected"></span>
-                </div>
-                <div style="font-size: 0.72rem; color: var(--office-text-muted); margin-bottom: 0.6rem;">
-                    Account: ${userName}<br>Folder: ${folder}
-                </div>
-                <button type="button" class="dashboard-nav-btn btn-gdrive-sync-now" style="font-size:0.75rem; padding: 0.35rem 0.5rem;">
-                    <i class="fa-solid fa-rotate"></i> Sync Cloud Now
-                </button>
-            `;
-
-            syncSection.querySelector(".btn-gdrive-sync-now").addEventListener("click", () => {
-                triggerCloudSync(windowEl);
-            });
-        } else {
-            syncSection.innerHTML = `
-                <div class="dashboard-sync-header">
-                    <strong><i class="fa-solid fa-cloud"></i> Cloud Sync</strong>
-                    <span class="status-dot"></span>
-                </div>
-                <div style="font-size: 0.72rem; color: var(--office-text-muted); margin-bottom: 0.6rem;">
-                    Google Drive backup not active.
-                </div>
-                <button type="button" class="dashboard-nav-btn btn-gdrive-connect" style="font-size:0.75rem; padding: 0.35rem 0.5rem; background: rgba(37, 99, 235, 0.1);">
-                    <i class="fa-solid fa-link"></i> Connect Drive
-                </button>
-            `;
-
-            syncSection.querySelector(".btn-gdrive-connect").addEventListener("click", async () => {
-                const btn = syncSection.querySelector(".btn-gdrive-connect");
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
-                try {
-                    await window.GDriveSync.loadGsiLibrary();
-                    // Obtain Client ID from Settings storage or prompt
-                    const savedId = localStorage.getItem("bl4ut0_gdrive_client_id") || window.GDriveSync.defaultClientId;
-                    await window.GDriveSync.login(savedId);
-                    window.showDesktopToast?.("Google Drive Connected!");
-                    triggerCloudSync(windowEl);
-                } catch (e) {
-                    console.error(e);
-                    alert("Connect failed. Check sync credentials in Settings.");
-                } finally {
-                    renderDashboardGDriveStatus(windowEl);
-                }
-            });
-        }
-    }
-
-    async function triggerCloudSync(windowEl) {
-        const syncBadge = windowEl.querySelector(".office-sync-status-badge");
-        if (syncBadge) {
-            syncBadge.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> Syncing...';
-        }
-
-        try {
-            await window.GDriveSync.sync();
-            window.showDesktopToast?.("Google Drive Sync Complete!");
-        } catch (e) {
-            console.error(e);
-            alert("Google Drive sync failed: " + e.message);
-        } finally {
-            if (syncBadge) {
-                syncBadge.innerHTML = '<i class="fa-solid fa-cloud-check"></i> Synced';
-            }
-            renderRecentDocsList(windowEl);
-        }
-    }
-
     // Register modular app hooks
     window.appRegistry[APP_ID] = {
         title: "LibreOffice WASM",
@@ -767,7 +683,6 @@
                             <span>LibreOffice WASM</span>
                         </div>
                         <div class="office-menubar-item btn-menubar-save"><i class="fa-regular fa-floppy-disk"></i> Save</div>
-                        <div class="office-menubar-item btn-menubar-sync"><i class="fa-solid fa-cloud-arrow-up"></i> Sync Cloud</div>
                         <div class="office-menubar-item btn-menubar-dashboard"><i class="fa-solid fa-house"></i> Close to Dashboard</div>
                     </div>
 
@@ -776,9 +691,6 @@
                         <div class="office-toolbar-group">
                             <button type="button" class="office-tool-btn btn-toolbar-save" title="Save file to virtual drive">
                                 <i class="fa-solid fa-floppy-disk"></i> Save
-                            </button>
-                            <button type="button" class="office-tool-btn btn-toolbar-sync" title="GDrive Sync">
-                                <i class="fa-solid fa-cloud"></i> Sync
                             </button>
                             <span class="office-tool-separator"></span>
                         </div>
@@ -890,8 +802,15 @@
                                 </button>
                             </div>
                             
-                            <div class="dashboard-sync-status">
-                                <!-- Populated dynamically -->
+                            <div class="dashboard-storage-status">
+                                <div class="dashboard-storage-header">
+                                    <strong><i class="fa-solid fa-hard-drive"></i> Local storage</strong>
+                                    <span class="status-dot"></span>
+                                </div>
+                                <p>Documents save to <code>/documents</code> in this browser.</p>
+                                <button type="button" class="dashboard-nav-btn" data-open-settings-panel="cloud-sync">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Cloud Sync Settings
+                                </button>
                             </div>
                         </aside>
                         
@@ -959,7 +878,7 @@
 
                 <!-- OFFICE BOTTOM STATUS BAR -->
                 <footer class="office-statusbar">
-                    <span class="office-sync-status-badge"><i class="fa-solid fa-cloud"></i> Local Storage (IndexedDB)</span>
+                    <span class="office-storage-status-badge"><i class="fa-solid fa-hard-drive"></i> Saved locally in IndexedDB</span>
                     <div class="office-statusbar-right">
                         <span class="office-doc-stats-badge">Words: 0 | Chars: 0</span>
                         <span>Thread Count: 4</span>
@@ -1011,10 +930,6 @@
             const handleSave = () => saveActiveOfficeFile(windowEl);
             windowEl.querySelectorAll(".btn-menubar-save").forEach(btn => btn.addEventListener("click", handleSave));
             windowEl.querySelectorAll(".btn-toolbar-save").forEach(btn => btn.addEventListener("click", handleSave));
-
-            const handleSync = () => triggerCloudSync(windowEl);
-            windowEl.querySelectorAll(".btn-menubar-sync").forEach(btn => btn.addEventListener("click", handleSync));
-            windowEl.querySelectorAll(".btn-toolbar-sync").forEach(btn => btn.addEventListener("click", handleSync));
 
             // 3. Writer Tooling Ribbons
             windowEl.querySelector(".btn-writer-bold").addEventListener("click", () => {

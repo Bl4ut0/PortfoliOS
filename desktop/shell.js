@@ -238,6 +238,7 @@ window.boot = async () => {
         const settingsPanelButton = event.target.closest("[data-open-settings-panel]");
         if (settingsPanelButton) {
             if (window.openDesktopSettings) window.openDesktopSettings(settingsPanelButton.dataset.openSettingsPanel || "desktop");
+            if (window.closeUserProfilePrompt) window.closeUserProfilePrompt();
             const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
             if (startMenu) startMenu.hidden = true;
             return;
@@ -273,9 +274,9 @@ window.boot = async () => {
             return;
         }
 
-        const privateProfileSignIn = event.target.closest("[data-sign-in-private-profile]");
-        if (privateProfileSignIn) {
-            if (window.signInPrivateProfile) window.signInPrivateProfile();
+        const privateProfileCreate = event.target.closest("[data-create-private-profile]");
+        if (privateProfileCreate) {
+            if (window.createPrivateProfile) window.createPrivateProfile();
             return;
         }
 

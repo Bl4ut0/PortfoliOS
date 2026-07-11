@@ -196,6 +196,18 @@ If a third-party iframe runtime cannot change volume through JavaScript, documen
 
 ## Save Storage
 
+Apps are local-first. They must write user data to `SystemFS` and must not authenticate, connect, disconnect, or invoke cloud synchronization directly. Cloud ownership belongs exclusively to **Settings > Cloud Sync**.
+
+To point a user toward optional backup without implementing sync in the app, use the shell route:
+
+```html
+<button type="button" data-open-settings-panel="cloud-sync">
+    Cloud Sync Settings
+</button>
+```
+
+The contract audit rejects modular apps that access `window.GDriveSync` or Google Drive client configuration. Runtime assets, ROMs, hidden cache paths, system account files, and records with `metadata.sync: false` remain local when Settings performs a sync.
+
 All game saves that should be visible in File Explorer belong under:
 
 ```text

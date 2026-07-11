@@ -277,7 +277,7 @@
             await window.SystemFS.writeFile(item.path, item.name, item.parent, updatedContent, updatedContent.length, "text/plain", false);
             overlay.classList.remove("active");
             renderFilesGrid(windowEl);
-            window.showDesktopToast?.(`Saved ${item.name}`);
+            window.showDesktopToast?.(`Saved ${item.name} locally.`);
         });
 
         overlay.querySelector(".close-btn").addEventListener("click", () => {
@@ -343,83 +343,8 @@
                 await window.SystemFS.writeFile(path, cleanName, currentPath, file, file.size, file.type, false);
             }
             renderFilesGrid(windowEl);
-            window.showDesktopToast?.(`Uploaded ${files.length} file(s) to ${currentPath}`);
+            window.showDesktopToast?.(`Saved ${files.length} file(s) locally in ${currentPath}.`);
         });
-    }
-
-    function updateSyncPanelUI(panel) {
-        const isConnected = window.GDriveSync.getToken() !== null;
-        const statusText = panel.querySelector(".status-text");
-        const indicator = panel.querySelector(".status-indicator");
-        const connectBtn = panel.querySelector(".btn-connect-gdrive");
-        const disconnectBtn = panel.querySelector(".btn-disconnect-gdrive");
-        const startSyncBtn = panel.querySelector(".btn-start-sync");
-        const clientIdInput = panel.querySelector(".sync-client-id-input");
-
-        const defaultId = window.GDriveSync?.defaultClientId || "";
-        clientIdInput.value = localStorage.getItem("bl4ut0_gdrive_client_id") || defaultId;
-
-        if (isConnected) {
-            const folderLabel = window.GDriveSync?.getCurrentFolderLabel ? window.GDriveSync.getCurrentFolderLabel() : "Google Drive";
-            statusText.textContent = `Connected to ${folderLabel}`;
-            indicator.className = "status-indicator connected";
-            connectBtn.style.display = "none";
-            disconnectBtn.style.display = "inline-flex";
-            startSyncBtn.style.display = "inline-flex";
-        } else {
-            statusText.textContent = "Not Connected";
-            indicator.className = "status-indicator disconnected";
-            connectBtn.style.display = "inline-flex";
-            disconnectBtn.style.display = "none";
-            startSyncBtn.style.display = "none";
-        }
-    }
-
-    async function runSyncProcess(panel, windowEl) {
-        const progressContainer = panel.querySelector(".sync-progress-container");
-        const progressText = panel.querySelector(".sync-progress-status");
-        const progressBar = panel.querySelector(".sync-progress-bar");
-        const startSyncBtn = panel.querySelector(".btn-start-sync");
-        const disconnectBtn = panel.querySelector(".btn-disconnect-gdrive");
-
-        progressContainer.style.display = "block";
-        startSyncBtn.disabled = true;
-        disconnectBtn.disabled = true;
-
-        try {
-            if (window.savePreferencesToFilesystem) {
-                await window.savePreferencesToFilesystem();
-            }
-            await window.GDriveSync.sync((processed, total, path) => {
-                if (total === 0) {
-                    progressText.textContent = "Syncing... (No files)";
-                    progressBar.style.width = "100%";
-                } else {
-                    const percent = Math.round((processed / total) * 100);
-                    progressText.textContent = `Syncing [${processed}/${total}]: ${path.split("/").pop()}`;
-                    progressBar.style.width = `${percent}%`;
-                }
-            });
-            if (window.loadPreferencesFromFilesystem) {
-                await window.loadPreferencesFromFilesystem();
-            }
-            const folderLabel = window.GDriveSync?.getCurrentFolderLabel ? window.GDriveSync.getCurrentFolderLabel() : "Google Drive";
-            window.showDesktopToast?.(`Synced ${folderLabel}`);
-            progressText.textContent = "Sync complete!";
-            progressBar.style.width = "100%";
-            renderFilesGrid(windowEl);
-        } catch (err) {
-            console.error("Sync failed:", err);
-            progressText.textContent = "Sync failed. Check settings.";
-            progressBar.style.width = "0%";
-            alert("Synchronization failed: " + err.message);
-        } finally {
-            startSyncBtn.disabled = false;
-            disconnectBtn.disabled = false;
-            setTimeout(() => {
-                progressContainer.style.display = "none";
-            }, 3000);
-        }
     }
 
     window.appRegistry.files = {
@@ -432,7 +357,6 @@
                     <button class="btn-toolbar btn-new-folder" title="New Folder"><i class="fa-solid fa-folder-plus"></i> New Folder</button>
                     <button class="btn-toolbar btn-new-file" title="New Text File"><i class="fa-solid fa-file-circle-plus"></i> New File</button>
                     <button class="btn-toolbar btn-upload" title="Upload File"><i class="fa-solid fa-file-arrow-up"></i> Upload</button>
-                    <button class="btn-toolbar btn-sync" title="Cloud Sync Settings"><i class="fa-solid fa-cloud"></i> Sync</button>
                     <input type="file" class="files-file-input" multiple style="display: none;" />
                     
                     <div class="files-search-wrapper">
@@ -451,38 +375,15 @@
                         <button class="sidebar-shortcut" data-path="/music"><i class="fa-solid fa-music"></i> Music</button>
                         <button class="sidebar-shortcut" data-path="/ROMs"><i class="fa-solid fa-gamepad"></i> ROMs</button>
                         <button class="sidebar-shortcut" data-path="/Saved Games"><i class="fa-solid fa-gamepad"></i> Saved Games</button>
+                        <div class="files-storage-status">
+                            <span><i class="fa-solid fa-hard-drive"></i> Saved locally</span>
+                            <button type="button" data-open-settings-panel="cloud-sync" title="Open Cloud Sync settings">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Cloud settings
+                            </button>
+                        </div>
                     </aside>
                     <div class="files-grid-container">
                         <div class="files-grid"></div>
-                    </div>
-                </div>
-                <!-- Collapsible Sync Settings Panel -->
-                <div class="files-sync-panel">
-                    <div class="sync-panel-header">
-                        <span><i class="fa-solid fa-cloud"></i> Google Drive Cloud Sync</span>
-                        <button class="btn-close-sync" title="Close Panel"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <div class="sync-panel-body">
-                        <div class="sync-connection-status">
-                            <span class="status-indicator disconnected"></span>
-                            <span class="status-text">Not Connected</span>
-                        </div>
-                        <div class="sync-config-section">
-                            <label for="sync-client-id">Google Client ID:</label>
-                            <input type="text" id="sync-client-id" class="sync-client-id-input" readonly placeholder="Enter your OAuth2 Client ID" />
-                            <p class="sync-help-text">Please enter your Google OAuth 2.0 Client ID to enable personal cloud backup. See the <strong>Cloud Sync</strong> tab in the <strong>Settings</strong> app for step-by-step credentials instructions.</p>
-                        </div>
-                        <div class="sync-actions-row">
-                            <button class="btn-sync-action btn-connect-gdrive"><i class="fa-solid fa-link"></i> Connect Account</button>
-                            <button class="btn-sync-action btn-disconnect-gdrive" style="display: none;"><i class="fa-solid fa-link-slash"></i> Disconnect</button>
-                            <button class="btn-sync-action btn-start-sync" style="display: none;"><i class="fa-solid fa-rotate"></i> Sync Now</button>
-                        </div>
-                        <div class="sync-progress-container" style="display: none;">
-                            <div class="sync-progress-status">Syncing...</div>
-                            <div class="sync-progress-bar-wrapper">
-                                <div class="sync-progress-bar"></div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -577,63 +478,9 @@
                         await window.SystemFS.writeFile(path, cleanName, currentPath, file, file.size, file.type, false);
                     }
                     renderFilesGrid(windowEl);
-                    window.showDesktopToast?.(`Uploaded ${files.length} file(s).`);
+                    window.showDesktopToast?.(`Saved ${files.length} file(s) locally.`);
                     fileInput.value = "";
                 });
-            }
-
-            // Sync Settings Panel Hooks
-            const syncBtn = windowEl.querySelector(".btn-sync");
-            const syncPanel = windowEl.querySelector(".files-sync-panel");
-            const closeSyncBtn = windowEl.querySelector(".btn-close-sync");
-            
-            if (syncBtn && syncPanel && closeSyncBtn) {
-                syncBtn.addEventListener("click", () => {
-                    syncPanel.classList.toggle("active");
-                    updateSyncPanelUI(syncPanel);
-                });
-                closeSyncBtn.addEventListener("click", () => {
-                    syncPanel.classList.remove("active");
-                });
-
-                const connectBtn = syncPanel.querySelector(".btn-connect-gdrive");
-                connectBtn.addEventListener("click", async () => {
-                    const clientId = syncPanel.querySelector(".sync-client-id-input").value.trim();
-                    if (!clientId) {
-                        alert("Please enter a valid Google Client ID first.");
-                        return;
-                    }
-                    try {
-                        connectBtn.disabled = true;
-                        connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
-                        await window.GDriveSync.loadGsiLibrary();
-                        await window.GDriveSync.login(clientId);
-                        window.showDesktopToast?.("Google Drive Connected!");
-                        await runSyncProcess(syncPanel, windowEl);
-                    } catch (err) {
-                        console.error(err);
-                        alert("Connection failed. Please check your credentials.");
-                    } finally {
-                        connectBtn.disabled = false;
-                        connectBtn.innerHTML = '<i class="fa-solid fa-link"></i> Connect Account';
-                        updateSyncPanelUI(syncPanel);
-                    }
-                });
-
-                const disconnectBtn = syncPanel.querySelector(".btn-disconnect-gdrive");
-                disconnectBtn.addEventListener("click", () => {
-                    window.GDriveSync.logout();
-                    window.showDesktopToast?.("Google Drive Disconnected.");
-                    updateSyncPanelUI(syncPanel);
-                });
-
-                const startSyncBtn = syncPanel.querySelector(".btn-start-sync");
-                startSyncBtn.addEventListener("click", () => {
-                    runSyncProcess(syncPanel, windowEl);
-                });
-
-                // Set initial UI state
-                updateSyncPanelUI(syncPanel);
             }
             return initialRender;
         },

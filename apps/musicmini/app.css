@@ -39,6 +39,47 @@
     flex-direction: column;
 }
 
+.musicmini-storage-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 2.15rem;
+    padding: 0.35rem 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted, #94a3b8);
+    background: rgba(4, 8, 13, 0.55);
+    font-size: 0.68rem;
+}
+
+.musicmini-storage-status span,
+.musicmini-storage-status button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+}
+
+.musicmini-storage-status code {
+    color: #dbeafe;
+}
+
+.musicmini-storage-status button {
+    flex: 0 0 auto;
+    min-height: 1.65rem;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid rgba(103, 232, 249, 0.28);
+    border-radius: 5px;
+    color: #67e8f9;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.66rem;
+}
+
+.musicmini-storage-status button:hover {
+    border-color: #67e8f9;
+    background: rgba(103, 232, 249, 0.08);
+}
+
 .musicmini-brand,
 .musicmini-title-block,
 .musicmini-track-main,

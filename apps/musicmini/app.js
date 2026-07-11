@@ -613,7 +613,7 @@
             appState.currentPath = firstImportedPath || appState.currentPath;
             writeStoredValue(STORE_KEYS.currentPath, appState.currentPath);
             await loadLibrary();
-            setNotice(`Imported ${audioEntries.length} track${audioEntries.length === 1 ? "" : "s"}.`, true);
+            setNotice(`Saved ${audioEntries.length} track${audioEntries.length === 1 ? "" : "s"} locally in /music.`, true);
         } catch (error) {
             setNotice(error.message || "Audio import failed.", true);
         } finally {
@@ -681,7 +681,7 @@
             appState.currentPath = record.path;
             writeStoredValue(STORE_KEYS.currentPath, record.path);
             await loadLibrary();
-            setNotice(`Imported ${record.name}.`, true);
+            setNotice(`Saved ${record.name} locally in /music.`, true);
         } catch (error) {
             const corsHint = /Failed to fetch|NetworkError|CORS/i.test(String(error?.message || error))
                 ? " The server may not allow browser downloads; download it locally and upload it instead."
@@ -689,35 +689,6 @@
             setNotice(`${error.message || "URL import failed."}${corsHint}`, true);
         } finally {
             suppressFsRefresh = false;
-            setBusy(false);
-        }
-    }
-
-    async function syncMusicLibrary() {
-        if (!window.GDriveSync) {
-            setNotice("Cloud Sync is not available.", true);
-            return;
-        }
-
-        const token = window.GDriveSync.getToken?.();
-        if (!token) {
-            setNotice("Connect Google Drive Cloud Sync first.", true);
-            return;
-        }
-
-        setBusyLabel("Syncing /music");
-        try {
-            await window.GDriveSync.sync((processed, total, path) => {
-                if (!path || path === "Complete" || path === MUSIC_ROOT || path.startsWith(`${MUSIC_ROOT}/`)) {
-                    appState.busyLabel = total ? `Sync ${Math.min(processed, total)}/${total}` : "Syncing";
-                    renderTopbar();
-                }
-            });
-            await loadLibrary();
-            setNotice("Music library synced.", true);
-        } catch (error) {
-            setNotice(error.message || "Music sync failed.", true);
-        } finally {
             setBusy(false);
         }
     }
@@ -946,14 +917,18 @@
                             <button type="button" data-mm-action="refresh" title="Refresh library">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
-                            <button type="button" data-mm-action="sync" title="Sync /music with Cloud Sync">
-                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                            <button type="button" data-open-settings-panel="cloud-sync" title="Cloud backup is managed in Settings">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
                             </button>
                             <button type="button" data-mm-action="webamp" title="Open selected track in Webamp">
                                 <i class="fa-solid fa-wave-square"></i>
                             </button>
                         </div>
                     </header>
+                    <div class="musicmini-storage-status">
+                        <span><i class="fa-solid fa-hard-drive"></i> Saved locally in <code>/music</code></span>
+                        <button type="button" data-open-settings-panel="cloud-sync">Cloud backup settings</button>
+                    </div>
                     <div class="musicmini-notice" data-mm-notice hidden></div>
                     <section class="musicmini-now" data-mm-now></section>
                     <section class="musicmini-controls" data-mm-controls></section>
@@ -963,7 +938,7 @@
                             <input type="url" data-mm-url-input placeholder="https://example.com/track.mp3" autocomplete="off">
                         </label>
                         <button type="submit" title="Save direct audio URL">
-                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                            <i class="fa-solid fa-download"></i>
                         </button>
                     </form>
                     <section class="musicmini-dropzone" data-mm-dropzone>
@@ -1223,11 +1198,6 @@
         if (action === "refresh") {
             await loadLibrary();
             setNotice("Music library refreshed.", false);
-            return;
-        }
-
-        if (action === "sync") {
-            await syncMusicLibrary();
             return;
         }
 

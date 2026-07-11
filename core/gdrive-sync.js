@@ -490,7 +490,9 @@ window.GDriveSync = {
 
         const allPaths = new Set([...remoteMap.keys(), ...localMap.keys()]);
         const isPathSyncable = (p) => {
-            if (p === "/ROMs" || p.startsWith("/ROMs/")) return false;
+            const local = localMap.get(p);
+            if (local?.metadata?.sync === false) return false;
+            if (["/apps", "/ROMs", "/etc"].some(root => p === root || p.startsWith(`${root}/`))) return false;
             const parts = p.split("/");
             if (parts.some(part => part.startsWith("."))) return false;
             if (p === "/home" || p.startsWith("/home/")) {

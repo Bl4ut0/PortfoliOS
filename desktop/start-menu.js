@@ -143,7 +143,7 @@ window.renderStartUser = () => {
             userAvatarBtn.title = `Switch to ${displayName}`;
         } else {
             userAvatarBtn.innerHTML = `<i class="fa-solid fa-circle-question" style="font-size: 1.25rem;"></i>`;
-            userAvatarBtn.title = "Sign In";
+            userAvatarBtn.title = "Create private profile";
         }
     }
 };
@@ -164,14 +164,14 @@ window.openUserProfilePrompt = () => {
     const prompt = document.createElement("aside");
     prompt.id = "user-profile-prompt";
     prompt.className = "user-profile-prompt";
-    prompt.setAttribute("aria-label", "Cloud profile sign in");
+    prompt.setAttribute("aria-label", "Private profile");
 
     prompt.innerHTML = isPrivate ? `
         <div class="user-profile-prompt-head">
             <i class="fa-solid fa-user-shield"></i>
             <span>
                 <strong>Private profile active</strong>
-                <small>Cloud Sync / private desktop</small>
+                <small>Local private desktop</small>
             </span>
             <button type="button" data-close-user-profile-prompt title="Close">
                 <i class="fa-solid fa-xmark"></i>
@@ -183,6 +183,10 @@ window.openUserProfilePrompt = () => {
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 Return to Owner
             </button>
+            <button type="button" data-open-settings-panel="cloud-sync">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                Cloud Sync Settings
+            </button>
             <button type="button" id="btn-delete-profile" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.35); color: #ef4444; font-weight: bold; min-height: 2rem; padding: 0.42rem 0.62rem; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;">
                 <i class="fa-solid fa-trash-can"></i>
                 Delete Profile
@@ -191,10 +195,10 @@ window.openUserProfilePrompt = () => {
         </div>
     ` : `
         <div class="user-profile-prompt-head">
-            <i class="fa-solid fa-cloud-arrow-down"></i>
+            <i class="fa-solid fa-user-plus"></i>
             <span>
-                <strong>Sign in to Private Account</strong>
-                <small>Google Drive Cloud Sync</small>
+                <strong>Create Private Profile</strong>
+                <small>Local PortfoliOS account</small>
             </span>
             <button type="button" data-close-user-profile-prompt title="Close">
                 <i class="fa-solid fa-xmark"></i>
@@ -202,13 +206,17 @@ window.openUserProfilePrompt = () => {
         </div>
         <label class="cloud-sync-field">
             <span>Profile Name</span>
-            <input type="text" id="cloud-sync-name" placeholder="Uses your Google name if blank" autocomplete="off">
+            <input type="text" id="private-profile-name" placeholder="Private Account" autocomplete="off">
         </label>
-        <p>This links your private workspace to Google Drive and uses your Google account name and picture for the desktop profile.</p>
+        <p>This profile is created in local browser storage. Cloud backup can be connected separately through Settings.</p>
         <div class="user-profile-prompt-actions">
-            <button type="button" class="primary" data-sign-in-private-profile>
-                <i class="fa-brands fa-google-drive"></i>
-                Sign In &amp; Sync
+            <button type="button" class="primary" data-create-private-profile>
+                <i class="fa-solid fa-user-plus"></i>
+                Create Local Profile
+            </button>
+            <button type="button" data-open-settings-panel="cloud-sync">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                Cloud Sync Settings
             </button>
             <button type="button" data-close-user-profile-prompt>Cancel</button>
         </div>
@@ -218,49 +226,30 @@ window.openUserProfilePrompt = () => {
     prompt.querySelector("input")?.focus({ preventScroll: true });
 };
 
-window.signInPrivateProfile = async () => {
-    const nameInput = document.getElementById("cloud-sync-name");
+window.createPrivateProfile = async () => {
+    const nameInput = document.getElementById("private-profile-name");
     const requestedProfileName = nameInput ? nameInput.value.trim() : "";
 
-    const button = document.querySelector("[data-sign-in-private-profile]");
+    const button = document.querySelector("[data-create-private-profile]");
     if (button) {
         button.disabled = true;
-        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
     }
 
     try {
-        const defaultId = window.GDriveSync?.defaultClientId || "";
-        const clientId = localStorage.getItem("bl4ut0_gdrive_client_id") || defaultId;
-        if (!clientId) {
-            throw new Error("Google Client ID is missing. Configure it in Settings first.");
-        }
-
-        // Authenticate with Google OAuth
-        if (window.GDriveSync) {
-            await window.GDriveSync.loadGsiLibrary();
-            await window.GDriveSync.login(clientId);
-        } else {
-            throw new Error("GDriveSync service is unavailable.");
-        }
-
-        const googleProfile = await window.GDriveSync.getGoogleProfile?.();
-        const profileName = requestedProfileName || googleProfile?.name || googleProfile?.email || "Private Account";
-        const profileEmail = googleProfile?.email || "";
-
-        // Google profile picture is preferred; generated letter avatar is the fallback.
+        const profileName = requestedProfileName || "Private Account";
         const char = profileName.charAt(0).toUpperCase();
         const colors = ["#1a73e8", "#ea4335", "#f9ab00", "#34a853"];
         const charCode = char.charCodeAt(0);
         const color = colors[charCode % colors.length];
         const generatedAvatar = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='${encodeURIComponent(color)}'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='48' font-weight='bold' fill='%23ffffff'%3E${char}%3C/text%3E%3C/svg%3E`;
-        const avatar = googleProfile?.picture || generatedAvatar;
 
         const profile = {
             name: profileName,
-            email: profileEmail,
-            avatar,
-            picture: googleProfile?.picture || "",
-            source: googleProfile?.picture ? "google" : "generated"
+            email: "",
+            avatar: generatedAvatar,
+            picture: "",
+            source: "generated"
         };
         localStorage.setItem("bl4ut0_private_user_profile", JSON.stringify(profile));
 
@@ -268,42 +257,27 @@ window.signInPrivateProfile = async () => {
         const privateAccount = window.userAccounts?.find(a => a.id === "private");
         if (privateAccount) {
             privateAccount.displayName = profileName;
-            privateAccount.handle = (profileEmail || profileName).split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-            privateAccount.avatar = avatar;
-        }
-
-        if (window.GDriveSync?.clearScopedSyncState) {
-            window.GDriveSync.clearScopedSyncState("private");
+            privateAccount.handle = profileName.toLowerCase().replace(/[^a-z0-9]/g, "") || "private";
+            privateAccount.avatar = generatedAvatar;
         }
 
         if (window.setCurrentUser) window.setCurrentUser("private");
         if (window.savePreferencesToFilesystem) {
             await window.savePreferencesToFilesystem();
         }
-        if (window.GDriveSync?.sync) {
-            if (button) {
-                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing...';
-            }
-            await window.GDriveSync.sync();
-            if (window.loadPreferencesFromFilesystem) {
-                await window.loadPreferencesFromFilesystem();
-            }
-        }
         window.closeUserProfilePrompt();
-        window.showDesktopToast?.(`Welcome, ${profileName}! Drive synced.`);
+        window.showDesktopToast?.(`Welcome, ${profileName}. Profile saved locally; cloud backup is available in Settings.`);
     } catch (err) {
-        console.error("Profile authentication failed:", err);
-        let errorMsg = "Google authentication failed.";
+        console.error("Profile creation failed:", err);
+        let errorMsg = "Private profile could not be created.";
         if (err instanceof Error) {
             errorMsg = err.message;
-        } else if (err?.error) {
-            errorMsg = `OAuth error: ${err.error}`;
         }
         window.showDesktopToast?.(errorMsg);
         
         if (button) {
             button.disabled = false;
-            button.innerHTML = '<i class="fa-brands fa-google-drive"></i> Sign In &amp; Sync';
+            button.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Local Profile';
         }
     }
 };

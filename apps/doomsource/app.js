@@ -421,7 +421,16 @@
                     // Save it to SystemFS so subsequent boots are instant
                     try {
                         const blob = new Blob([wadBuffer], { type: "application/octet-stream" });
-                        await window.SystemFS.writeFile("/apps/doomsource/DOOM.WAD", "DOOM.WAD", "/apps/doomsource", blob, blob.size, "application/octet-stream", false);
+                        await window.SystemFS.writeFile(
+                            "/apps/doomsource/DOOM.WAD",
+                            "DOOM.WAD",
+                            "/apps/doomsource",
+                            blob,
+                            blob.size,
+                            "application/octet-stream",
+                            false,
+                            { metadata: { sync: false, kind: "app-runtime", app: APP_ID } }
+                        );
                         assertDoomLoadActive(generation, signal);
                         console.log("PortfoliOS: DOOM.WAD saved to SystemFS.");
                     } catch (err) {
