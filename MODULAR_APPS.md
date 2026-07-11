@@ -40,6 +40,12 @@ After copying a template, add one entry to `window.desktopApps` in `data/apps.js
 
 Every modular app must be reachable: include its ID in `window.standardInstalledAppIds` for a built-in app, or add an installable Store entry.
 
+### Compatibility Modules
+
+`apps/local-ai/` is a retained standalone UI implementation, not a loadable modular app or a template. The `local-ai` launcher intentionally opens **Settings > Local AI**, where the maintained controls live. Its catalog entry therefore must not set `modular: true`.
+
+Any compatibility module under `apps/` must be explicitly listed in `scripts/check-app-contracts.js`, carry a local README explaining its active replacement, and have its launcher redirect verified by the audit. New apps should always start from `apps/_template/` or `apps/_template-game/`.
+
 ## App Registration Contract
 
 Each `app.js` registers itself on `window.appRegistry[appId]`:

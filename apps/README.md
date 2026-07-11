@@ -19,6 +19,10 @@ Copy a template to `apps/<app-id>/`, then update:
 The desktop catalog is the single source for `window.modularApps`; do not edit the loader for each app.
 Also make the app reachable by adding it to `standardInstalledAppIds` or giving it an installable Store entry.
 
+## Compatibility Exception
+
+`local-ai/` is retained as a documented compatibility implementation. It is not lazy-loaded: the `local-ai` launcher redirects to the maintained controls in **Settings > Local AI**. Do not copy it when creating an app; use one of the templates above. The contract audit verifies this exception explicitly.
+
 ## Required App Shape
 
 ```javascript

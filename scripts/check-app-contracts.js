@@ -16,7 +16,12 @@ const WINDOW_PRESETS = new Set([
     "game-window"
 ]);
 const LIFECYCLE_HOOKS = ["onOpen", "onRestore", "onFocus", "onMinimize", "onMaximize", "onClose"];
-const LEGACY_APP_DIRS = new Set(["local-ai"]);
+const LEGACY_APP_DIRS = new Map([
+    ["local-ai", {
+        documentation: "apps/local-ai/README.md",
+        redirectSource: "core/window-manager.js"
+    }]
+]);
 const failures = [];
 
 function fail(scope, message) {
@@ -577,6 +582,26 @@ async function run() {
     modularIds.forEach((appId) => {
         if (!defaultInstalledIds.has(appId) && !installableStoreIds.has(appId)) {
             fail(appId, "modular app is unreachable; make it standard-installed or add an installable Store entry");
+        }
+    });
+
+    LEGACY_APP_DIRS.forEach((legacy, appId) => {
+        const desktopApp = desktopApps.find((app) => app.id === appId);
+        if (!desktopApp) {
+            fail(`legacy:${appId}`, "legacy app has no desktop catalog entry");
+        } else if (desktopApp.modular === true) {
+            fail(`legacy:${appId}`, "legacy app must not be declared modular while its launcher redirects elsewhere");
+        }
+
+        if (!fs.existsSync(path.join(ROOT, legacy.documentation))) {
+            fail(`legacy:${appId}`, `missing compatibility documentation at ${legacy.documentation}`);
+        }
+
+        const redirectPath = path.join(ROOT, legacy.redirectSource);
+        if (!fs.existsSync(redirectPath)) {
+            fail(`legacy:${appId}`, `missing launcher redirect source at ${legacy.redirectSource}`);
+        } else if (!fs.readFileSync(redirectPath, "utf8").includes(`name === "${appId}"`)) {
+            fail(`legacy:${appId}`, `${legacy.redirectSource} no longer contains the expected launcher redirect`);
         }
     });
 
