@@ -457,9 +457,20 @@ function initLocalAISettings() {
             stopBtn.disabled = true;
             const status = window.LocalAI.getStatus();
             const isCloud = status.modelType && status.modelType.startsWith("cloud-");
-            await window.LocalAI.disable("user-settings");
-            window.showDesktopToast?.(isCloud ? "Cloud AI disconnected." : "Local AI stopped.");
-            updateLocalAiSettingsUI();
+            try {
+                if (status.status === "generating") {
+                    await window.LocalAI.cancelGeneration?.("settings");
+                    window.showDesktopToast?.("AI response cancelled.");
+                } else {
+                    await window.LocalAI.disable("user-settings");
+                    window.showDesktopToast?.(isCloud ? "Cloud AI disconnected." : "Local AI stopped.");
+                }
+            } catch (error) {
+                console.error("Local AI stop failed.", error);
+                window.showDesktopToast?.("Could not stop the current AI operation.");
+            } finally {
+                updateLocalAiSettingsUI();
+            }
         });
     }
 
@@ -592,7 +603,7 @@ function updateLocalAiSettingsUI() {
             modelSelect.updateCustomDropdown?.();
         }
         
-        modelSelect.disabled = !isCloud && (status.busy || status.ready);
+        modelSelect.disabled = status.busy;
     }
 
     // Update API Key Status Dots
@@ -705,7 +716,10 @@ function updateLocalAiSettingsUI() {
     if (stopBtn) {
         stopBtn.disabled = !status.enabled;
         stopBtn.style.display = isAiActive ? "inline-flex" : "none";
-        if (isCloud) {
+        if (status.status === "generating") {
+            stopBtn.className = "settings-btn btn-danger";
+            stopBtn.innerHTML = '<i class="fa-solid fa-square"></i> Cancel Reply';
+        } else if (isCloud) {
             stopBtn.className = "settings-btn btn-danger";
             stopBtn.innerHTML = '<i class="fa-solid fa-link-slash"></i> Disconnect';
         } else {

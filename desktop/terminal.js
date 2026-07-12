@@ -13,6 +13,7 @@ const history = [];
 let historyIndex = -1;
 let currentInputVal = "";
 let terminalJobId = 0;
+const terminalJobs = new Map();
 
 // SHA-256 Hashing helper
 async function sha256(message) {
@@ -234,6 +235,9 @@ function setupHistory() {
                 historyIndex = -1;
                 inputEl.value = currentInputVal;
             }
+        } else if (event.key === "Enter" && !event.isComposing) {
+            event.preventDefault();
+            inputEl.form?.requestSubmit();
         }
     });
 }
@@ -734,11 +738,13 @@ async function runRm(args) {
     }
 }
 
-function createTerminalAsyncJob(label, run) {
+function createTerminalAsyncJob(label, run, options = {}) {
     return {
         __terminalAsyncJob: true,
         label,
-        run
+        run,
+        kind: options.kind || "background",
+        cancel: options.cancel || null
     };
 }
 
@@ -749,23 +755,73 @@ function isTerminalAsyncJob(value) {
 function createLocalAIChatJob(prompt, context = {}) {
     return createTerminalAsyncJob(
         "Local AI queued in background GPU worker. Terminal remains available while it answers.",
-        (onChunk) => window.LocalAI.chat(prompt, context, onChunk)
+        (onChunk) => window.LocalAI.chat(prompt, context, onChunk),
+        {
+            kind: "local-ai",
+            cancel: () => window.LocalAI.cancelGeneration?.("cli-job")
+        }
     );
+}
+
+function getTerminalJob(jobId) {
+    const normalizedId = Number.parseInt(String(jobId || "").replace(/^%/, ""), 10);
+    if (Number.isFinite(normalizedId)) return terminalJobs.get(normalizedId) || null;
+    return [...terminalJobs.values()].reverse().find((job) => job.status === "running" || job.status === "cancelling") || null;
+}
+
+function formatTerminalJobs() {
+    const jobs = [...terminalJobs.values()];
+    if (!jobs.length) return "No active background jobs.";
+
+    return jobs.map((job) => {
+        const elapsedSeconds = Math.max(0, Math.round((Date.now() - job.startedAt) / 1000));
+        return `[${job.id}] ${job.status.padEnd(10)} ${job.kind} (${elapsedSeconds}s)`;
+    }).join("\n");
+}
+
+async function cancelTerminalJob(jobId) {
+    const job = getTerminalJob(jobId);
+    if (!job) {
+        if (!jobId && window.LocalAI?.getStatus?.().status === "generating") {
+            const cancelled = await window.LocalAI.cancelGeneration?.("cli");
+            return cancelled ? "Local AI cancellation requested." : "The AI response had already finished.";
+        }
+        return jobId ? `kill: job ${jobId} was not found` : "No cancellable background job is running.";
+    }
+    if (typeof job.cancel !== "function") {
+        return `[job ${job.id}] does not support cancellation.`;
+    }
+
+    job.cancelRequested = true;
+    job.status = "cancelling";
+    if (job.statusLine) job.statusLine.textContent = `[job ${job.id}] Cancelling Local AI response...`;
+    const cancelled = await job.cancel();
+    return cancelled === false
+        ? `[job ${job.id}] had already finished.`
+        : `[job ${job.id}] cancellation requested.`;
 }
 
 async function startTerminalAsyncJob(job, targetFile, append) {
     const jobId = ++terminalJobId;
     const statusLine = window.addTerminalLine(`[job ${jobId}] ${job.label}`, "muted");
+    const jobRecord = {
+        id: jobId,
+        kind: job.kind || "background",
+        status: "running",
+        statusLine,
+        startedAt: Date.now(),
+        cancel: job.cancel,
+        cancelRequested: false
+    };
+    terminalJobs.set(jobId, jobRecord);
 
     try {
         let aiLine = null;
         let responseText = "";
 
         const onChunk = (delta) => {
-            if (targetFile) {
-                responseText += delta;
-                return;
-            }
+            responseText += String(delta || "");
+            if (targetFile) return;
 
             if (!aiLine) {
                 if (statusLine) {
@@ -773,34 +829,134 @@ async function startTerminalAsyncJob(job, targetFile, append) {
                 }
                 aiLine = window.addTerminalLine("", "ai-response");
             }
-            aiLine.textContent += delta;
+            aiLine.textContent = responseText;
             
             const output = window.byId ? window.byId("terminal-output") : document.getElementById("terminal-output");
             if (output) output.scrollTop = output.scrollHeight;
         };
 
         const result = await job.run(onChunk);
+        const finalText = String(result ?? "");
+        jobRecord.status = jobRecord.cancelRequested ? "cancelled" : "completed";
 
         if (targetFile) {
-            await handleRedirection(targetFile, result, append);
-            if (statusLine) statusLine.textContent = `[job ${jobId}] Local AI response written to ${targetFile}`;
+            await handleRedirection(targetFile, finalText, append);
+            if (statusLine) {
+                statusLine.textContent = jobRecord.cancelRequested
+                    ? `[job ${jobId}] Local AI response cancelled`
+                    : `[job ${jobId}] Local AI response written to ${targetFile}`;
+            }
             return;
         }
 
-        if (statusLine) statusLine.textContent = `[job ${jobId}] Local AI response ready`;
+        if (statusLine) {
+            statusLine.textContent = jobRecord.cancelRequested
+                ? `[job ${jobId}] Local AI response cancelled`
+                : `[job ${jobId}] Local AI response ready`;
+        }
         if (aiLine) {
-            aiLine.textContent = result;
+            aiLine.textContent = finalText;
         } else {
-            window.addTerminalLine(result, "ai-response");
+            window.addTerminalLine(finalText, "ai-response");
         }
     } catch (error) {
+        jobRecord.status = "failed";
         const message = error?.message || "Local AI failed.";
         if (statusLine) {
             statusLine.textContent = `[job ${jobId}] Local AI failed: ${message}`;
         } else {
             window.addTerminalLine(`[job ${jobId}] Local AI failed: ${message}`, "muted");
         }
+    } finally {
+        terminalJobs.delete(jobId);
     }
+}
+
+function getLocalAICapabilitiesText() {
+    return [
+        "Local AI CLI controls:",
+        "  ai status             show service, model, and runtime state",
+        "  ai models             list available local/cloud models",
+        "  ai use <name|number>  select a model (stops the current loaded model)",
+        "  ai on                 enable the selected model",
+        "  ai cancel             cancel the active answer but keep the model loaded",
+        "  ai off                stop the service and release the model",
+        "  ai settings           open Settings > Local AI",
+        "  ai <question>         ask in a background job",
+        "  jobs                  list active background jobs",
+        "  kill [%job]           cancel a background job"
+    ].join("\n");
+}
+
+function isCliCapabilitiesQuestion(value) {
+    const text = String(value || "").toLowerCase();
+    return /what can you do|what.*commands|available commands|(?:cli|terminal).*(?:help|capabilit)|capabilit.*(?:cli|terminal)/.test(text);
+}
+
+function formatLocalAIStatus() {
+    const status = window.LocalAI.getStatus();
+    const lines = [
+        `State:   ${status.status}`,
+        `Model:   ${status.modelLabel}`,
+        `Runtime: ${status.executionMode}`,
+        `Detail:  ${status.statusText}`
+    ];
+    if (status.memoryMB) lines.splice(3, 0, `Memory:  ~${status.memoryMB} MB`);
+    if (status.modelNote) lines.push(`Note:    ${status.modelNote}`);
+    if (status.status === "generating") lines.push("Control: ai cancel");
+    return lines.join("\n");
+}
+
+function getLocalAIModelsText() {
+    const models = window.LocalAI.getAvailableModels?.() || [];
+    const selectedId = window.LocalAI.getSelectedModelId?.();
+    if (!models.length) return "No AI models are available in this profile.";
+
+    return models.map((model, index) => {
+        const marker = model.id === selectedId ? "*" : " ";
+        const runtime = model.type?.startsWith("cloud-") ? "cloud" : `${model.memoryMB} MB`;
+        return `${marker} ${String(index + 1).padStart(2)}  ${model.label} [${runtime}]`;
+    }).join("\n") + "\nUse: ai use <number or model name>";
+}
+
+function normalizeAIModelSearch(value) {
+    return String(value || "")
+        .toLowerCase()
+        .replace(/q\d+f\d+(?:_\d+)?/g, " ")
+        .replace(/\bmlc\b/g, " ")
+        .replace(/[^a-z0-9.]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function resolveLocalAIModel(query) {
+    const models = window.LocalAI.getAvailableModels?.() || [];
+    const rawQuery = String(query || "").trim();
+    const numericIndex = Number.parseInt(rawQuery, 10);
+    if (/^\d+$/.test(rawQuery) && models[numericIndex - 1]) {
+        return { model: models[numericIndex - 1], matches: [] };
+    }
+
+    const aliases = {
+        "smol 360m": "SmolLM2-360M-Instruct-q4f16_1-MLC",
+        "smollm2 360m": "SmolLM2-360M-Instruct-q4f16_1-MLC",
+        "qwen 0.5b": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+        "llama 1b": "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+        "gemma 1b": "gemma-3-1b-it-q4f16_1-MLC",
+        "gemma 2 2b": "gemma-2-2b-it-q4f16_1-MLC"
+    };
+    const normalizedQuery = normalizeAIModelSearch(rawQuery);
+    const aliasId = aliases[normalizedQuery];
+    const exact = models.find((model) => model.id.toLowerCase() === rawQuery.toLowerCase())
+        || models.find((model) => normalizeAIModelSearch(model.label) === normalizedQuery)
+        || models.find((model) => model.id === aliasId);
+    if (exact) return { model: exact, matches: [] };
+
+    const matches = models.filter((model) => {
+        const searchable = `${normalizeAIModelSearch(model.label)} ${normalizeAIModelSearch(model.id)}`;
+        return normalizedQuery && searchable.includes(normalizedQuery);
+    });
+    return { model: matches.length === 1 ? matches[0] : null, matches };
 }
 
 async function runLocalAICommand(args) {
@@ -809,34 +965,77 @@ async function runLocalAICommand(args) {
     }
 
     const subcommand = (args[0] || "").toLowerCase();
-    if (!subcommand) {
-        if (window.openDesktopWindow) window.openDesktopWindow("local-ai");
+    if (!subcommand || subcommand === "status" || subcommand === "info") return formatLocalAIStatus();
+
+    if (subcommand === "help" || subcommand === "commands" || subcommand === "capabilities") {
+        return getLocalAICapabilitiesText();
+    }
+
+    if (subcommand === "models" || subcommand === "list") return getLocalAIModelsText();
+
+    if (subcommand === "settings" || subcommand === "config" || subcommand === "configure") {
+        if (window.openDesktopWindow) {
+            await Promise.resolve(window.openDesktopWindow("settings"));
+            window.openSettingsPanel?.("local-ai");
+        }
+        return "Opened Settings > Local AI.";
+    }
+
+    if (subcommand === "use" || subcommand === "model") {
+        const query = args.slice(1).join(" ");
+        if (!query) return "Usage: ai use <model number or name>. Run 'ai models' first.";
         const status = window.LocalAI.getStatus();
-        return `${status.statusText} Use ai on to enable it, ai off to stop it, or ai <question> once it is ready.`;
+        if (status.busy) return "Local AI is busy. Run 'ai cancel' before changing models.";
+
+        const resolved = resolveLocalAIModel(query);
+        if (!resolved.model) {
+            if (resolved.matches.length > 1) {
+                return `Model name is ambiguous: ${resolved.matches.map((model) => model.label).join(", ")}`;
+            }
+            return `No available AI model matched "${query}". Run 'ai models' to list choices.`;
+        }
+
+        const nextStatus = window.LocalAI.setSelectedModelId(resolved.model.id);
+        return `Selected ${nextStatus.modelLabel}. Run 'ai on' to enable it.`;
     }
 
     if (subcommand === "on" || subcommand === "enable" || subcommand === "start") {
-        if (window.openDesktopWindow) {
-            window.openDesktopWindow("local-ai");
-        }
-        return "Opening the AI Model settings. Please select and enable your preferred model in the app window.";
+        const status = window.LocalAI.getStatus();
+        if (status.status === "generating") return "Local AI is already enabled and answering. Run 'ai cancel' to interrupt it.";
+        if (status.ready) return `${status.modelLabel} is already ready.`;
+        const nextStatus = await window.LocalAI.enable("Portfolio CLI");
+        return nextStatus.ready ? `${nextStatus.modelLabel} is ready.` : "Local AI startup was cancelled.";
+    }
+
+    if (subcommand === "cancel" || subcommand === "interrupt") {
+        return cancelTerminalJob(args[1]);
+    }
+
+    if (subcommand === "stop" && window.LocalAI.getStatus().status === "generating") {
+        return cancelTerminalJob(args[1]);
     }
 
     if (subcommand === "off" || subcommand === "disable" || subcommand === "stop") {
         await window.LocalAI.disable("cli");
-        return "Local AI stopped. Starting it again will ask permission.";
+        return "Local AI stopped and its loaded model was released.";
+    }
+
+    const questionText = args.join(" ");
+    if (isCliCapabilitiesQuestion(questionText)) return getLocalAICapabilitiesText();
+
+    const status = window.LocalAI.getStatus();
+    if (status.status === "generating") {
+        return "Local AI is already answering in a background job. Run 'jobs' or 'ai cancel'.";
     }
 
     if (!window.LocalAI.isReady()) {
-        const question = args.join(" ");
+        const question = questionText;
         if (question && window.SimpleBrain) {
             const answer = window.SimpleBrain.query(question);
             if (answer) return answer;
         }
-        return "Local/Cloud AI is currently disabled. Run 'ai on' or enable a higher-tier model in the AI app to handle more complicated information requests.";
+        return "Local/Cloud AI is disabled. Run 'ai on', or use 'ai settings' to configure it.";
     }
-
-    const questionText = args.join(" ");
     
     // Check if the query asks for system actions (open app, close app, speak, toast)
     // If so, redirect it directly to Lobe (the mascot) to execute agentically.
@@ -855,7 +1054,7 @@ async function runLocalAICommand(args) {
     return createLocalAIChatJob(questionText, {
         user: currentUser,
         cwd: currentDir,
-        mode: "cli" // Run simple question answering without agent/tool execution loops
+        mode: "cli"
     });
 }
 
@@ -926,7 +1125,9 @@ async function executeCommand(command, args, raw) {
             "  mkdir <dir>     create a directory",
             "  rm [-rf] <path> delete file or directory recursively",
             "  echo <text>     print text (redirect with > or >> to files)",
-            "  ai [on|off|text] manage or talk to the Local AI assistant",
+            "  ai <command|text> manage or talk to the Local AI assistant",
+            "  jobs            list active background jobs",
+            "  kill [%job]     cancel a background job",
             isPrivateDesktopProfile()
                 ? "  whoami --info   print private profile summary"
                 : "  whoami --info   print Alex's developer profile summary"
@@ -1103,6 +1304,14 @@ async function executeCommand(command, args, raw) {
         return args.join(" ");
     }
 
+    if (command === "jobs") {
+        return formatTerminalJobs();
+    }
+
+    if (command === "kill") {
+        return await cancelTerminalJob(args[0]);
+    }
+
     if (command === "ai" || command === "assistant") {
         return await runLocalAICommand(args);
     }
@@ -1130,6 +1339,15 @@ async function executeCommand(command, args, raw) {
         window.BrainHelper.show();
         window.BrainHelper.openBubble();
         return "Lobe helper opened.";
+    }
+
+    if (isCliCapabilitiesQuestion(raw)) {
+        return getLocalAICapabilitiesText();
+    }
+
+    const localAIStatus = window.LocalAI?.getStatus?.();
+    if (localAIStatus?.status === "generating") {
+        return "Local AI is already answering in a background job. Run 'jobs' or 'ai cancel'.";
     }
 
     if (window.LocalAI?.isReady?.()) {

@@ -10,7 +10,6 @@ These models run entirely in the browser using WebGPU and the WebLLM runtime. Th
 
 | Model ID & Name | Size / VRAM | Repo Source (HF / GitHub) | Status / Verification Notes |
 | :--- | :--- | :--- | :--- |
-| **Gemma 3 270M** <br>`gemma-3-270m-it-q4f16_1-MLC` | 200MB | [Aadeshisdoingsomething/gemma-3-270m-it-q4f16_1-mlc](https://huggingface.co/Aadeshisdoingsomething/gemma-3-270m-it-q4f16_1-mlc) | **Active & Gated Bypass**<br>- Gated officially by Google (returns 401 on `mlc-ai`).<br>- Routed to community fork (`Aadeshisdoingsomething`) to avoid auth prompt.<br>- Requires `shader-f16` GPU feature support.<br>- WASM Size: **5.76 MB** (verified). |
 | **SmolLM2 360M** <br>`SmolLM2-360M-Instruct-q4f16_1-MLC` | 376MB | [mlc-ai/SmolLM2-360M-Instruct-q4f16_1-MLC](https://huggingface.co/mlc-ai/SmolLM2-360M-Instruct-q4f16_1-MLC) | **Active & Verified** (Default)<br>- Official prebuilt model from MLC-AI catalog.<br>- Loads WASM directly from GitHub raw CDN.<br>- Highly stable, works out of the box. |
 | **Qwen 2.5 0.5B** <br>`Qwen2.5-0.5B-Instruct-q4f16_1-MLC` | 420MB | [mlc-ai/Qwen2.5-0.5B-Instruct-q4f16_1-MLC](https://huggingface.co/mlc-ai/Qwen2.5-0.5B-Instruct-q4f16_1-MLC) | **Active & Verified**<br>- Official prebuilt model from MLC-AI catalog.<br>- Stable performance for low-mid spec devices. |
 | **Llama 3.2 1B** <br>`Llama-3.2-1B-Instruct-q4f16_1-MLC` | 980MB | [mlc-ai/Llama-3.2-1B-Instruct-q4f16_1-MLC](https://huggingface.co/mlc-ai/Llama-3.2-1B-Instruct-q4f16_1-MLC) | **Active & Verified**<br>- Official prebuilt model from MLC-AI catalog.<br>- Recommended for devices with 4GB+ system VRAM. |
@@ -19,12 +18,13 @@ These models run entirely in the browser using WebGPU and the WebLLM runtime. Th
 
 ---
 
-## 2. Gated / Gating Workarounds
+## 2. Model Source Policy
 
-Google gates the official `google/gemma` and `mlc-ai/gemma` model weights behind Hugging Face agreements. To prevent users from encountering HTTP 401 errors:
+Only models that provide useful instruction/chat responses and are available through the maintained WebLLM catalog belong in the application selector.
 
-1. **Keep Custom Model Configurations**: For custom community forks, ensure `CUSTOM_WEBLLM_MODELS` array entries in `core/local-ai.js` point to ungated, verified community repos.
-2. **Avoid Broken Mirrors**:
+1. **No community gating bypasses**: Do not route users through an unofficial model fork solely to avoid provider authentication or license agreements. Hide or remove a model that cannot be loaded reliably from its maintained source.
+2. **Minimum capability**: Ultra-small models that return control tokens, repetitive fragments, or cannot sustain basic chat should not be exposed as assistants.
+3. **Avoid broken mirrors**:
    - `hf-mirror.com` (China CDN) **must remain disabled** because it fails to resolve outside of China or fails to verify LFS assets correctly.
    - Run tests directly to `huggingface.co` or GitHub raw CDNs.
 

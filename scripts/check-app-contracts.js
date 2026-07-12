@@ -76,7 +76,7 @@ function createIframeGameRegistration(config) {
     };
 }
 
-function evaluateRegistration(appId, source) {
+function evaluateAppWindow(appId, source) {
     const storage = {
         getItem: () => null,
         setItem: () => {},
@@ -121,7 +121,92 @@ function evaluateRegistration(appId, source) {
     };
     windowObject.window = windowObject;
     vm.runInNewContext(source, sandbox, { filename: `apps/${appId}/app.js` });
-    return windowObject.appRegistry[appId];
+    return windowObject;
+}
+
+function evaluateRegistration(appId, source) {
+    return evaluateAppWindow(appId, source).appRegistry[appId];
+}
+
+function validateIPTVContract() {
+    const scope = "apps/iptv/app.js";
+    const source = read(scope);
+    const appWindow = evaluateAppWindow("iptv", source);
+    const tools = appWindow.IPTVStreamTools;
+    if (!tools) {
+        fail(scope, "IPTV parsing and cache diagnostics were not registered");
+        return;
+    }
+
+    const rendered = appWindow.appRegistry.iptv?.renderBody?.() || "";
+    [
+        "data-iptv-video",
+        "data-iptv-source-mode=\"xtream\"",
+        "data-iptv-source-mode=\"m3u\"",
+        "data-iptv-source-mode=\"upload\"",
+        "data-iptv-protocol-alert",
+        "data-iptv-guide-list"
+    ].forEach((marker) => {
+        if (!rendered.includes(marker)) fail(scope, `rendered shell is missing ${marker}`);
+    });
+
+    const playlist = `#EXTM3U url-tvg="https://guide.example/epg.xml"
+#EXTINF:-1 tvg-id="news.one" tvg-logo="https://img.example/news.png" group-title="News",News, One
+https://stream.example/live/news.m3u8
+#EXTINF:-1 group-title="Sports",Arena
+/live/arena.ts`;
+    const parsed = tools.parseM3U(playlist, "https://stream.example/list/playlist.m3u");
+    if (parsed.channels.length !== 2
+        || parsed.channels[0].name !== "News, One"
+        || parsed.channels[0].streamKind !== "hls"
+        || parsed.channels[1].streamUrl !== "https://stream.example/live/arena.ts"
+        || parsed.channels[1].streamKind !== "mpegts"
+        || parsed.epgUrl !== "https://guide.example/epg.xml") {
+        fail(scope, `M3U metadata, relative URLs, or stream format detection regressed: ${JSON.stringify(parsed)}`);
+    }
+
+    const zonedTimestamp = tools.parseXmltvDate("20260101010000 +0200");
+    if (zonedTimestamp !== Date.UTC(2025, 11, 31, 23, 0, 0)) {
+        fail(scope, "XMLTV timezone offsets are not normalized to UTC correctly");
+    }
+
+    const now = Date.UTC(2026, 0, 1, 12, 0, 0);
+    const retained = { s: now - 1000, e: now + 1000, t: "Current" };
+    const pruned = tools.pruneEpgCache({
+        schemaVersion: 1,
+        fetchedAt: now,
+        channels: { channel: { name: "Channel" } },
+        programmes: {
+            channel: [
+                { s: now - (14 * 60 * 60 * 1000), e: now - (13 * 60 * 60 * 1000), t: "Old" },
+                retained,
+                { s: now + (74 * 60 * 60 * 1000), e: now + (75 * 60 * 60 * 1000), t: "Too far" }
+            ]
+        }
+    }, now);
+    if (!pruned || pruned.programmeCount !== 1 || pruned.programmes.channel[0].t !== retained.t) {
+        fail(scope, "EPG retention did not keep only the bounded current window");
+    }
+
+    const expired = tools.pruneEpgCache({
+        schemaVersion: 1,
+        fetchedAt: now - (25 * 60 * 60 * 1000),
+        channels: {},
+        programmes: {}
+    }, now);
+    if (expired !== null) {
+        fail(scope, "EPG caches older than 24 hours must be evicted");
+    }
+
+    if (!source.includes("parseXmltvStream") || !source.includes("response.body")) {
+        fail(scope, "large XMLTV sources must be parsed incrementally from the response stream");
+    }
+    if (/25 MB browser limit|80 MB browser limit/.test(source)) {
+        fail(scope, "IPTV source files must not be rejected by the retired whole-file size limits");
+    }
+    if (/cdn\.jsdelivr\.net/.test(source) || !source.includes('type: "mse"')) {
+        fail(scope, "playback engines must be local and raw TS playback must use MSE autodetection");
+    }
 }
 
 function validateRegistration(appId, app) {
@@ -531,11 +616,326 @@ async function validateIframeGameContract() {
     }
 }
 
+function validateLocalAIInteractionContract() {
+    const brainHelper = read("desktop/brain-helper.js");
+    const localAI = read("core/local-ai.js");
+    const taskbar = read("desktop/taskbar.js");
+    const shell = read("desktop/shell.js");
+    const terminal = read("desktop/terminal.js");
+    const components = read("styles/components.css");
+    const utils = read("core/utils.js");
+
+    const containerRule = brainHelper.match(/\.brain-helper-container\s*\{([\s\S]*?)\}/)?.[1] || "";
+    const visibleContainerRule = brainHelper.match(/\.brain-helper-container\.visible\s*\{([\s\S]*?)\}/)?.[1] || "";
+    if (!/visibility\s*:\s*hidden/.test(containerRule) || !/visibility\s*:\s*visible/.test(visibleContainerRule)) {
+        fail("desktop/brain-helper.js", "Lobe must leave the focus/accessibility tree while its HUD is hidden");
+    }
+    if (!/pointer-events\s*:\s*none/.test(visibleContainerRule)) {
+        fail("desktop/brain-helper.js", "the visible Lobe container must remain click-through outside its interactive children");
+    }
+    if (!/\.brain-helper-container\.visible\s+\.brain-helper-mascot\s*\{[\s\S]*?pointer-events\s*:\s*auto/.test(brainHelper)) {
+        fail("desktop/brain-helper.js", "the visible Lobe mascot must explicitly own its pointer hitbox");
+    }
+    if (!/\.brain-helper-container\.visible\s+\.brain-helper-bubble\.visible\s*\{[\s\S]*?pointer-events\s*:\s*auto/.test(brainHelper)) {
+        fail("desktop/brain-helper.js", "the open Lobe bubble must explicitly own its pointer hitbox");
+    }
+    if (/textOutput\.innerHTML\s*\+\s*delta/.test(brainHelper)) {
+        fail("desktop/brain-helper.js", "streamed model output must not be concatenated into live HTML");
+    }
+    if (!brainHelper.includes("brain-helper-stop") || !brainHelper.includes("cancelGeneration")) {
+        fail("desktop/brain-helper.js", "Lobe must expose an answer-level cancel control");
+    }
+    if (!/cancelGeneration,\s*\n\s*chat,/.test(localAI) || !localAI.includes("interruptGenerate")) {
+        fail("core/local-ai.js", "LocalAI must expose cancellation and interrupt local WebLLM generation");
+    }
+    if (/\b(?:stopButton|settingsButton)\.onclick\s*=/.test(taskbar)) {
+        fail("desktop/taskbar.js", "tray actions must use the shell's single delegated click path");
+    }
+    if (!shell.includes('event.target.closest("[data-local-ai-tray-stop]")')) {
+        fail("desktop/shell.js", "the delegated Local AI tray stop handler is missing");
+    }
+    if (!/event\.key === "Enter"[\s\S]*?requestSubmit\(\)/.test(terminal)) {
+        fail("desktop/terminal.js", "the CLI must explicitly submit on Enter in embedded browsers");
+    }
+    const terminalButtonRule = components.match(/\.terminal-input-row button\s*\{([\s\S]*?)\}/)?.[1] || "";
+    if (/width\s*:\s*1px|height\s*:\s*1px|clip\s*:\s*rect/.test(terminalButtonRule)) {
+        fail("styles/components.css", "the CLI submit button must have a stable visible hitbox");
+    }
+    if (!utils.includes("if (selectEl.disabled || opt.disabled) return") || !utils.includes('trigger.setAttribute("aria-expanded", "false")')) {
+        fail("core/utils.js", "custom dropdowns must reject stale disabled selections and expose open state");
+    }
+}
+
+async function validateLocalAICliRuntimeContract() {
+    const models = [
+        { id: "SmolLM2-360M-Instruct-q4f16_1-MLC", label: "SmolLM2 360M", memoryMB: 376, type: "local" },
+        { id: "gemma-3-1b-it-q4f16_1-MLC", label: "Gemma 3 1B", memoryMB: 600, type: "local" }
+    ];
+    let selectedModelId = models[0].id;
+    let serviceStatus = "idle";
+    let cancelCalls = 0;
+    const getStatus = () => {
+        const model = models.find((item) => item.id === selectedModelId) || models[0];
+        return {
+            status: serviceStatus,
+            statusText: serviceStatus === "generating" ? "Local AI is answering..." : "Local AI is off.",
+            modelId: model.id,
+            modelLabel: model.label,
+            modelType: model.type,
+            memoryMB: model.memoryMB,
+            modelNote: "",
+            executionMode: "web-worker-webgpu",
+            busy: serviceStatus === "generating",
+            ready: serviceStatus === "ready"
+        };
+    };
+    const localAI = {
+        getStatus,
+        getAvailableModels: () => models,
+        getSelectedModelId: () => selectedModelId,
+        setSelectedModelId: (modelId) => {
+            selectedModelId = modelId;
+            serviceStatus = "idle";
+            return getStatus();
+        },
+        isReady: () => serviceStatus === "ready",
+        enable: async () => {
+            serviceStatus = "ready";
+            return getStatus();
+        },
+        disable: async () => {
+            serviceStatus = "idle";
+            return getStatus();
+        },
+        cancelGeneration: async () => {
+            cancelCalls += 1;
+            serviceStatus = "ready";
+            return true;
+        }
+    };
+    const windowObject = {
+        LocalAI: localAI,
+        SimpleBrain: { query: () => null },
+        EventBus: { on: () => {} },
+        state: { currentUserId: "guest" },
+        cliCommands: { help: "help", whoami: "profile", links: "links" },
+        getCurrentUser: () => ({ id: "guest" }),
+        addEventListener: () => {},
+        setTimeout: () => 1,
+        clearTimeout: () => {},
+        SystemFS: {}
+    };
+    const sandbox = {
+        window: windowObject,
+        document: {
+            readyState: "loading",
+            addEventListener: () => {},
+            getElementById: () => null
+        },
+        localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+        console: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+        crypto: global.crypto,
+        TextEncoder,
+        Blob,
+        Date,
+        Map,
+        Promise,
+        setTimeout: () => 1,
+        clearTimeout: () => {}
+    };
+    windowObject.window = windowObject;
+    vm.createContext(sandbox);
+    vm.runInContext(read("desktop/terminal.js"), sandbox, { filename: "desktop/terminal.js" });
+
+    const statusText = await vm.runInContext('runLocalAICommand(["status"])', sandbox);
+    if (!statusText.includes("State:   idle") || !statusText.includes("SmolLM2 360M")) {
+        fail("desktop/terminal.js", "ai status did not report the mocked Local AI service state");
+    }
+
+    const modelsText = await vm.runInContext('runLocalAICommand(["models"])', sandbox);
+    if (!modelsText.includes("Gemma 3 1B") || !modelsText.includes("ai use")) {
+        fail("desktop/terminal.js", "ai models did not expose available model choices");
+    }
+
+    const selectionText = await vm.runInContext('runLocalAICommand(["use", "gemma", "1b"])', sandbox);
+    if (selectedModelId !== models[1].id || !selectionText.includes("Selected Gemma 3 1B")) {
+        fail("desktop/terminal.js", "ai use did not resolve and select a friendly model name");
+    }
+
+    const capabilityText = vm.runInContext("getLocalAICapabilitiesText()", sandbox);
+    if (!capabilityText.includes("ai cancel") || !capabilityText.includes("jobs")) {
+        fail("desktop/terminal.js", "AI CLI capability help is missing cancellation/job controls");
+    }
+
+    serviceStatus = "generating";
+    const cancelText = await vm.runInContext('runLocalAICommand(["cancel"])', sandbox);
+    if (cancelCalls !== 1 || !cancelText.includes("cancellation requested")) {
+        fail("desktop/terminal.js", "ai cancel did not interrupt a non-terminal Local AI generation");
+    }
+}
+
+async function validateLocalAIServiceRuntimeContract() {
+    const storageValues = new Map();
+    storageValues.set("bl4ut0LocalAiModel", "gemma-3-270m-it-q4f16_1-MLC");
+    const storage = {
+        getItem: (key) => storageValues.has(key) ? storageValues.get(key) : null,
+        setItem: (key, value) => storageValues.set(key, String(value)),
+        removeItem: (key) => storageValues.delete(key)
+    };
+    let streamMode = "complete";
+    let fetchStarted = false;
+    const encoder = new TextEncoder();
+    const fetchMock = async (url, options = {}) => {
+        fetchStarted = true;
+        if (streamMode === "cancel") {
+            return {
+                ok: true,
+                body: {
+                    getReader: () => ({
+                        read: () => new Promise((resolve, reject) => {
+                            const abort = () => reject(new DOMException("Aborted", "AbortError"));
+                            if (options.signal?.aborted) abort();
+                            else options.signal?.addEventListener("abort", abort, { once: true });
+                        }),
+                        releaseLock: () => {}
+                    })
+                }
+            };
+        }
+
+        let reads = 0;
+        const payload = JSON.stringify([{
+            candidates: [{ content: { parts: [{ text: "<image_soft_token>Hello from the model." }] } }]
+        }]);
+        return {
+            ok: true,
+            body: {
+                getReader: () => ({
+                    read: async () => reads++ === 0
+                        ? { done: false, value: encoder.encode(payload) }
+                        : { done: true, value: undefined },
+                    releaseLock: () => {}
+                })
+            }
+        };
+    };
+
+    function createConsentOverlay() {
+        let clickHandler = null;
+        const overlay = {
+            className: "",
+            innerHTML: "",
+            setAttribute: () => {},
+            remove: () => {},
+            addEventListener: (type, handler) => {
+                if (type === "click") clickHandler = handler;
+            },
+            querySelector: () => ({
+                focus: () => clickHandler?.({
+                    target: {
+                        closest: () => ({ dataset: { localAiConsent: "allow" } })
+                    }
+                })
+            })
+        };
+        return overlay;
+    }
+
+    const host = { appendChild: () => {} };
+    const statusEvents = [];
+    const windowObject = {
+        EventBus: { emit: (name, value) => statusEvents.push({ name, value }) },
+        addSystemLog: () => {},
+        systems: [],
+        bookmarks: [],
+        crossOriginIsolated: false,
+        requestAnimationFrame: (callback) => setTimeout(callback, 0),
+        cancelAnimationFrame: (id) => clearTimeout(id),
+        setTimeout,
+        clearTimeout,
+        setInterval,
+        clearInterval
+    };
+    const sandbox = {
+        window: windowObject,
+        document: {
+            body: host,
+            createElement: () => createConsentOverlay(),
+            querySelector: () => host
+        },
+        localStorage: storage,
+        navigator: { gpu: null, userAgent: "contract-test" },
+        performance: { now: () => Date.now() },
+        fetch: fetchMock,
+        console: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+        AbortController,
+        DOMException,
+        TextDecoder,
+        TextEncoder,
+        Uint8Array,
+        ArrayBuffer,
+        Blob,
+        URL,
+        atob,
+        setTimeout,
+        clearTimeout,
+        setInterval,
+        clearInterval
+    };
+    windowObject.window = windowObject;
+    vm.createContext(sandbox);
+    vm.runInContext(read("core/local-ai.js"), sandbox, { filename: "core/local-ai.js" });
+
+    const migratedModelId = windowObject.LocalAI.getSelectedModelId();
+    const availableModelIds = windowObject.LocalAI.getAvailableModels().map((model) => model.id);
+    if (migratedModelId !== "SmolLM2-360M-Instruct-q4f16_1-MLC" || availableModelIds.includes("gemma-3-270m-it-q4f16_1-MLC")) {
+        fail("core/local-ai.js", "retired Gemma 3 270M selections must migrate to SmolLM2 and stay out of the catalog");
+    }
+
+    const cloudModelId = "gemini-2.5-flash";
+    windowObject.LocalAI.setSelectedModelId(cloudModelId);
+    const enabledStatus = await windowObject.LocalAI.enable("contract test");
+    if (!enabledStatus.ready || enabledStatus.modelId !== cloudModelId) {
+        fail("core/local-ai.js", "the mocked cloud model did not reach ready state");
+        return;
+    }
+
+    const chunks = [];
+    fetchStarted = false;
+    const response = await windowObject.LocalAI.chat("hello", { mode: "cli" }, (delta) => chunks.push(delta));
+    if (response.includes("<image_soft_token>") || chunks.join("").includes("<image_soft_token>")) {
+        fail("core/local-ai.js", "internal model tokens escaped the final or streamed output sanitizer");
+    }
+    if (response !== "Hello from the model." || chunks.join("") !== "Hello from the model.") {
+        fail("core/local-ai.js", "sanitized cloud streaming did not preserve normal response text");
+    }
+
+    streamMode = "cancel";
+    fetchStarted = false;
+    const pendingChat = windowObject.LocalAI.chat("wait", { mode: "cli" }, () => {});
+    for (let attempt = 0; attempt < 20 && !fetchStarted; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+    }
+    const cancelled = await windowObject.LocalAI.cancelGeneration("contract-test");
+    const cancelledResponse = await pendingChat;
+    const finalStatus = windowObject.LocalAI.getStatus();
+    if (!cancelled || cancelledResponse !== "AI response cancelled." || finalStatus.status !== "ready") {
+        fail("core/local-ai.js", "answer cancellation did not preserve the ready cloud runtime");
+    }
+    if (!statusEvents.some((event) => event.name === "local-ai:status" && event.value?.canCancel)) {
+        fail("core/local-ai.js", "generating status did not advertise answer-level cancellation");
+    }
+}
+
 async function run() {
     await validateFrameworkContract();
     await validateLoaderContract();
     await validateWindowManagerContract();
     await validateIframeGameContract();
+    validateIPTVContract();
+    validateLocalAIInteractionContract();
+    await validateLocalAICliRuntimeContract();
+    await validateLocalAIServiceRuntimeContract();
     let catalog;
     try {
         catalog = loadCatalog();
@@ -660,7 +1060,7 @@ async function run() {
         return;
     }
 
-    console.log(`App contract audit passed: ${modularIds.length} modular apps, 2 templates, lifecycle/window/loader/iframe behavior, and ${syntaxFileCount} first-party scripts checked.`);
+    console.log(`App contract audit passed: ${modularIds.length} modular apps, 2 templates, lifecycle/window/loader/iframe/Local AI behavior, and ${syntaxFileCount} first-party scripts checked.`);
 }
 
 run().catch((error) => {

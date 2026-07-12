@@ -1496,6 +1496,9 @@
         },
         onMinimize: () => {},
         onMaximize: () => {},
-        setVolume
+        setVolume,
+        playPath: async (path) => {
+            await loadTrack(path, true);
+        }
     };
 })();

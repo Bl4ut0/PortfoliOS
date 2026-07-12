@@ -42,11 +42,20 @@ window.openDesktopSettings = (panel = "desktop") => {
 window.getContextMenuItems = (event) => {
     const windowBar = event.target.closest(".desktop-window .window-bar");
     const desktopWindow = event.target.closest(".desktop-window");
+    const appContextTarget = event.target.closest("[data-app-context]");
     const desktopIcon = event.target.closest(".desktop-icon");
     const taskbarApp = event.target.closest("[data-taskbar-app]");
     const link = event.target.closest("a[href]");
     const input = event.target.closest("input, textarea");
     const selection = window.getSelection()?.toString().trim();
+
+    if (desktopWindow && appContextTarget) {
+        const app = window.appRegistry?.[desktopWindow.dataset.window];
+        if (typeof app?.getContextMenuItems === "function") {
+            const appItems = app.getContextMenuItems(appContextTarget, event, desktopWindow);
+            if (Array.isArray(appItems) && appItems.length) return appItems;
+        }
+    }
 
     if (windowBar && desktopWindow) {
         const name = desktopWindow.dataset.window;
@@ -161,12 +170,26 @@ window.showContextMenu = (event) => {
     event.preventDefault();
 
     const items = window.getContextMenuItems(event);
-    menu.innerHTML = items.map((item, index) => item.type === "separator"
-        ? `<div class="context-separator" role="separator"></div>`
-        : `<button type="button" role="menuitem" data-context-index="${index}" ${item.disabled ? "disabled" : ""}>
-            <i class="${item.icon}"></i><span>${item.label}</span>
-        </button>`
-    ).join("");
+    const escapeHtml = window.escapeHtml || ((value) => String(value));
+    const renderItems = (entries, parentPath = "") => entries.map((item, index) => {
+        if (item.type === "separator") return '<div class="context-separator" role="separator"></div>';
+        const itemPath = parentPath ? `${parentPath}.${index}` : String(index);
+        const safeLabel = escapeHtml(item.label || "");
+        const safeIcon = escapeHtml(item.icon || "fa-regular fa-circle");
+        if (Array.isArray(item.children) && item.children.length) {
+            return `<div class="context-menu-entry has-submenu">
+                <button type="button" role="menuitem" aria-haspopup="menu">
+                    <i class="${safeIcon}"></i><span>${safeLabel}</span><i class="fa-solid fa-chevron-right context-submenu-arrow"></i>
+                </button>
+                <div class="context-submenu" role="menu">${renderItems(item.children, itemPath)}</div>
+            </div>`;
+        }
+        return `<button type="button" role="menuitem" data-context-path="${itemPath}" ${item.disabled ? "disabled" : ""}>
+            <i class="${safeIcon}"></i><span>${safeLabel}</span>
+        </button>`;
+    }).join("");
+    menu.innerHTML = renderItems(items);
+    menu.classList.toggle("submenu-left", event.clientX > window.innerWidth / 2);
     menu.hidden = false;
 
     const scale = window.getDesktopScale ? window.getDesktopScale() : 1;
@@ -181,12 +204,17 @@ window.showContextMenu = (event) => {
 
 // Event Delegation for context menu item click
 document.addEventListener("click", (event) => {
-    const item = event.target.closest("#desktop-context-menu button");
+    const item = event.target.closest("#desktop-context-menu button[data-context-path]");
     if (!item) return;
     const menu = window.byId ? window.byId("desktop-context-menu") : document.getElementById("desktop-context-menu");
     if (!menu) return;
-    const index = parseInt(item.dataset.contextIndex, 10);
-    const contextItem = menu._contextItems?.[index];
+    const path = String(item.dataset.contextPath || "").split(".").map((part) => parseInt(part, 10));
+    let contextItem = null;
+    let entries = menu._contextItems;
+    path.forEach((index) => {
+        contextItem = entries?.[index] || null;
+        entries = contextItem?.children;
+    });
     if (contextItem && typeof contextItem.action === "function") {
         contextItem.action();
     }

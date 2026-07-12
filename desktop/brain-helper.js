@@ -10,21 +10,23 @@
         .brain-helper-container {
             position: fixed;
             bottom: 70px;
-            right: 25px;
-            z-index: 9999;
+            right: clamp(12px, 2vw, 25px);
+            z-index: 78;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             pointer-events: none;
+            visibility: hidden;
             transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             opacity: 0;
             transform: translateY(20px) scale(0.9);
         }
         .brain-helper-container.visible {
             opacity: 1;
+            visibility: visible;
             transform: translateY(0) scale(1);
-            pointer-events: auto;
+            pointer-events: none;
         }
 
         /* Mascot Element */
@@ -34,7 +36,21 @@
             cursor: pointer;
             position: relative;
             user-select: none;
+            padding: 0;
+            border: 0;
+            color: inherit;
+            background: transparent;
+            line-height: 0;
             filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+            pointer-events: none;
+        }
+        .brain-helper-container.visible .brain-helper-mascot {
+            pointer-events: auto;
+        }
+        .brain-helper-mascot:focus-visible {
+            outline: 2px solid var(--theme-primary, #22d3ee);
+            outline-offset: 2px;
+            border-radius: 8px;
         }
 
         /* Floating Bobbing Animation */
@@ -63,6 +79,7 @@
             transform-origin: center;
             animation: shadow-scale 3.5s ease-in-out infinite;
             transition: all 0.3s ease;
+            pointer-events: none;
         }
         .brain-helper-mascot.thinking + .brain-helper-shadow {
             animation: shadow-scale 1.5s ease-in-out infinite;
@@ -74,8 +91,9 @@
             backdrop-filter: blur(12px) saturate(180%);
             -webkit-backdrop-filter: blur(12px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            width: 320px;
+            border-radius: 8px;
+            width: min(320px, calc(100vw - 24px));
+            box-sizing: border-box;
             padding: 16px;
             margin-bottom: 12px;
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
@@ -85,11 +103,13 @@
             transform-origin: bottom right;
             transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             opacity: 0;
+            visibility: hidden;
             transform: scale(0.85) translateY(10px);
             pointer-events: none;
         }
-        .brain-helper-bubble.visible {
+        .brain-helper-container.visible .brain-helper-bubble.visible {
             opacity: 1;
+            visibility: visible;
             transform: scale(1) translateY(0);
             pointer-events: auto;
         }
@@ -207,6 +227,16 @@
             color: var(--text-soft, #4b5563);
             cursor: not-allowed;
         }
+        .brain-helper-submit[hidden] {
+            display: none;
+        }
+        .brain-helper-stop {
+            color: var(--rose, #f43f5e);
+        }
+        .brain-helper-stop:hover:not(:disabled) {
+            color: #fff;
+            background: rgba(244, 63, 94, 0.14);
+        }
 
         /* Mini-text helpers */
         .brain-helper-hint {
@@ -306,7 +336,7 @@
         if (isCloud) {
             return `Hi there! I am your Cloud AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Running on a cloud-hosted model. You can switch models or manage connection settings in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI app</a>.</span>`;
         }
-        return `Hi there! I am your Local AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Tip: Running slow? You can select lighter models like Gemma 3 270M inside the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Local AI app</a>.</span>`;
+        return `Hi there! I am your Local AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">For lightweight chat, use SmolLM2 360M or Qwen 0.5B in <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI settings</a>.</span>`;
     }
 
     function getClearChatMessage(isCloud) {
@@ -322,7 +352,7 @@
     const container = document.createElement("div");
     container.className = "brain-helper-container";
     container.innerHTML = `
-        <div class="brain-helper-bubble" id="brain-helper-bubble">
+        <div class="brain-helper-bubble" id="brain-helper-bubble" role="dialog" aria-label="Lobe AI assistant" aria-hidden="true">
             <div class="brain-helper-header">
                 <span class="brain-helper-title">
                     <i class="fa-solid fa-microchip-brain"></i> Lobe
@@ -331,7 +361,7 @@
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
             </div>
-            <div class="brain-helper-output" id="brain-helper-text">
+            <div class="brain-helper-output" id="brain-helper-text" aria-live="polite">
                 ${getWelcomeMessage(initialIsCloud)}
             </div>
             <form class="brain-helper-form" id="brain-helper-form">
@@ -340,6 +370,9 @@
                     <button type="submit" class="brain-helper-submit" id="brain-helper-send" title="Send question">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
+                    <button type="button" class="brain-helper-submit brain-helper-stop" id="brain-helper-stop" title="Cancel response" hidden>
+                        <i class="fa-solid fa-square"></i>
+                    </button>
                 </div>
                 <div class="brain-helper-hint">
                     <span>Press Enter to send</span>
@@ -347,7 +380,7 @@
                 </div>
             </form>
         </div>
-        <div class="brain-helper-mascot idle" id="brain-helper-mascot" title="Click to chat with ${initialIsCloud ? 'Cloud AI' : 'Local AI'}">
+        <button type="button" class="brain-helper-mascot idle" id="brain-helper-mascot" title="Chat with ${initialIsCloud ? 'Cloud AI' : 'Local AI'}" aria-label="Open Lobe AI assistant" aria-expanded="false" aria-controls="brain-helper-bubble">
             <svg class="brain-helper-svg" viewBox="0 0 100 100" width="100%" height="100%">
                 <!-- Gradient for Brain Shape -->
                 <defs>
@@ -428,7 +461,7 @@
                 <circle cx="27" cy="54" r="3.5" fill="#f43f5e" opacity="0.5" />
                 <circle cx="73" cy="54" r="3.5" fill="#f43f5e" opacity="0.5" />
             </svg>
-        </div>
+        </button>
         <div class="brain-helper-shadow"></div>
     `;
     document.body.appendChild(container);
@@ -440,13 +473,38 @@
     const form = document.getElementById("brain-helper-form");
     const input = document.getElementById("brain-helper-input");
     const sendBtn = document.getElementById("brain-helper-send");
+    const stopBtn = document.getElementById("brain-helper-stop");
     const closeBtn = document.getElementById("brain-helper-close-btn");
     const clearBtn = document.getElementById("brain-helper-clear-btn");
     const mouth = document.getElementById("brainy-mouth");
 
     let isMascotVisible = false;
     let isBubbleVisible = false;
-    let activeGenerations = 0;
+    let isGenerating = false;
+    let lobeRequestId = 0;
+
+    function renderAssistantText(value) {
+        return escapeHtml(value)
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/\n/g, "<br>");
+    }
+
+    function setMascotThinking(thinking) {
+        mascot.classList.toggle("thinking", thinking);
+        mascot.classList.toggle("idle", !thinking);
+        mouth.setAttribute("d", thinking ? "M 46 60 Q 50 60, 54 60" : "M 45 58 Q 50 63, 55 58");
+    }
+
+    function setGenerationControls(generating) {
+        isGenerating = generating;
+        form.setAttribute("aria-busy", String(generating));
+        input.disabled = generating;
+        sendBtn.disabled = generating;
+        sendBtn.hidden = generating;
+        stopBtn.hidden = !generating;
+        stopBtn.disabled = false;
+        setMascotThinking(generating);
+    }
 
     // Toggle speech bubble on mascot click
     mascot.addEventListener("click", () => {
@@ -465,10 +523,28 @@
     // Clear Chat
     clearBtn.addEventListener("click", (e) => {
         e.preventDefault();
+        lobeRequestId += 1;
+        if (isGenerating) {
+            window.LocalAI?.cancelGeneration?.("lobe-clear");
+        }
         const isCloud = window.LocalAI && window.LocalAI.getStatus ? window.LocalAI.getStatus().modelType?.startsWith("cloud-") : false;
         textOutput.innerHTML = getClearChatMessage(isCloud);
         input.value = "";
         input.focus();
+    });
+
+    stopBtn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!window.LocalAI?.cancelGeneration) return;
+
+        stopBtn.disabled = true;
+        try {
+            await window.LocalAI.cancelGeneration("lobe");
+        } finally {
+            const stillGenerating = window.LocalAI.getStatus?.().status === "generating";
+            setGenerationControls(stillGenerating);
+        }
     });
 
     // Handle clicks on internal link actions
@@ -501,7 +577,9 @@
 
     function updateHelperMode(isCloud) {
         if (mascot) {
-            mascot.title = isCloud ? "Click to chat with Cloud AI" : "Click to chat with Local AI";
+            const label = isCloud ? "Cloud AI" : "Local AI";
+            mascot.title = `Chat with ${label}`;
+            mascot.setAttribute("aria-label", `Open Lobe ${label} assistant`);
         }
         const welcomeTextLocal = "Hi there! I am your Local AI brain helper.";
         const welcomeTextCloud = "Hi there! I am your Cloud AI brain helper.";
@@ -516,12 +594,6 @@
         isMascotVisible = visible;
         if (visible) {
             container.classList.add("visible");
-            // Welcome bubble after load delay
-            setTimeout(() => {
-                if (isMascotVisible && !isBubbleVisible && textOutput.innerHTML.includes("Hi there!")) {
-                    setBubbleVisibility(true);
-                }
-            }, 1500);
         } else {
             container.classList.remove("visible");
             setBubbleVisibility(false);
@@ -531,12 +603,22 @@
     // Set Bubble Visibility
     function setBubbleVisibility(visible) {
         isBubbleVisible = visible;
+        mascot.setAttribute("aria-expanded", String(visible));
+        bubble.setAttribute("aria-hidden", String(!visible));
         if (visible) {
+            window.closeLocalAITrayPanel?.();
             bubble.classList.add("visible");
         } else {
             bubble.classList.remove("visible");
         }
     }
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && isBubbleVisible) {
+            setBubbleVisibility(false);
+            mascot.focus();
+        }
+    });
 
     // Handle Form Submit (AI prompt query)
     form.addEventListener("submit", async (e) => {
@@ -544,11 +626,16 @@
         const prompt = input.value.trim();
         if (!prompt) return;
 
+        if (isGenerating) {
+            textOutput.textContent = "Local AI is already answering. Cancel the current response before sending another question.";
+            return;
+        }
+
+        const requestId = ++lobeRequestId;
         input.value = "";
         input.style.height = "38px";
         input.blur();
 
-        // Check if Local AI is ready
         if (!window.LocalAI || !window.LocalAI.isReady()) {
             if (window.SimpleBrain) {
                 const answer = window.SimpleBrain.query(prompt);
@@ -556,20 +643,17 @@
                     input.disabled = true;
                     sendBtn.disabled = true;
                     textOutput.innerHTML = "";
-                    mascot.classList.remove("idle");
-                    mascot.classList.add("thinking");
-                    mouth.setAttribute("d", "M 46 60 Q 50 60, 54 60");
-                    
+                    setMascotThinking(true);
+
                     setTimeout(() => {
-                        mascot.classList.remove("thinking");
-                        mascot.classList.add("idle");
-                        mouth.setAttribute("d", "M 45 58 Q 50 63, 55 58");
-                        textOutput.innerHTML = answer.replace(/\n/g, '<br>');
+                        if (requestId !== lobeRequestId || isGenerating) return;
+                        setMascotThinking(false);
+                        textOutput.innerHTML = renderAssistantText(answer);
                         input.disabled = false;
                         sendBtn.disabled = false;
                         textOutput.scrollTop = textOutput.scrollHeight;
                         input.focus();
-                    }, 400); // 400ms thinking delay for realism
+                    }, 250);
                     return;
                 }
             }
@@ -578,43 +662,26 @@
             return;
         }
 
-        // Lock form during generation
-        input.disabled = true;
-        sendBtn.disabled = true;
+        setGenerationControls(true);
         textOutput.innerHTML = "";
-        
-        // Transition mascot to thinking state
-        mascot.classList.remove("idle");
-        mascot.classList.add("thinking");
-        mouth.setAttribute("d", "M 46 60 Q 50 60, 54 60"); // Neutral/flat mouth while thinking
-        activeGenerations++;
+        let streamedText = "";
 
-        let cursorSpan = document.createElement("span");
+        const cursorSpan = document.createElement("span");
         cursorSpan.className = "brain-stream-cursor";
         textOutput.appendChild(cursorSpan);
 
         try {
             const onChunk = (delta) => {
-                // Remove cursor temporarily to insert content
-                if (cursorSpan.parentNode) {
-                    cursorSpan.parentNode.removeChild(cursorSpan);
-                }
-
-                // Add token and render simple markdown (bolding, newlines)
-                const currentHtml = textOutput.innerHTML + delta;
-                textOutput.innerHTML = currentHtml
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>');
-
-                // Put cursor back at the end
+                if (requestId !== lobeRequestId) return;
+                streamedText += String(delta || "");
+                textOutput.innerHTML = renderAssistantText(streamedText);
                 textOutput.appendChild(cursorSpan);
                 textOutput.scrollTop = textOutput.scrollHeight;
-                
-                // Animate mouth speaking (toggle smile/o-shape slightly)
+
                 if (Math.random() > 0.4) {
-                    mouth.setAttribute("d", "M 46 61 Q 50 56, 54 61"); // O shape mouth
+                    mouth.setAttribute("d", "M 46 61 Q 50 56, 54 61");
                 } else {
-                    mouth.setAttribute("d", "M 45 58 Q 50 63, 55 58"); // Smile
+                    mouth.setAttribute("d", "M 45 58 Q 50 63, 55 58");
                 }
             };
 
@@ -624,31 +691,24 @@
                 mode: "chat"
             }, onChunk);
 
-            // Finished successfully
-            if (cursorSpan.parentNode) {
-                cursorSpan.parentNode.removeChild(cursorSpan);
+            if (requestId === lobeRequestId) {
+                textOutput.innerHTML = renderAssistantText(result);
             }
-            textOutput.innerHTML = result
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>');
         } catch (error) {
-            if (cursorSpan.parentNode) {
-                cursorSpan.parentNode.removeChild(cursorSpan);
+            if (requestId === lobeRequestId) {
+                const isCloud = window.LocalAI?.getStatus?.().modelType?.startsWith("cloud-");
+                const message = error?.message || (isCloud ? "Cloud AI failed to generate response." : "Local AI failed to generate response.");
+                textOutput.innerHTML = `<span style="color: var(--rose, #f43f5e);">Error: ${escapeHtml(message)}</span>`;
             }
-            const isCloud = window.LocalAI && window.LocalAI.getStatus ? window.LocalAI.getStatus().modelType?.startsWith("cloud-") : false;
-            textOutput.innerHTML = `<span style="color: var(--rose, #f43f5e);">Error: ${escapeHtml(error?.message || (isCloud ? "Cloud AI failed to generate response." : "Local AI failed to generate response."))}</span>`;
         } finally {
-            activeGenerations--;
-            if (activeGenerations <= 0) {
-                activeGenerations = 0;
-                mascot.classList.remove("thinking");
-                mascot.classList.add("idle");
-                mouth.setAttribute("d", "M 45 58 Q 50 63, 55 58"); // Standard smile
+            if (requestId === lobeRequestId) {
+                const stillGenerating = window.LocalAI?.getStatus?.().status === "generating";
+                setGenerationControls(stillGenerating);
+                textOutput.scrollTop = textOutput.scrollHeight;
+                if (!stillGenerating) {
+                    setTimeout(() => input.focus(), 50);
+                }
             }
-            input.disabled = false;
-            sendBtn.disabled = false;
-            textOutput.scrollTop = textOutput.scrollHeight;
-            setTimeout(() => input.focus(), 50);
         }
     });
 
@@ -665,10 +725,9 @@
     // Listen to Local AI Status events
     if (window.EventBus) {
         window.EventBus.on("local-ai:status", (status) => {
-            // Show mascot if local AI is loaded/active (ready, generating)
-            // Hide it if it's idle or off.
             const isReady = status.ready || status.status === "generating";
             setMascotVisibility(isReady);
+            setGenerationControls(status.status === "generating");
             
             const isCloud = status.modelType && status.modelType.startsWith("cloud-");
             updateHelperMode(isCloud);
@@ -679,6 +738,7 @@
             const currentStatus = window.LocalAI.getStatus();
             const isReady = currentStatus.ready || currentStatus.status === "generating";
             setMascotVisibility(isReady);
+            setGenerationControls(currentStatus.status === "generating");
             
             const isCloud = currentStatus.modelType && currentStatus.modelType.startsWith("cloud-");
             updateHelperMode(isCloud);
@@ -690,6 +750,8 @@
         hide: () => setMascotVisibility(false),
         openBubble: () => setBubbleVisibility(true),
         closeBubble: () => setBubbleVisibility(false),
+        cancel: () => window.LocalAI?.cancelGeneration?.("lobe-api"),
+        isOpen: () => isBubbleVisible,
         ask: (promptText) => {
             setMascotVisibility(true);
             setBubbleVisibility(true);

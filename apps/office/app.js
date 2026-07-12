@@ -23,6 +23,41 @@
         }
     };
 
+    let saveDialogPath = "/documents";
+
+    function sanitizeFileName(name) {
+        return String(name || "")
+            .replace(/[\\/:*?"<>|]/g, "-")
+            .replace(/[\u0000-\u001f]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function joinPath(parent, name) {
+        const cleanParent = window.SystemFS?.normalizePath(parent) || parent || "/";
+        return cleanParent === "/" ? `/${name}` : `${cleanParent}/${name}`;
+    }
+
+    function getSaveSpec() {
+        return officeState.activeView === "calc"
+            ? { extension: ".ods", defaultName: "Untitled.ods", mimeType: "application/json" }
+            : { extension: ".odt", defaultName: "Untitled.odt", mimeType: "text/html" };
+    }
+
+    function getActiveFileData(windowEl) {
+        const spec = getSaveSpec();
+        if (officeState.activeView === "writer") {
+            return {
+                data: windowEl.querySelector(".writer-page")?.innerHTML || "",
+                mimeType: spec.mimeType
+            };
+        }
+        return {
+            data: JSON.stringify(officeState.sheets),
+            mimeType: spec.mimeType
+        };
+    }
+
     // Helper to translate col letters like "A" -> 1
     function colToNumber(col) {
         let num = 0;
@@ -422,50 +457,217 @@
         saveRecentDocs(fileItem);
     }
 
-    // Save active document back to SystemFS
-    async function saveActiveOfficeFile(windowEl) {
-        if (officeState.activeView === "dashboard") return;
+    function setSaveDialogError(windowEl, message = "") {
+        const errorEl = windowEl.querySelector(".office-save-error");
+        if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.hidden = !message;
+        }
+    }
 
-        let path = officeState.currentFile ? officeState.currentFile.path : "";
-        let name = officeState.currentFile ? officeState.currentFile.name : "";
-        let parent = officeState.currentFile ? officeState.currentFile.parent : "/documents";
+    function resetSaveDialogConfirmation(windowEl) {
+        const dialog = windowEl.querySelector(".office-save-dialog");
+        const saveButton = windowEl.querySelector(".office-save-confirm");
+        if (dialog) delete dialog.dataset.overwritePath;
+        if (saveButton) saveButton.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
+        setSaveDialogError(windowEl);
+    }
 
-        if (!path) {
-            const ext = officeState.activeView === "writer" ? ".odt" : ".ods";
-            const inputName = prompt("Save file as:", "Untitled" + ext);
-            if (!inputName) return;
+    function closeSaveDialog(windowEl) {
+        const overlay = windowEl.querySelector(".office-save-overlay");
+        if (!overlay) return;
+        overlay.hidden = true;
+        resetSaveDialogConfirmation(windowEl);
+        windowEl.querySelector(".office-new-folder-row")?.setAttribute("hidden", "");
+    }
 
-            let cleanName = inputName.replace(/[\\/:*?"<>|]/g, "-").trim();
-            if (!cleanName) return;
+    function renderSaveBreadcrumbs(windowEl) {
+        const container = windowEl.querySelector(".office-save-breadcrumbs");
+        if (!container) return;
+        container.replaceChildren();
 
-            if (!cleanName.endsWith(ext)) {
-                cleanName += ext;
+        const appendSegment = (label, path, icon = "") => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "office-save-breadcrumb";
+            if (icon) button.innerHTML = `<i class="${icon}"></i><span>${label}</span>`;
+            else button.textContent = label;
+            button.addEventListener("click", () => {
+                saveDialogPath = path;
+                resetSaveDialogConfirmation(windowEl);
+                renderSaveDirectory(windowEl);
+            });
+            container.appendChild(button);
+        };
+
+        appendSegment("SystemFS", "/", "fa-solid fa-hard-drive");
+        let accumulatedPath = "";
+        saveDialogPath.split("/").filter(Boolean).forEach((part) => {
+            const separator = document.createElement("i");
+            separator.className = "fa-solid fa-chevron-right office-save-breadcrumb-separator";
+            container.appendChild(separator);
+            accumulatedPath += `/${part}`;
+            appendSegment(part, accumulatedPath);
+        });
+    }
+
+    async function renderSaveDirectory(windowEl) {
+        const list = windowEl.querySelector(".office-save-folder-list");
+        const upButton = windowEl.querySelector(".office-save-up");
+        const location = windowEl.querySelector(".office-save-location");
+        if (!list) return;
+
+        saveDialogPath = window.SystemFS.normalizePath(saveDialogPath);
+        if (upButton) upButton.disabled = saveDialogPath === "/";
+        if (location) location.textContent = saveDialogPath;
+        renderSaveBreadcrumbs(windowEl);
+        list.innerHTML = '<div class="office-save-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading folders...</div>';
+
+        try {
+            const items = await window.SystemFS.readDir(saveDialogPath);
+            const directories = items.filter((item) => item.isDirectory && !item.name.startsWith("."));
+            list.replaceChildren();
+
+            if (!directories.length) {
+                const empty = document.createElement("div");
+                empty.className = "office-save-empty";
+                empty.textContent = "No folders in this location.";
+                list.appendChild(empty);
+                return;
             }
-            name = cleanName;
-            path = parent === "/" ? `/${name}` : `${parent}/${name}`;
+
+            directories.forEach((directory) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "office-save-folder";
+                button.innerHTML = '<i class="fa-solid fa-folder"></i><span></span><i class="fa-solid fa-chevron-right"></i>';
+                button.querySelector("span").textContent = directory.name;
+                button.addEventListener("click", () => {
+                    saveDialogPath = directory.path;
+                    resetSaveDialogConfirmation(windowEl);
+                    renderSaveDirectory(windowEl);
+                });
+                list.appendChild(button);
+            });
+        } catch (error) {
+            console.error("Failed to list SystemFS folders:", error);
+            list.innerHTML = '<div class="office-save-empty">This location could not be opened.</div>';
+            setSaveDialogError(windowEl, error.message || "This location could not be opened.");
+        }
+    }
+
+    async function writeActiveOfficeFile(windowEl, path, name, parent) {
+        const { data, mimeType } = getActiveFileData(windowEl);
+        const record = await window.SystemFS.writeFile(path, name, parent, data, data.length, mimeType, false);
+        officeState.currentFile = record;
+        updateDocumentTitle(windowEl);
+        saveRecentDocs(record);
+        window.showDesktopToast?.(`Saved ${name} locally in ${parent}.`);
+        return record;
+    }
+
+    async function commitSaveDialog(windowEl) {
+        const dialog = windowEl.querySelector(".office-save-dialog");
+        const input = windowEl.querySelector(".office-save-name");
+        const saveButton = windowEl.querySelector(".office-save-confirm");
+        if (!dialog || !input || !saveButton) return;
+
+        const { extension } = getSaveSpec();
+        let name = sanitizeFileName(input.value);
+        if (!name) {
+            setSaveDialogError(windowEl, "Enter a file name.");
+            input.focus();
+            return;
+        }
+        if (!name.toLowerCase().endsWith(extension)) name += extension;
+        input.value = name;
+
+        const path = joinPath(saveDialogPath, name);
+        try {
+            const existing = await window.SystemFS.readFile(path);
+            if (existing?.isDirectory) {
+                setSaveDialogError(windowEl, "A folder already uses that name.");
+                return;
+            }
+            if (existing && dialog.dataset.overwritePath !== path) {
+                dialog.dataset.overwritePath = path;
+                saveButton.innerHTML = '<i class="fa-solid fa-rotate"></i> Replace';
+                setSaveDialogError(windowEl, `${name} already exists here. Choose Replace to overwrite it.`);
+                return;
+            }
+
+            saveButton.disabled = true;
+            await writeActiveOfficeFile(windowEl, path, name, saveDialogPath);
+            closeSaveDialog(windowEl);
+        } catch (error) {
+            console.error("Save failed:", error);
+            setSaveDialogError(windowEl, error.message || "The file could not be saved.");
+        } finally {
+            saveButton.disabled = false;
+        }
+    }
+
+    async function createSaveDialogFolder(windowEl) {
+        const row = windowEl.querySelector(".office-new-folder-row");
+        const input = windowEl.querySelector(".office-new-folder-name");
+        if (!row || !input) return;
+        const name = sanitizeFileName(input.value);
+        if (!name) {
+            setSaveDialogError(windowEl, "Enter a folder name.");
+            input.focus();
+            return;
         }
 
-        let fileData = "";
-        let mimeType = "text/plain";
+        const path = joinPath(saveDialogPath, name);
+        try {
+            if (await window.SystemFS.readFile(path)) {
+                setSaveDialogError(windowEl, "A file or folder already uses that name.");
+                return;
+            }
+            await window.SystemFS.ensureDirectory(path);
+            input.value = "";
+            row.hidden = true;
+            resetSaveDialogConfirmation(windowEl);
+            await renderSaveDirectory(windowEl);
+        } catch (error) {
+            console.error("Folder creation failed:", error);
+            setSaveDialogError(windowEl, error.message || "The folder could not be created.");
+        }
+    }
 
-        if (officeState.activeView === "writer") {
-            const page = windowEl.querySelector(".writer-page");
-            fileData = page ? page.innerHTML : "";
-            mimeType = "text/html";
-        } else if (officeState.activeView === "calc") {
-            fileData = JSON.stringify(officeState.sheets);
-            mimeType = "application/json";
+    async function openSaveDialog(windowEl) {
+        const overlay = windowEl.querySelector(".office-save-overlay");
+        const input = windowEl.querySelector(".office-save-name");
+        if (!overlay || !input) return;
+
+        const spec = getSaveSpec();
+        saveDialogPath = officeState.currentFile?.parent || "/documents";
+        input.value = officeState.currentFile?.name || spec.defaultName;
+        overlay.hidden = false;
+        resetSaveDialogConfirmation(windowEl);
+        await renderSaveDirectory(windowEl);
+        input.focus({ preventScroll: true });
+        input.select();
+    }
+
+    // Save active document back to SystemFS. Unsaved files use the in-app picker.
+    async function saveActiveOfficeFile(windowEl) {
+        if (officeState.activeView === "dashboard") return;
+        if (!officeState.currentFile?.path) {
+            await openSaveDialog(windowEl);
+            return;
         }
 
         try {
-            const record = await window.SystemFS.writeFile(path, name, parent, fileData, fileData.length, mimeType, false);
-            officeState.currentFile = record;
-            updateDocumentTitle(windowEl);
-            saveRecentDocs(record);
-            window.showDesktopToast?.(`Saved ${name} locally.`);
-        } catch (err) {
-            console.error("Save failed:", err);
-            alert("Failed to save file: " + err.message);
+            await writeActiveOfficeFile(
+                windowEl,
+                officeState.currentFile.path,
+                officeState.currentFile.name,
+                officeState.currentFile.parent
+            );
+        } catch (error) {
+            console.error("Save failed:", error);
+            window.showDesktopToast?.(error.message || "The file could not be saved.");
         }
     }
 
@@ -876,6 +1078,59 @@
 
                 </div>
 
+                <!-- SYSTEMFS SAVE AS DIALOG -->
+                <div class="office-save-overlay" hidden>
+                    <section class="office-save-dialog" role="dialog" aria-modal="true" aria-labelledby="office-save-title">
+                        <header class="office-save-dialog-header">
+                            <div>
+                                <span class="office-save-dialog-icon"><i class="fa-solid fa-floppy-disk"></i></span>
+                                <div>
+                                    <h2 id="office-save-title">Save As</h2>
+                                    <p>Choose a folder in local SystemFS.</p>
+                                </div>
+                            </div>
+                            <button type="button" class="office-save-icon-btn office-save-close" title="Close" aria-label="Close Save As dialog">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </header>
+
+                        <div class="office-save-browser-toolbar">
+                            <button type="button" class="office-save-icon-btn office-save-up" title="Up one folder" aria-label="Up one folder">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </button>
+                            <nav class="office-save-breadcrumbs" aria-label="Save location"></nav>
+                            <button type="button" class="office-save-new-folder" title="Create folder">
+                                <i class="fa-solid fa-folder-plus"></i><span>New folder</span>
+                            </button>
+                        </div>
+
+                        <div class="office-new-folder-row" hidden>
+                            <input type="text" class="office-new-folder-name" placeholder="Folder name" autocomplete="off" />
+                            <button type="button" class="office-save-create-folder">Create</button>
+                            <button type="button" class="office-save-cancel-folder" aria-label="Cancel folder creation"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+
+                        <div class="office-save-folder-list" role="list"></div>
+
+                        <footer class="office-save-dialog-footer">
+                            <div class="office-save-location-row">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <span>Location</span>
+                                <code class="office-save-location">/documents</code>
+                            </div>
+                            <label class="office-save-name-row">
+                                <span>File name</span>
+                                <input type="text" class="office-save-name" autocomplete="off" spellcheck="false" />
+                            </label>
+                            <p class="office-save-error" role="alert" hidden></p>
+                            <div class="office-save-actions">
+                                <button type="button" class="office-save-secondary office-save-cancel">Cancel</button>
+                                <button type="button" class="office-save-primary office-save-confirm"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                            </div>
+                        </footer>
+                    </section>
+                </div>
+
                 <!-- OFFICE BOTTOM STATUS BAR -->
                 <footer class="office-statusbar">
                     <span class="office-storage-status-badge"><i class="fa-solid fa-hard-drive"></i> Saved locally in IndexedDB</span>
@@ -930,6 +1185,56 @@
             const handleSave = () => saveActiveOfficeFile(windowEl);
             windowEl.querySelectorAll(".btn-menubar-save").forEach(btn => btn.addEventListener("click", handleSave));
             windowEl.querySelectorAll(".btn-toolbar-save").forEach(btn => btn.addEventListener("click", handleSave));
+
+            // SystemFS Save As dialog actions
+            const saveOverlay = windowEl.querySelector(".office-save-overlay");
+            const saveNameInput = windowEl.querySelector(".office-save-name");
+            const newFolderRow = windowEl.querySelector(".office-new-folder-row");
+            const newFolderInput = windowEl.querySelector(".office-new-folder-name");
+
+            windowEl.querySelector(".office-save-close")?.addEventListener("click", () => closeSaveDialog(windowEl));
+            windowEl.querySelector(".office-save-cancel")?.addEventListener("click", () => closeSaveDialog(windowEl));
+            windowEl.querySelector(".office-save-confirm")?.addEventListener("click", () => commitSaveDialog(windowEl));
+            windowEl.querySelector(".office-save-up")?.addEventListener("click", () => {
+                if (saveDialogPath === "/") return;
+                saveDialogPath = window.SystemFS.getParentPath(saveDialogPath);
+                resetSaveDialogConfirmation(windowEl);
+                renderSaveDirectory(windowEl);
+            });
+            windowEl.querySelector(".office-save-new-folder")?.addEventListener("click", () => {
+                if (!newFolderRow || !newFolderInput) return;
+                newFolderRow.hidden = false;
+                setSaveDialogError(windowEl);
+                newFolderInput.focus({ preventScroll: true });
+            });
+            windowEl.querySelector(".office-save-cancel-folder")?.addEventListener("click", () => {
+                if (newFolderRow) newFolderRow.hidden = true;
+                if (newFolderInput) newFolderInput.value = "";
+                setSaveDialogError(windowEl);
+            });
+            windowEl.querySelector(".office-save-create-folder")?.addEventListener("click", () => createSaveDialogFolder(windowEl));
+            saveNameInput?.addEventListener("input", () => resetSaveDialogConfirmation(windowEl));
+            saveNameInput?.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    commitSaveDialog(windowEl);
+                }
+            });
+            newFolderInput?.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    createSaveDialogFolder(windowEl);
+                }
+            });
+            saveOverlay?.addEventListener("click", (event) => {
+                if (event.target === saveOverlay) closeSaveDialog(windowEl);
+            });
+            saveOverlay?.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    closeSaveDialog(windowEl);
+                }
+            });
 
             // 3. Writer Tooling Ribbons
             windowEl.querySelector(".btn-writer-bold").addEventListener("click", () => {
@@ -1016,6 +1321,7 @@
         },
         onClose: (windowEl) => {
             cancelOfficeBoot();
+            closeSaveDialog(windowEl);
             // reset state
             officeState.activeCell = null;
             officeState.currentFile = null;

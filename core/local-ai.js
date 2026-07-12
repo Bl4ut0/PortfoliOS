@@ -37,14 +37,6 @@
         },
         // ── Local Models (WebGPU) ──────────────────────────────────
         {
-            id: "gemma-3-270m-it-q4f16_1-MLC",
-            label: "Gemma 3 270M (Experimental/basic, 200MB)",
-            memoryMB: 200,
-            type: "local",
-            chatProfile: "experimental-basic",
-            usageNote: "Experimental ultra-small model. Best for basic command intent tests; use SmolLM2 360M, Qwen 0.5B, or Gemma 3 1B for normal chat."
-        },
-        {
             id: "SmolLM2-360M-Instruct-q4f16_1-MLC",
             label: "SmolLM2 360M (Ultra-light, 376MB)",
             memoryMB: 376,
@@ -79,20 +71,9 @@
     const DEFAULT_LOCAL_MODEL_ID = "SmolLM2-360M-Instruct-q4f16_1-MLC";
     const LEGACY_MODEL_ALIASES = {
         "gemma3-1b-it-q4f16_1-MLC": "gemma-3-1b-it-q4f16_1-MLC",
-        "SmolLM2-135M-Instruct-q4f16_1-MLC": "SmolLM2-360M-Instruct-q4f16_1-MLC"
+        "SmolLM2-135M-Instruct-q4f16_1-MLC": DEFAULT_LOCAL_MODEL_ID,
+        "gemma-3-270m-it-q4f16_1-MLC": DEFAULT_LOCAL_MODEL_ID
     };
-    const CUSTOM_WEBLLM_MODELS = [
-        {
-            model: "https://huggingface.co/Aadeshisdoingsomething/gemma-3-270m-it-q4f16_1-mlc",
-            model_id: "gemma-3-270m-it-q4f16_1-MLC",
-            model_lib: "https://huggingface.co/Aadeshisdoingsomething/gemma-3-270m-it-q4f16_1-mlc/resolve/main/gemma-3-270m-it-q4f16_1-webgpu.wasm",
-            vram_requirement_MB: 200,
-            required_features: ["shader-f16"],
-            overrides: {
-                sliding_window_size: -1
-            }
-        }
-    ];
     const PREFERRED_MODEL = AVAILABLE_MODELS.find(m => m.id === DEFAULT_LOCAL_MODEL_ID) ||
         AVAILABLE_MODELS.find(m => m.type === "local") ||
         AVAILABLE_MODELS[0];
@@ -106,6 +87,7 @@
     const INTERNAL_SPECIAL_TOKEN_RE = /<image_soft_token>|<start_of_turn>|<end_of_turn>|<bos>|<eos>|<pad>|<unused\d+>|<\|(?:begin_of_text|end_of_text|eot_id|start_header_id|end_header_id)\|>/gi;
     const INTERNAL_SPECIAL_TOKEN_TEST_RE = /<image_soft_token>|<start_of_turn>|<end_of_turn>|<bos>|<eos>|<pad>|<unused\d+>|<\|(?:begin_of_text|end_of_text|eot_id|start_header_id|end_header_id)\|>/i;
     const STREAM_SANITIZER_TAIL_CHARS = 32;
+    const CANCELLED_RESPONSE = "AI response cancelled.";
 
     let engine = null;
     let worker = null;
@@ -200,6 +182,24 @@
         ].join("\n");
     }
 
+    function getGroundedFallbackResponse(prompt = "") {
+        const normalizedPrompt = String(prompt || "").trim();
+        if (!normalizedPrompt) return "";
+
+        if (/(?:what|tell|explain|information|details?).*(?:system|portfolios?)|(?:system|portfolios?).*(?:what|tell|explain|information|details?)/i.test(normalizedPrompt)) {
+            return getCoreSystemOverview();
+        }
+
+        if (/(?:what can you do|capabilit|cli help|terminal help|available commands)/i.test(normalizedPrompt)) {
+            return [
+                "I can explain PortfoliOS, answer questions about Alex's profile and projects, and help with the browser CLI.",
+                "Useful commands include `help`, `projects`, `status`, `pwd`, `ls`, `cat`, `ai status`, `ai models`, `ai use <model>`, and `ai cancel`."
+            ].join("\n");
+        }
+
+        return window.SimpleBrain?.query?.(normalizedPrompt) || "";
+    }
+
     function finalizeModelOutput(value, options = {}) {
         const fallbackMessage = typeof options === "string"
             ? options
@@ -213,13 +213,18 @@
 
         if (cleaned) return repairKnownMetadataRequest(cleaned, prompt);
 
+        const groundedFallback = getGroundedFallbackResponse(prompt);
+        if (groundedFallback) {
+            emitAIDebug("Used grounded fallback for an empty or unusable model response.", getAIDebugSnapshot({
+                rawLength: raw.length
+            }));
+            return groundedFallback;
+        }
+
         if (INTERNAL_SPECIAL_TOKEN_TEST_RE.test(raw)) {
             emitAIDebug("Model output contained only internal special tokens.", getAIDebugSnapshot({
                 rawLength: raw.length
             }));
-            if (modelInfo.chatProfile === "experimental-basic") {
-                return `${modelInfo.label} is too small for reliable free-form chat in this browser build. It is best kept for basic command/intent tests. Switch to SmolLM2 360M, Qwen 0.5B, or Gemma 3 1B for normal chat.`;
-            }
             return "The selected model returned only internal control tokens. Please retry once, or switch to SmolLM2 360M / Qwen 0.5B if it keeps happening.";
         }
 
@@ -245,6 +250,9 @@
                 const emitText = stripInternalSpecialTokens(pending);
                 pending = "";
                 if (emitText) onChunk(emitText);
+            },
+            discard() {
+                pending = "";
             }
         };
     }
@@ -301,12 +309,7 @@
             }
             return m;
         });
-        const customModels = CUSTOM_WEBLLM_MODELS.map(m => ({
-            ...m,
-            model: mapRuntimeUrl(m.model, useMirror),
-            model_lib: mapRuntimeUrl(m.model_lib, useMirror)
-        }));
-        return [...prebuiltModels, ...customModels];
+        return prebuiltModels;
     }
 
     // Initialize modelInfo from localStorage preference or fallback
@@ -343,6 +346,9 @@
     let statusText = isCloudModel(modelInfo) ? "Cloud AI is off." : "Local AI is off.";
     let lastError = "";
     let stopRequested = false;
+    let activeGenerationId = 0;
+    let activeGenerationStartedAt = 0;
+    let activeGenerationSurface = "";
     let lastStatusEmitAt = 0;
     let statusEmitTimer = null;
     let statusEmitFrame = null;
@@ -529,6 +535,8 @@
 
     function stopActiveRuntimeForModelChange() {
         stopRequested = true;
+        activeGenerationStartedAt = 0;
+        activeGenerationSurface = "";
         permissionGranted = false;
         if (permissionPrompt) removePermissionPrompt(false);
 
@@ -581,11 +589,13 @@
         const isCloud = isCloudModel(modelInfo);
         if (isCloud) {
             const isReady = status === "ready" || status === "generating";
+            const isGenerating = status === "generating";
             return {
                 enabled: isReady,
                 ready: isReady,
-                busy: status === "generating",
-                status: status === "generating" ? "generating" : (isReady ? "ready" : "idle"),
+                busy: isGenerating,
+                canCancel: isGenerating,
+                status,
                 modelId: modelInfo.id,
                 modelLabel: modelInfo.label,
                 modelType: modelInfo.type,
@@ -596,8 +606,11 @@
                 preferredModelId: PREFERRED_MODEL.id,
                 preferredModelLabel: PREFERRED_MODEL.label,
                 progress: 0,
-                statusText: status === "generating" ? "Cloud AI is generating..." : (isReady ? "Cloud AI is ready." : "Cloud AI is off."),
+                statusText,
                 lastError,
+                generationId: isGenerating ? activeGenerationId : 0,
+                generationStartedAt: isGenerating ? activeGenerationStartedAt : 0,
+                generationSurface: isGenerating ? activeGenerationSurface : "",
                 permissionGranted: true,
                 webGpuSupported: Boolean(navigator.gpu),
                 executionMode: "cloud-api",
@@ -610,6 +623,7 @@
             enabled: status === "loading" || status === "ready" || status === "generating",
             ready: status === "ready",
             busy: status === "loading" || status === "generating",
+            canCancel: status === "generating",
             status,
             modelId: modelInfo.id,
             modelLabel: modelInfo.label,
@@ -623,6 +637,9 @@
             progress,
             statusText,
             lastError,
+            generationId: status === "generating" ? activeGenerationId : 0,
+            generationStartedAt: status === "generating" ? activeGenerationStartedAt : 0,
+            generationSurface: status === "generating" ? activeGenerationSurface : "",
             permissionGranted,
             webGpuSupported: Boolean(navigator.gpu),
             executionMode: "web-worker-webgpu",
@@ -1024,7 +1041,7 @@
                 const adapter = await navigator.gpu.requestAdapter();
                 const hasF16 = adapter?.features?.has("shader-f16");
                 if (!hasF16) {
-                    const featErr = `Your GPU or browser doesn't support the 'shader-f16' feature required by Gemma models. Please select a compatible model like SmolLM2 135M.`;
+                    const featErr = `Your GPU or browser doesn't support the 'shader-f16' feature required by this Gemma model. Please select a compatible model like SmolLM2 360M.`;
                     lastError = featErr;
                     setStatus("error", lastError, 0, { force: true });
                     throw new Error(featErr);
@@ -1043,6 +1060,7 @@
 
         if (isCloud) {
             stopRequested = false;
+            lastError = "";
             status = "ready";
             emitAIDebug("Cloud AI enabled.", getAIDebugSnapshot({ source }));
             setStatus("ready", `Cloud AI is ready.`, 1, { force: true });
@@ -1076,9 +1094,39 @@
         return getStatus();
     }
 
+    async function cancelGeneration(reason = "user") {
+        if (status !== "generating") return false;
+
+        stopRequested = true;
+        emitAIDebug("Generation cancellation requested.", getAIDebugSnapshot({ reason }));
+        setStatus("generating", "Cancelling the current AI response...", 1, { force: true });
+
+        if (currentAbortController) {
+            const controller = currentAbortController;
+            currentAbortController = null;
+            try {
+                controller.abort();
+            } catch (error) {
+                emitAIDebug("Cloud generation abort failed.", getAIDebugSnapshot({ error: serializeDebugValue(error) }));
+            }
+        }
+
+        if (engine && typeof engine.interruptGenerate === "function") {
+            try {
+                await engine.interruptGenerate();
+            } catch (error) {
+                emitAIDebug("Local generation interrupt failed.", getAIDebugSnapshot({ error: serializeDebugValue(error) }));
+            }
+        }
+
+        return true;
+    }
+
     async function disable(reason = "user", options = {}) {
         emitAIDebug("Disable requested.", getAIDebugSnapshot({ reason, preserveError: Boolean(options.preserveError) }));
         stopRequested = true;
+        activeGenerationStartedAt = 0;
+        activeGenerationSurface = "";
         permissionGranted = false;
         if (permissionPrompt) removePermissionPrompt(false);
 
@@ -1294,15 +1342,11 @@
         const isConstrainedLocal = !isCloud && (modelInfo.memoryMB || 0) <= 1000;
         const runtimeType = isCloud ? `a cloud-hosted model (${modelInfo.label})` : `a local on-device WebGPU model (${modelInfo.label})`;
         const tokenHygiene = "Write normal text only. Never output internal model tokens such as <image_soft_token>, <start_of_turn>, <end_of_turn>, <bos>, or <eos>.";
-        const modelCapabilityRule = modelInfo.chatProfile === "experimental-basic"
-            ? "This selected model is experimental and very small. For open-ended chat, answer briefly and recommend switching to SmolLM2 360M, Qwen 0.5B, or Gemma 3 1B for better conversation."
-            : "";
         const groundingRules = [
             "Use the provided PortfoliOS facts directly. The user is asking about this system unless they clearly say otherwise.",
             "Do not ask for portfolio name, portfolio URL, profile URL, user name, or description; those facts are already provided.",
             "If asked about the system or instance, explain PortfoliOS itself: browser desktop shell, modular apps, storage helpers, sync options, and local/cloud AI.",
             "Do not describe the generic browser account as the system unless the user specifically asks about the browser.",
-            modelCapabilityRule,
             "Avoid repeated bullets or checklist loops. Stop after a useful concise answer."
         ].filter(Boolean).join("\n");
 
@@ -1368,7 +1412,7 @@
                 "You can understand ordinary typed English. If asked whether you understand the user, answer yes and briefly explain what you can help with.",
                 "If a prompt is unclear, ask one short clarifying question instead of saying you cannot understand language.",
                 "When a user enters an invalid command, explain the likely intent and suggest one or two valid PortfoliOS commands.",
-                "Known shell commands include: help, clear, whoami, whoami --info, links, projects, status, quick, play doom, inspect <id>, open <target>, pwd, cd, ls, ls -l, cat, touch, mkdir, rm, echo, su, passwd, useradd, userdel, groups, id, ai on, ai off.",
+                "Known shell commands include: help, clear, whoami, whoami --info, links, projects, status, quick, play doom, inspect <id>, open <target>, pwd, cd, ls, ls -l, cat, touch, mkdir, rm, echo, su, passwd, useradd, userdel, groups, id, ai status, ai models, ai use <model>, ai on, ai cancel, ai off, jobs, and kill.",
                 "",
                 "### PORTFOLIO DATASET ###",
                 dataset,
@@ -1610,67 +1654,65 @@
         const controller = new AbortController();
         currentAbortController = controller;
 
-        const response = await fetch(url, {
-            method: "POST",
-            headers: headers,
-            body: JSON.stringify(body),
-            signal: controller.signal
-        });
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
 
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Gemini API error: ${response.status} - ${errText}`);
-        }
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Gemini API error: ${response.status} - ${errText}`);
+            }
 
-        if (onChunk) {
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let accumulatedBody = "";
-            let emittedTextLength = 0;
-            let currentFullText = "";
+            if (onChunk) {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let accumulatedBody = "";
+                let emittedTextLength = 0;
+                let currentFullText = "";
 
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done || stopRequested) break;
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done || stopRequested) break;
 
-                    accumulatedBody += decoder.decode(value, { stream: true });
-                    
-                    const matches = [...accumulatedBody.matchAll(/"text":\s*"((?:[^"\\]|\\.)*)"/g)];
-                    currentFullText = "";
-                    for (const match of matches) {
-                        try {
-                            const text = JSON.parse(`"${match[1]}"`);
-                            currentFullText += text;
-                        } catch (e) {
-                            // Ignore partial matches
+                        accumulatedBody += decoder.decode(value, { stream: true });
+
+                        const matches = [...accumulatedBody.matchAll(/"text":\s*"((?:[^"\\]|\\.)*)"/g)];
+                        currentFullText = "";
+                        for (const match of matches) {
+                            try {
+                                const text = JSON.parse(`"${match[1]}"`);
+                                currentFullText += text;
+                            } catch (error) {
+                                // Ignore partial JSON string matches until the next chunk.
+                            }
+                        }
+                        if (currentFullText.length > emittedTextLength) {
+                            const newDelta = currentFullText.slice(emittedTextLength);
+                            emittedTextLength = currentFullText.length;
+                            onChunk(newDelta);
                         }
                     }
-                    if (currentFullText.length > emittedTextLength) {
-                        const newDelta = currentFullText.slice(emittedTextLength);
-                        emittedTextLength = currentFullText.length;
-                        onChunk(newDelta);
-                    }
+                    return currentFullText.trim();
+                } finally {
+                    reader.releaseLock();
                 }
-                return currentFullText.trim();
-            } finally {
-                reader.releaseLock();
             }
-        } else {
+
             const data = await response.json();
             return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        } finally {
+            if (currentAbortController === controller) {
+                currentAbortController = null;
+            }
         }
     }
 
     function getLocalGenerationOptions() {
-        if (modelInfo.chatProfile === "experimental-basic") {
-            return {
-                temperature: 0.15,
-                top_p: 0.65,
-                max_tokens: 64
-            };
-        }
-
         const isConstrainedLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) <= 1000;
         return {
             temperature: isConstrainedLocal ? 0.2 : 0.35,
@@ -1681,19 +1723,21 @@
 
     async function generateCompletion(prompt, context = {}, onChunk = null) {
         const isCloud = isCloudModel(modelInfo);
+        const outputStream = typeof onChunk === "function" ? createOutputStreamSanitizer(onChunk) : null;
+        const emitChunk = outputStream ? (delta) => outputStream.push(delta) : null;
+
         try {
+            let rawText = "";
+
             if (isCloud) {
                 if (modelInfo.type === "cloud-openai") {
-                    return await chatOpenAI(prompt, context, onChunk);
+                    rawText = await chatOpenAI(prompt, context, emitChunk);
                 } else if (modelInfo.type === "cloud-gemini") {
-                    return await chatGemini(prompt, context, onChunk);
+                    rawText = await chatGemini(prompt, context, emitChunk);
                 } else {
                     throw new Error(`Unsupported cloud model type: ${modelInfo.type}`);
                 }
-            }
-
-            if (typeof onChunk === "function") {
-                const outputStream = createOutputStreamSanitizer(onChunk);
+            } else if (outputStream) {
                 const generationOptions = getLocalGenerationOptions();
                 const chunks = await engine.chat.completions.create({
                     messages: buildSystemMessages(prompt, context),
@@ -1702,23 +1746,15 @@
                     max_tokens: generationOptions.max_tokens,
                     stream: true
                 });
-                let fullText = "";
                 for await (const chunk of chunks) {
-                    if (stopRequested) {
-                        break;
-                    }
+                    if (stopRequested) break;
                     const delta = chunk.choices[0]?.delta?.content || "";
                     if (delta) {
-                        fullText += delta;
+                        rawText += delta;
                         outputStream.push(delta);
                     }
                     await yieldToBrowser();
                 }
-                outputStream.flush();
-                if (stopRequested) {
-                    return "Local AI was stopped.";
-                }
-                return finalizeModelOutput(fullText, { prompt });
             } else {
                 const generationOptions = getLocalGenerationOptions();
                 const reply = await engine.chat.completions.create({
@@ -1727,15 +1763,21 @@
                     top_p: generationOptions.top_p,
                     max_tokens: generationOptions.max_tokens
                 });
-                if (stopRequested) {
-                    return "Local AI was stopped.";
-                }
                 await yieldToBrowser();
-                return finalizeModelOutput(reply?.choices?.[0]?.message?.content, { prompt });
+                rawText = reply?.choices?.[0]?.message?.content || "";
             }
+
+            if (stopRequested) {
+                outputStream?.discard();
+                return CANCELLED_RESPONSE;
+            }
+
+            outputStream?.flush();
+            return finalizeModelOutput(rawText, { prompt });
         } catch (err) {
-            if (err.name === "AbortError") {
-                return "AI query was stopped.";
+            outputStream?.discard();
+            if (err?.name === "AbortError" || stopRequested) {
+                return CANCELLED_RESPONSE;
             }
             throw err;
         }
@@ -1773,11 +1815,17 @@
 
     async function chat(prompt, context = {}, onChunk = null) {
         const isCloud = isCloudModel(modelInfo);
-        if (status !== "ready" && status !== "generating") {
+        if (status === "generating") {
+            throw new Error("Local AI is already answering. Cancel the current response before starting another one.");
+        }
+        if (status !== "ready") {
             throw new Error(isCloud ? "Cloud AI is not enabled." : "Local AI is not enabled.");
         }
 
         stopRequested = false;
+        activeGenerationId += 1;
+        activeGenerationStartedAt = Date.now();
+        activeGenerationSurface = String(context.mode || "chat");
         setStatus("generating", isCloud ? "Cloud AI is answering..." : "Local AI is answering in a background GPU worker...", 1, { force: true });
         await yieldToBrowser();
         try {
@@ -1787,13 +1835,17 @@
                 return await generateCompletion(prompt, context, onChunk);
             }
         } catch (error) {
+            lastError = error?.message || "Local AI failed to generate response.";
             await disable("error", { preserveError: true });
-            setStatus("error", error?.message || "Local AI failed to generate response.", 0, { force: true });
+            setStatus("error", lastError, 0, { force: true });
             throw error;
         } finally {
-            if (!stopRequested && (isCloud || (worker && engine))) {
+            if (status === "generating" && (isCloud || (worker && engine))) {
                 setStatus("ready", isCloud ? "Cloud AI is ready." : `${modelInfo.label} is ready.`, 1, { force: true });
+                stopRequested = false;
             }
+            activeGenerationStartedAt = 0;
+            activeGenerationSurface = "";
         }
     }
 
@@ -1809,10 +1861,10 @@
         requestPermission,
         enable,
         disable,
+        cancelGeneration,
         chat,
         isReady: () => {
-            const isCloud = isCloudModel(modelInfo);
-            return isCloud ? (status === "ready" || status === "generating") : (status === "ready" && Boolean(engine));
+            return isCloudModel(modelInfo) ? status === "ready" : (status === "ready" && Boolean(engine));
         },
         isRunning: () => {
             return ["loading", "ready", "generating"].includes(status);
@@ -1859,6 +1911,11 @@
                     requestedModelId: modelId,
                     normalizedModelId
                 }));
+                return getStatus();
+            }
+
+            if (modelInfo.id === normalizedModelId) {
+                localStorage.setItem(STORAGE_KEY, normalizedModelId);
                 return getStatus();
             }
 

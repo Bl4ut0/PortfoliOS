@@ -11,7 +11,7 @@ window.standardInstalledAppIds = [
 
 window.desktopPinnedIds = [
     "store", "files", "cli", "devhub", "office",
-    "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "ut99", "webamp", "musicmini"
+    "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "ut99", "webamp", "musicmini", "iptv"
 ];
 
 window.startMenuPinnedIds = [
@@ -34,7 +34,7 @@ window.startMenuGroups = [
     {
         id: "installed",
         label: "Installed Store Apps",
-        ids: ["romplayer", "openrct2", "webamp", "doomsource", "duke32", "diablo", "quake", "ut99"]
+        ids: ["romplayer", "openrct2", "webamp", "iptv", "doomsource", "duke32", "diablo", "quake", "ut99"]
     }
 ];
 
@@ -52,7 +52,8 @@ window.defaultDesktopIconLayout = {
     quake: { col: 1, row: 5 },
     ut99: { col: 2, row: 0 },
     webamp: { col: 2, row: 1 },
-    musicmini: { col: 2, row: 2 }
+    musicmini: { col: 2, row: 2 },
+    iptv: { col: 2, row: 3 }
 };
 
 window.desktopApps = [
@@ -69,6 +70,7 @@ window.desktopApps = [
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false, modular: true, meta: "System monitor" },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false, modular: true, meta: "Classic media player" },
     { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", pinned: true, modular: true, meta: "Local music player" },
+    { id: "iptv", title: "IPTV Stream", icon: "fa-solid fa-tv", pinned: false, modular: true, meta: "Live TV and XMLTV guide" },
     { id: "settings", title: "Settings", icon: "fa-solid fa-sliders", pinned: false },
     { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", pinned: true, modular: true, meta: "Emulator launcher" },
     { id: "openrct2", title: "OpenRCT2", icon: "fa-solid fa-train", pinned: false, modular: true, meta: "Theme park engine" },
@@ -155,6 +157,15 @@ window.storeApps = [
         description: "Winamp 2.9 re-implementation in HTML5/JS with full skins, EQ, and visualizer support.",
         size: "1.4 MB",
         publisher: "Nullsoft / Webamp team"
+    },
+    {
+        id: "iptv",
+        title: "IPTV Stream",
+        icon: "fa-solid fa-tv",
+        category: "Media",
+        description: "Play authorized Xtream and M3U live TV sources with a local XMLTV guide cache.",
+        size: "0.8 MB + guide cache",
+        publisher: "PortfoliOS"
     },
     {
         id: "tools",

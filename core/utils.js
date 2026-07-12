@@ -97,9 +97,13 @@ window.createCustomDropdown = (selectEl) => {
             item.textContent = opt.textContent;
             item.dataset.value = opt.value;
             item.dataset.index = idx;
+            item.setAttribute("role", "option");
+            item.setAttribute("aria-selected", String(opt.selected));
+            if (opt.disabled) item.setAttribute("aria-disabled", "true");
 
             item.addEventListener("click", (e) => {
                 e.stopPropagation();
+                if (selectEl.disabled || opt.disabled) return;
                 selectEl.selectedIndex = idx;
                 
                 // Dispatch change event on original select
@@ -107,12 +111,17 @@ window.createCustomDropdown = (selectEl) => {
                 selectEl.dispatchEvent(event);
 
                 // Update UI selection
-                Array.from(optionsList.querySelectorAll(".custom-select-option")).forEach(child => child.classList.remove("selected"));
+                Array.from(optionsList.querySelectorAll(".custom-select-option")).forEach(child => {
+                    child.classList.remove("selected");
+                    child.setAttribute("aria-selected", "false");
+                });
                 item.classList.add("selected");
+                item.setAttribute("aria-selected", "true");
                 triggerText.textContent = opt.textContent;
 
                 // Close dropdown
                 container.classList.remove("open");
+                trigger.setAttribute("aria-expanded", "false");
             });
 
             optionsList.appendChild(item);
@@ -144,6 +153,9 @@ window.createCustomDropdown = (selectEl) => {
     };
 
     rebuildOptions();
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+    optionsList.setAttribute("role", "listbox");
 
     // Toggle dropdown open state
     trigger.addEventListener("click", (e) => {
@@ -153,6 +165,7 @@ window.createCustomDropdown = (selectEl) => {
         document.querySelectorAll(".custom-select-container").forEach(c => {
             if (c !== container) {
                 c.classList.remove("open");
+                c.querySelector(".custom-select-trigger")?.setAttribute("aria-expanded", "false");
             }
         });
 
@@ -169,17 +182,30 @@ window.createCustomDropdown = (selectEl) => {
             container.classList.remove("open-upwards");
         }
 
-        container.classList.toggle("open");
+        const isOpen = container.classList.toggle("open");
+        trigger.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    trigger.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || !container.classList.contains("open")) return;
+        event.preventDefault();
+        container.classList.remove("open");
+        trigger.setAttribute("aria-expanded", "false");
     });
 
     // Close on click outside
     document.addEventListener("click", () => {
         container.classList.remove("open");
+        trigger.setAttribute("aria-expanded", "false");
     });
 
     // Handle disabled/enabled and programmatically updated values
     const syncState = () => {
         trigger.disabled = selectEl.disabled;
+        if (selectEl.disabled) {
+            container.classList.remove("open");
+            trigger.setAttribute("aria-expanded", "false");
+        }
         rebuildOptions();
     };
 

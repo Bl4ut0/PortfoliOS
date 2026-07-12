@@ -408,7 +408,8 @@ window.uninstallApp = (id) => {
         duke32: "/apps/duke32",
         quake: "/apps/quake",
         diablo: "/apps/diablo",
-        openrct2: "/apps/openrct2/runtime"
+        openrct2: "/apps/openrct2/runtime",
+        iptv: "/Apps/IPTV Stream"
     };
 
     if (localCleanupDirs[id] && window.SystemFS) {

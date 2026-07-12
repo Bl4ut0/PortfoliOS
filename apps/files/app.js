@@ -27,6 +27,18 @@
         return currentPath === "/" ? `/${name}` : `${currentPath}/${name}`;
     }
 
+    function isOfficeFile(name = "") {
+        return /\.(?:odt|doc|docx|ods|xls|xlsx|csv)$/i.test(name);
+    }
+
+    function isTextFile(name = "", type = "") {
+        return String(type).startsWith("text/") || /\.(?:txt|md|json|js|css|html?|xml|log|csv)$/i.test(name);
+    }
+
+    function isAudioFile(name = "", type = "") {
+        return String(type).startsWith("audio/") || /\.(?:mp3|wav|ogg|oga|m4a|aac|flac|opus|weba)$/i.test(name);
+    }
+
     function renderBreadcrumbs(windowEl) {
         const breadcrumbsContainer = windowEl.querySelector(".files-breadcrumbs");
         if (!breadcrumbsContainer) return;
@@ -162,6 +174,10 @@
                 const el = document.createElement("div");
                 el.className = `file-item ${item.isDirectory ? "dir-item" : "file-item-doc"}`;
                 el.dataset.path = item.path;
+                el.dataset.appContext = "file";
+                el.dataset.fileName = item.name;
+                el.dataset.fileType = item.type || "";
+                el.dataset.isDirectory = String(!!item.isDirectory);
                 const safeName = escapeHtml(item.name);
 
                 let iconHtml = '<i class="fa-regular fa-file"></i>';
@@ -223,15 +239,39 @@
 
     function openFile(item, windowEl) {
         const lowerName = item.name.toLowerCase();
-        if (lowerName.endsWith(".odt") || lowerName.endsWith(".doc") || lowerName.endsWith(".docx") || lowerName.endsWith(".ods") || lowerName.endsWith(".xls") || lowerName.endsWith(".xlsx")) {
+        if (isOfficeFile(lowerName)) {
             window.openDesktopWindow("office", item);
-        } else if (item.type.startsWith("text/") || lowerName.endsWith(".txt") || lowerName.endsWith(".json") || lowerName.endsWith(".md") || lowerName.endsWith(".js") || lowerName.endsWith(".css")) {
+        } else if (isTextFile(lowerName, item.type)) {
             openTextEditor(item, windowEl);
-        } else if (item.type.startsWith("audio/") || lowerName.endsWith(".mp3") || lowerName.endsWith(".wav") || lowerName.endsWith(".ogg")) {
-            playAudioInWebamp(item);
+        } else if (isAudioFile(lowerName, item.type)) {
+            playAudioInMusicMini(item);
         } else {
             downloadFileToHost(item);
         }
+    }
+
+    async function readFileForAction(path, action) {
+        try {
+            const item = await window.SystemFS.readFile(path);
+            if (!item) {
+                window.showDesktopToast?.("That file is no longer available.");
+                return;
+            }
+            await action(item);
+        } catch (error) {
+            console.error("File action failed:", error);
+            window.showDesktopToast?.(error.message || "The file action failed.");
+        }
+    }
+
+    async function playAudioInMusicMini(item) {
+        await window.openDesktopWindow?.("musicmini");
+        const musicMiniApp = window.appRegistry?.musicmini;
+        if (!musicMiniApp || typeof musicMiniApp.playPath !== "function") {
+            window.showDesktopToast?.("Music Mini is not ready to play this file.");
+            return;
+        }
+        await musicMiniApp.playPath(item.path);
     }
 
     function openTextEditor(item, windowEl) {
@@ -308,6 +348,77 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    function getFileContextMenuItems(target, windowEl) {
+        const path = target.dataset.path;
+        const name = target.dataset.fileName || window.SystemFS.getName(path);
+        const type = target.dataset.fileType || "";
+        const isDirectory = target.dataset.isDirectory === "true";
+
+        if (isDirectory) {
+            return [
+                {
+                    label: "Open folder",
+                    icon: "fa-solid fa-folder-open",
+                    action: () => {
+                        currentPath = path;
+                        searchQuery = "";
+                        const searchInput = windowEl.querySelector(".files-search-input");
+                        if (searchInput) searchInput.value = "";
+                        renderFilesGrid(windowEl);
+                    }
+                },
+                { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(path) }
+            ];
+        }
+
+        const openWith = [];
+        if (isOfficeFile(name) || isTextFile(name, type)) {
+            openWith.push({
+                label: "PortfoliOS Office",
+                icon: "fa-solid fa-file-signature",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("office", item))
+            });
+        }
+        if (isTextFile(name, type)) {
+            openWith.push({
+                label: "Text Editor",
+                icon: "fa-solid fa-pen-to-square",
+                action: () => readFileForAction(path, (item) => openTextEditor(item, windowEl))
+            });
+        }
+        if (isAudioFile(name, type)) {
+            openWith.push({
+                label: "Music Mini",
+                icon: "fa-solid fa-record-vinyl",
+                action: () => readFileForAction(path, playAudioInMusicMini)
+            });
+            if (!window.isAppInstalled || window.isAppInstalled("webamp")) {
+                openWith.push({
+                    label: "Webamp",
+                    icon: "fa-solid fa-music",
+                    action: () => readFileForAction(path, playAudioInWebamp)
+                });
+            }
+        }
+
+        const items = [
+            {
+                label: isAudioFile(name, type) ? "Play" : "Open",
+                icon: isAudioFile(name, type) ? "fa-solid fa-play" : "fa-solid fa-up-right-from-square",
+                action: () => readFileForAction(path, (item) => openFile(item, windowEl))
+            }
+        ];
+        if (openWith.length) {
+            items.push({ label: "Open with", icon: "fa-solid fa-table-list", children: openWith });
+        }
+        items.push(
+            { type: "separator" },
+            { label: "Download", icon: "fa-solid fa-download", action: () => readFileForAction(path, downloadFileToHost) },
+            { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(path) }
+        );
+        return items;
     }
 
     function setupDragAndDrop(windowEl) {
@@ -388,6 +499,7 @@
                 </div>
             </div>
         `,
+        getContextMenuItems: (target, event, windowEl) => getFileContextMenuItems(target, windowEl),
         onOpen: (windowEl) => {
             if (!currentPath) currentPath = "/";
             const initialRender = renderFilesGrid(windowEl);

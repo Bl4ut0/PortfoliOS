@@ -431,12 +431,10 @@ window.boot = async () => {
         const localAITraySettings = event.target.closest("[data-local-ai-tray-settings]");
         if (localAITraySettings) {
             if (window.openDesktopWindow) {
-                window.openDesktopWindow("settings").then(() => {
-                    if (window.openSettingsPanel) {
-                        window.openSettingsPanel("local-ai");
-                    }
-                });
+                await Promise.resolve(window.openDesktopWindow("settings"));
+                window.openSettingsPanel?.("local-ai");
             }
+            window.BrainHelper?.closeBubble?.();
             if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
             return;
         }
@@ -450,19 +448,18 @@ window.boot = async () => {
                 localAITrayEnable.innerHTML = isCloud 
                     ? '<i class="fa-solid fa-spinner fa-spin"></i> Connecting' 
                     : '<i class="fa-solid fa-spinner fa-spin"></i> Starting';
-                window.LocalAI.enable("Local AI tray")
-                    .then((status) => {
-                        if (status?.ready) {
-                            window.showDesktopToast?.(isCloud ? "Cloud AI is ready." : "Local AI is ready.");
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Local AI tray start failed.", error);
-                        window.showDesktopToast?.(isCloud ? "Cloud AI failed to connect." : "Local AI failed to start.");
-                    })
-                    .finally(() => {
-                        window.renderLocalAITray?.();
-                    });
+                window.BrainHelper?.closeBubble?.();
+                try {
+                    const nextStatus = await window.LocalAI.enable("Local AI tray");
+                    if (nextStatus?.ready) {
+                        window.showDesktopToast?.(isCloud ? "Cloud AI is ready." : "Local AI is ready.");
+                    }
+                } catch (error) {
+                    console.error("Local AI tray start failed.", error);
+                    window.showDesktopToast?.(isCloud ? "Cloud AI failed to connect." : "Local AI failed to start.");
+                } finally {
+                    window.renderLocalAITray?.();
+                }
             }
             return;
         }
@@ -472,8 +469,22 @@ window.boot = async () => {
             if (window.LocalAI) {
                 const status = window.LocalAI.getStatus();
                 const isCloud = status.modelType && status.modelType.startsWith("cloud-");
-                window.LocalAI.disable("tray");
-                window.showDesktopToast?.(isCloud ? "Cloud AI disconnected." : "Local AI stopped.");
+                localAITrayStop.disabled = true;
+                try {
+                    if (status.status === "generating") {
+                        localAITrayStop.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling';
+                        await window.LocalAI.cancelGeneration?.("tray");
+                        window.showDesktopToast?.("AI response cancelled.");
+                    } else {
+                        localAITrayStop.innerHTML = isCloud
+                            ? '<i class="fa-solid fa-spinner fa-spin"></i> Disconnecting'
+                            : '<i class="fa-solid fa-spinner fa-spin"></i> Stopping';
+                        await window.LocalAI.disable("tray");
+                        window.showDesktopToast?.(isCloud ? "Cloud AI disconnected." : "Local AI stopped.");
+                    }
+                } finally {
+                    window.renderLocalAITray?.();
+                }
             }
             return;
         }
