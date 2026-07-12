@@ -1,4 +1,5 @@
 (function() {
+    const WEBAMP_BUNDLE_URL = "apps/webamp/webamp.bundle.min.js?v=2.3.1";
     let webampInstance = null;
     let libraryPromise = null;
     let rejectLibraryLoad = null;
@@ -14,7 +15,8 @@
         libraryPromise = new Promise((resolve, reject) => {
             const script = document.createElement("script");
             script.id = "webamp-library-script";
-            script.src = "https://unpkg.com/webamp@1.4.2/built/webamp.bundle.min.js";
+            script.src = WEBAMP_BUNDLE_URL;
+            script.async = true;
             rejectLibraryLoad = reject;
             script.onload = () => {
                 const Webamp = window.Webamp;
@@ -54,22 +56,15 @@
                 const statusEl = windowEl.querySelector(".webamp-status");
                 if (!mountPoint) return null;
 
-                const initialTracks = [
-                    {
-                        metaData: {
-                            title: "Elysium Theme",
-                            artist: "PortfoliOS Core"
-                        },
-                        url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-                    }
-                ];
-
                 const instance = new Webamp({
-                    initialTracks,
-                    zIndex: 9999
+                    zIndex: 5
                 });
                 webampInstance = instance;
-                await instance.renderWhenReady(mountPoint);
+                if (typeof instance.renderInto === "function") {
+                    await instance.renderInto(mountPoint);
+                } else {
+                    await instance.renderWhenReady(mountPoint);
+                }
 
                 if (generation !== initGeneration || !windowEl.isConnected) {
                     try {
