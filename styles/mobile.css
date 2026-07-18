@@ -472,6 +472,8 @@ body[data-view="mobile"] .mobile-app-grid {
 }
 
 .mobile-app-content.is-edge-to-edge {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
     overflow: hidden;
     padding: 0;
 }

@@ -11,16 +11,20 @@ window.startFlappyBird = function(canvasId) {
     
     function resize() {
         dpr = window.devicePixelRatio || 1;
-        logicalWidth = parent.clientWidth;
-        logicalHeight = parent.clientHeight;
-        canvas.width = logicalWidth * dpr;
-        canvas.height = logicalHeight * dpr;
-        ctx.scale(dpr, dpr);
+        logicalWidth = Math.max(1, parent.clientWidth);
+        logicalHeight = Math.max(1, parent.clientHeight);
+        canvas.width = Math.round(logicalWidth * dpr);
+        canvas.height = Math.round(logicalHeight * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         // Turn off image smoothing for pixel art look
         ctx.imageSmoothingEnabled = false;
     }
     
     window.addEventListener("resize", resize);
+    const resizeObserver = typeof ResizeObserver === "function"
+        ? new ResizeObserver(resize)
+        : null;
+    resizeObserver?.observe(parent);
     resize();
 
     // -- ASSET GENERATOR (Pixel Art) --
@@ -506,6 +510,7 @@ window.startFlappyBird = function(canvasId) {
         canvas.removeEventListener("mousedown", onInteract);
         canvas.removeEventListener("keydown", onKeyDown);
         window.removeEventListener("resize", resize);
+        resizeObserver?.disconnect();
         observer.disconnect();
     };
 
@@ -518,7 +523,10 @@ window.startFlappyBird = function(canvasId) {
 
     return {
         pause() { isPaused = true; },
-        resume() { isPaused = false; },
+        resume() {
+            resize();
+            isPaused = false;
+        },
         destroy
     };
 };

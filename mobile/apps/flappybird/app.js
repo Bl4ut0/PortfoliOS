@@ -6,7 +6,7 @@
             controller = window.startFlappyBird?.("mobile-flappy-canvas") || null;
         };
         if (typeof window.startFlappyBird !== "function") {
-            await window.loadScript("flappy.js?v=1.1.13");
+            await window.loadScript("flappy.js?v=1.1.14");
         }
         if (root?.isConnected) launch();
     }

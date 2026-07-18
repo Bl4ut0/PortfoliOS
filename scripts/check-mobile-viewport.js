@@ -296,4 +296,19 @@ const mobileShellSource = fs.readFileSync(path.join(__dirname, "..", "mobile", "
 assert.match(mobileShellSource, /const target = document\.documentElement;/);
 assert.doesNotMatch(mobileShellSource, /const target = elements\(\)\.device/);
 
-console.log("Mobile viewport audit passed: browser preview, phones, Android virtual viewports, keyboard and pinch zoom, split screen, foldables, iPadOS, touch laptops, fullscreen, and installed PWA checked.");
+const mobileCssSource = fs.readFileSync(path.join(__dirname, "..", "styles", "mobile.css"), "utf8");
+const edgeContentRule = mobileCssSource.match(/\.mobile-app-content\.is-edge-to-edge\s*\{([^}]*)\}/)?.[1] || "";
+assert.match(edgeContentRule, /display:\s*grid;/);
+assert.match(edgeContentRule, /grid-template-rows:\s*minmax\(0,\s*1fr\);/);
+
+const flappyCssSource = fs.readFileSync(path.join(__dirname, "..", "mobile", "apps", "flappybird", "app.css"), "utf8");
+const flappyRootRule = flappyCssSource.match(/\.mobile-native-app\.mobile-flappybird-app\s*\{([^}]*)\}/)?.[1] || "";
+assert.match(flappyRootRule, /min-height:\s*0;/);
+assert.match(flappyRootRule, /grid-template-rows:\s*minmax\(0,\s*1fr\);/);
+assert.doesNotMatch(flappyCssSource, /min-height:\s*28rem;/);
+
+const flappyEngineSource = fs.readFileSync(path.join(__dirname, "..", "flappy.js"), "utf8");
+assert.match(flappyEngineSource, /new ResizeObserver\(resize\)/);
+assert.match(flappyEngineSource, /resizeObserver\?\.disconnect\(\)/);
+
+console.log("Mobile viewport audit passed: browser preview, phones, Android virtual viewports, keyboard and pinch zoom, split screen, foldables, iPadOS, touch laptops, fullscreen, edge-to-edge games, and installed PWA checked.");
