@@ -6,6 +6,7 @@ Mobile is an independent browser-native operating experience. It shares neutral 
 
 - `app-framework.js` validates mobile registrations and runs open/resume/pause/back/intent/state/close lifecycle hooks.
 - `app-loader.js` lazily loads `mobile/apps/<id>/app.js` and `app.css`.
+- `viewport.js` classifies a physical mobile/PWA versus desktop preview before first paint and maintains adaptive viewport metrics across resize, rotation, split-screen, and fold/unfold changes.
 - `shell.js` owns retained tasks, Home, Back, Recents, task dismissal, notification shade, quick settings, gestures, lock/fullscreen/install actions, and mobile preferences.
 - `data/mobile-apps.js` is the explicit mobile-only application catalog.
 
@@ -23,6 +24,8 @@ Files, Documents, Gallery, and Music use the shared IndexedDB-backed `SystemFS`.
 
 ## Phone and PWA behavior
 
-At 700px and below, Mobile fills `100dvh`, removes the simulated bezel and global top bar, and applies safe-area insets. Larger screens retain a framed phone preview. `manifest.webmanifest` provides a standalone Mobile start route, and the service worker precaches the mobile shell and first-party mobile app modules for offline startup.
+Physical touch devices and installed PWAs fill the live viewport, remove the simulated bezel and global top bar, and apply safe-area insets. Normal desktop browsers retain a framed phone preview independently of window width. Android's virtual desktop viewport is compensated back to the device's natural width so text, controls, and gestures remain phone-sized even when the browser reports roughly 980 CSS pixels. The runtime responds to compact phones, tall screens, landscape, split-screen, tablets, and foldable viewport changes without discarding the active task.
+
+For deterministic testing, `mobilePresentation=edge` forces the device presentation and `mobilePresentation=preview` forces the framed desktop preview. `manifest.webmanifest` provides a standalone Mobile start route, and the service worker precaches the mobile shell, viewport runtime, and first-party mobile app modules for offline startup.
 
 Swipe down from the top edge for the shade, swipe up from the bottom for Home, swipe up and hold for Recents, or use the accessible Android-style navigation buttons. Gesture navigation can be selected in Mobile Settings.

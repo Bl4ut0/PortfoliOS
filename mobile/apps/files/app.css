@@ -448,8 +448,6 @@
     background: #dc2626;
 }
 
-@media (max-width: 360px) {
-    .mobile-files-sheet-actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+html[data-mobile-size="compact"] .mobile-files-sheet-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }

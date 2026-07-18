@@ -48,7 +48,7 @@
     background:
         repeating-radial-gradient(circle, transparent 0 15px, rgba(255, 255, 255, 0.055) 16px 17px),
         linear-gradient(145deg, rgba(244, 114, 182, 0.28), rgba(99, 102, 241, 0.28));
-    font-size: clamp(3.5rem, 18vw, 5.5rem);
+    font-size: clamp(3.5rem, 18cqw, 5.5rem);
 }
 
 .mobile-music-cover-fallback i {
@@ -74,7 +74,7 @@
     margin: 0.25rem 0 0;
     overflow: hidden;
     font-family: var(--heading);
-    font-size: clamp(1.2rem, 5vw, 1.55rem);
+    font-size: clamp(1.2rem, 5cqw, 1.55rem);
     line-height: 1.15;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -462,22 +462,20 @@
     line-height: 1.45;
 }
 
-@media (max-width: 360px) {
-    .mobile-music-player {
-        padding: 0.85rem;
-    }
+html[data-mobile-size="compact"] .mobile-music-player {
+    padding: 0.85rem;
+}
 
-    .mobile-music-cover {
-        width: min(68%, 13rem);
-    }
+html[data-mobile-size="compact"] .mobile-music-cover {
+    width: min(68%, 13rem);
+}
 
-    .mobile-music-volume-row {
-        grid-template-columns: auto minmax(0, 1fr) auto;
-    }
+html[data-mobile-size="compact"] .mobile-music-volume-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+}
 
-    .mobile-music-volume-row > span {
-        display: none;
-    }
+html[data-mobile-size="compact"] .mobile-music-volume-row > span {
+    display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

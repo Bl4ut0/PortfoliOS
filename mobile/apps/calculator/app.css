@@ -66,7 +66,7 @@
     overflow: hidden;
     color: var(--text);
     font-family: var(--heading);
-    font-size: clamp(2.1rem, 10vw, 3.5rem);
+    font-size: clamp(2.1rem, 10cqw, 3.5rem);
     font-variant-numeric: tabular-nums;
     font-weight: 600;
     line-height: 1.08;
@@ -83,7 +83,7 @@
 
 .mobile-calculator-keys button {
     min-width: 0;
-    min-height: clamp(3.3rem, 14vw, 4.25rem);
+    min-height: clamp(3.3rem, 14cqw, 4.25rem);
     color: var(--text);
     background: color-mix(in srgb, var(--panel-strong) 82%, transparent);
     border: 1px solid var(--line);
@@ -128,14 +128,12 @@
     cursor: pointer;
 }
 
-@media (max-height: 690px) {
-    .mobile-calculator-shell {
-        grid-template-rows: minmax(6.5rem, 0.75fr) auto auto;
-    }
+html[data-mobile-height="compact"] .mobile-calculator-shell {
+    grid-template-rows: minmax(6.5rem, 0.75fr) auto auto;
+}
 
-    .mobile-calculator-keys button {
-        min-height: 3rem;
-    }
+html[data-mobile-height="compact"] .mobile-calculator-keys button {
+    min-height: 3rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

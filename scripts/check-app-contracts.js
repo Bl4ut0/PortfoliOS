@@ -1191,7 +1191,11 @@ async function run() {
     console.log(`App contract audit passed: ${modularIds.length} desktop apps, ${mobileAppCount} independent mobile apps, 2 templates, lifecycle/window/loader/iframe/Local AI behavior, and ${syntaxFileCount} first-party scripts checked.`);
 }
 
-run().catch((error) => {
-    console.error(`App contract audit crashed: ${error.stack || error.message}`);
-    process.exitCode = 1;
-});
+run()
+    .then(() => {
+        if (!process.exitCode) require("./check-mobile-viewport.js");
+    })
+    .catch((error) => {
+        console.error(`App contract audit crashed: ${error.stack || error.message}`);
+        process.exitCode = 1;
+    });

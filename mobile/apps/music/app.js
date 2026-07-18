@@ -1,6 +1,6 @@
 (function() {
     const APP_ID = "music";
-    const SERVICE_URL = "core/media-service.js?v=1.1.12";
+    const SERVICE_URL = "core/media-service.js?v=1.1.13";
     let rootEl = null;
     let unsubscribe = null;
     let servicePromise = null;

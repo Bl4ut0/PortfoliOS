@@ -156,6 +156,10 @@
     min-height: calc(100dvh - 11rem);
 }
 
+html[data-mobile-presentation="edge"] .mobile-gallery-viewer {
+    min-height: calc(var(--mobile-natural-height, 100dvh) - 11rem);
+}
+
 .mobile-gallery-viewer[hidden],
 .mobile-gallery-main[hidden] {
     display: none !important;

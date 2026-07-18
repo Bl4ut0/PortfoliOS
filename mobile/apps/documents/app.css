@@ -620,12 +620,10 @@
     font-weight: 750;
 }
 
-@media (max-width: 360px) {
-    .mobile-documents-row {
-        grid-template-columns: 2.9rem minmax(0, 1fr) 0.7rem;
-    }
+html[data-mobile-size="compact"] .mobile-documents-row {
+    grid-template-columns: 2.9rem minmax(0, 1fr) 0.7rem;
+}
 
-    .mobile-documents-row time {
-        display: none;
-    }
+html[data-mobile-size="compact"] .mobile-documents-row time {
+    display: none;
 }

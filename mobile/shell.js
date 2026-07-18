@@ -729,7 +729,10 @@
     }
 
     async function requestFullscreen() {
-        const target = elements().device || document.documentElement;
+        // Keep the transformed handset surface below the fullscreen element.
+        // Chromium applies special sizing rules to an element in fullscreen;
+        // targeting the root preserves virtual-viewport compensation.
+        const target = document.documentElement;
         if (document.fullscreenElement) {
             await document.exitFullscreen?.();
             return false;
@@ -891,6 +894,7 @@
     function beginGesture(event) {
         const device = elements().device;
         if (!device || elements().lock?.contains(event.target)) return;
+        const presentationScale = Math.max(1, Number(window.MobileViewport?.getMetrics?.().presentationScale) || 1);
         const recentCard = event.target instanceof Element ? event.target.closest("[data-mobile-recent-card]") : null;
         if (recentCard) {
             gesture = {
@@ -898,20 +902,22 @@
                 startX: event.clientX,
                 startY: event.clientY,
                 startTime: performance.now(),
+                presentationScale,
                 recentCard
             };
             return;
         }
         const rect = device.getBoundingClientRect();
-        const topEdge = event.clientY - rect.top <= 34;
-        const bottomEdge = rect.bottom - event.clientY <= 48;
-        const leftEdge = event.clientX - rect.left <= 24;
+        const topEdge = (event.clientY - rect.top) / presentationScale <= 34;
+        const bottomEdge = (rect.bottom - event.clientY) / presentationScale <= 48;
+        const leftEdge = (event.clientX - rect.left) / presentationScale <= 24;
         if (!topEdge && !bottomEdge && !leftEdge && !shadeOpen) return;
         gesture = {
             id: event.pointerId,
             startX: event.clientX,
             startY: event.clientY,
             startTime: performance.now(),
+            presentationScale,
             topEdge,
             bottomEdge,
             leftEdge,
@@ -921,8 +927,9 @@
 
     function moveGesture(event) {
         if (!gesture || gesture.id !== event.pointerId) return;
-        const dx = event.clientX - gesture.startX;
-        const dy = event.clientY - gesture.startY;
+        const scale = Math.max(1, gesture.presentationScale || 1);
+        const dx = (event.clientX - gesture.startX) / scale;
+        const dy = (event.clientY - gesture.startY) / scale;
         if (Math.abs(dx) > 10 || Math.abs(dy) > 10) event.preventDefault();
         if (gesture.recentCard && dy < 0) {
             gesture.recentCard.style.transform = `translateY(${Math.max(-140, dy)}px)`;
@@ -934,8 +941,9 @@
         if (!gesture || gesture.id !== event.pointerId) return;
         const current = gesture;
         gesture = null;
-        const dx = event.clientX - current.startX;
-        const dy = event.clientY - current.startY;
+        const scale = Math.max(1, current.presentationScale || 1);
+        const dx = (event.clientX - current.startX) / scale;
+        const dy = (event.clientY - current.startY) / scale;
         const duration = performance.now() - current.startTime;
         if (current.recentCard) {
             const taskId = current.recentCard.dataset.mobileRecentCard;
