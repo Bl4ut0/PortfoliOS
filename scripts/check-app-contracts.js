@@ -16,12 +16,6 @@ const WINDOW_PRESETS = new Set([
     "game-window"
 ]);
 const LIFECYCLE_HOOKS = ["onOpen", "onRestore", "onFocus", "onMinimize", "onMaximize", "onClose"];
-const LEGACY_APP_DIRS = new Map([
-    ["local-ai", {
-        documentation: "apps/local-ai/README.md",
-        redirectSource: "core/window-manager.js"
-    }]
-]);
 const failures = [];
 
 function fail(scope, message) {
@@ -47,6 +41,8 @@ function loadCatalog() {
         console
     };
     sandbox.window.window = sandbox.window;
+    vm.runInNewContext(read("data/systems.js"), sandbox, { filename: "data/systems.js" });
+    vm.runInNewContext(read("data/mobile-apps.js"), sandbox, { filename: "data/mobile-apps.js" });
     vm.runInNewContext(read("data/apps.js"), sandbox, { filename: "data/apps.js" });
     return sandbox.window;
 }
@@ -126,6 +122,110 @@ function evaluateAppWindow(appId, source) {
 
 function evaluateRegistration(appId, source) {
     return evaluateAppWindow(appId, source).appRegistry[appId];
+}
+
+function evaluateMobileRegistration(appId, source) {
+    const mobileQuietConsole = { log: () => {}, info: () => {}, warn: () => {}, error: () => {}, debug: () => {} };
+    const windowObject = {
+        mobileAppRegistry: {},
+        renderMobileProjectCard: () => "<section></section>",
+        loadScript: async () => {}
+    };
+    windowObject.window = windowObject;
+    vm.runInNewContext(source, { window: windowObject, console: mobileQuietConsole }, {
+        filename: `mobile/apps/${appId}/app.js`
+    });
+    return windowObject.mobileAppRegistry[appId];
+}
+
+function validateMobileFrameworkContract(catalog) {
+    const apps = Array.isArray(catalog.mobileAppCatalog) ? catalog.mobileAppCatalog : [];
+    const evictionStateApps = new Set(["browser", "calculator", "documents", "files"]);
+    const ids = apps.map((app) => app.id);
+    findDuplicates(ids).forEach((id) => fail("data/mobile-apps.js", `duplicate mobile app ID "${id}"`));
+    if (JSON.stringify(catalog.mobileAppIds || []) !== JSON.stringify(ids)) {
+        fail("data/mobile-apps.js", "window.mobileAppIds must be derived from the independent mobile catalog");
+    }
+
+    const desktopCatalogSource = read("data/apps.js");
+    const mobileCatalogSource = read("data/mobile-apps.js");
+    if (mobileCatalogSource.includes("desktopApps") || desktopCatalogSource.includes("mobileAppCatalog")) {
+        fail("catalog-boundary", "desktop and mobile catalogs must not derive from one another");
+    }
+
+    const mobileShell = read("mobile/shell.js");
+    if (/desktopApps|renderSystemArticle|systems\.filter/.test(mobileShell)) {
+        fail("mobile/shell.js", "the mobile shell must use its own catalog and renderer, not desktop or generic system launch logic");
+    }
+    ["ensureMobileAppLoaded", "runMobileAppLifecycle", "unloadMobileApp"].forEach((marker) => {
+        const combined = `${read("mobile/app-framework.js")}\n${read("mobile/app-loader.js")}\n${mobileShell}`;
+        if (!combined.includes(marker)) fail("mobile-framework", `missing independent mobile contract marker ${marker}`);
+    });
+
+    const systemIds = new Set((catalog.systems || []).map((system) => system.id));
+    apps.forEach((catalogApp) => {
+        const appId = String(catalogApp.id || "");
+        if (!APP_ID_PATTERN.test(appId)) fail("data/mobile-apps.js", `invalid mobile app ID "${appId}"`);
+        if (catalogApp.sourceId && !systemIds.has(catalogApp.sourceId)) {
+            fail(`mobile:${appId}`, `unknown neutral system data source "${catalogApp.sourceId}"`);
+        }
+        ["title", "icon", "color", "category"].forEach((field) => {
+            if (typeof catalogApp[field] !== "string" || !catalogApp[field].trim()) {
+                fail(`mobile:${appId}`, `${field} must be a non-empty string`);
+            }
+        });
+
+        const jsPath = path.join(ROOT, "mobile", "apps", appId, "app.js");
+        const cssPath = path.join(ROOT, "mobile", "apps", appId, "app.css");
+        if (!fs.existsSync(jsPath)) fail(`mobile:${appId}`, "missing mobile/apps/<id>/app.js");
+        if (!fs.existsSync(cssPath)) fail(`mobile:${appId}`, "missing mobile/apps/<id>/app.css");
+        if (!fs.existsSync(jsPath) || !fs.existsSync(cssPath)) return;
+
+        let registration;
+        try {
+            registration = evaluateMobileRegistration(appId, fs.readFileSync(jsPath, "utf8"));
+        } catch (error) {
+            fail(`mobile:${appId}`, `module could not register: ${error.message}`);
+            return;
+        }
+        if (!registration || typeof registration !== "object") {
+            fail(`mobile:${appId}`, "module did not register its catalog ID");
+            return;
+        }
+        ["title", "icon", "viewClass"].forEach((field) => {
+            if (typeof registration[field] !== "string" || !registration[field].trim()) {
+                fail(`mobile:${appId}`, `${field} must be a non-empty string`);
+            }
+        });
+        if (typeof registration.render !== "function") fail(`mobile:${appId}`, "render must be a function");
+        ["onOpen", "onResume", "onPause", "onBack", "onIntent", "serializeState", "restoreState", "onClose"].forEach((hook) => {
+            if (registration[hook] != null && typeof registration[hook] !== "function") {
+                fail(`mobile:${appId}`, `${hook} must be a function when provided`);
+            }
+        });
+        const hasSerializeState = typeof registration.serializeState === "function";
+        const hasRestoreState = typeof registration.restoreState === "function";
+        if (hasSerializeState !== hasRestoreState) {
+            fail(`mobile:${appId}`, "serializeState and restoreState must be implemented together");
+        }
+        if (evictionStateApps.has(appId) && (!hasSerializeState || !hasRestoreState)) {
+            fail(`mobile:${appId}`, "stateful retained app must survive LRU eviction");
+        }
+        const css = fs.readFileSync(cssPath, "utf8");
+        if (!css.includes(`.mobile-native-app.${registration.viewClass}`)) {
+            fail(`mobile:${appId}`, `app.css must scope a .mobile-native-app.${registration.viewClass} root`);
+        }
+    });
+
+    const mobileAppsRoot = path.join(ROOT, "mobile", "apps");
+    if (fs.existsSync(mobileAppsRoot)) {
+        fs.readdirSync(mobileAppsRoot, { withFileTypes: true })
+            .filter((entry) => entry.isDirectory())
+            .forEach((entry) => {
+                if (!ids.includes(entry.name)) fail(`mobile:${entry.name}`, "module folder is absent from mobileAppCatalog");
+            });
+    }
+    return ids.length;
 }
 
 function validateIPTVContract() {
@@ -927,6 +1027,49 @@ async function validateLocalAIServiceRuntimeContract() {
     }
 }
 
+function validateCompletedMigrationContract() {
+    const migratedTemplateApps = ["profile", "dossier", "browser", "network", "linux", "cli", "store", "settings"];
+    const index = read("index.html");
+    migratedTemplateApps.forEach((appId) => {
+        const templatePattern = new RegExp(`<template\\s+id=["']app-template-${appId}["'][\\s\\S]*?data-window=["']${appId}["'][\\s\\S]*?</template>`);
+        if (!templatePattern.test(index)) {
+            fail(`index.html:${appId}`, "migrated shell markup must be inert inside its app template");
+        }
+    });
+
+    const messagingFiles = [
+        "volume-hook.js",
+        "apps/romplayer/runtime.html",
+        "apps/ut99/runtime/index.php",
+        "apps/openrct2/runtime/index.js"
+    ];
+    messagingFiles.forEach((file) => {
+        const source = read(file);
+        if (/postMessage\([\s\S]{0,600}?,\s*["']\*["']\s*\)/.test(source)) {
+            fail(file, "runtime messaging must never use a wildcard target origin");
+        }
+    });
+
+    const volumeHook = read("volume-hook.js");
+    if (!volumeHook.includes("event.source !== window.parent") || !volumeHook.includes("event.origin !== window.location.origin")) {
+        fail("volume-hook.js", "runtime commands must validate both the parent window and same-origin sender");
+    }
+
+    const preferences = read("core/preferences.js");
+    if (!preferences.includes('document.querySelectorAll("iframe.game-frame")') || !preferences.includes("iframe.contentWindow === event.source")) {
+        fail("core/preferences.js", "runtime toast messages must be tied to a live game iframe");
+    }
+
+    const openrctApp = read("apps/openrct2/app.js");
+    const openrctRuntime = read("apps/openrct2/runtime/index.js");
+    ["openrct2-import-saves", "openrct2-export-saves", "runtimePath", "OpenRCT2"].forEach((marker) => {
+        if (!openrctApp.includes(marker)) fail("apps/openrct2/app.js", `save bridge is missing ${marker}`);
+    });
+    ["initializeParentSaveBridge", "openrct2-save-ready", "openrct2-export-saves-result", "syncOpenRCT2FileSystem"].forEach((marker) => {
+        if (!openrctRuntime.includes(marker)) fail("apps/openrct2/runtime/index.js", `save bridge is missing ${marker}`);
+    });
+}
+
 async function run() {
     await validateFrameworkContract();
     await validateLoaderContract();
@@ -936,6 +1079,7 @@ async function run() {
     validateLocalAIInteractionContract();
     await validateLocalAICliRuntimeContract();
     await validateLocalAIServiceRuntimeContract();
+    validateCompletedMigrationContract();
     let catalog;
     try {
         catalog = loadCatalog();
@@ -945,6 +1089,7 @@ async function run() {
     }
 
     const desktopApps = Array.isArray(catalog.desktopApps) ? catalog.desktopApps : [];
+    const mobileAppCount = validateMobileFrameworkContract(catalog);
     const storeApps = Array.isArray(catalog.storeApps) ? catalog.storeApps : [];
     const modularApps = desktopApps.filter((app) => app.modular === true);
     const modularIds = modularApps.map((app) => app.id);
@@ -965,6 +1110,9 @@ async function run() {
                 fail(`data/apps.js:${app.id || "unknown"}`, `${field} must be a non-empty string`);
             }
         });
+        if (app.modular !== true) {
+            fail(`data/apps.js:${app.id || "unknown"}`, "every desktop catalog app must declare modular: true");
+        }
     });
 
     if (JSON.stringify(catalog.modularApps || []) !== JSON.stringify(modularIds)) {
@@ -982,26 +1130,6 @@ async function run() {
     modularIds.forEach((appId) => {
         if (!defaultInstalledIds.has(appId) && !installableStoreIds.has(appId)) {
             fail(appId, "modular app is unreachable; make it standard-installed or add an installable Store entry");
-        }
-    });
-
-    LEGACY_APP_DIRS.forEach((legacy, appId) => {
-        const desktopApp = desktopApps.find((app) => app.id === appId);
-        if (!desktopApp) {
-            fail(`legacy:${appId}`, "legacy app has no desktop catalog entry");
-        } else if (desktopApp.modular === true) {
-            fail(`legacy:${appId}`, "legacy app must not be declared modular while its launcher redirects elsewhere");
-        }
-
-        if (!fs.existsSync(path.join(ROOT, legacy.documentation))) {
-            fail(`legacy:${appId}`, `missing compatibility documentation at ${legacy.documentation}`);
-        }
-
-        const redirectPath = path.join(ROOT, legacy.redirectSource);
-        if (!fs.existsSync(redirectPath)) {
-            fail(`legacy:${appId}`, `missing launcher redirect source at ${legacy.redirectSource}`);
-        } else if (!fs.readFileSync(redirectPath, "utf8").includes(`name === "${appId}"`)) {
-            fail(`legacy:${appId}`, `${legacy.redirectSource} no longer contains the expected launcher redirect`);
         }
     });
 
@@ -1044,7 +1172,7 @@ async function run() {
 
     const appsDirectory = path.join(ROOT, "apps");
     fs.readdirSync(appsDirectory, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && !entry.name.startsWith("_") && !LEGACY_APP_DIRS.has(entry.name))
+        .filter((entry) => entry.isDirectory() && !entry.name.startsWith("_"))
         .filter((entry) => fs.existsSync(path.join(appsDirectory, entry.name, "app.js")))
         .forEach((entry) => {
             if (!modularIds.includes(entry.name)) {
@@ -1060,7 +1188,7 @@ async function run() {
         return;
     }
 
-    console.log(`App contract audit passed: ${modularIds.length} modular apps, 2 templates, lifecycle/window/loader/iframe/Local AI behavior, and ${syntaxFileCount} first-party scripts checked.`);
+    console.log(`App contract audit passed: ${modularIds.length} desktop apps, ${mobileAppCount} independent mobile apps, 2 templates, lifecycle/window/loader/iframe/Local AI behavior, and ${syntaxFileCount} first-party scripts checked.`);
 }
 
 run().catch((error) => {

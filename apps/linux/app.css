@@ -1,0 +1,7 @@
+.desktop-window.linux-window {
+    --app-window-width: min(52rem, calc(100% - 2rem));
+    --app-window-height: min(37rem, calc(100% - 6rem));
+    --app-window-left: clamp(3rem, 13vw, 12rem);
+    --app-window-top: 5.4rem;
+    --app-window-min-height: 24rem;
+}

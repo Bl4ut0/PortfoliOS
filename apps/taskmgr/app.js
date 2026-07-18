@@ -1,5 +1,6 @@
 (function() {
     let statsInterval = null;
+    let optimizeTimer = null;
     let cpuHistory = Array(30).fill(10); // Start with some initial history data
     let startTime = Date.now();
 
@@ -63,11 +64,20 @@
         }
     }
 
-    function stopMonitoring() {
+    function stopMonitoring(windowEl) {
         stopDiagnosticsLoop();
         if (statsInterval) {
             clearInterval(statsInterval);
             statsInterval = null;
+        }
+        if (optimizeTimer) {
+            clearTimeout(optimizeTimer);
+            optimizeTimer = null;
+            const optimizeBtn = windowEl?.querySelector(".btn-optimize-mem");
+            if (optimizeBtn) {
+                optimizeBtn.disabled = false;
+                optimizeBtn.innerHTML = '<i class="fa-solid fa-gauge-high"></i> Optimize Memory';
+            }
         }
     }
 
@@ -546,7 +556,9 @@
                     optimizeBtn.disabled = true;
                     optimizeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Optimizing...';
 
-                    setTimeout(() => {
+                    optimizeTimer = setTimeout(() => {
+                        optimizeTimer = null;
+                        if (!windowEl.isConnected) return;
                         optimizeBtn.disabled = false;
                         optimizeBtn.innerHTML = '<i class="fa-solid fa-gauge-high"></i> Optimize Memory';
                         if (window.showDesktopToast) {

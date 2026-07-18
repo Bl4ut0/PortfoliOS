@@ -394,6 +394,27 @@
 
 /* Responsive Overrides */
 @media (max-width: 580px) {
+    body:not(.desktop-scaled) .desktop-window.taskmgr-window {
+        --app-window-width: calc(100vw - 1.5rem);
+        --app-window-left: 0.75rem;
+        width: calc(100vw - 2rem);
+        min-width: 0;
+        max-width: calc(100vw - 2rem);
+    }
+    .taskmgr-container,
+    .taskmgr-tabs,
+    .taskmgr-content {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .taskmgr-tabs {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    .taskmgr-tab {
+        flex: 0 0 auto;
+        padding-inline: 11px;
+    }
     .taskmgr-perf-grid {
         grid-template-columns: 1fr;
     }

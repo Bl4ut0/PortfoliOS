@@ -1,0 +1,7 @@
+.desktop-window.browser-window {
+    --app-window-width: min(54rem, calc(100% - 2rem));
+    --app-window-height: min(38rem, calc(100% - 6rem));
+    --app-window-left: clamp(3rem, 16vw, 15rem);
+    --app-window-top: 5.1rem;
+    --app-window-min-height: 26rem;
+}

@@ -1,0 +1,487 @@
+.mobile-native-app.mobile-music-app {
+    --mobile-app-accent: #f472b6;
+    --music-surface: rgba(255, 255, 255, 0.055);
+    --music-surface-strong: rgba(255, 255, 255, 0.09);
+    gap: 0.85rem;
+    padding-bottom: 0.25rem;
+}
+
+.mobile-music-player {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 0%, rgba(244, 114, 182, 0.3), transparent 38%),
+        radial-gradient(circle at 90% 80%, rgba(129, 140, 248, 0.2), transparent 45%),
+        rgba(11, 13, 22, 0.94);
+    border: 1px solid color-mix(in srgb, var(--mobile-app-accent) 30%, var(--line));
+    border-radius: 22px;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
+.mobile-music-cover {
+    position: relative;
+    width: min(74%, 15.5rem);
+    aspect-ratio: 1;
+    margin: 0 auto;
+    overflow: hidden;
+    background: linear-gradient(145deg, rgba(244, 114, 182, 0.24), rgba(99, 102, 241, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.32);
+}
+
+.mobile-music-cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mobile-music-cover-fallback {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: rgba(255, 255, 255, 0.88);
+    background:
+        repeating-radial-gradient(circle, transparent 0 15px, rgba(255, 255, 255, 0.055) 16px 17px),
+        linear-gradient(145deg, rgba(244, 114, 182, 0.28), rgba(99, 102, 241, 0.28));
+    font-size: clamp(3.5rem, 18vw, 5.5rem);
+}
+
+.mobile-music-cover-fallback i {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
+}
+
+.mobile-music-now-copy {
+    min-width: 0;
+    text-align: center;
+}
+
+.mobile-music-now-copy > span,
+.mobile-music-library-header span {
+    color: var(--mobile-app-accent);
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.mobile-music-now-copy h2 {
+    margin: 0.25rem 0 0;
+    overflow: hidden;
+    font-family: var(--heading);
+    font-size: clamp(1.2rem, 5vw, 1.55rem);
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-music-now-copy p {
+    margin: 0.35rem 0 0;
+    overflow: hidden;
+    color: var(--text-soft);
+    font-size: 0.76rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-music-timeline {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.mobile-music-timeline > div {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+}
+
+.mobile-music-app input[type="range"] {
+    --range-progress: 0%;
+    width: 100%;
+    height: 1.35rem;
+    margin: 0;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    touch-action: pan-y;
+}
+
+.mobile-music-app input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: linear-gradient(to right, var(--mobile-app-accent) var(--range-progress), rgba(255, 255, 255, 0.14) var(--range-progress));
+    border-radius: 999px;
+}
+
+.mobile-music-app input[type="range"]::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    appearance: none;
+    background: #fff;
+    border: 3px solid var(--mobile-app-accent);
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-music-app input[type="range"]::-moz-range-track {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+}
+
+.mobile-music-app input[type="range"]::-moz-range-progress {
+    height: 4px;
+    background: var(--mobile-app-accent);
+    border-radius: 999px;
+}
+
+.mobile-music-app input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border: 3px solid var(--mobile-app-accent);
+    border-radius: 50%;
+}
+
+.mobile-music-app input[type="range"]:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+
+.mobile-music-controls {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.3rem;
+    align-items: center;
+}
+
+.mobile-music-controls button,
+.mobile-music-volume-row button {
+    display: grid;
+    place-items: center;
+    width: 2.7rem;
+    height: 2.7rem;
+    margin: 0 auto;
+    color: var(--text-soft);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.mobile-music-controls button:hover,
+.mobile-music-controls button:focus-visible,
+.mobile-music-volume-row button:hover,
+.mobile-music-volume-row button:focus-visible {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    outline: none;
+}
+
+.mobile-music-controls button.is-active {
+    color: var(--mobile-app-accent);
+}
+
+.mobile-music-controls button:disabled,
+.mobile-music-volume-row button:disabled {
+    cursor: default;
+    opacity: 0.35;
+}
+
+.mobile-music-controls .mobile-music-play {
+    width: 3.55rem;
+    height: 3.55rem;
+    color: #160a12;
+    background: linear-gradient(145deg, #f9a8d4, var(--mobile-app-accent));
+    border-color: rgba(255, 255, 255, 0.36);
+    box-shadow: 0 8px 20px rgba(244, 114, 182, 0.24);
+    font-size: 1.08rem;
+}
+
+.mobile-music-controls .mobile-music-play:hover,
+.mobile-music-controls .mobile-music-play:focus-visible {
+    color: #160a12;
+    background: linear-gradient(145deg, #fbcfe8, #f472b6);
+}
+
+.mobile-music-volume-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 2.5rem auto;
+    gap: 0.55rem;
+    align-items: center;
+    padding: 0.45rem 0.6rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+}
+
+.mobile-music-volume-row > span {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    text-align: right;
+}
+
+.mobile-music-volume-row button {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 11px;
+}
+
+.mobile-music-notice {
+    margin: 0;
+    padding: 0.7rem 0.8rem;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.mobile-music-notice[data-tone="error"] {
+    color: #fecaca;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(248, 113, 113, 0.28);
+}
+
+.mobile-music-notice[data-tone="success"] {
+    color: #bbf7d0;
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(74, 222, 128, 0.25);
+}
+
+.mobile-music-library-section {
+    display: grid;
+    gap: 0.7rem;
+    min-width: 0;
+    padding: 0.85rem;
+    background: var(--music-surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+}
+
+.mobile-music-library-header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.mobile-music-library-header h3 {
+    margin: 0.15rem 0 0;
+    font-family: var(--heading);
+    font-size: 1.1rem;
+}
+
+.mobile-music-library-header small {
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+}
+
+.mobile-music-search {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.55rem;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 0.8rem;
+    color: var(--text-muted);
+    background: rgba(4, 7, 12, 0.46);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+}
+
+.mobile-music-search:focus-within {
+    border-color: color-mix(in srgb, var(--mobile-app-accent) 50%, var(--line));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--mobile-app-accent) 12%, transparent);
+}
+
+.mobile-music-search input {
+    width: 100%;
+    min-width: 0;
+    color: var(--text);
+    background: transparent;
+    border: 0;
+    outline: 0;
+    font: inherit;
+    font-size: 0.78rem;
+}
+
+.mobile-music-search input::placeholder {
+    color: var(--text-muted);
+}
+
+.mobile-music-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+}
+
+.mobile-music-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.7rem;
+    padding: 0.55rem 0.7rem;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.mobile-music-actions button:first-child {
+    color: #1d0b15;
+    background: linear-gradient(145deg, #f9a8d4, var(--mobile-app-accent));
+    border-color: rgba(255, 255, 255, 0.24);
+}
+
+.mobile-music-actions button:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.mobile-music-library {
+    display: grid;
+    gap: 0.38rem;
+    min-width: 0;
+}
+
+.mobile-music-track {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    align-items: center;
+    width: 100%;
+    min-height: 3.55rem;
+    padding: 0.4rem 0.48rem;
+    color: var(--text);
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    cursor: pointer;
+}
+
+.mobile-music-track:hover,
+.mobile-music-track:focus-visible {
+    background: rgba(255, 255, 255, 0.055);
+    border-color: var(--line);
+    outline: none;
+}
+
+.mobile-music-track.is-active {
+    background: color-mix(in srgb, var(--mobile-app-accent) 10%, rgba(255, 255, 255, 0.035));
+    border-color: color-mix(in srgb, var(--mobile-app-accent) 26%, var(--line));
+}
+
+.mobile-music-track-art {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    overflow: hidden;
+    color: var(--mobile-app-accent);
+    background: linear-gradient(145deg, rgba(244, 114, 182, 0.18), rgba(99, 102, 241, 0.12));
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 11px;
+}
+
+.mobile-music-track-art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mobile-music-track-copy {
+    display: grid;
+    gap: 0.18rem;
+    min-width: 0;
+}
+
+.mobile-music-track-copy strong,
+.mobile-music-track-copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-music-track-copy strong {
+    font-size: 0.78rem;
+}
+
+.mobile-music-track-copy small,
+.mobile-music-track-tail small {
+    color: var(--text-muted);
+    font-size: 0.64rem;
+}
+
+.mobile-music-track-tail {
+    display: grid;
+    place-items: center;
+    min-width: 1.4rem;
+    color: var(--mobile-app-accent);
+}
+
+.mobile-music-empty {
+    display: grid;
+    justify-items: center;
+    gap: 0.42rem;
+    padding: 1.4rem 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.mobile-music-empty > i {
+    margin-bottom: 0.2rem;
+    color: var(--mobile-app-accent);
+    font-size: 1.45rem;
+}
+
+.mobile-music-empty strong {
+    color: var(--text-soft);
+    font-size: 0.8rem;
+}
+
+.mobile-music-empty span {
+    max-width: 17rem;
+    font-size: 0.68rem;
+    line-height: 1.45;
+}
+
+@media (max-width: 360px) {
+    .mobile-music-player {
+        padding: 0.85rem;
+    }
+
+    .mobile-music-cover {
+        width: min(68%, 13rem);
+    }
+
+    .mobile-music-volume-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .mobile-music-volume-row > span {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-music-app * {
+        scroll-behavior: auto;
+    }
+}

@@ -1,7 +1,7 @@
-# Local AI Compatibility Module
+# Local AI Modular App
 
-This folder contains the retired standalone Local AI window implementation for reference. PortfoliOS does not lazy-load it.
+This folder contains the maintained, lazy-loaded Local AI control window. It uses the shared service in `core/local-ai.js` and mirrors status with Settings and the taskbar tray.
 
-The `local-ai` catalog launcher is intentionally non-modular and redirects to **Settings > Local AI** in `core/window-manager.js`. The maintained service is `core/local-ai.js`, with controls in `desktop/settings.js` and the taskbar tray.
+The `local-ai` catalog entry is declared modular in `data/apps.js`, registers through `window.appRegistry`, and owns its lifecycle subscriptions in `apps/local-ai/app.js`.
 
-Do not use this folder as an app template. New modular apps must start from `apps/_template/` or `apps/_template-game/` and declare `modular: true` in `data/apps.js`.
+New modular apps should still start from `apps/_template/` or `apps/_template-game/` and declare `modular: true` in `data/apps.js`.

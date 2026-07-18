@@ -24,14 +24,6 @@ window.appClosePromises = window.appClosePromises || {};
 window.appLifecyclePromises = window.appLifecyclePromises || {};
 
 window.openDesktopWindow = async (name, params = null) => {
-    if (name === "local-ai") {
-        const settingsWindow = await window.openDesktopWindow("settings");
-        if (window.openSettingsPanel) {
-            window.openSettingsPanel("local-ai");
-        }
-        return settingsWindow;
-    }
-
     if (window.appClosePromises[name]) {
         await window.appClosePromises[name];
     }
@@ -309,6 +301,11 @@ window.switchView = (view) => {
     if (window.closeVolumePanel) window.closeVolumePanel();
     
     document.body.dataset.view = targetView;
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("view", targetView);
+        window.history.replaceState({ ...(window.history.state || {}), view: targetView }, "", url);
+    } catch (error) {}
     if (view === "cli") {
         window.openDesktopWindow("cli");
     }

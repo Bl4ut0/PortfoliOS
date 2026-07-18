@@ -110,7 +110,13 @@ window.boot = async () => {
         window.addEventListener("message", window.handleGameRuntimeMessage);
     }
 
-    if (window.runBootSequence) {
+    const requestedView = new URLSearchParams(window.location.search).get("view");
+    if (["desktop", "mobile", "quick"].includes(requestedView)) {
+        document.getElementById("boot-screen")?.classList.add("hidden");
+        window.switchView?.(requestedView);
+        state.systemStarted = true;
+        if (requestedView === "desktop") window.startCanvas?.();
+    } else if (window.runBootSequence) {
         window.runBootSequence();
     }
 
@@ -400,6 +406,23 @@ window.boot = async () => {
             return;
         }
 
+        const startLauncher = event.target.closest("#start-menu [data-open-app]");
+        if (startLauncher) {
+            event.preventDefault();
+            const appId = startLauncher.dataset.openApp;
+            if (startLauncher.dataset.select && window.renderDossier) {
+                window.renderDossier(startLauncher.dataset.select);
+            }
+            if (appId === "settings" && window.openDesktopSettings) {
+                await window.openDesktopSettings("desktop");
+            } else if (window.openDesktopWindow) {
+                await window.openDesktopWindow(appId);
+            }
+            const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+            if (startMenu) startMenu.hidden = true;
+            return;
+        }
+
         const resetResolutionBtn = event.target.closest("#reset-resolution-btn");
         if (resetResolutionBtn) {
             state.desktopResolution = "auto";
@@ -586,32 +609,6 @@ window.boot = async () => {
             state.quickActiveId = quickSelectButton.dataset.quickSelect;
             state.activeId = state.quickActiveId;
             if (window.renderQuick) window.renderQuick();
-            return;
-        }
-
-        const mobileOpenButton = event.target.closest("[data-mobile-open]");
-        if (mobileOpenButton) {
-            if (window.openMobileApp) window.openMobileApp(mobileOpenButton.dataset.mobileOpen);
-            return;
-        }
-
-        const mobileHomeButton = event.target.closest("[data-mobile-home]");
-        if (mobileHomeButton) {
-            if (window.showMobileHome) window.showMobileHome();
-            return;
-        }
-
-        const mobileBackButton = event.target.closest("[data-mobile-back]");
-        if (mobileBackButton) {
-            if (state.mobileActiveId && window.showMobileHome) window.showMobileHome();
-            return;
-        }
-
-        const mobileRecentsButton = event.target.closest("[data-mobile-recents]");
-        if (mobileRecentsButton) {
-            if (window.showMobileHome) window.showMobileHome();
-            const mobScreen = window.byId ? window.byId("mobile-screen") : document.getElementById("mobile-screen");
-            if (mobScreen) mobScreen.scrollTo({ top: 0, behavior: "smooth" });
             return;
         }
 

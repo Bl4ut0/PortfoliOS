@@ -208,10 +208,8 @@ function promptUser(label, isPassword, callback) {
 // History setup helper
 function setupHistory() {
     const inputEl = document.getElementById("terminal-input");
-    if (!inputEl) {
-        setTimeout(setupHistory, 100);
-        return;
-    }
+    if (!inputEl || inputEl.dataset.historyBound === "true") return;
+    inputEl.dataset.historyBound = "true";
 
     inputEl.addEventListener("keydown", (event) => {
         if (event.key === "ArrowUp") {
@@ -1577,9 +1575,13 @@ async function initCli() {
     } catch (e) {
         console.error("Failed to load users DB or home directories:", e);
     }
+    window.initializeCliWindow();
+}
+
+window.initializeCliWindow = () => {
     updatePrompt();
     setupHistory();
-}
+};
 
 // Listen for user changes on the desktop to automatically update the CLI user session
 if (window.EventBus) {

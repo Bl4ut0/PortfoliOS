@@ -209,7 +209,7 @@
     window.appRegistry[APP_ID] = {
         title: "Local AI",
         icon: "fa-solid fa-brain",
-        windowClass: "local-ai-window",
+        windowClass: "local-ai-window utility-window",
         renderBody: () => renderBodyFromStatus(window.LocalAI?.getStatus ? window.LocalAI.getStatus() : {}),
         onOpen: (windowEl) => {
             bindActions(windowEl);

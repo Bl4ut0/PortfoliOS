@@ -813,15 +813,13 @@
         try {
             const { record, blob } = await readTrackBlob(path);
             await window.openDesktopWindow?.("webamp");
-            window.setTimeout(() => {
-                const webampApp = window.appRegistry?.webamp;
-                if (webampApp && typeof webampApp.playTrack === "function") {
-                    webampApp.playTrack(blob, record.name);
-                    setNotice(`Sent ${record.name} to Webamp.`, true);
-                } else {
-                    setNotice("Webamp is not ready yet. Try again in a moment.", true);
-                }
-            }, 450);
+            const webampApp = window.appRegistry?.webamp;
+            if (webampApp && typeof webampApp.playTrack === "function") {
+                webampApp.playTrack(blob, record.name);
+                setNotice(`Sent ${record.name} to Webamp.`, true);
+            } else {
+                setNotice("Webamp is not ready yet. Try again in a moment.", true);
+            }
         } catch (error) {
             setNotice(error.message || "Could not open track in Webamp.", true);
         }

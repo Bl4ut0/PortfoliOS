@@ -5,14 +5,193 @@
 
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
+const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-v1.1.12";
+const MOBILE_SHELL_ASSETS = [
+    "/",
+    "/index.html",
+    "/manifest.webmanifest",
+    "/mobile/mobile-icon.svg",
+    "/mobile/mobile-icon-192.png",
+    "/mobile/mobile-icon-512.png",
+    "/mobile/mobile-icon-maskable-512.png",
+    "/mobile/apple-touch-icon.png",
+    "/styles-v1.css",
+    "/styles/tokens.css",
+    "/styles/reset.css",
+    "/styles/layout.css",
+    "/styles/windows.css",
+    "/styles/desktop.css",
+    "/styles/mobile.css",
+    "/styles/quick.css",
+    "/styles/boot.css",
+    "/styles/components.css",
+    "/apps/_shared/iframe-game.js",
+    "/core/event-bus.js",
+    "/core/storage.js",
+    "/core/state.js",
+    "/core/utils.js",
+    "/core/filesystem.js",
+    "/core/file-intents.js",
+    "/core/media-service.js",
+    "/apps/musicmini/vendor/jsmediatags.min.js",
+    "/core/app-framework.js",
+    "/core/gdrive-sync.js",
+    "/core/app-loader.js",
+    "/core/local-ai.js",
+    "/core/simple-brain.js",
+    "/core/preferences.js",
+    "/core/window-manager.js",
+    "/data/systems.js",
+    "/data/mobile-apps.js",
+    "/data/apps.js",
+    "/data/users.js",
+    "/data/bookmarks.js",
+    "/data/config.js",
+    "/desktop/taskbar.js",
+    "/desktop/start-menu.js",
+    "/desktop/desktop-icons.js",
+    "/desktop/context-menu.js",
+    "/desktop/dossier.js",
+    "/desktop/browser.js",
+    "/desktop/terminal.js",
+    "/desktop/network-map.js",
+    "/desktop/store.js",
+    "/desktop/settings.js",
+    "/desktop/calendar.js",
+    "/desktop/toast.js",
+    "/desktop/canvas-bg.js",
+    "/desktop/matrix-rain.js",
+    "/desktop/boot.js",
+    "/desktop/wad-inspector.js",
+    "/desktop/brain-helper.js",
+    "/desktop/shell.js",
+    "/mobile/app-framework.js",
+    "/mobile/app-loader.js",
+    "/mobile/shell.js",
+    "/mobile/apps/browser/app.js",
+    "/mobile/apps/browser/app.css",
+    "/mobile/apps/documents/app.js",
+    "/mobile/apps/documents/app.css",
+    "/mobile/apps/music/app.js",
+    "/mobile/apps/music/app.css",
+    "/mobile/apps/settings/app.js",
+    "/mobile/apps/settings/app.css",
+    "/mobile/apps/files/app.js",
+    "/mobile/apps/files/app.css",
+    "/mobile/apps/calculator/app.js",
+    "/mobile/apps/calculator/app.css",
+    "/mobile/apps/devhub/app.js",
+    "/mobile/apps/devhub/app.css",
+    "/mobile/apps/status/app.js",
+    "/mobile/apps/status/app.css",
+    "/mobile/apps/homelab/app.js",
+    "/mobile/apps/homelab/app.css",
+    "/mobile/apps/automation/app.js",
+    "/mobile/apps/automation/app.css",
+    "/mobile/apps/addons/app.js",
+    "/mobile/apps/addons/app.css",
+    "/mobile/apps/guildcraft/app.js",
+    "/mobile/apps/guildcraft/app.css",
+    "/mobile/apps/survival-ai/app.js",
+    "/mobile/apps/survival-ai/app.css",
+    "/mobile/apps/wardenit/app.js",
+    "/mobile/apps/wardenit/app.css",
+    "/mobile/apps/media/app.js",
+    "/mobile/apps/media/app.css",
+    "/mobile/apps/flappybird/app.js",
+    "/mobile/apps/flappybird/app.css",
+    "/quick/shell.js",
+    "/main.js",
+    "/flappy.js"
+];
+const OPTIONAL_EXTERNAL_ASSETS = [
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2"
+];
+const CACHEABLE_EXTERNAL_HOSTS = new Set(["cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com"]);
 
 self.addEventListener("install", (event) => {
-    self.skipWaiting();
+    event.waitUntil((async () => {
+        // Each release writes to a new cache. If any required asset fails, remove
+        // that partial cache and reject installation so the active worker keeps
+        // serving the last complete shell.
+        await caches.delete(MOBILE_SHELL_CACHE);
+        const cache = await caches.open(MOBILE_SHELL_CACHE);
+        try {
+            await Promise.all(MOBILE_SHELL_ASSETS.map(async (path) => {
+                const response = await fetch(new Request(path, { cache: "reload" }));
+                if (!response.ok) {
+                    throw new Error(`Required shell asset ${path} returned ${response.status}.`);
+                }
+                await cache.put(path, response);
+            }));
+        } catch (error) {
+            await caches.delete(MOBILE_SHELL_CACHE);
+            throw error;
+        }
+        await Promise.allSettled(OPTIONAL_EXTERNAL_ASSETS.map(async (url) => {
+            const request = new Request(url, { cache: "reload", mode: "cors" });
+            const response = await fetch(request);
+            if (response.ok) await cache.put(request, response);
+        }));
+        await self.skipWaiting();
+    })());
 });
 
 self.addEventListener("activate", (event) => {
-    event.waitUntil(self.clients.claim());
+    event.waitUntil((async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys
+            .filter((key) => key.startsWith("portfolio-mobile-shell-") && key !== MOBILE_SHELL_CACHE)
+            .map((key) => caches.delete(key)));
+        await self.clients.claim();
+    })());
 });
+
+function isMobileShellAsset(pathname) {
+    return MOBILE_SHELL_ASSETS.includes(pathname)
+        || pathname.startsWith("/mobile/apps/");
+}
+
+async function serveMobileShellAsset(request) {
+    const cache = await caches.open(MOBILE_SHELL_CACHE);
+    const exactCached = await cache.match(request);
+    const offlineFallback = exactCached || await cache.match(request, { ignoreSearch: true });
+    const networkPromise = fetch(request.clone()).then(async (response) => {
+        if (response.ok) await cache.put(request, response.clone());
+        return response;
+    });
+
+    if (request.mode === "navigate") {
+        try {
+            return await networkPromise;
+        } catch (error) {
+            return offlineFallback || await cache.match("/") || new Response("PortfoliOS Mobile is unavailable offline.", { status: 503 });
+        }
+    }
+
+    if (exactCached) {
+        networkPromise.catch(() => {});
+        return exactCached;
+    }
+    try {
+        return await networkPromise;
+    } catch (error) {
+        if (offlineFallback) return offlineFallback;
+        throw error;
+    }
+}
+
+async function serveExternalAsset(request) {
+    const cache = await caches.open(MOBILE_SHELL_CACHE);
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    const response = await fetch(request);
+    if (response.ok || response.type === "opaque") await cache.put(request, response.clone());
+    return response;
+}
 
 function openDB() {
     return new Promise((resolve, reject) => {
@@ -124,7 +303,7 @@ function prepareRuntimeHtml(html) {
                     level: "error",
                     message: "[Iframe] " + type + ": " + message,
                     detail: detail || null
-                }, "*");
+                }, window.location.origin);
             } catch (e) {}
         }
     }
@@ -194,7 +373,17 @@ async function serveFromIndexedDB(relativePath, request) {
 self.addEventListener("fetch", (event) => {
     const url = new URL(event.request.url);
 
+    if (event.request.method === "GET" && CACHEABLE_EXTERNAL_HOSTS.has(url.hostname)) {
+        event.respondWith(serveExternalAsset(event.request));
+        return;
+    }
+
     if (url.origin === self.location.origin) {
+        if (event.request.method === "GET" && isMobileShellAsset(url.pathname)) {
+            event.respondWith(serveMobileShellAsset(event.request));
+            return;
+        }
+
         // --- 1. Unreal Tournament 99 Interceptor ---
         if (url.pathname.startsWith("/apps/ut99/runtime/index.php")) {
             let relativePath = url.pathname.replace("/apps/ut99/runtime/index.php", "/apps/ut99/runtime");

@@ -50,6 +50,10 @@ window.showGameControls = (windowEl) => {
 };
 
 window.handleGameRuntimeMessage = (event) => {
+    if (event.origin !== window.location.origin) return;
+    const sourceFrame = Array.from(document.querySelectorAll("iframe.game-frame"))
+        .find((iframe) => iframe.contentWindow === event.source);
+    if (!sourceFrame) return;
     const data = event.data || {};
     if (data.type !== "game-pointer-release" && data.type !== "game-pointer-release-hint") return;
 
@@ -430,6 +434,9 @@ window.setDesktopVolume = (value) => {
     if (window.EventBus) window.EventBus.emit("volume:changed", state.volume);
     if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
+
+// Neutral alias used by non-desktop experiences and shared media services.
+window.setSystemVolume = window.setDesktopVolume;
 
 window.setThemeColor = (type, value) => {
     if (type === "primary") {

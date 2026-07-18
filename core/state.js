@@ -13,6 +13,7 @@
         currentUserId: "bl4ut0",
         browserBookmark: "devhub",
         mobileActiveId: null,
+        mobileSurface: "home",
         quickActiveId: "overview",
         quickRoute: "overview",
         quickFilter: "all",

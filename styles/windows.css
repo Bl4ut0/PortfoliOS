@@ -308,11 +308,6 @@
 }
 
 .profile-window {
-    right: 2rem;
-    left: auto;
-    top: 4.8rem;
-    bottom: var(--window-bottom);
-    width: min(48rem, 80vw);
     overflow: hidden;
 }
 
@@ -461,36 +456,6 @@
     border-radius: 999px;
 }
 
-.desktop-window.dossier-window {
-    top: 4.8rem;
-    right: 2rem;
-    bottom: var(--window-bottom);
-    width: min(33rem, 42vw);
-    overflow: hidden;
-    min-height: 0;
-}
-
-.desktop-window.network-window {
-    left: clamp(8.6rem, 14vw, 13rem);
-    bottom: calc(var(--window-bottom) + 0.3rem);
-    width: min(48rem, 62vw);
-}
-
-.desktop-window.linux-window {
-    left: clamp(8.6rem, 13vw, 12rem);
-    top: 5.4rem;
-    bottom: var(--window-bottom);
-    width: min(52rem, 66vw);
-}
-
-.desktop-window.cli-window {
-    left: clamp(2rem, 12vw, 8rem);
-    top: 5rem;
-    bottom: calc(var(--window-bottom) + 2.4rem);
-    width: min(64rem, 80vw);
-    min-height: 0;
-}
-
 .desktop-window.game-window {
     left: var(--app-window-left, clamp(4rem, 10vw, 8rem));
     top: var(--app-window-top, 4.8rem);
@@ -498,32 +463,6 @@
     width: var(--app-window-width, min(54rem, calc(100% - 2rem)));
     height: var(--app-window-height, min(38rem, calc(100% - 6rem)));
     min-height: var(--app-window-min-height, 24rem);
-}
-
-.desktop-window.store-window {
-    left: clamp(5rem, 12vw, 10rem);
-    top: 4.8rem;
-    bottom: auto;
-    width: min(39rem, calc(100% - 2rem));
-    height: min(30rem, calc(100% - 6rem));
-    min-height: 22rem;
-}
-
-.desktop-window.settings-window {
-    left: clamp(6rem, 15vw, 12rem);
-    top: 4.8rem;
-    bottom: var(--window-bottom);
-    width: min(46rem, calc(100% - 2rem));
-    height: min(32rem, calc(100% - 6rem));
-    min-height: 22rem;
-}
-
-.desktop-window.browser-window {
-    left: clamp(8rem, 16vw, 15rem);
-    top: 5.1rem;
-    bottom: var(--window-bottom);
-    width: min(54rem, 70vw);
-    min-height: 26rem;
 }
 
 .desktop-experience[data-session="linux"] .profile-window {

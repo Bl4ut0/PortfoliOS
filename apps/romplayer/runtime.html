@@ -110,7 +110,7 @@
             }
 
             window.addEventListener("message", (event) => {
-                if (event.origin !== window.location.origin) return;
+                if (event.origin !== window.location.origin || event.source !== window.parent) return;
                 const data = event.data || {};
                 if (data.source !== "romplayer") return;
 

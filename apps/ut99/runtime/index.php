@@ -84,7 +84,7 @@ function prepare_runtime_html($html, $baseHref) {
                     level: "error",
                     message: "[Iframe] " + type + ": " + message,
                     detail: detail || null
-                }, "*");
+                }, window.location.origin);
             } catch (e) {}
         }
     }
@@ -218,7 +218,7 @@ HTML;
               source: "portfolio-ut99-runtime",
               type: "ut99-status",
               status: text || ""
-            }, "*");
+            }, window.location.origin);
           }',
         $html
     );
@@ -424,7 +424,7 @@ HTML;
                               source: "portfolio-ut99-runtime",
                               type: "ut99-status",
                               status: "Runtime error: " + errMsg
-                            }, "*");
+                            }, window.location.origin);
                           }
                           throw err;
                         }',

@@ -111,9 +111,8 @@ window.createIframeGameApp = (config) => {
                     await config.onClose(windowEl);
                 }
                 iframe.style.visibility = "hidden";
-                window.setTimeout(() => {
-                    iframe.src = "";
-                }, saveDelay);
+                await new Promise((resolve) => window.setTimeout(resolve, saveDelay));
+                if (iframe.isConnected) iframe.src = "";
             }
         }
     };

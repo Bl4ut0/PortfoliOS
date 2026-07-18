@@ -3,10 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description"
         content="PortfoliOS is a personal portfolio network for development projects, homelab infrastructure, community tools, and professional IT work.">
+    <meta name="theme-color" content="#080b12">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PortfoliOS">
     <title>PortfoliOS | Portfolio Network</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="mobile/apple-touch-icon.png">
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23090a0f'/%3E%3Cpath d='M8 10l7 6-7 6' stroke='%23f8fafc' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M18 22h7' stroke='%2322d3ee' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +22,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="styles-v1.css?v=1.0.54">
+    <link rel="stylesheet" href="styles-v1.css?v=1.1.12">
     <script>
         // Global System Debug Logger
         window.SystemLogs = [];
@@ -190,6 +197,7 @@
 
                         <div class="desktop-icons" id="desktop-icons" aria-label="Desktop icons"></div>
 
+                        <template id="app-template-profile">
                         <section class="desktop-window profile-window is-hidden" data-window="profile"
                             aria-label="Profile window">
                             <div class="window-bar">
@@ -341,7 +349,9 @@
                                 </div>
                             </div>
                         </section>
+                        </template>
 
+                        <template id="app-template-dossier">
                         <section class="desktop-window dossier-window is-hidden" data-window="dossier" aria-live="polite">
                             <div class="window-bar">
                                 <span id="dossier-file">dossier/devhub.md</span>
@@ -380,7 +390,9 @@
                                 <div class="dossier-links" id="dossier-links"></div>
                             </div>
                         </section>
+                        </template>
 
+                        <template id="app-template-network">
                         <section class="desktop-window network-window is-hidden" data-window="network"
                             aria-label="Network map window">
                             <div class="window-bar">
@@ -399,7 +411,9 @@
                             </div>
                             <div class="network-map" id="network-map" aria-label="Portfolio network map"></div>
                         </section>
+                        </template>
 
+                        <template id="app-template-linux">
                         <section class="desktop-window linux-window is-hidden" data-window="linux"
                             aria-label="Linux workstation window">
                             <div class="window-bar">
@@ -433,7 +447,9 @@
                                 </div>
                             </div>
                         </section>
+                        </template>
 
+                        <template id="app-template-cli">
                         <section class="desktop-window cli-window is-hidden" data-window="cli"
                             aria-label="CLI terminal app window">
                             <div class="window-bar">
@@ -465,8 +481,10 @@
                                 </div>
                             </div>
                         </section>
+                        </template>
 
 
+                        <template id="app-template-store">
                         <section class="desktop-window store-window is-hidden" data-window="store"
                             aria-label="Store window">
                             <div class="window-bar">
@@ -487,7 +505,9 @@
                                 <!-- Rendered dynamically -->
                             </div>
                         </section>
+                        </template>
 
+                        <template id="app-template-browser">
                         <section class="desktop-window browser-window is-hidden" data-window="browser"
                             aria-label="Browser window">
                             <div class="window-bar">
@@ -518,6 +538,7 @@
                                 <article class="browser-page" id="browser-page"></article>
                             </div>
                         </section>
+                        </template>
 
 
                         <div class="start-menu" id="start-menu" hidden>
@@ -586,6 +607,7 @@
                             </div>
                         </div>
 
+                        <template id="app-template-settings">
                         <section class="desktop-window settings-window is-hidden" data-window="settings"
                             aria-label="Settings window">
                             <div class="window-bar">
@@ -784,24 +806,27 @@
 
                                         <section class="settings-section">
                                             <h3>Mobile Shell</h3>
-                                            <p class="settings-info-text">Mobile settings will control the phone-style shell, mobile wallpaper, icon layout, and mobile-specific defaults as that experience is built out.</p>
+                                            <p class="settings-info-text">Mobile now runs as an independent phone-style OS. Open its native Settings app to control wallpaper, accent, theme, navigation, sound, fullscreen, install, and lock behavior.</p>
                                             <div class="settings-placeholder-grid">
                                                 <div>
                                                     <i class="fa-solid fa-mobile-screen-button"></i>
                                                     <strong>Viewport profile</strong>
-                                                    <span>Planned</span>
+                                                    <span>Safe-area fullscreen</span>
                                                 </div>
                                                 <div>
-                                                    <i class="fa-solid fa-table-cells"></i>
-                                                    <strong>Home layout</strong>
-                                                    <span>Planned</span>
+                                                    <i class="fa-regular fa-clone"></i>
+                                                    <strong>App switching</strong>
+                                                    <span>Retained tasks + Recents</span>
                                                 </div>
                                                 <div>
-                                                    <i class="fa-solid fa-image"></i>
-                                                    <strong>Mobile wallpaper</strong>
-                                                    <span>Planned</span>
+                                                    <i class="fa-solid fa-sliders"></i>
+                                                    <strong>System surfaces</strong>
+                                                    <span>Shade, lock, and quick settings</span>
                                                 </div>
                                             </div>
+                                            <button type="button" class="settings-btn btn-primary" data-view="mobile" style="margin-top: 1rem;">
+                                                <i class="fa-solid fa-mobile-screen-button"></i> Open Mobile Experience
+                                            </button>
                                         </section>
                                     </div>
 
@@ -1042,6 +1067,7 @@
                                 </main>
                             </div>
                         </section>
+                        </template>
 
                         <div class="desktop-context-menu" id="desktop-context-menu" hidden role="menu"></div>
                         <div class="desktop-toast" id="desktop-toast" hidden></div>
@@ -1138,45 +1164,112 @@
                 </div>
             </section>
 
-            <section class="view" data-view-panel="mobile" aria-label="Mobile portfolio">
-                <div class="mobile-device" id="mobile-device">
-                    <div class="mobile-statusbar">
-                        <span>Bl4ut0 Mobile</span>
-                        <div>
-                            <i class="fa-solid fa-signal"></i>
-                            <i class="fa-solid fa-wifi"></i>
-                            <i class="fa-solid fa-battery-three-quarters"></i>
-                        </div>
-                    </div>
-                    <main class="mobile-screen" id="mobile-screen">
-                        <section class="mobile-home" id="mobile-home">
-                            <div class="mobile-widget">
-                                <span>Experience OS</span>
-                                <strong>Portfolio apps, project nodes, and public routes.</strong>
+            <section class="view mobile-view" data-view-panel="mobile" aria-label="Mobile portfolio">
+                <div class="mobile-stage">
+                    <div class="mobile-device" id="mobile-device" aria-label="PortfoliOS Mobile">
+                        <div class="mobile-wallpaper" aria-hidden="true"></div>
+
+                        <button class="mobile-statusbar" type="button" data-mobile-shade-toggle aria-label="Open notifications and quick settings"
+                            aria-controls="mobile-shade" aria-expanded="false" title="Open notifications and quick settings">
+                            <span class="mobile-status-time" id="mobile-status-time">--:--</span>
+                            <span class="mobile-status-icons">
+                                <i class="fa-solid fa-circle mobile-notification-dot" id="mobile-notification-dot" hidden></i>
+                                <i class="fa-solid fa-signal"></i>
+                                <i class="fa-solid fa-wifi" data-mobile-status-wifi></i>
+                                <i class="fa-solid fa-battery-three-quarters"></i>
+                            </span>
+                        </button>
+
+                        <aside class="mobile-shade" id="mobile-shade" role="dialog" aria-modal="true" aria-label="Notifications and quick settings" aria-hidden="true" hidden>
+                            <div class="mobile-shade-handle" aria-hidden="true"></div>
+                            <header class="mobile-shade-header">
+                                <div>
+                                    <strong id="mobile-shade-time">--:--</strong>
+                                    <span id="mobile-shade-date">Loading date</span>
+                                </div>
+                                <div class="mobile-shade-actions">
+                                    <button type="button" data-mobile-open="settings" title="Open Mobile Settings" aria-label="Open Mobile Settings"><i class="fa-solid fa-gear"></i></button>
+                                    <button type="button" data-mobile-fullscreen title="Enter full screen" aria-label="Enter full screen"><i class="fa-solid fa-expand"></i></button>
+                                </div>
+                            </header>
+
+                            <div class="mobile-quick-tiles" aria-label="Quick settings">
+                                <button type="button" class="is-active" data-mobile-toggle="wifi" aria-pressed="true"><i class="fa-solid fa-wifi"></i><span>Wi-Fi</span><small>Connected</small></button>
+                                <button type="button" data-mobile-toggle="bluetooth" aria-pressed="false"><i class="fa-brands fa-bluetooth-b"></i><span>Bluetooth</span><small>Off</small></button>
+                                <button type="button" data-mobile-toggle="dnd" aria-pressed="false"><i class="fa-solid fa-moon"></i><span>Do not disturb</span><small>Off</small></button>
+                                <button type="button" data-mobile-toggle="rotation" aria-pressed="false"><i class="fa-solid fa-rotate"></i><span>Auto-rotate</span><small>Off</small></button>
+                                <button type="button" data-view="quick"><i class="fa-solid fa-compass"></i><span>Quick view</span><small>Portfolio</small></button>
+                                <button type="button" data-view="desktop"><i class="fa-solid fa-desktop"></i><span>Desktop</span><small>Workspace</small></button>
                             </div>
-                            <div class="mobile-app-grid" id="mobile-app-grid"></div>
-                        </section>
-                        <section class="mobile-app-view is-hidden" id="mobile-app-view" aria-live="polite">
-                            <div class="mobile-app-header">
-                                <button type="button" data-mobile-home title="Back to mobile home">
-                                    <i class="fa-solid fa-arrow-left"></i>
+
+                            <label class="mobile-range-control" for="mobile-brightness">
+                                <i class="fa-solid fa-sun"></i>
+                                <input id="mobile-brightness" type="range" min="45" max="100" value="100" data-mobile-brightness aria-label="Screen brightness">
+                            </label>
+                            <label class="mobile-range-control" for="mobile-volume">
+                                <i class="fa-solid fa-volume-high"></i>
+                                <input id="mobile-volume" type="range" min="0" max="100" value="70" data-mobile-volume aria-label="Media volume">
+                            </label>
+
+                            <section class="mobile-now-playing is-hidden" id="mobile-now-playing" aria-label="Now playing">
+                                <span class="mobile-now-playing-art"><i class="fa-solid fa-music"></i></span>
+                                <div><strong id="mobile-now-playing-title">Nothing playing</strong><small id="mobile-now-playing-artist">Music</small></div>
+                                <button type="button" data-mobile-media-action="previous" title="Previous track" aria-label="Previous track"><i class="fa-solid fa-backward-step"></i></button>
+                                <button type="button" data-mobile-media-action="toggle" title="Play or pause" aria-label="Play or pause"><i class="fa-solid fa-play"></i></button>
+                                <button type="button" data-mobile-media-action="next" title="Next track" aria-label="Next track"><i class="fa-solid fa-forward-step"></i></button>
+                            </section>
+
+                            <div class="mobile-notification-heading">
+                                <strong>Notifications</strong>
+                                <button type="button" data-mobile-clear-notifications>Clear</button>
+                            </div>
+                            <div class="mobile-notifications" id="mobile-notifications" aria-live="polite"></div>
+                            <button class="mobile-shade-close" type="button" data-mobile-shade-close aria-label="Close quick settings"></button>
+                        </aside>
+
+                        <main class="mobile-screen" id="mobile-screen">
+                            <section class="mobile-home" id="mobile-home" aria-label="Home screen">
+                                <header class="mobile-home-clock">
+                                    <strong id="mobile-home-time">--:--</strong>
+                                    <span id="mobile-home-date">Loading date</span>
+                                </header>
+                                <button class="mobile-search-pill" type="button" data-mobile-open="browser">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <span>Search PortfoliOS</span>
+                                    <i class="fa-solid fa-microphone"></i>
                                 </button>
-                                <span id="mobile-app-title">App</span>
-                            </div>
-                            <article class="mobile-app-content" id="mobile-app-content"></article>
-                        </section>
-                    </main>
-                    <nav class="mobile-nav" aria-label="Mobile navigation">
-                        <button type="button" data-mobile-back title="Back">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <button type="button" data-mobile-home title="Home">
-                            <i class="fa-regular fa-circle"></i>
-                        </button>
-                        <button type="button" data-mobile-recents title="Recent apps">
-                            <i class="fa-regular fa-square"></i>
-                        </button>
-                    </nav>
+                                <button class="mobile-widget" type="button" data-view="quick">
+                                    <span><i class="fa-solid fa-sparkles"></i> At a glance</span>
+                                    <strong>Projects, services, and professional signals.</strong>
+                                    <small>Open Quick View <i class="fa-solid fa-arrow-right"></i></small>
+                                </button>
+                                <div class="mobile-app-grid" id="mobile-app-grid" aria-label="Applications"></div>
+                                <nav class="mobile-home-dock" id="mobile-home-dock" aria-label="Favorite applications"></nav>
+                            </section>
+
+                            <section class="mobile-task-stack is-hidden" id="mobile-task-stack" aria-live="polite"></section>
+
+                            <section class="mobile-recents is-hidden" id="mobile-recents" aria-label="Recent applications">
+                                <header><div><span>Running apps</span><strong>Recents</strong></div><button type="button" data-mobile-clear-recents>Clear all</button></header>
+                                <div class="mobile-recents-list" id="mobile-recents-list"></div>
+                            </section>
+
+                            <section class="mobile-lock-screen is-hidden" id="mobile-lock-screen" role="dialog" aria-modal="true" aria-label="Lock screen" aria-hidden="true" inert hidden>
+                                <div class="mobile-lock-icon"><i class="fa-solid fa-lock"></i></div>
+                                <strong id="mobile-lock-time">--:--</strong>
+                                <span id="mobile-lock-date">Loading date</span>
+                                <div class="mobile-lock-notice"><i class="fa-solid fa-shield-halved"></i><span>Local browser session<br><small>Your files stay on this device.</small></span></div>
+                                <button type="button" data-mobile-unlock><i class="fa-solid fa-chevron-up"></i><span>Swipe or tap to unlock</span></button>
+                            </section>
+                        </main>
+
+                        <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
+                            <button type="button" data-mobile-back title="Back" aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>
+                            <button type="button" data-mobile-home title="Home" aria-label="Home"><i class="fa-regular fa-circle"></i></button>
+                            <button type="button" data-mobile-recents title="Recent apps" aria-label="Recent apps"><i class="fa-regular fa-square"></i></button>
+                            <span class="mobile-gesture-pill" aria-hidden="true"></span>
+                        </nav>
+                    </div>
                 </div>
             </section>
 
@@ -1194,23 +1287,27 @@
     <!-- Shared Ext Utilities -->
     <script src="core/app-framework.js?v=1.0.34"></script>
     <script src="apps/_shared/iframe-game.js?v=1.0.34"></script>
+    <script src="mobile/app-framework.js?v=1.1.0"></script>
     
     <!-- Core Services -->
     <script src="core/event-bus.js"></script>
     <script src="core/storage.js"></script>
-    <script src="core/state.js?v=1.0.47"></script>
+    <script src="core/state.js?v=1.1.0"></script>
     <script src="core/utils.js?v=1.0.1"></script>
     <script src="core/filesystem.js?v=1.0.30"></script>
+    <script src="core/file-intents.js?v=1.1.12"></script>
+    <script src="core/media-service.js?v=1.1.12"></script>
     <script src="core/gdrive-sync.js?v=1.0.59"></script>
-    <script src="core/app-loader.js?v=1.0.105"></script>
+    <script src="core/app-loader.js?v=1.0.107"></script>
     <script src="core/local-ai.js?v=1.0.67"></script>
     <script src="core/simple-brain.js"></script>
-    <script src="core/preferences.js?v=1.0.77"></script>
-    <script src="core/window-manager.js?v=1.0.34"></script>
+    <script src="core/preferences.js?v=1.1.0"></script>
+    <script src="core/window-manager.js?v=1.1.0"></script>
     
     <!-- Shared Data -->
     <script src="data/systems.js?v=1.0.54"></script>
-    <script src="data/apps.js?v=1.0.66"></script>
+    <script src="data/mobile-apps.js?v=1.1.0"></script>
+    <script src="data/apps.js?v=1.0.67"></script>
     <script src="data/users.js?v=1.0.58"></script>
     <script src="data/bookmarks.js?v=1.0.51"></script>
     <script src="data/config.js?v=1.0.53"></script>
@@ -1233,10 +1330,11 @@
     <script src="desktop/boot.js"></script>
     <script src="desktop/wad-inspector.js"></script>
     <script src="desktop/brain-helper.js?v=1.0.2"></script>
-    <script src="desktop/shell.js?v=1.0.60"></script>
+    <script src="desktop/shell.js?v=1.1.0"></script>
     
     <!-- Mobile & Quick Shells -->
-    <script src="mobile/shell.js?v=1.0.47"></script>
+    <script src="mobile/app-loader.js?v=1.1.12"></script>
+    <script src="mobile/shell.js?v=1.1.12"></script>
     <script src="quick/shell.js?v=1.0.47"></script>
     
     <!-- Main Entry Point -->

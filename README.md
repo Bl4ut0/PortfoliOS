@@ -9,12 +9,12 @@ The shell runs independently in each visitor's browser. Server-side pieces can b
 * **[core/](file:///c:/Dev Projects/bl4ut0-portfolio-os/core)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, Google Drive sync, preferences loader, and app-loader).
 * **[data/](file:///c:/Dev Projects/bl4ut0-portfolio-os/data)**: Shared static dataset arrays (portfolio project nodes, catalogs, settings, bookmarks).
 * **[desktop/](file:///c:/Dev Projects/bl4ut0-portfolio-os/desktop)**: Desktop UI components and shell boot orchestration (start launcher, taskbar window mapping, snapping desktop icons, context menus, and custom WAD inspector).
-* **[mobile/](file:///c:/Dev Projects/bl4ut0-portfolio-os/mobile)**: Mobile view grid layouts and app launcher.
+* **[mobile/](file:///c:/Dev Projects/bl4ut0-portfolio-os/mobile)**: Independent mobile OS framework, lazy loader, lifecycle, app registry, and mobile-only app modules. It shares neutral data/services with Desktop but not the desktop app catalog or window framework.
 * **[quick/](file:///c:/Dev Projects/bl4ut0-portfolio-os/quick)**: Split-screen quick search index layout.
-* **[apps/](file:///c:/Dev Projects/bl4ut0-portfolio-os/apps)**: Custom modular desktop applications (Task Manager `taskmgr`, File Explorer `files`, Webamp media player, and browser-compiled game runtimes).
+* **[apps/](file:///c:/Dev Projects/bl4ut0-portfolio-os/apps)**: The complete modular desktop catalog. Every launcher loads its own `apps/<id>/app.js` registration and `app.css` lifecycle surface.
 * **[styles/](file:///c:/Dev Projects/bl4ut0-portfolio-os/styles)**: Segmented CSS stylesheet system imported globally via `styles-v1.css`.
 * **[main.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/main.js)**: Entry point orchestrator bootstrapping the OS shell on DOM load.
-* **`index.html`** - HTML shell template and static markup container.
+* **`index.html`** - HTML shell plus inert templates used by migrated first-party apps; no catalog window is live-mounted at startup.
 * `DOOM.WAD` can be placed in the web root for the DOOM route.
 
 ## Test Locally
@@ -97,7 +97,7 @@ To allow visitors to connect their Google Drive and backup their filesystem:
 ## Experience Modes
 
 - Desktop is a windowed app shell with a Start launcher, running-app taskbar, minimize/maximize/close controls, calendar flyout, mini browser, draggable/resizable windows, network map, Linux Lab, and a playable DOOM engine.
-- Mobile is an Android-style app shell with project apps and back/home navigation.
+- Mobile is an independent Android-leaning browser OS with retained app tasks, Home/Back/Recents navigation, a notification and quick-settings shade, lock screen, mobile Settings, local Files/Documents/PDF/Gallery apps, persistent music playback, and explicit Desktop/Quick handoff.
 - Quick is a direct searchable portfolio index for visitors who want the information without using the desktop, phone, or terminal surfaces.
 - CLI is the terminal interface for the same nodes and public routes.
 
@@ -107,7 +107,7 @@ The PortfoliOS Store is evolving into an app catalog with categories for games, 
 
 ## Mobile Behavior
 
-Mobile is now a dedicated experience. Desktop remains available on small screens, but the Mobile view is the intended phone route.
+Mobile is a dedicated experience, not a responsive desktop theme. On phone-sized viewports it occupies the full dynamic viewport, respects safe-area insets, and hides the global shell chrome. The installable web manifest starts at `?view=mobile`; users can also enter browser fullscreen from Mobile Settings or the quick-settings shade. Apps use their own mobile catalog and UI modules while sharing neutral services such as SystemFS, volume, portfolio records, and the persistent media service.
 
 ## DOOM Engine Loader
 

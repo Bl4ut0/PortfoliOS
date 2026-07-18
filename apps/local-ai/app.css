@@ -1,12 +1,9 @@
 .desktop-window.local-ai-window {
-    display: flex;
-    flex-direction: column;
-    width: min(34rem, calc(100% - 2rem));
-    height: min(31rem, calc(100% - 5rem));
-    min-width: 22rem;
-    min-height: 24rem;
-    left: clamp(1rem, 22vw, 16rem);
-    top: clamp(3rem, 9vh, 6rem);
+    --app-window-width: min(34rem, calc(100% - 2rem));
+    --app-window-height: min(31rem, calc(100% - 5rem));
+    --app-window-min-height: 24rem;
+    --app-window-left: clamp(1rem, 22vw, 16rem);
+    --app-window-top: clamp(3rem, 9vh, 6rem);
 }
 
 .local-ai-app {

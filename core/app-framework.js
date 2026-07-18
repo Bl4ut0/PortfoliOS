@@ -44,6 +44,18 @@
         }
     }
 
+    function renderAppTemplate(appId) {
+        const template = document.getElementById(`app-template-${appId}`);
+        const root = template?.content?.querySelector(`[data-window="${appId}"]`);
+        if (!root) {
+            throw new Error(`PortfoliOS: Missing inert template for app "${appId}".`);
+        }
+
+        const clone = root.cloneNode(true);
+        clone.querySelector(":scope > .window-bar")?.remove();
+        return clone.innerHTML;
+    }
+
     function validateAppRegistration(appId, app = window.appRegistry?.[appId]) {
         if (!appIdPattern.test(String(appId || ""))) {
             console.error(`PortfoliOS: App ID "${appId}" must contain only lowercase letters, numbers, and hyphens.`);
@@ -177,6 +189,7 @@
         escapeHtml,
         getIframeTargetOrigin,
         postMessageToIframe,
+        renderAppTemplate,
         validateAppRegistration,
         runAppLifecycleHook,
         unloadModularApp,
@@ -188,6 +201,7 @@
     window.escapeHtml = window.escapeHtml || escapeHtml;
     window.getIframeTargetOrigin = getIframeTargetOrigin;
     window.postMessageToIframe = postMessageToIframe;
+    window.renderAppTemplate = renderAppTemplate;
     window.validateAppRegistration = validateAppRegistration;
     window.runAppLifecycleHook = runAppLifecycleHook;
     window.unloadModularApp = unloadModularApp;

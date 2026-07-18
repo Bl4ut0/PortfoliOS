@@ -1,0 +1,296 @@
+.mobile-native-app.mobile-settings-app {
+    --mobile-app-accent: #94a3b8;
+    gap: 0.85rem;
+    padding-bottom: 1rem;
+}
+
+.mobile-settings-heading,
+.mobile-settings-section-title,
+.mobile-settings-row,
+.mobile-settings-volume,
+.mobile-settings-experiences,
+.mobile-settings-system-actions {
+    display: flex;
+    align-items: center;
+}
+
+.mobile-settings-heading {
+    gap: 0.9rem;
+    padding: 0.35rem 0.1rem 0.5rem;
+}
+
+.mobile-settings-heading > span {
+    display: grid;
+    place-items: center;
+    width: 3.4rem;
+    height: 3.4rem;
+    flex: 0 0 auto;
+    color: var(--text);
+    background: linear-gradient(145deg, #64748b, #334155);
+    border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 12px 24px rgba(0, 0, 0, 0.24);
+    font-size: 1.3rem;
+}
+
+.mobile-settings-heading p,
+.mobile-settings-heading h2,
+.mobile-settings-heading small,
+.mobile-settings-section-title h3,
+.mobile-settings-section-title p {
+    margin: 0;
+}
+
+.mobile-settings-heading p {
+    color: var(--theme-primary);
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.mobile-settings-heading h2 {
+    font-family: var(--heading);
+    font-size: 1.75rem;
+    line-height: 1.08;
+}
+
+.mobile-settings-heading small,
+.mobile-settings-section-title p,
+.mobile-settings-row small {
+    color: var(--text-soft);
+}
+
+.mobile-settings-status {
+    margin: 0;
+    padding: 0.65rem 0.8rem;
+    color: var(--text-soft);
+    background: var(--panel-soft);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    font-size: 0.75rem;
+}
+
+.mobile-settings-status[data-tone="success"] {
+    color: var(--theme-accent);
+    border-color: color-mix(in srgb, var(--theme-accent) 35%, var(--line));
+}
+
+.mobile-settings-status[data-tone="error"] {
+    color: var(--rose);
+    border-color: color-mix(in srgb, var(--rose) 35%, var(--line));
+}
+
+.mobile-settings-card {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    background: color-mix(in srgb, var(--panel-strong) 82%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 21px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.mobile-settings-section-title {
+    gap: 0.7rem;
+}
+
+.mobile-settings-section-title > i {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 auto;
+    color: var(--theme-primary);
+    background: color-mix(in srgb, var(--theme-primary) 13%, transparent);
+    border-radius: 12px;
+}
+
+.mobile-settings-section-title h3 {
+    font-family: var(--heading);
+    font-size: 0.94rem;
+}
+
+.mobile-settings-section-title p {
+    font-size: 0.7rem;
+}
+
+.mobile-settings-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.mobile-settings-wallpapers {
+    display: flex;
+    padding-bottom: 0.15rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+}
+
+.mobile-settings-wallpapers::-webkit-scrollbar {
+    display: none;
+}
+
+.mobile-settings-choice,
+.mobile-settings-action,
+.mobile-settings-experiences button {
+    min-height: 2.85rem;
+    color: var(--text-soft);
+    background: var(--panel-soft);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    cursor: pointer;
+}
+
+.mobile-settings-choice {
+    display: grid;
+    place-items: center;
+    gap: 0.25rem;
+    min-width: 5.5rem;
+    padding: 0.55rem;
+    scroll-snap-align: start;
+    font-size: 0.72rem;
+}
+
+.mobile-settings-choice.is-selected {
+    color: var(--theme-primary);
+    background: color-mix(in srgb, var(--theme-primary) 14%, var(--panel-soft));
+    border-color: color-mix(in srgb, var(--theme-primary) 42%, var(--line));
+}
+
+.mobile-settings-row {
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3.1rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--line);
+}
+
+.mobile-settings-row span,
+.mobile-settings-row strong,
+.mobile-settings-row small {
+    display: block;
+}
+
+.mobile-settings-row strong {
+    font-size: 0.82rem;
+}
+
+.mobile-settings-row small {
+    font-size: 0.67rem;
+}
+
+.mobile-settings-accent-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.4rem;
+    padding: 0.65rem 0;
+    border-top: 1px solid var(--line);
+}
+
+.mobile-settings-accent-grid button {
+    display: grid;
+    justify-items: center;
+    gap: 0.28rem;
+    min-width: 0;
+    min-height: 3.1rem;
+    padding: 0.35rem 0.15rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 12px;
+}
+
+.mobile-settings-accent-grid button > span {
+    width: 1.55rem;
+    height: 1.55rem;
+    background: var(--settings-swatch);
+    border: 2px solid color-mix(in srgb, var(--text) 18%, transparent);
+    border-radius: 999px;
+}
+
+.mobile-settings-accent-grid button small {
+    overflow: hidden;
+    font-size: 0.58rem;
+    text-overflow: ellipsis;
+}
+
+.mobile-settings-accent-grid button.is-selected {
+    color: var(--text);
+    background: color-mix(in srgb, var(--settings-swatch) 12%, transparent);
+    border-color: color-mix(in srgb, var(--settings-swatch) 42%, var(--line));
+}
+
+.mobile-settings-switch {
+    width: 2.9rem;
+    height: 1.65rem;
+    flex: 0 0 auto;
+    accent-color: var(--theme-primary);
+}
+
+.mobile-settings-volume {
+    gap: 0.65rem;
+}
+
+.mobile-settings-volume input {
+    min-width: 0;
+    flex: 1;
+    accent-color: var(--theme-primary);
+}
+
+.mobile-settings-volume output {
+    min-width: 2.7rem;
+    color: var(--text-soft);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-align: right;
+}
+
+.mobile-settings-experiences,
+.mobile-settings-system-actions {
+    gap: 0.55rem;
+}
+
+.mobile-settings-experiences button,
+.mobile-settings-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    flex: 1;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.76rem;
+}
+
+.mobile-settings-experiences button {
+    color: var(--text);
+    background: color-mix(in srgb, var(--theme-primary) 10%, var(--panel-soft));
+}
+
+.mobile-settings-action:hover,
+.mobile-settings-action:focus-visible,
+.mobile-settings-experiences button:hover,
+.mobile-settings-experiences button:focus-visible,
+.mobile-settings-choice:hover,
+.mobile-settings-choice:focus-visible {
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--theme-primary) 38%, var(--line));
+}
+
+@media (max-width: 350px) {
+    .mobile-settings-choice-grid:not(.mobile-settings-wallpapers) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mobile-settings-system-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-settings-wallpapers {
+        scroll-behavior: auto;
+    }
+}

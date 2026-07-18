@@ -30,11 +30,9 @@ window.toggleVolumePanel = () => {
     window.closeContextMenu();
 };
 
-window.openDesktopSettings = (panel = "desktop") => {
-    if (window.openDesktopWindow) window.openDesktopWindow("settings");
-    window.setTimeout(() => {
-        if (window.openSettingsPanel) window.openSettingsPanel(panel);
-    }, 0);
+window.openDesktopSettings = async (panel = "desktop") => {
+    if (window.openDesktopWindow) await window.openDesktopWindow("settings");
+    if (window.openSettingsPanel) window.openSettingsPanel(panel);
     window.closeVolumePanel();
     window.closeContextMenu();
 };

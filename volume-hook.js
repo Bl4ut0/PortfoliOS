@@ -34,7 +34,7 @@
             ...payload,
             source: "portfolio-game-runtime",
             path: window.location.pathname
-        }, "*");
+        }, window.location.origin);
     }
 
     function isUt99Runtime() {
@@ -48,7 +48,7 @@
                 ...payload,
                 source: "portfolio-ut99-runtime",
                 path: window.location.pathname
-            }, "*");
+            }, window.location.origin);
         } catch (error) {}
     }
 
@@ -516,7 +516,7 @@
     }
 
     window.addEventListener("message", (event) => {
-        if (!event.data) return;
+        if (event.source !== window.parent || event.origin !== window.location.origin || !event.data) return;
         if (event.data.type === "volume") {
             applyOsVolume(event.data.value);
         }

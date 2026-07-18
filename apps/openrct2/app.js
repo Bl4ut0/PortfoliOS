@@ -1,13 +1,16 @@
 (function() {
     const APP_ID = "openrct2";
     const SAVE_DIR_NAME = "OpenRCT2";
-    const RUNTIME_URL = "apps/openrct2/runtime/index.php?v=1.0.56";
+    const SAVE_ROOT = "/Saved Games/OpenRCT2";
+    const RUNTIME_URL = "apps/openrct2/runtime/index.php?v=1.0.57";
     const EMBED_URL = `${RUNTIME_URL}&embed=1`;
     const LINKS = {
         github: "https://github.com/OpenRCT2/OpenRCT2",
         docs: "https://docs.openrct2.io/en/latest/installing/installing-on-windows.html"
     };
     let openGeneration = 0;
+    let focusTimer = null;
+    let runtimeAbort = null;
 
     async function ensureSaveWorkspace() {
         if (!window.SystemFS) return;
@@ -42,15 +45,121 @@
     function focusRuntime(windowEl) {
         const iframe = getFrame(windowEl);
         if (!iframe) return;
-        window.setTimeout(() => {
+        if (focusTimer) window.clearTimeout(focusTimer);
+        focusTimer = window.setTimeout(() => {
+            focusTimer = null;
+            if (!windowEl?.isConnected || windowEl.classList.contains("is-hidden")) return;
             iframe.focus({ preventScroll: true });
             iframe.contentWindow?.focus();
         }, 160);
     }
 
+    function clearFocusTimer() {
+        if (!focusTimer) return;
+        window.clearTimeout(focusTimer);
+        focusTimer = null;
+    }
+
+    async function toArrayBuffer(data) {
+        if (data instanceof Blob) return data.arrayBuffer();
+        if (data instanceof ArrayBuffer) return data;
+        if (ArrayBuffer.isView(data)) {
+            return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        return new ArrayBuffer(0);
+    }
+
+    async function readSavedGames() {
+        if (!window.SystemFS) return [];
+        const items = await window.SystemFS.readDir(SAVE_ROOT);
+        const files = [];
+        for (const item of items) {
+            if (item.isDirectory) continue;
+            const record = await window.SystemFS.readFile(item.path);
+            const runtimePath = record?.metadata?.runtimePath;
+            if (!record || !runtimePath) continue;
+            files.push({ path: runtimePath, data: await toArrayBuffer(record.data) });
+        }
+        return files;
+    }
+
+    async function restoreSavedGames(iframe) {
+        const files = await readSavedGames();
+        window.postMessageToIframe?.(iframe, {
+            source: "portfolio-openrct2-shell",
+            type: "openrct2-import-saves",
+            files
+        });
+    }
+
+    function systemFileName(runtimePath) {
+        return String(runtimePath || "save.park")
+            .replace(/^\/+/, "")
+            .replace(/[^a-z0-9._-]+/gi, "__")
+            .slice(-180) || "save.park";
+    }
+
+    async function persistExportedGames(files) {
+        if (!window.SystemFS || !Array.isArray(files)) return;
+        await ensureSaveWorkspace();
+        for (const file of files) {
+            const runtimePath = String(file?.path || "");
+            if (!/^\/(?:persistent|OpenRCT2)\//.test(runtimePath) || !file?.data) continue;
+            const blob = new Blob([file.data], { type: "application/octet-stream" });
+            const name = systemFileName(runtimePath);
+            await window.SystemFS.writeFile(
+                `${SAVE_ROOT}/${name}`,
+                name,
+                SAVE_ROOT,
+                blob,
+                blob.size,
+                "application/octet-stream",
+                false,
+                { metadata: { game: APP_ID, runtimePath } }
+            );
+        }
+    }
+
+    async function exportSavedGames(windowEl) {
+        const iframe = getFrame(windowEl);
+        if (!iframe?.contentWindow || !iframe.src || iframe.src === "about:blank") return;
+
+        const requestId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+        const files = await new Promise((resolve) => {
+            let settled = false;
+            const finish = (value) => {
+                if (settled) return;
+                settled = true;
+                window.removeEventListener("message", onMessage);
+                window.clearTimeout(timer);
+                resolve(value);
+            };
+            const onMessage = (event) => {
+                if (event.origin !== window.location.origin || event.source !== iframe.contentWindow) return;
+                const data = event.data || {};
+                if (data.source === "portfolio-openrct2-runtime"
+                    && data.type === "openrct2-export-saves-result"
+                    && data.requestId === requestId) {
+                    finish(data.files || []);
+                }
+            };
+            const timer = window.setTimeout(() => finish([]), 3000);
+            window.addEventListener("message", onMessage);
+            window.postMessageToIframe?.(iframe, {
+                source: "portfolio-openrct2-shell",
+                type: "openrct2-export-saves",
+                requestId
+            });
+        });
+        await persistExportedGames(files);
+    }
+
     function bindOpenRCT2Window(windowEl) {
         if (windowEl.dataset.openrct2Initialized === "1") return;
         windowEl.dataset.openrct2Initialized = "1";
+        runtimeAbort?.abort();
+        runtimeAbort = new AbortController();
+        const { signal } = runtimeAbort;
 
         windowEl.addEventListener("click", (event) => {
             const action = event.target.closest("[data-openrct2-action]")?.dataset.openrct2Action;
@@ -68,13 +177,37 @@
             } else if (action === "docs") {
                 window.open(LINKS.docs, "_blank", "noopener,noreferrer");
             }
-        });
+        }, { signal });
 
         const iframe = getFrame(windowEl);
         iframe?.addEventListener("load", () => {
-            setRuntimeStatus(windowEl, "RUNNING");
+            if (!iframe.src || iframe.src === "about:blank") return;
+            setRuntimeStatus(windowEl, "SYNCING SAVES");
             focusRuntime(windowEl);
-        });
+        }, { signal });
+
+        window.addEventListener("message", async (event) => {
+            if (!iframe || event.origin !== window.location.origin || event.source !== iframe.contentWindow) return;
+            const data = event.data || {};
+            if (data.source !== "portfolio-openrct2-runtime") return;
+
+            if (data.type === "openrct2-save-ready") {
+                setRuntimeStatus(windowEl, "RESTORING SAVES");
+                try {
+                    await restoreSavedGames(iframe);
+                } catch (error) {
+                    console.warn("OpenRCT2 save restore failed.", error);
+                    window.postMessageToIframe?.(iframe, {
+                        source: "portfolio-openrct2-shell",
+                        type: "openrct2-import-saves",
+                        files: []
+                    });
+                }
+            } else if (data.type === "openrct2-import-complete") {
+                setRuntimeStatus(windowEl, "RUNNING");
+                focusRuntime(windowEl);
+            }
+        }, { signal });
     }
 
     window.appRegistry[APP_ID] = {
@@ -126,12 +259,21 @@
             loadEmbeddedRuntime(windowEl);
             focusRuntime(windowEl);
         },
-        onClose: (windowEl) => {
+        onClose: async (windowEl) => {
             openGeneration++;
+            clearFocusTimer();
+            try {
+                await exportSavedGames(windowEl);
+            } catch (error) {
+                console.warn("OpenRCT2 save export failed.", error);
+            }
+            runtimeAbort?.abort();
+            runtimeAbort = null;
             const iframe = getFrame(windowEl);
             if (iframe) iframe.src = "about:blank";
         },
         onMinimize: (windowEl) => {
+            clearFocusTimer();
             window.postMessageToIframe?.(getFrame(windowEl), { type: "release-pointer-lock" });
         },
         onRestore: (windowEl) => {

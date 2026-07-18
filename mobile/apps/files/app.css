@@ -1,0 +1,455 @@
+.mobile-native-app.mobile-files-app {
+    --mobile-app-accent: #facc15;
+    position: relative;
+    display: block;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    color: var(--text);
+}
+
+.mobile-files-app button,
+.mobile-files-app input {
+    font: inherit;
+}
+
+.mobile-files-app button {
+    touch-action: manipulation;
+}
+
+.mobile-files-shell {
+    display: grid;
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--mobile-app-accent) 7%, #0b0d14), #090b11 34%);
+}
+
+.mobile-files-toolbar {
+    display: grid;
+    grid-template-columns: 2.8rem minmax(0, 1fr) 2.8rem;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 3.5rem;
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.mobile-files-toolbar > button,
+.mobile-files-more {
+    display: inline-grid;
+    place-items: center;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    color: var(--text-soft);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+}
+
+.mobile-files-toolbar > button:hover,
+.mobile-files-toolbar > button:focus-visible,
+.mobile-files-more:hover,
+.mobile-files-more:focus-visible {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+}
+
+.mobile-files-toolbar > button:disabled {
+    opacity: 0.28;
+}
+
+.mobile-files-path {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.mobile-files-path::-webkit-scrollbar {
+    display: none;
+}
+
+.mobile-files-path i {
+    flex: 0 0 auto;
+    margin: 0 0.12rem;
+    color: var(--text-muted);
+    font-size: 0.55rem;
+}
+
+.mobile-files-path button {
+    flex: 0 0 auto;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.35rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    font-weight: 650;
+}
+
+.mobile-files-path button[aria-current="page"] {
+    color: var(--text);
+}
+
+.mobile-files-locations {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.7rem 0.65rem 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.mobile-files-locations::-webkit-scrollbar {
+    display: none;
+}
+
+.mobile-files-locations button,
+.mobile-files-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.42rem;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.75rem;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.mobile-files-locations button:first-child {
+    color: #fde047;
+    background: rgba(250, 204, 21, 0.1);
+    border-color: rgba(250, 204, 21, 0.22);
+}
+
+.mobile-files-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+    padding: 0.45rem 0.65rem 0.7rem;
+}
+
+.mobile-files-actions button {
+    border-radius: 13px;
+}
+
+.mobile-files-actions button:hover,
+.mobile-files-actions button:focus-visible,
+.mobile-files-locations button:hover,
+.mobile-files-locations button:focus-visible {
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--mobile-app-accent) 42%, var(--line));
+    outline: none;
+}
+
+.mobile-files-notice {
+    margin: 0 0.65rem 0.4rem;
+    padding: 0.55rem 0.7rem;
+    color: #bbf7d0;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 10px;
+    font-size: 0.76rem;
+}
+
+.mobile-files-notice[hidden] {
+    display: none;
+}
+
+.mobile-files-notice.is-error {
+    color: #fecaca;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.22);
+}
+
+.mobile-files-list {
+    min-height: 0;
+    padding: 0 0.45rem 1rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.mobile-files-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2.75rem;
+    align-items: center;
+    min-height: 4.45rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.mobile-files-open {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+    min-height: 4.4rem;
+    padding: 0.45rem 0.25rem;
+    color: var(--text);
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: 12px;
+}
+
+.mobile-files-open:focus-visible {
+    outline: 2px solid var(--mobile-app-accent);
+    outline-offset: -2px;
+}
+
+.mobile-files-icon {
+    display: grid;
+    place-items: center;
+    width: 2.8rem;
+    height: 2.8rem;
+    color: var(--mobile-app-accent);
+    background: color-mix(in srgb, var(--mobile-app-accent) 11%, rgba(255, 255, 255, 0.04));
+    border-radius: 13px;
+    font-size: 1.1rem;
+}
+
+.mobile-files-name {
+    display: grid;
+    min-width: 0;
+    gap: 0.18rem;
+}
+
+.mobile-files-name strong,
+.mobile-files-name small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-files-name strong {
+    font-size: 0.88rem;
+}
+
+.mobile-files-name small {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.mobile-files-loading,
+.mobile-files-empty {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 0.5rem;
+    min-height: 15rem;
+    padding: 2rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.mobile-files-empty i,
+.mobile-files-loading i {
+    color: var(--mobile-app-accent);
+    font-size: 1.65rem;
+}
+
+.mobile-files-empty strong {
+    color: var(--text-soft);
+}
+
+.mobile-files-empty span {
+    max-width: 15rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.mobile-files-empty.is-error i {
+    color: #f87171;
+}
+
+.mobile-files-sheet,
+.mobile-files-dialog {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+}
+
+.mobile-files-sheet[hidden],
+.mobile-files-dialog[hidden] {
+    display: none;
+}
+
+.mobile-files-sheet-scrim,
+.mobile-files-dialog-scrim {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.58);
+    border: 0;
+    backdrop-filter: blur(3px);
+}
+
+.mobile-files-sheet-card {
+    position: absolute;
+    inset: auto 0 0;
+    display: grid;
+    gap: 0.8rem;
+    padding: 0.55rem 0.8rem max(0.9rem, env(safe-area-inset-bottom));
+    background: #161922;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -22px 55px rgba(0, 0, 0, 0.42);
+}
+
+.mobile-files-sheet-handle {
+    width: 2.4rem;
+    height: 0.25rem;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+}
+
+.mobile-files-sheet-card h2 {
+    margin: 0;
+    padding: 0 0.3rem;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-files-sheet-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.mobile-files-sheet-actions button {
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    min-height: 4.6rem;
+    padding: 0.6rem 0.25rem;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    font-size: 0.7rem;
+}
+
+.mobile-files-sheet-actions button i {
+    color: var(--mobile-app-accent);
+    font-size: 1rem;
+}
+
+.mobile-files-sheet-actions button.is-danger i {
+    color: #f87171;
+}
+
+.mobile-files-sheet-cancel {
+    min-height: 2.8rem;
+    color: var(--text-soft);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.mobile-files-dialog-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    gap: 0.8rem;
+    width: min(21rem, calc(100% - 2rem));
+    padding: 1rem;
+    background: #171a23;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 20px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5);
+    transform: translate(-50%, -50%);
+}
+
+.mobile-files-dialog-card h2,
+.mobile-files-dialog-card p {
+    margin: 0;
+}
+
+.mobile-files-dialog-card h2 {
+    color: var(--text);
+    font-size: 1.08rem;
+}
+
+.mobile-files-dialog-card p {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.mobile-files-dialog-card label {
+    display: grid;
+    gap: 0.4rem;
+    color: var(--text-soft);
+    font-size: 0.72rem;
+}
+
+.mobile-files-dialog-card label[hidden] {
+    display: none;
+}
+
+.mobile-files-dialog-card input {
+    width: 100%;
+    min-height: 2.9rem;
+    padding: 0.65rem 0.75rem;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    outline: none;
+}
+
+.mobile-files-dialog-card input:focus {
+    border-color: var(--mobile-app-accent);
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.11);
+}
+
+.mobile-files-dialog-error {
+    min-height: 1rem;
+    color: #fca5a5;
+    font-size: 0.72rem;
+}
+
+.mobile-files-dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+}
+
+.mobile-files-dialog-actions button {
+    min-height: 2.8rem;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+}
+
+.mobile-files-dialog-actions button.is-primary {
+    color: #111827;
+    background: var(--mobile-app-accent);
+    border-color: transparent;
+    font-weight: 750;
+}
+
+.mobile-files-dialog-actions button.is-danger {
+    color: #fff;
+    background: #dc2626;
+}
+
+@media (max-width: 360px) {
+    .mobile-files-sheet-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

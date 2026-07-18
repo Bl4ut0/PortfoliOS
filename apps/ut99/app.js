@@ -546,7 +546,7 @@
         document.addEventListener("mousemove", (event) => syncRuntimePointer(windowEl, event), { signal, capture: true });
 
         window.addEventListener("message", (event) => {
-            if (!iframe || event.source !== iframe.contentWindow) return;
+            if (!iframe || event.source !== iframe.contentWindow || event.origin !== window.location.origin) return;
             const data = event.data || {};
             if (data.source !== "portfolio-ut99-runtime" && data.source !== "portfolio-game-runtime") return;
             if (data.type === "ut99-status") {

@@ -509,6 +509,8 @@
 
     function handleRuntimeMessage(event) {
         if (event.origin !== window.location.origin) return;
+        const iframe = document.querySelector('[data-window="romplayer"] .romplayer-frame');
+        if (!iframe || event.source !== iframe.contentWindow) return;
         const data = event.data || {};
         if (data.source !== "romplayer-runtime") return;
 

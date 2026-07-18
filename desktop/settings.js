@@ -878,6 +878,14 @@ function initSystemResetSettings() {
 
 // Bootstrap function for Settings App
 function initSettingsApp() {
+    const root = document.querySelector('[data-window="settings"] .desktop-settings-content');
+    if (!root) return;
+    if (root.dataset.settingsBound === "true") {
+        refreshSettingsOnActivation("settings");
+        return;
+    }
+    root.dataset.settingsBound = "true";
+
     initSettingsTabs();
     initVolumeSettings();
     initResolutionSettings();
@@ -898,6 +906,8 @@ function initSettingsApp() {
     const ssDelaySelect = document.getElementById("screensaver-delay-select");
     if (ssDelaySelect && window.createCustomDropdown) window.createCustomDropdown(ssDelaySelect);
 }
+
+window.initializeSettingsWindow = initSettingsApp;
 
 // Run initialization once the DOM is loaded or when settings is opened
 if (document.readyState === "loading") {

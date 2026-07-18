@@ -94,6 +94,7 @@ const SERVER_RCT_ZIP = "RCT.zip";
     Module.FS.mount(Module.FS.filesystems.IDBFS, { autoPersist: true }, "/OpenRCT2");
 
     await new Promise((res) => Module.FS.syncfs(true, res));
+    await initializeParentSaveBridge();
 
     const assetsOK = await updateAssets();
     if (!assetsOK)
@@ -146,6 +147,181 @@ const SERVER_RCT_ZIP = "RCT.zip";
     Module.canvas.style.display = "";
     Module.callMain(["--user-data-path=/persistent/", "--openrct2-data-path=/OpenRCT2/"]);
 })();
+
+const OPENRCT2_SAVE_FILE_PATTERN = /\.(?:park|parkseq|sv4|sv6|sc4|sc6|sea)$/i;
+const OPENRCT2_SAVE_ROOTS = ["/persistent", "/OpenRCT2"];
+const OPENRCT2_MAX_SAVE_BYTES = 64 * 1024 * 1024;
+let parentSaveRestoreResolve = null;
+let parentSaveBridgeInstalled = false;
+
+function postOpenRCT2ParentMessage(message)
+{
+    if (!window.parent || window.parent === window) return;
+    window.parent.postMessage({
+        source: "portfolio-openrct2-runtime",
+        ...message
+    }, window.location.origin);
+}
+
+function syncOpenRCT2FileSystem(populate)
+{
+    return new Promise((resolve, reject) =>
+    {
+        Module.FS.syncfs(populate, (error) => error ? reject(error) : resolve());
+    });
+}
+
+function isAllowedOpenRCT2SavePath(filePath)
+{
+    const path = String(filePath || "");
+    return OPENRCT2_SAVE_ROOTS.some((root) => path.startsWith(`${root}/`))
+        && OPENRCT2_SAVE_FILE_PATTERN.test(path);
+}
+
+function collectOpenRCT2SaveFiles()
+{
+    const files = [];
+    const visit = (path) =>
+    {
+        let entries;
+        try
+        {
+            entries = Module.FS.readdir(path);
+        }
+        catch (error)
+        {
+            return;
+        }
+
+        for (const entry of entries)
+        {
+            if (entry === "." || entry === "..") continue;
+            const childPath = `${path}/${entry}`.replace(/\/+/g, "/");
+            let stat;
+            try
+            {
+                stat = Module.FS.stat(childPath);
+            }
+            catch (error)
+            {
+                continue;
+            }
+
+            if (Module.FS.isDir(stat.mode))
+            {
+                visit(childPath);
+                continue;
+            }
+            if (!isAllowedOpenRCT2SavePath(childPath) || stat.size > OPENRCT2_MAX_SAVE_BYTES) continue;
+
+            try
+            {
+                const bytes = Module.FS.readFile(childPath);
+                files.push({
+                    path: childPath,
+                    data: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+                });
+            }
+            catch (error)
+            {
+                console.warn("Could not export OpenRCT2 save", childPath, error);
+            }
+        }
+    };
+
+    OPENRCT2_SAVE_ROOTS.forEach(visit);
+    return files;
+}
+
+async function importOpenRCT2SaveFiles(files)
+{
+    let imported = 0;
+    for (const file of Array.isArray(files) ? files : [])
+    {
+        const path = String(file?.path || "");
+        if (!isAllowedOpenRCT2SavePath(path) || !file?.data) continue;
+        const bytes = file.data instanceof ArrayBuffer
+            ? new Uint8Array(file.data)
+            : ArrayBuffer.isView(file.data)
+                ? new Uint8Array(file.data.buffer, file.data.byteOffset, file.data.byteLength)
+                : null;
+        if (!bytes || bytes.byteLength > OPENRCT2_MAX_SAVE_BYTES) continue;
+
+        ensureDirectory(getParentDirectory(path));
+        Module.FS.writeFile(path, bytes);
+        imported++;
+    }
+    await syncOpenRCT2FileSystem(false);
+    return imported;
+}
+
+async function handleOpenRCT2ParentMessage(event)
+{
+    if (event.origin !== window.location.origin || event.source !== window.parent) return;
+    const data = event.data || {};
+    if (data.source !== "portfolio-openrct2-shell") return;
+
+    if (data.type === "openrct2-import-saves")
+    {
+        let imported = 0;
+        try
+        {
+            imported = await importOpenRCT2SaveFiles(data.files);
+        }
+        catch (error)
+        {
+            console.warn("OpenRCT2 save import failed", error);
+        }
+        postOpenRCT2ParentMessage({ type: "openrct2-import-complete", imported });
+        parentSaveRestoreResolve?.();
+        parentSaveRestoreResolve = null;
+    }
+
+    if (data.type === "openrct2-export-saves")
+    {
+        let files = [];
+        try
+        {
+            await syncOpenRCT2FileSystem(false);
+            files = collectOpenRCT2SaveFiles();
+        }
+        catch (error)
+        {
+            console.warn("OpenRCT2 save export failed", error);
+        }
+        postOpenRCT2ParentMessage({
+            type: "openrct2-export-saves-result",
+            requestId: data.requestId,
+            files
+        });
+    }
+}
+
+async function initializeParentSaveBridge()
+{
+    if (!window.parent || window.parent === window) return;
+    if (!parentSaveBridgeInstalled)
+    {
+        parentSaveBridgeInstalled = true;
+        window.addEventListener("message", handleOpenRCT2ParentMessage);
+    }
+
+    await new Promise((resolve) =>
+    {
+        const timeout = window.setTimeout(() =>
+        {
+            if (parentSaveRestoreResolve === finish) parentSaveRestoreResolve = null;
+            resolve();
+        }, 3000);
+        const finish = () =>
+        {
+            window.clearTimeout(timeout);
+            resolve();
+        };
+        parentSaveRestoreResolve = finish;
+        postOpenRCT2ParentMessage({ type: "openrct2-save-ready" });
+    });
+}
 
 async function updateAssets()
 {

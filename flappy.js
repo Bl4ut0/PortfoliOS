@@ -105,6 +105,13 @@ window.startFlappyBird = function(canvasId) {
     let state = 0; // 0: Splash, 1: Playing, 2: Hit/Fall, 3: Game Over
     let animationReq;
     let flashOpacity = 0;
+    let isPaused = false;
+    let isDestroyed = false;
+    const statusElement = document.getElementById(canvas.dataset.flappyStatus || "");
+
+    function announce(message) {
+        if (statusElement) statusElement.textContent = message;
+    }
 
     const bg = {
         x: 0,
@@ -301,6 +308,7 @@ window.startFlappyBird = function(canvasId) {
                 if (!p.passed && p.x + PIPE_WIDTH < bird.x) {
                     score++;
                     p.passed = true;
+                    announce(`Score ${score}.`);
                 }
                 
                 // Remove off-screen
@@ -318,6 +326,7 @@ window.startFlappyBird = function(canvasId) {
     function hit() {
         if (state === 1) {
             state = 2; // Fall state
+            announce(`Hit. Final score ${score}.`);
             flashOpacity = 1;
             if (score > bestScore) {
                 bestScore = score;
@@ -414,6 +423,11 @@ window.startFlappyBird = function(canvasId) {
     }
 
     function loop() {
+        if (isDestroyed) return;
+        if (isPaused) {
+            animationReq = requestAnimationFrame(loop);
+            return;
+        }
         bg.draw();
         pipes.draw();
         ground.draw();
@@ -451,6 +465,7 @@ window.startFlappyBird = function(canvasId) {
             case 0:
                 state = 1;
                 bird.flap();
+                announce("Game started. Score 0.");
                 break;
             case 1:
                 bird.flap();
@@ -465,22 +480,45 @@ window.startFlappyBird = function(canvasId) {
                 score = 0;
                 frames = 0;
                 state = 0;
+                announce("Ready. Press Space, Enter, or tap to start.");
                 break;
         }
+    }
+
+    function onKeyDown(event) {
+        if (event.key !== " " && event.key !== "Enter") return;
+        event.preventDefault();
+        onInteract(event);
     }
     
     canvas.addEventListener("touchstart", onInteract, { passive: false });
     canvas.addEventListener("mousedown", onInteract);
+    canvas.addEventListener("keydown", onKeyDown);
     
     // Start game loop
     loop();
     
-    const observer = new MutationObserver((mutations) => {
+    const destroy = () => {
+        if (isDestroyed) return;
+        isDestroyed = true;
+        cancelAnimationFrame(animationReq);
+        canvas.removeEventListener("touchstart", onInteract);
+        canvas.removeEventListener("mousedown", onInteract);
+        canvas.removeEventListener("keydown", onKeyDown);
+        window.removeEventListener("resize", resize);
+        observer.disconnect();
+    };
+
+    const observer = new MutationObserver(() => {
         if (!document.body.contains(canvas)) {
-            cancelAnimationFrame(animationReq);
-            window.removeEventListener("resize", resize);
-            observer.disconnect();
+            destroy();
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
+
+    return {
+        pause() { isPaused = true; },
+        resume() { isPaused = false; },
+        destroy
+    };
 };

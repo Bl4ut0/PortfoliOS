@@ -1,0 +1,145 @@
+.mobile-native-app.mobile-calculator-app {
+    --mobile-app-accent: #fb923c;
+    display: flex;
+    min-height: 100%;
+}
+
+.mobile-calculator-shell {
+    display: grid;
+    grid-template-rows: minmax(9rem, 1fr) auto auto;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 100%;
+}
+
+.mobile-calculator-display {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    flex-direction: column;
+    min-width: 0;
+    padding: 1.1rem;
+    overflow: hidden;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--mobile-app-accent) 12%, var(--panel-strong)), var(--panel-strong));
+    border: 1px solid color-mix(in srgb, var(--mobile-app-accent) 24%, var(--line));
+    border-radius: 24px;
+}
+
+.mobile-calculator-display-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: auto;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.mobile-calculator-display-actions button {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--text-soft);
+    background: var(--panel-soft);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+}
+
+.mobile-calculator-display small {
+    width: 100%;
+    overflow: hidden;
+    color: var(--text-soft);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-calculator-display output {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    color: var(--text);
+    font-family: var(--heading);
+    font-size: clamp(2.1rem, 10vw, 3.5rem);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    line-height: 1.08;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-calculator-keys {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+}
+
+.mobile-calculator-keys button {
+    min-width: 0;
+    min-height: clamp(3.3rem, 14vw, 4.25rem);
+    color: var(--text);
+    background: color-mix(in srgb, var(--panel-strong) 82%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.mobile-calculator-keys button:active {
+    transform: scale(0.96);
+}
+
+.mobile-calculator-keys .is-utility {
+    color: var(--text-soft);
+    background: color-mix(in srgb, var(--text-muted) 14%, var(--panel-soft));
+}
+
+.mobile-calculator-keys .is-operator,
+.mobile-calculator-keys .is-equals {
+    color: #1b1005;
+    background: var(--mobile-app-accent);
+    border-color: transparent;
+}
+
+.mobile-calculator-keys .is-wide {
+    grid-column: span 2;
+}
+
+.mobile-calculator-backspace {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.85rem;
+    color: var(--text-soft);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+@media (max-height: 690px) {
+    .mobile-calculator-shell {
+        grid-template-rows: minmax(6.5rem, 0.75fr) auto auto;
+    }
+
+    .mobile-calculator-keys button {
+        min-height: 3rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-calculator-keys button:active {
+        transform: none;
+    }
+}
