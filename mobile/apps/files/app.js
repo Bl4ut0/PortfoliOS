@@ -28,6 +28,8 @@
 
                 <nav class="mobile-files-locations" aria-label="Storage locations">
                     <button type="button" data-files-location="/"><i class="fa-solid fa-hard-drive"></i><span>Storage</span></button>
+                    <button type="button" data-files-location="/Downloads"><i class="fa-solid fa-download"></i><span>Downloads</span></button>
+                    <button type="button" data-files-location="/Pictures"><i class="fa-solid fa-images"></i><span>Pictures</span></button>
                     <button type="button" data-files-location="/documents"><i class="fa-solid fa-file-lines"></i><span>Documents</span></button>
                     <button type="button" data-files-location="/music"><i class="fa-solid fa-music"></i><span>Music</span></button>
                 </nav>

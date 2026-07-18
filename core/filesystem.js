@@ -174,6 +174,14 @@ window.SystemFS = {
             await this.writeFile("/music", "music", "/", null, 0, "directory", true, { silent: true });
         }
 
+        if (!await this.readFile("/Pictures")) {
+            await this.writeFile("/Pictures", "Pictures", "/", null, 0, "directory", true, { silent: true });
+        }
+
+        if (!await this.readFile("/Downloads")) {
+            await this.writeFile("/Downloads", "Downloads", "/", null, 0, "directory", true, { silent: true });
+        }
+
         if (!await this.readFile("/ROMs")) {
             await this.writeFile("/ROMs", "ROMs", "/", null, 0, "directory", true, {
                 silent: true,

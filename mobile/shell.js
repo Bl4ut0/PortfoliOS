@@ -103,6 +103,12 @@
             .find((dialog) => !dialog.closest("[hidden]") && !dialog.closest(".is-hidden")) || null;
     }
 
+    function visibleLauncherDialog() {
+        if (currentSurface !== "home") return null;
+        return [...document.querySelectorAll('#mobile-home [data-mobile-launcher-dialog][role="dialog"][aria-modal="true"]')]
+            .find((dialog) => !dialog.closest("[hidden], .is-hidden, [inert]")) || null;
+    }
+
     function inertForModal(element) {
         if (!element || element.inert) return;
         element.inert = true;
@@ -117,6 +123,8 @@
     function activeModal() {
         if (isLockOpen()) return elements().lock;
         if (shadeOpen) return elements().shade;
+        const launcherDialog = visibleLauncherDialog();
+        if (launcherDialog) return launcherDialog;
         return visibleAppDialog();
     }
 
@@ -124,6 +132,7 @@
         clearModalInert();
         const ui = elements();
         const appDialog = visibleAppDialog();
+        const launcherDialog = visibleLauncherDialog();
         if (appDialog !== activeAppDialog) {
             if (appDialog && !activeAppDialog) appDialogReturnFocus = document.activeElement;
             if (!appDialog && activeAppDialog) {
@@ -149,6 +158,18 @@
             inertForModal(ui.nav);
             return;
         }
+        if (launcherDialog) {
+            inertForModal(ui.statusToggle);
+            inertForModal(ui.shade);
+            let branch = launcherDialog;
+            while (branch?.parentElement && branch !== ui.home) {
+                [...branch.parentElement.children].forEach((sibling) => {
+                    if (sibling !== branch) inertForModal(sibling);
+                });
+                branch = branch.parentElement;
+            }
+            return;
+        }
         if (appDialog) {
             inertForModal(ui.statusToggle);
             inertForModal(ui.nav);
@@ -172,11 +193,21 @@
 
     function handleModalKeydown(event) {
         const modal = activeModal();
-        if (!modal) return;
+        if (!modal) {
+            if (event.key === "Escape" && currentSurface === "home" && window.MobileHome?.goBack?.()) {
+                event.preventDefault();
+            }
+            return;
+        }
         if (event.key === "Escape") {
             if (shadeOpen) {
                 event.preventDefault();
                 setShadeOpen(false);
+                return;
+            }
+            if (visibleLauncherDialog()) {
+                event.preventDefault();
+                window.MobileHome?.goBack?.();
                 return;
             }
             if (!isLockOpen()) {
@@ -216,8 +247,9 @@
 
     function getVisibleMobileCatalog() {
         return (window.mobileAppCatalog || []).filter((app) => {
-            if (!app.sourceId || !window.isVisibleForCurrentUser) return true;
-            return window.isVisibleForCurrentUser(app.sourceId);
+            const visibilitySourceId = app.visibilitySourceId || app.sourceId;
+            if (!visibilitySourceId || !window.isVisibleForCurrentUser) return true;
+            return window.isVisibleForCurrentUser(visibilitySourceId);
         });
     }
 
@@ -322,25 +354,7 @@
 
     function renderMobileApps() {
         const catalog = getVisibleMobileCatalog();
-        const grid = document.getElementById("mobile-app-grid");
-        const dock = document.getElementById("mobile-home-dock");
-        if (grid) {
-            grid.innerHTML = catalog.filter((app) => !app.pinned).map((app) => `
-                <button class="mobile-app-icon" type="button" data-mobile-open="${escapeHtml(app.id)}"
-                    style="--tile-color:${escapeHtml(app.color)}" aria-label="Open ${escapeHtml(app.title)}">
-                    <span class="mobile-app-icon-shape">${iconHtml(app)}</span>
-                    <span>${escapeHtml(app.title)}</span>
-                </button>
-            `).join("");
-        }
-        if (dock) {
-            dock.innerHTML = catalog.filter((app) => app.pinned).map((app) => `
-                <button class="mobile-app-icon mobile-dock-app" type="button" data-mobile-open="${escapeHtml(app.id)}"
-                    style="--tile-color:${escapeHtml(app.color)}" aria-label="Open ${escapeHtml(app.title)}">
-                    <span class="mobile-app-icon-shape">${iconHtml(app)}</span>
-                </button>
-            `).join("");
-        }
+        window.MobileHome?.mount?.({ userId: currentMobileUserId, catalog });
     }
 
     function touchRecent(appId) {
@@ -555,6 +569,7 @@
         activeTaskId = null;
         if (window.state) window.state.mobileActiveId = null;
         setSurface("home");
+        window.MobileHome?.showHome?.();
         await suspendTasks(reason);
         document.getElementById("mobile-screen")?.scrollTo({ top: 0, behavior: prefs.reducedMotion ? "auto" : "smooth" });
     }
@@ -580,6 +595,7 @@
         claimNavigation("recents");
         visibilityPausedTaskId = null;
         setShadeOpen(false);
+        window.MobileHome?.showHome?.({ announce: false });
         activeTaskId = null;
         if (window.state) window.state.mobileActiveId = null;
         setSurface("recents");
@@ -639,6 +655,7 @@
             return;
         }
         if (!elements().lock?.classList.contains("is-hidden")) return;
+        if (currentSurface === "home" && window.MobileHome?.goBack?.()) return;
         if (currentSurface === "recents") {
             await showMobileHome("back");
             return;
@@ -827,6 +844,7 @@
 
     function updateNowPlaying() {
         const state = window.MobileMediaService?.getState?.();
+        window.MobileHome?.updateNowPlaying?.();
         const player = document.getElementById("mobile-now-playing");
         if (!player) return;
         const hasTrack = Boolean(state?.currentTrack);
@@ -851,6 +869,7 @@
         if (targetView !== "mobile") {
             visibilityPausedTaskId = null;
             setShadeOpen(false);
+            window.MobileHome?.showHome?.({ announce: false });
             await suspendTasks("experience-change");
             return;
         }
@@ -893,7 +912,7 @@
 
     function beginGesture(event) {
         const device = elements().device;
-        if (!device || elements().lock?.contains(event.target)) return;
+        if (!device || elements().lock?.contains(event.target) || visibleLauncherDialog()) return;
         const presentationScale = Math.max(1, Number(window.MobileViewport?.getMetrics?.().presentationScale) || 1);
         const recentCard = event.target instanceof Element ? event.target.closest("[data-mobile-recent-card]") : null;
         if (recentCard) {
@@ -911,7 +930,18 @@
         const topEdge = (event.clientY - rect.top) / presentationScale <= 34;
         const bottomEdge = (rect.bottom - event.clientY) / presentationScale <= 48;
         const leftEdge = (event.clientX - rect.left) / presentationScale <= 24;
-        if (!topEdge && !bottomEdge && !leftEdge && !shadeOpen) return;
+        const homeGesture = currentSurface === "home";
+        const gestureExempt = event.target instanceof Element
+            ? event.target.closest("input, textarea, select, [contenteditable], [data-mobile-gesture-exempt]")
+            : null;
+        if (gestureExempt && !topEdge) return;
+        if (!topEdge && !bottomEdge && !leftEdge && !shadeOpen && !homeGesture) return;
+        const launcherItem = homeGesture && event.target instanceof Element
+            ? event.target.closest("[data-mobile-home-item]")
+            : null;
+        const scroller = homeGesture && event.target instanceof Element
+            ? event.target.closest(".mobile-launcher-page, .mobile-app-drawer-grid")
+            : null;
         gesture = {
             id: event.pointerId,
             startX: event.clientX,
@@ -921,8 +951,23 @@
             topEdge,
             bottomEdge,
             leftEdge,
-            shadeWasOpen: shadeOpen
+            shadeWasOpen: shadeOpen,
+            homeGesture,
+            launcherState: homeGesture ? window.MobileHome?.getState?.() : null,
+            launcherItem,
+            startScrollTop: Number(scroller?.scrollTop || 0),
+            moved: false,
+            axis: null,
+            longPressTriggered: false,
+            longPressTimer: null
         };
+        if (launcherItem && event.isPrimary !== false && (event.button === undefined || event.button === 0)) {
+            const gestureId = event.pointerId;
+            gesture.longPressTimer = setTimeout(() => {
+                if (!gesture || gesture.id !== gestureId || gesture.moved) return;
+                gesture.longPressTriggered = window.MobileHome?.openItemActions?.(launcherItem) === true;
+            }, 500);
+        }
     }
 
     function moveGesture(event) {
@@ -930,21 +975,41 @@
         const scale = Math.max(1, gesture.presentationScale || 1);
         const dx = (event.clientX - gesture.startX) / scale;
         const dy = (event.clientY - gesture.startY) / scale;
-        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) event.preventDefault();
+        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+            gesture.moved = true;
+            clearTimeout(gesture.longPressTimer);
+            gesture.longPressTimer = null;
+            if (!gesture.axis) gesture.axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? "horizontal" : "vertical";
+            if (gesture.recentCard || gesture.axis === "horizontal" || gesture.topEdge || gesture.bottomEdge || gesture.shadeWasOpen) {
+                event.preventDefault();
+            }
+        }
         if (gesture.recentCard && dy < 0) {
             gesture.recentCard.style.transform = `translateY(${Math.max(-140, dy)}px)`;
             gesture.recentCard.style.opacity = String(Math.max(0.25, 1 + dy / 180));
         }
     }
 
+    function cancelGesture() {
+        if (!gesture) return;
+        clearTimeout(gesture.longPressTimer);
+        if (gesture.recentCard) {
+            gesture.recentCard.style.transform = "";
+            gesture.recentCard.style.opacity = "";
+        }
+        gesture = null;
+    }
+
     async function endGesture(event) {
         if (!gesture || gesture.id !== event.pointerId) return;
         const current = gesture;
         gesture = null;
+        clearTimeout(current.longPressTimer);
         const scale = Math.max(1, current.presentationScale || 1);
         const dx = (event.clientX - current.startX) / scale;
         const dy = (event.clientY - current.startY) / scale;
         const duration = performance.now() - current.startTime;
+        if (current.longPressTriggered) return;
         if (current.recentCard) {
             const taskId = current.recentCard.dataset.mobileRecentCard;
             if (dy < -76) await closeTask(taskId, "dismiss");
@@ -960,6 +1025,28 @@
         }
         if (current.shadeWasOpen && dy < -48) {
             setShadeOpen(false);
+            return;
+        }
+        const horizontal = Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.2;
+        const vertical = Math.abs(dy) > 56 && Math.abs(dy) > Math.abs(dx) * 1.2;
+        if (current.homeGesture) {
+            const launcherState = window.MobileHome?.getState?.() || current.launcherState || {};
+            if (launcherState.drawerOpen && vertical && dy > 56 && current.startScrollTop <= 0) {
+                window.MobileHome?.suppressNextItemClick?.();
+                window.MobileHome?.closeDrawer?.();
+                return;
+            }
+            if (!launcherState.drawerOpen && vertical && dy < -58 && launcherState.pageIndex >= 0 && current.startScrollTop <= 0) {
+                window.MobileHome?.suppressNextItemClick?.();
+                if (current.bottomEdge && duration > 360 && Math.abs(dy) > 100) await showMobileRecents();
+                else window.MobileHome?.openDrawer?.();
+                return;
+            }
+            if (!launcherState.drawerOpen && horizontal) {
+                window.MobileHome?.suppressNextItemClick?.();
+                window.MobileHome?.stepPage?.(dx < 0 ? 1 : -1);
+                return;
+            }
             return;
         }
         if (current.bottomEdge && dy < -58) {
@@ -987,7 +1074,8 @@
                 return;
             }
             if (event.target.closest("[data-mobile-home]")) {
-                await showMobileHome();
+                if (currentSurface === "home") window.MobileHome?.showHome?.({ primary: true });
+                else await showMobileHome();
                 return;
             }
             if (event.target.closest("[data-mobile-back]")) {
@@ -1045,7 +1133,8 @@
         device?.addEventListener("pointerdown", beginGesture);
         device?.addEventListener("pointermove", moveGesture);
         device?.addEventListener("pointerup", endGesture);
-        device?.addEventListener("pointercancel", () => { gesture = null; });
+        device?.addEventListener("pointercancel", cancelGesture);
+        device?.addEventListener("lostpointercapture", cancelGesture);
         document.addEventListener("keydown", handleModalKeydown, true);
         if (device && typeof MutationObserver === "function") {
             const modalObserver = new MutationObserver(syncModalIsolation);
@@ -1069,6 +1158,7 @@
         window.EventBus?.on("mobile:open-app", ({ appId, context } = {}) => openMobileApp(appId, context || {}));
         document.addEventListener("visibilitychange", async () => {
             if (document.hidden) {
+                cancelGesture();
                 visibilityPausedTaskId = activeTaskId;
                 if (activeTaskId) await pauseTask(activeTaskId, "document-hidden");
                 return;
@@ -1081,6 +1171,7 @@
                 }
             }
         });
+        window.addEventListener("blur", cancelGesture);
         window.addEventListener("pagehide", () => {
             tasks.forEach((task) => { serializeTask(task); });
         });
@@ -1125,7 +1216,8 @@
         lock,
         unlock,
         switchExperience,
-        updateNowPlaying
+        updateNowPlaying,
+        home: window.MobileHome
     };
     window.renderMobileApps = renderMobileApps;
     window.openMobileApp = openMobileApp;

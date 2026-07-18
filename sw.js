@@ -5,7 +5,7 @@
 
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-v1.1.15";
+const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-v1.2.2";
 const MOBILE_SHELL_ASSETS = [
     "/",
     "/index.html",
@@ -43,6 +43,7 @@ const MOBILE_SHELL_ASSETS = [
     "/core/window-manager.js",
     "/data/systems.js",
     "/data/mobile-apps.js",
+    "/data/mobile-home.js",
     "/data/apps.js",
     "/data/users.js",
     "/data/bookmarks.js",
@@ -68,6 +69,7 @@ const MOBILE_SHELL_ASSETS = [
     "/mobile/app-framework.js",
     "/mobile/viewport.js",
     "/mobile/app-loader.js",
+    "/mobile/home.js",
     "/mobile/shell.js",
     "/mobile/apps/browser/app.js",
     "/mobile/apps/browser/app.css",

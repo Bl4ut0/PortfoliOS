@@ -23,7 +23,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="mobile/viewport.js?v=1.1.13"></script>
-    <link rel="stylesheet" href="styles-v1.css?v=1.1.15">
+    <link rel="stylesheet" href="styles-v1.css?v=1.2.2">
     <script>
         // Global System Debug Logger
         window.SystemLogs = [];
@@ -1229,23 +1229,94 @@
                         </aside>
 
                         <main class="mobile-screen" id="mobile-screen">
-                            <section class="mobile-home" id="mobile-home" aria-label="Home screen">
-                                <header class="mobile-home-clock">
-                                    <strong id="mobile-home-time">--:--</strong>
-                                    <span id="mobile-home-date">Loading date</span>
-                                </header>
-                                <button class="mobile-search-pill" type="button" data-mobile-open="browser">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    <span>Search PortfoliOS</span>
-                                    <i class="fa-solid fa-microphone"></i>
-                                </button>
-                                <button class="mobile-widget" type="button" data-view="quick">
-                                    <span><i class="fa-solid fa-sparkles"></i> At a glance</span>
-                                    <strong>Projects, services, and professional signals.</strong>
-                                    <small>Open Quick View <i class="fa-solid fa-arrow-right"></i></small>
-                                </button>
-                                <div class="mobile-app-grid" id="mobile-app-grid" aria-label="Applications"></div>
+                            <section class="mobile-home" id="mobile-home" aria-label="Home screen" data-mobile-home-page="1">
+                                <div class="mobile-home-pager" id="mobile-home-pager">
+                                    <div class="mobile-home-track" id="mobile-home-track">
+                                        <article class="mobile-launcher-page mobile-feed-page" id="mobile-portfolio-feed"
+                                            data-mobile-home-panel-index="-1" aria-label="PortfoliOS News and Signals" aria-hidden="true" inert>
+                                            <header class="mobile-feed-header">
+                                                <div><span>For you</span><strong>PortfoliOS News &amp; Signals</strong></div>
+                                                <button type="button" data-view="quick" aria-label="Open Quick Data"><i class="fa-solid fa-compass"></i></button>
+                                            </header>
+                                            <div class="mobile-portfolio-feed-content" id="mobile-portfolio-feed-content"></div>
+                                        </article>
+
+                                        <section class="mobile-launcher-page mobile-primary-home-page" data-mobile-home-panel-index="0"
+                                            aria-label="Daily Home page" aria-hidden="false">
+                                            <header class="mobile-home-clock">
+                                                <strong id="mobile-home-time">--:--</strong>
+                                                <span id="mobile-home-date">Loading date</span>
+                                            </header>
+                                            <button class="mobile-search-pill" type="button" data-mobile-drawer-open>
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Search apps</span>
+                                                <i class="fa-solid fa-arrow-up"></i>
+                                            </button>
+                                            <div class="mobile-launcher-grid" data-mobile-home-page-content="0" aria-label="Daily Home items"></div>
+                                        </section>
+
+                                        <section class="mobile-launcher-page mobile-secondary-home-page" data-mobile-home-panel-index="1"
+                                            aria-label="Portfolio Home page" aria-hidden="true" inert>
+                                            <header class="mobile-launcher-page-heading">
+                                                <span>Home 2</span>
+                                                <strong>Portfolio workspace</strong>
+                                                <small>Build, operate, create, and play.</small>
+                                            </header>
+                                            <div class="mobile-launcher-grid" data-mobile-home-page-content="1" aria-label="Portfolio Home items"></div>
+                                        </section>
+                                    </div>
+                                </div>
+
+                                <div class="mobile-launcher-controls">
+                                    <button type="button" data-mobile-customize aria-label="Customize Home" title="Customize Home"><i class="fa-solid fa-sliders"></i></button>
+                                    <nav class="mobile-page-indicator" id="mobile-page-indicator" aria-label="Home pages"></nav>
+                                    <button type="button" data-mobile-drawer-open aria-label="Open all apps" title="All apps"><i class="fa-solid fa-chevron-up"></i></button>
+                                </div>
                                 <nav class="mobile-home-dock" id="mobile-home-dock" aria-label="Favorite applications"></nav>
+
+                                <section class="mobile-app-drawer is-hidden" id="mobile-app-drawer" aria-label="All apps" aria-hidden="true" hidden inert>
+                                    <header class="mobile-app-drawer-header">
+                                        <div><span>Launcher</span><strong>All apps</strong><small id="mobile-app-drawer-count">0 apps</small></div>
+                                        <button type="button" data-mobile-drawer-close aria-label="Close all apps"><i class="fa-solid fa-chevron-down"></i></button>
+                                    </header>
+                                    <label class="mobile-app-drawer-search" for="mobile-app-drawer-search">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        <input id="mobile-app-drawer-search" type="search" autocomplete="off" spellcheck="false"
+                                            placeholder="Search apps" data-mobile-app-drawer-search aria-label="Search apps">
+                                    </label>
+                                    <div class="mobile-app-drawer-categories" id="mobile-app-drawer-categories" aria-label="App categories"></div>
+                                    <div class="mobile-app-drawer-grid" id="mobile-app-drawer-grid" aria-label="Applications"></div>
+                                    <p class="mobile-app-drawer-empty" id="mobile-app-drawer-empty" hidden><i class="fa-solid fa-magnifying-glass"></i>No matching apps</p>
+                                </section>
+
+                                <section class="mobile-launcher-dialog mobile-folder-panel is-hidden" id="mobile-folder-panel"
+                                    role="dialog" aria-modal="true" aria-labelledby="mobile-folder-title" data-mobile-launcher-dialog
+                                    aria-hidden="true" hidden inert>
+                                    <div class="mobile-launcher-scrim" data-mobile-launcher-dialog-close></div>
+                                    <div class="mobile-launcher-sheet">
+                                        <header>
+                                            <div><span id="mobile-folder-subtitle">Folder</span><strong id="mobile-folder-title">Apps</strong></div>
+                                            <button type="button" id="mobile-folder-close" data-mobile-launcher-dialog-close aria-label="Close folder"><i class="fa-solid fa-xmark"></i></button>
+                                        </header>
+                                        <div class="mobile-folder-grid" id="mobile-folder-grid"></div>
+                                    </div>
+                                </section>
+
+                                <section class="mobile-launcher-dialog mobile-launcher-actions is-hidden" id="mobile-launcher-actions"
+                                    role="dialog" aria-modal="true" aria-labelledby="mobile-launcher-actions-title" data-mobile-launcher-dialog
+                                    aria-hidden="true" hidden inert>
+                                    <div class="mobile-launcher-scrim" data-mobile-launcher-dialog-close></div>
+                                    <div class="mobile-launcher-sheet">
+                                        <header>
+                                            <span class="mobile-launcher-actions-icon"><i id="mobile-launcher-actions-icon" class="fa-solid fa-sliders"></i></span>
+                                            <div><span id="mobile-launcher-actions-subtitle">Home options</span><strong id="mobile-launcher-actions-title">Customize Home</strong></div>
+                                            <button type="button" id="mobile-launcher-actions-close" data-mobile-launcher-dialog-close aria-label="Close Home options"><i class="fa-solid fa-xmark"></i></button>
+                                        </header>
+                                        <div class="mobile-launcher-actions-body" id="mobile-launcher-actions-body"></div>
+                                    </div>
+                                </section>
+
+                                <span class="sr-only" id="mobile-home-live" aria-live="polite"></span>
                             </section>
 
                             <section class="mobile-task-stack is-hidden" id="mobile-task-stack" aria-live="polite"></section>
@@ -1295,7 +1366,7 @@
     <script src="core/storage.js"></script>
     <script src="core/state.js?v=1.1.0"></script>
     <script src="core/utils.js?v=1.0.1"></script>
-    <script src="core/filesystem.js?v=1.0.30"></script>
+    <script src="core/filesystem.js?v=1.2.2"></script>
     <script src="core/file-intents.js?v=1.1.13"></script>
     <script src="core/media-service.js?v=1.1.13"></script>
     <script src="core/gdrive-sync.js?v=1.0.59"></script>
@@ -1307,7 +1378,8 @@
     
     <!-- Shared Data -->
     <script src="data/systems.js?v=1.0.54"></script>
-    <script src="data/mobile-apps.js?v=1.1.0"></script>
+    <script src="data/mobile-apps.js?v=1.2.2"></script>
+    <script src="data/mobile-home.js?v=1.2.2"></script>
     <script src="data/apps.js?v=1.0.67"></script>
     <script src="data/users.js?v=1.0.58"></script>
     <script src="data/bookmarks.js?v=1.0.51"></script>
@@ -1334,12 +1406,13 @@
     <script src="desktop/shell.js?v=1.1.0"></script>
     
     <!-- Mobile & Quick Shells -->
-    <script src="mobile/app-loader.js?v=1.1.14"></script>
-    <script src="mobile/shell.js?v=1.1.15"></script>
+    <script src="mobile/app-loader.js?v=1.2.2"></script>
+    <script src="mobile/home.js?v=1.2.2"></script>
+    <script src="mobile/shell.js?v=1.2.2"></script>
     <script src="quick/shell.js?v=1.0.47"></script>
     
     <!-- Main Entry Point -->
-    <script src="main.js?v=1.1.15"></script>
+    <script src="main.js?v=1.2.2"></script>
 </body>
 
 </html>

@@ -34,7 +34,7 @@
 }
 
 .mobile-gallery-hero p {
-    color: var(--mobile-app-accent);
+    color: var(--mobile-app-accent-ink);
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -46,7 +46,7 @@
 }
 
 .mobile-gallery-hero small {
-    opacity: 0.62;
+    color: var(--text-muted);
 }
 
 .mobile-gallery-actions {
@@ -62,14 +62,14 @@
     justify-content: center;
     gap: 0.55rem;
     color: inherit;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.11);
+    background: var(--mobile-surface-raised);
+    border: 1px solid var(--mobile-outline);
     border-radius: 16px;
     cursor: pointer;
 }
 
 .mobile-gallery-actions button:first-child {
-    color: #071019;
+    color: var(--mobile-on-accent);
     background: var(--mobile-app-accent);
     border-color: transparent;
 }
@@ -77,17 +77,17 @@
 .mobile-gallery-notice {
     margin: 0;
     padding: 0.75rem;
-    color: #c7d2fe;
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(129, 140, 248, 0.22);
+    color: var(--mobile-app-accent-ink);
+    background: color-mix(in srgb, var(--mobile-app-accent) 12%, var(--mobile-surface-raised));
+    border: 1px solid color-mix(in srgb, var(--mobile-app-accent) 24%, var(--mobile-outline));
     border-radius: 14px;
     font-size: 0.75rem;
 }
 
 .mobile-gallery-notice.is-error {
-    color: #fecaca;
-    background: rgba(239, 68, 68, 0.11);
-    border-color: rgba(248, 113, 113, 0.22);
+    color: var(--mobile-danger);
+    background: color-mix(in srgb, var(--mobile-danger) 10%, var(--mobile-surface-raised));
+    border-color: color-mix(in srgb, var(--mobile-danger) 24%, var(--mobile-outline));
 }
 
 .mobile-gallery-grid {
@@ -105,8 +105,8 @@
     display: grid;
     place-items: center;
     padding: 0;
-    color: #c7d2fe;
-    background: rgba(255, 255, 255, 0.055);
+    color: var(--mobile-app-accent-ink);
+    background: var(--mobile-surface-raised);
     border: 0;
     border-radius: 9px;
     cursor: pointer;
@@ -138,12 +138,17 @@
     place-items: center;
     align-content: center;
     gap: 0.55rem;
-    opacity: 0.62;
+    color: var(--text-muted);
     text-align: center;
 }
 
 .mobile-gallery-empty > i {
+    color: var(--mobile-app-accent-ink);
     font-size: 2.2rem;
+}
+
+.mobile-gallery-empty strong {
+    color: var(--text-soft);
 }
 
 .mobile-gallery-empty span {
@@ -178,8 +183,8 @@ html[data-mobile-presentation="edge"] .mobile-gallery-viewer {
     display: grid;
     place-items: center;
     color: inherit;
-    background: rgba(255, 255, 255, 0.065);
-    border: 1px solid rgba(255, 255, 255, 0.11);
+    background: var(--mobile-surface-raised);
+    border: 1px solid var(--mobile-outline);
     border-radius: 999px;
 }
 
@@ -196,7 +201,7 @@ html[data-mobile-presentation="edge"] .mobile-gallery-viewer {
 }
 
 .mobile-gallery-viewer > header small {
-    opacity: 0.58;
+    color: var(--text-muted);
 }
 
 .mobile-gallery-viewer > div {

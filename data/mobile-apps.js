@@ -19,7 +19,7 @@ window.mobileAppCatalog = [
     { id: "guildcraft", title: "GuildCraft", icon: "fa-solid fa-cubes", color: "#f59e0b", category: "portfolio", sourceId: "guildcraft" },
     { id: "survival-ai", title: "Survival AI", icon: "fa-solid fa-brain", color: "#f43f5e", category: "portfolio", sourceId: "survival-ai" },
     { id: "wardenit", title: "WardenIT", icon: "fa-solid fa-briefcase", color: "#e879f9", category: "portfolio", sourceId: "wardenit" },
-    { id: "media", title: "Gallery", icon: "fa-solid fa-images", color: "#818cf8", category: "media", sourceId: "media" },
+    { id: "media", title: "Gallery", icon: "fa-solid fa-images", color: "#818cf8", category: "media", visibilitySourceId: "media" },
     { id: "flappybird", title: "Flappy Bird", icon: "fa-solid fa-dove", color: "#facc15", category: "games" }
 ];
 

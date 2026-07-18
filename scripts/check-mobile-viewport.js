@@ -28,6 +28,21 @@ function approximately(actual, expected, tolerance = 0.01) {
     assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} was not within ${tolerance} of ${expected}`);
 }
 
+function relativeLuminance(hex) {
+    const channels = hex.replace("#", "").match(/.{2}/g).map((channel) => parseInt(channel, 16) / 255);
+    const linear = channels.map((channel) => channel <= 0.04045
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
+function contrastRatio(foreground, background) {
+    const foregroundLuminance = relativeLuminance(foreground);
+    const backgroundLuminance = relativeLuminance(background);
+    return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05)
+        / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
+}
+
 const phone = calculate(environment());
 assert.equal(phone.presentation, "edge");
 assert.equal(phone.presentationScale, 1);
@@ -296,14 +311,48 @@ const mobileShellSource = fs.readFileSync(path.join(__dirname, "..", "mobile", "
 assert.match(mobileShellSource, /const target = document\.documentElement;/);
 assert.doesNotMatch(mobileShellSource, /const target = elements\(\)\.device/);
 assert.match(mobileShellSource, /setAttribute\("data-mobile-surface", surface\)/);
+assert.match(mobileShellSource, /if \(currentSurface !== "home"\) return null;[\s\S]*?visibleLauncherDialog/);
+assert.match(mobileShellSource, /async function showMobileRecents\(\)[\s\S]*?MobileHome\?\.showHome\?\.\(\{ announce: false \}\)[\s\S]*?setSurface\("recents"\)/);
+assert.match(mobileShellSource, /if \(targetView !== "mobile"\)[\s\S]*?MobileHome\?\.showHome\?\.\(\{ announce: false \}\)[\s\S]*?suspendTasks\("experience-change"\)/);
 
 const mobileCssSource = fs.readFileSync(path.join(__dirname, "..", "styles", "mobile.css"), "utf8");
 const edgeContentRule = mobileCssSource.match(/\.mobile-app-content\.is-edge-to-edge\s*\{([^}]*)\}/)?.[1] || "";
 assert.match(edgeContentRule, /display:\s*grid;/);
 assert.match(edgeContentRule, /grid-template-rows:\s*minmax\(0,\s*1fr\);/);
-const immersiveStatusRule = mobileCssSource.match(/\.mobile-device\[data-mobile-surface="app"\] \.mobile-statusbar,[\s\S]*?\.mobile-device\.mobile-shade-open \.mobile-statusbar\s*\{([^}]*)\}/)?.[1] || "";
-assert.match(immersiveStatusRule, /color:\s*#fff;/);
-assert.match(immersiveStatusRule, /background:\s*#000;/);
+const immersiveStatusRule = mobileCssSource.match(/\.mobile-device\[data-mobile-surface="app"\] \.mobile-statusbar,[\s\S]*?\{([^}]*)\}/)?.[1] || "";
+assert.match(immersiveStatusRule, /color:\s*var\(--mobile-system-bar-fg\);/);
+assert.match(immersiveStatusRule, /background:\s*var\(--mobile-system-bar-bg\);/);
+assert.match(mobileCssSource, /--mobile-system-bar-bg:\s*#000;/);
+assert.match(mobileCssSource, /--mobile-system-bar-fg:\s*#fff;/);
+assert.match(mobileCssSource, /\.mobile-device\[data-mobile-theme="light"\]\s*\{[\s\S]*?--mobile-surface-raised:\s*#fff;/);
+const lightThemeRule = mobileCssSource.match(/\.mobile-device\[data-mobile-theme="light"\]\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+const lightToken = (name) => lightThemeRule.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, "i"))?.[1];
+["mobile-fg-muted", "mobile-accent-ink", "mobile-success", "mobile-warning", "mobile-danger"].forEach((name) => {
+    const color = lightToken(name);
+    assert.ok(color, `Light theme is missing --${name}`);
+    assert.ok(contrastRatio(color, "#ffffff") >= 4.5, `--${name} ${color} must remain readable on raised light surfaces`);
+});
+assert.match(mobileCssSource, /\.mobile-device\[data-mobile-theme="light"\] \.mobile-native-app\s*\{[\s\S]*?--mobile-app-accent-ink:/);
+assert.match(mobileCssSource, /\.mobile-native-app:focus\s*\{\s*outline:\s*none;/);
+assert.match(mobileCssSource, /\.mobile-nav button:focus\s*\{\s*outline:\s*none;/);
+assert.match(mobileCssSource, /\.mobile-home-track\s*\{[\s\S]*?display:\s*flex;/);
+assert.match(mobileCssSource, /\.mobile-app-drawer\s*\{[\s\S]*?position:\s*absolute;/);
+assert.match(mobileCssSource, /\.mobile-app-drawer-empty\[hidden\]\s*\{\s*display:\s*none;/);
+
+const documentsCssSource = fs.readFileSync(path.join(__dirname, "..", "mobile", "apps", "documents", "app.css"), "utf8");
+const documentsToolbarRule = documentsCssSource.match(/\.mobile-documents-toolbar\s*\{([^}]*)\}/)?.[1] || "";
+assert.match(documentsToolbarRule, /background:\s*color-mix\([^;]*var\(--mobile-surface-high\)/);
+assert.doesNotMatch(documentsToolbarRule, /rgba\(12,\s*15,\s*23/);
+["mobile-success", "mobile-warning", "mobile-danger", "mobile-app-accent-ink"].forEach((token) => {
+    assert.match(documentsCssSource, new RegExp(`var\\(--${token}\\)`));
+});
+
+const mobileHomeSource = fs.readFileSync(path.join(__dirname, "..", "mobile", "home.js"), "utf8");
+assert.match(mobileHomeSource, /function openDrawer/);
+assert.match(mobileHomeSource, /function openFolder/);
+assert.match(mobileHomeSource, /function openItemActions/);
+assert.match(mobileShellSource, /homeGesture/);
+assert.match(mobileShellSource, /longPressTimer/);
 
 const flappyCssSource = fs.readFileSync(path.join(__dirname, "..", "mobile", "apps", "flappybird", "app.css"), "utf8");
 const flappyRootRule = flappyCssSource.match(/\.mobile-native-app\.mobile-flappybird-app\s*\{([^}]*)\}/)?.[1] || "";
@@ -315,4 +364,4 @@ const flappyEngineSource = fs.readFileSync(path.join(__dirname, "..", "flappy.js
 assert.match(flappyEngineSource, /new ResizeObserver\(resize\)/);
 assert.match(flappyEngineSource, /resizeObserver\?\.disconnect\(\)/);
 
-console.log("Mobile viewport audit passed: browser preview, phones, Android virtual viewports, keyboard and pinch zoom, split screen, foldables, iPadOS, touch laptops, fullscreen, immersive status bars, edge-to-edge games, and installed PWA checked.");
+console.log("Mobile viewport audit passed: browser preview, phones, Android virtual viewports, keyboard and pinch zoom, split screen, foldables, launcher pages, app drawer, long press, fullscreen, immersive status bars, edge-to-edge games, and installed PWA checked.");

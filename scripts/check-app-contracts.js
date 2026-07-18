@@ -138,6 +138,71 @@ function evaluateMobileRegistration(appId, source) {
     return windowObject.mobileAppRegistry[appId];
 }
 
+async function validateMobileStorageContract() {
+    const filesystemScope = "core/filesystem.js";
+    const filesystemSandbox = { window: {}, console: { log: () => {}, warn: () => {}, error: () => {} } };
+    vm.runInNewContext(read(filesystemScope), filesystemSandbox, { filename: filesystemScope });
+
+    const systemFS = filesystemSandbox.window.SystemFS;
+    if (!systemFS || typeof systemFS.ensureDefaultFiles !== "function") {
+        fail(filesystemScope, "shared SystemFS default storage initializer is unavailable");
+        return;
+    }
+
+    const records = new Map();
+    const writes = [];
+    systemFS.readFile = async (filePath) => records.get(filePath) || null;
+    systemFS.writeFile = async (filePath, name, parent, data, size, type, isDirectory, options = {}) => {
+        const record = { path: filePath, name, parent, data, size, type, isDirectory, options };
+        records.set(filePath, record);
+        writes.push(record);
+        return record;
+    };
+
+    try {
+        await systemFS.ensureDefaultFiles();
+        await systemFS.ensureDefaultFiles();
+    } catch (error) {
+        fail(filesystemScope, `default storage initialization failed in the audit sandbox: ${error.message}`);
+        return;
+    }
+
+    const expectedRoots = ["/documents", "/music", "/Pictures", "/Downloads", "/ROMs", "/Saved Games"];
+    expectedRoots.forEach((rootPath) => {
+        const record = records.get(rootPath);
+        if (!record || record.parent !== "/" || record.isDirectory !== true || record.type !== "directory") {
+            fail(filesystemScope, `missing default root directory ${rootPath}`);
+        }
+        const rootWrites = writes.filter((write) => write.path === rootPath);
+        if (rootWrites.length !== 1) {
+            fail(filesystemScope, `${rootPath} must be created idempotently; observed ${rootWrites.length} writes across two startup passes`);
+        }
+    });
+    if (records.has("/DCIM") || read(filesystemScope).includes('"/DCIM"')) {
+        fail(filesystemScope, "the mobile storage contract must not create a /DCIM root");
+    }
+
+    const filesScope = "mobile/apps/files/app.js";
+    let filesRegistration;
+    try {
+        filesRegistration = evaluateMobileRegistration("files", read(filesScope));
+    } catch (error) {
+        fail(filesScope, `Files could not register in the storage audit sandbox: ${error.message}`);
+        return;
+    }
+    const renderedFiles = filesRegistration?.render?.() || "";
+    ["/", "/Downloads", "/Pictures", "/documents", "/music"].forEach((location) => {
+        const marker = `data-files-location="${location}"`;
+        const occurrences = renderedFiles.split(marker).length - 1;
+        if (occurrences !== 1) {
+            fail(filesScope, `primary storage location ${location} must be rendered exactly once`);
+        }
+    });
+    if (renderedFiles.includes('data-files-location="/DCIM"')) {
+        fail(filesScope, "Files must not expose a /DCIM primary location");
+    }
+}
+
 function validateMobileFrameworkContract(catalog) {
     const apps = Array.isArray(catalog.mobileAppCatalog) ? catalog.mobileAppCatalog : [];
     const evictionStateApps = new Set(["browser", "calculator", "documents", "files"]);
@@ -166,8 +231,13 @@ function validateMobileFrameworkContract(catalog) {
     apps.forEach((catalogApp) => {
         const appId = String(catalogApp.id || "");
         if (!APP_ID_PATTERN.test(appId)) fail("data/mobile-apps.js", `invalid mobile app ID "${appId}"`);
-        if (catalogApp.sourceId && !systemIds.has(catalogApp.sourceId)) {
-            fail(`mobile:${appId}`, `unknown neutral system data source "${catalogApp.sourceId}"`);
+        ["sourceId", "visibilitySourceId"].forEach((field) => {
+            if (catalogApp[field] && !systemIds.has(catalogApp[field])) {
+                fail(`mobile:${appId}`, `unknown neutral system data source "${catalogApp[field]}" in ${field}`);
+            }
+        });
+        if (catalogApp.sourceId && catalogApp.visibilitySourceId) {
+            fail(`mobile:${appId}`, "use sourceId for representative apps or visibilitySourceId for profile gating, not both");
         }
         ["title", "icon", "color", "category"].forEach((field) => {
             if (typeof catalogApp[field] !== "string" || !catalogApp[field].trim()) {
@@ -1079,6 +1149,7 @@ async function run() {
     validateLocalAIInteractionContract();
     await validateLocalAICliRuntimeContract();
     await validateLocalAIServiceRuntimeContract();
+    await validateMobileStorageContract();
     validateCompletedMigrationContract();
     let catalog;
     try {
@@ -1193,7 +1264,10 @@ async function run() {
 
 run()
     .then(() => {
-        if (!process.exitCode) require("./check-mobile-viewport.js");
+        if (!process.exitCode) {
+            require("./check-mobile-viewport.js");
+            require("./check-mobile-home.js");
+        }
     })
     .catch((error) => {
         console.error(`App contract audit crashed: ${error.stack || error.message}`);
