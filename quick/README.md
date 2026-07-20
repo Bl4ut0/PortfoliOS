@@ -6,4 +6,4 @@ This directory contains the layout and filters for the Quick Access view. This v
 
 ## Files
 
-- **[shell.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/quick/shell.js)**: Orchestrates filter and category clicks, rendering search queries, and populating detail templates.
+- **[shell.js](shell.js)**: Orchestrates filter and category clicks, rendering search queries, and populating detail templates.

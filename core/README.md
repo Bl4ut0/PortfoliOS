@@ -6,7 +6,7 @@ This directory houses the foundational services that drive PortfoliOS. These ser
 
 ## Files and Responsibilities
 
-1. **[event-bus.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/event-bus.js)**
+1. **[event-bus.js](event-bus.js)**
    - **Role**: Decentralized pub/sub message router.
    - **API**:
      - `EventBus.on(event, cb)`: Subscribes to an event. Returns an unsubscribe function.
@@ -18,30 +18,30 @@ This directory houses the foundational services that drive PortfoliOS. These ser
      - `fs:changed` (with path details)
      - `state:changed:${key}` (with newValue, oldValue)
 
-2. **[state.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/state.js)**
+2. **[state.js](state.js)**
    - **Role**: Centralized system state.
    - **Design**: Implemented as a Proxy over a raw state object. Setting a property automatically notifies listeners via `EventBus.emit('state:changed', ...)`.
    - **Initial values**: Restored from `Storage` on boot.
 
-3. **[storage.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/storage.js)**
+3. **[storage.js](storage.js)**
    - **Role**: Unified interface for local and session storages.
    - **API**:
      - `Storage.local.get(key)` / `Storage.local.set(key, val)` (falls back to session storage on permission rejection)
      - `Storage.session.get(key)` / `Storage.session.set(key, val)`
 
-4. **[filesystem.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/filesystem.js)**
+4. **[filesystem.js](filesystem.js)**
    - **Role**: Virtual filesystem (`SystemFS`) backed by IndexedDB.
    - **Features**: Database upgrades to v2 to create an index on `parent` path, optimizing directory scanning. Emits `fs:changed` events on write/delete.
 
-5. **[app-loader.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-loader.js)**
+5. **[app-loader.js](app-loader.js)**
    - **Role**: Retryable lazy-loader for modular applications derived from `data/apps.js`. Injects scripts and styles only when an app is opened and rejects invalid registrations.
 
-6. **[app-framework.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/app-framework.js)**
+6. **[app-framework.js](app-framework.js)**
    - **Role**: Shared modular app contract helpers.
    - **Features**: App registration and window-preset validation, safe iframe `postMessage` targeting, distinct open/restore/focus/minimize/maximize/close hooks, modular teardown, and audio adapter registration.
 
-7. **[preferences.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/preferences.js)**
+7. **[preferences.js](preferences.js)**
    - **Role**: Applies user selections (volume percentages, color pickers, wallpaper choices, scaling adjustments). Handles volume updates for nested iframe runtimes.
 
-8. **[utils.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/core/utils.js)**
+8. **[utils.js](utils.js)**
    - **Role**: Common helper functions (`byId`, `getDesktopScale`, `formatBytes`, and icon template builder).

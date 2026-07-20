@@ -6,7 +6,7 @@ This directory holds the static configuration arrays and portfolio project nodes
 
 ## Data Schemas
 
-1. **[systems.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/data/systems.js)**
+1. **[systems.js](systems.js)**
    Defines the nodes mapped across the Desktop, Mobile, and Quick views.
    - **Fields**:
      - `id` (string): Unique identifier.
@@ -23,7 +23,7 @@ This directory holds the static configuration arrays and portfolio project nodes
      - `launchApp` (string, optional): Overrides dossier view to open a window on click.
      - `desktopOnly` / `mobileOnly` (boolean, optional): Restricts view context.
 
-2. **[apps.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/data/apps.js)**
+2. **[apps.js](apps.js)**
    Contains `desktopApps` (available system programs) and `storeApps` (installable extensions).
    - **Fields for `storeApps`**:
      - `id` (string): Matching app Registry key.
@@ -34,13 +34,13 @@ This directory holds the static configuration arrays and portfolio project nodes
      - `size` (string): Simulated size download.
      - `publisher` (string): Author credits.
 
-3. **[bookmarks.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/data/bookmarks.js)**
+3. **[bookmarks.js](bookmarks.js)**
    Bookmarks bar items in the Browser window.
    - **Fields**:
      - `id`, `label`, `url`, `icon`, `systemId`.
      - `embeddable` (boolean): `true` allows rendering inside an iframe; `false` prompts open tab fallback.
 
-4. **[config.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/data/config.js)**
+4. **[config.js](config.js)**
    Definitions for:
    - `wallpaperOptions`: Themes in settings.
    - `quickRoutes` & `quickFilters`: Sidebar groupings in Quick access view.

@@ -6,14 +6,15 @@ The shell runs independently in each visitor's browser. Server-side pieces can b
 
 ## Directory Structure
 
-* **[core/](file:///c:/Dev Projects/bl4ut0-portfolio-os/core)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, Google Drive sync, preferences loader, and app-loader).
-* **[data/](file:///c:/Dev Projects/bl4ut0-portfolio-os/data)**: Shared static dataset arrays (portfolio project nodes, catalogs, settings, bookmarks).
-* **[desktop/](file:///c:/Dev Projects/bl4ut0-portfolio-os/desktop)**: Desktop UI components and shell boot orchestration (start launcher, taskbar window mapping, snapping desktop icons, context menus, and custom WAD inspector).
-* **[mobile/](file:///c:/Dev Projects/bl4ut0-portfolio-os/mobile)**: Independent mobile OS framework, lazy loader, lifecycle, app registry, and mobile-only app modules. It shares neutral data/services with Desktop but not the desktop app catalog or window framework.
-* **[quick/](file:///c:/Dev Projects/bl4ut0-portfolio-os/quick)**: Split-screen quick search index layout.
-* **[apps/](file:///c:/Dev Projects/bl4ut0-portfolio-os/apps)**: The complete modular desktop catalog. Every launcher loads its own `apps/<id>/app.js` registration and `app.css` lifecycle surface.
-* **[styles/](file:///c:/Dev Projects/bl4ut0-portfolio-os/styles)**: Segmented CSS stylesheet system imported globally via `styles-v1.css`.
-* **[main.js](file:///c:/Dev Projects/bl4ut0-portfolio-os/main.js)**: Entry point orchestrator bootstrapping the OS shell on DOM load.
+* **[core/](core/)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, Google Drive sync, preferences loader, and app-loader).
+* **[data/](data/)**: Shared static dataset arrays (portfolio project nodes, catalogs, settings, bookmarks).
+* **[desktop/](desktop/)**: Desktop UI components and shell boot orchestration (start launcher, taskbar window mapping, snapping desktop icons, context menus, and custom WAD inspector).
+* **[mobile/](mobile/)**: Independent mobile OS framework, lazy loader, lifecycle, app registry, and mobile-only app modules. It shares neutral data/services with Desktop but not the desktop app catalog or window framework.
+* **[quick/](quick/)**: Split-screen quick search index layout.
+* **[apps/](apps/)**: The complete modular desktop catalog. Every app owns its `apps/<id>/app.js` registration and `app.css` lifecycle surface. Includes Office Document Editor, IPTV Player, Webamp Player, File Explorer, Task Manager, DoomSource, OpenRCT2, and UT99.
+* **[services/](services/)**: Backend proxy services (e.g. Node.js WebSocket-to-UDP relay service for UT99 web multiplayer).
+* **[styles/](styles/)**: Segmented CSS stylesheet system imported globally via `styles-v1.css`.
+* **[main.js](main.js)**: Entry point orchestrator bootstrapping the OS shell on DOM load.
 * **`index.html`** - HTML shell plus inert templates used by migrated first-party apps; no catalog window is live-mounted at startup.
 * `DOOM.WAD` can be placed in the web root for the DOOM route.
 
@@ -93,17 +94,18 @@ To allow visitors to connect their Google Drive and backup their filesystem:
 - `links`
 - `status`
 - `open devhub`
+- `ai` / `brain` / `model`
 
 ## Experience Modes
 
-- Desktop is a windowed app shell with a Start launcher, running-app taskbar, minimize/maximize/close controls, calendar flyout, mini browser, draggable/resizable windows, network map, Linux Lab, and a playable DOOM engine.
+- Desktop is a windowed app shell with a Start launcher, running-app taskbar, minimize/maximize/close controls, calendar flyout, system tray AI assistant, mini browser, draggable/resizable windows, network map, Linux Lab, Office Document Editor, IPTV Player, Webamp player, and playable DOOM / OpenRCT2 / UT99 engines.
 - Mobile is an independent Android-leaning browser OS with retained app tasks, Home/Back/Recents navigation, a notification and quick-settings shade, lock screen, mobile Settings, local Files/Documents/PDF/Gallery apps, persistent music playback, and explicit Desktop/Quick handoff.
 - Quick is a direct searchable portfolio index for visitors who want the information without using the desktop, phone, or terminal surfaces.
-- CLI is the terminal interface for the same nodes and public routes.
+- CLI is the terminal interface for the same nodes and public routes with integrated AI commands.
 
 ## Store Direction
 
-The PortfoliOS Store is evolving into an app catalog with categories for games, hosted services, and future productivity tools. Current service candidates include `https://tools.bl4ut0.com` and `https://pdf.bl4ut0.com`; both should launch cleanly from the Store even when security headers prevent iframe embedding.
+The PortfoliOS Store is evolving into an app catalog with categories for games, hosted services, media, and productivity tools. Current service candidates include `https://tools.bl4ut0.com` and `https://pdf.bl4ut0.com`; both launch cleanly from the Store even when security headers prevent iframe embedding.
 
 ## Mobile Behavior
 
@@ -120,6 +122,8 @@ The current loader checks for `./DOOM.WAD` and `/DOOM.WAD` from the same origin 
 - Add real status endpoints for public services.
 - Add dedicated project dossier pages.
 - Wire WardenIT to a professional route or separate domain.
-- Add productivity/service apps such as an open-source document editor and hosted tools/PDF surfaces.
+- Expand productivity/service apps and hosted tools/PDF surfaces (Office Document app complete).
+- Expand single-turn local AI skills library in `core/simple-brain.js`.
 - Add screenshots or release media for key projects.
 - Add analytics only after deciding what privacy posture the site should have.
+
