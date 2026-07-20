@@ -15,11 +15,28 @@ package-lock.json
 .DS_Store
 Thumbs.db
 
-# Game Assets (proprietary/large)
-diablo/*.MPQ
-diablo/*.mpq
-apps/openrct2/runtime/openrct2.zip
+# Game Data & Proprietary Assets (must be provided by self-hoster from legitimate installs)
+*.WAD
+*.wad
+*.MPQ
+*.mpq
+*.PAK
+*.pak
+*.GRP
+*.grp
+duke32/*.zip
+apps/ut99/runtime/gamedata/Maps/*.unr
+apps/ut99/runtime/gamedata/Music/*.umx
+apps/ut99/runtime/gamedata/Sounds/*.uax
+apps/ut99/runtime/gamedata/Textures/*.utx
+apps/openrct2/runtime/*.zip
 apps/openrct2/runtime/openrct2.js
 apps/openrct2/runtime/openrct2.wasm
 apps/openrct2/runtime/assets.zip
 apps/openrct2/runtime/RCT.zip
+apps/romplayer/roms/
+*.rom
+*.nes
+*.sfc
+*.gba
+*.z64

@@ -29,6 +29,7 @@ This review covers the browser-local filesystem, game-save backup flow, and plan
 - Game iframe messages now use `window.postMessageToIframe()` so runtime messages target the iframe's resolved origin instead of `*`.
 - Store catalog display text is escaped before insertion into the Store UI.
 - The modular app framework documentation now requires explicit origin checks, adaptive sizing, audio adapters, and `/Saved Games` save sync patterns.
+- Commercial game data assets (WAD, MPQ, PAK, UNR, UMX, UAX, UTX, ROMs, ZIP archives) are strictly excluded from git tracking via `.gitignore`. Local development and testing utilize legally acquired user media.
 
 ## Required Before Public OAuth Launch
 

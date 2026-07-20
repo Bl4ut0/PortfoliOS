@@ -117,6 +117,12 @@ The DOOM window runs a WebAssembly browser source port. Install `DOOM + DOOM II`
 
 The current loader checks for `./DOOM.WAD` and `/DOOM.WAD` from the same origin and can inspect a local WAD header in-browser without uploading it. Example local path found during testing: `C:\Program Files (x86)\Steam\steamapps\common\Ultimate Doom\base\DOOM.WAD`.
 
+## Game Data & Asset Ownership Compliance
+
+All game data files, WADs, MPQs, PAKs, audio/texture archives, and ROMs referenced during local development and testing were obtained from legitimate, legally owned user installations (e.g., Steam, GOG, or original retail media).
+
+**Self-Hosting Requirement**: This repository contains web engine runners, WebAssembly source ports, and UI shells only. Commercial game data binaries are strictly excluded from git tracking via `.gitignore`. If you wish to host your own version of these playable web applications (such as DOOM, Quake, Diablo, Unreal Tournament 99, Duke Nukem 3D, or OpenRCT2), you will need to provide your own legally acquired game source files.
+
 ## Next Build Pass
 
 - Add real status endpoints for public services.
@@ -126,4 +132,5 @@ The current loader checks for `./DOOM.WAD` and `/DOOM.WAD` from the same origin 
 - Expand single-turn local AI skills library in `core/simple-brain.js`.
 - Add screenshots or release media for key projects.
 - Add analytics only after deciding what privacy posture the site should have.
+
 
