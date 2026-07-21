@@ -188,6 +188,17 @@ window.storeApps = [
         publisher: "pdf.bl4ut0.com",
         bookmarkId: "pdf",
         installable: false
+    },
+    {
+        id: "pki",
+        title: "Managed PKI & CA",
+        icon: "fa-solid fa-shield-halved",
+        category: "Services",
+        description: "Internally managed Public Key Infrastructure and GCA deployment testing portal.",
+        size: "Hosted",
+        publisher: "pki.bl4ut0.dev",
+        bookmarkId: "pki",
+        installable: false
     }
 ];
 

@@ -220,6 +220,22 @@ window.systems = [
         position: [14, 45]
     },
     {
+        id: "pki",
+        title: "Managed PKI & CA",
+        type: "Security Infrastructure",
+        status: "Online",
+        icon: "fa-solid fa-shield-halved",
+        color: "#38bdf8",
+        summary: "Internally managed Public Key Infrastructure (PKI) for issuing security certificates and deploying Global Certificate Authority (GCA) root trust.",
+        signal: "Provides automated certificate management, intermediate CA issuing, GCA root deployment guides, and validation test pages to verify certificate trust installation.",
+        tech: ["PKI", "Certificate Authority", "TLS/SSL", "GCA Root", "Security Trust"],
+        links: [
+            ["PKI Portal", "https://pki.bl4ut0.dev/", "fa-solid fa-lock"],
+            ["PKI Test Page", "https://pki.bl4ut0.dev/test", "fa-solid fa-vial"]
+        ],
+        position: [30, 72]
+    },
+    {
         id: "wardenit",
         title: "WardenIT",
         type: "Professional services identity",
