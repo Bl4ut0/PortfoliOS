@@ -103,6 +103,22 @@ window.getStartMenuGroups = () => {
     return groups;
 };
 
+window.getStartMenuInstalledApps = () => {
+    const categoryLabels = new Map((window.startMenuCategories || []).map((category) => [category.id, category.label]));
+    return (window.desktopApps || [])
+        .filter((app) => window.isAppInstalled ? window.isAppInstalled(app.id) : true)
+        .filter((app) => !window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(app.id))
+        .map((app) => ({
+            ...window.getStartMenuLauncher(app.id),
+            category: app.category || "other",
+            categoryLabel: categoryLabels.get(app.category) || "Other"
+        }))
+        .filter(Boolean)
+        .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
+};
+
+window.startMenuState = window.startMenuState || { view: "pinned", query: "" };
+
 window.renderStartUser = () => {
     const user = window.getCurrentUser ? window.getCurrentUser() : null;
     if (!user) return;
@@ -302,7 +318,18 @@ window.renderStartMenu = () => {
         ${item.selectId ? `data-select="${escapeHtml(item.selectId)}"` : ""}
         data-open-app="${escapeHtml(item.launchApp)}"`;
 
-    startPinned.innerHTML = window.getStartMenuPinnedApps()
+    const query = String(window.startMenuState.query || "").trim().toLocaleLowerCase();
+    const matchesQuery = (item) => !query || [
+        item.title, item.meta, item.categoryLabel
+    ].some((value) => String(value || "").toLocaleLowerCase().includes(query));
+    const pinnedApps = window.getStartMenuPinnedApps().filter((item) => {
+        const app = (window.desktopApps || []).find((candidate) => candidate.id === item.id);
+        if (!app) return false;
+        return matchesQuery({ ...item, categoryLabel: app.category });
+    });
+    const installedApps = window.getStartMenuInstalledApps().filter(matchesQuery);
+
+    startPinned.innerHTML = pinnedApps
         .map((item) => `
             <button class="start-pin" ${renderLauncherAttrs(item)} title="Open ${escapeHtml(item.title)}">
                 ${window.getAppIconHtml(item.icon)}
@@ -311,28 +338,71 @@ window.renderStartMenu = () => {
             </button>
         `).join("");
 
-    startGrid.innerHTML = window.getStartMenuGroups()
-        .map((group) => `
-            <section class="start-menu-group" data-start-group="${escapeHtml(group.id)}">
-                <div class="start-group-title">
-                    <h4>${escapeHtml(group.label)}</h4>
-                    <b>${group.items.length}</b>
-                </div>
-                <div class="start-group-grid">
-                    ${group.items.map((item) => `
-                        <button class="start-app" ${renderLauncherAttrs(item)}
-                            style="--tile-color:${safeColor(item.color)}" title="Open ${escapeHtml(item.title)}">
-                            ${window.getAppIconHtml(item.icon)}
-                            <span>
-                                <strong>${escapeHtml(item.title)}</strong>
-                                <small>${escapeHtml(item.meta)}</small>
-                            </span>
-                        </button>
-                    `).join("")}
-                </div>
-            </section>
-        `).join("");
+    const letterGroups = installedApps.reduce((groups, item) => {
+        const letter = (item.title.match(/[A-Za-z0-9]/)?.[0] || "#").toUpperCase();
+        if (!groups.has(letter)) groups.set(letter, []);
+        groups.get(letter).push(item);
+        return groups;
+    }, new Map());
+
+    startGrid.innerHTML = [...letterGroups.entries()].map(([letter, items]) => `
+        <section class="start-menu-group" data-start-letter="${escapeHtml(letter)}">
+            <div class="start-letter" aria-hidden="true">${escapeHtml(letter)}</div>
+            <div class="start-app-list">
+                ${items.map((item) => `
+                    <button class="start-app" ${renderLauncherAttrs(item)}
+                        style="--tile-color:${safeColor(item.color)}" title="Open ${escapeHtml(item.title)}">
+                        ${window.getAppIconHtml(item.icon)}
+                        <span>
+                            <strong>${escapeHtml(item.title)}</strong>
+                            <small>${escapeHtml(item.categoryLabel)} · ${escapeHtml(item.meta)}</small>
+                        </span>
+                    </button>
+                `).join("")}
+            </div>
+        </section>
+    `).join("");
+
+    const activeView = query ? "all" : window.startMenuState.view;
+    document.querySelectorAll("[data-start-view]").forEach((button) => {
+        const active = button.dataset.startView === activeView;
+        button.setAttribute("aria-selected", String(active));
+    });
+    document.querySelectorAll("[data-start-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.startPanel !== activeView;
+    });
+
+    const pinnedCount = document.getElementById("start-pinned-count");
+    const appCount = document.getElementById("start-app-count");
+    const empty = document.getElementById("start-empty");
+    if (pinnedCount) pinnedCount.textContent = `${pinnedApps.length} apps`;
+    if (appCount) appCount.textContent = `${installedApps.length} installed`;
+    if (empty) empty.hidden = activeView === "pinned" ? pinnedApps.length > 0 : installedApps.length > 0;
 };
+
+document.addEventListener("input", (event) => {
+    if (event.target.id !== "start-search-input") return;
+    window.startMenuState.query = event.target.value;
+    window.renderStartMenu();
+});
+
+document.addEventListener("click", (event) => {
+    const viewButton = event.target.closest("[data-start-view]");
+    if (!viewButton) return;
+    window.startMenuState.view = viewButton.dataset.startView;
+    window.startMenuState.query = "";
+    const input = document.getElementById("start-search-input");
+    if (input) input.value = "";
+    window.renderStartMenu();
+});
+
+document.addEventListener("keydown", (event) => {
+    if (!(event.ctrlKey || event.metaKey) || event.key.toLocaleLowerCase() !== "k") return;
+    const menu = document.getElementById("start-menu");
+    if (!menu || menu.hidden) return;
+    event.preventDefault();
+    document.getElementById("start-search-input")?.focus();
+});
 
 // Hook into EventBus
 if (window.EventBus) {

@@ -23,7 +23,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="mobile/viewport.js?v=1.1.13"></script>
-    <link rel="stylesheet" href="styles-v1.css?v=1.2.2">
+    <link rel="stylesheet" href="styles-v1.css?v=1.2.3">
     <script>
         // Global System Debug Logger
         window.SystemLogs = [];
@@ -592,17 +592,39 @@
                                             <small id="start-user-meta">Bl4ut0 / Local administrator</small>
                                         </span>
                                     </button>
-                                    <div class="start-search">
+                                    <label class="start-search" for="start-search-input">
                                         <i class="fa-solid fa-magnifying-glass"></i>
-                                        <span>Apps, projects, services, and routes</span>
+                                        <input id="start-search-input" type="search" autocomplete="off"
+                                            spellcheck="false" placeholder="Search installed apps"
+                                            aria-controls="start-menu-content">
+                                        <kbd>Ctrl K</kbd>
+                                    </label>
+                                    <div class="start-view-tabs" role="tablist" aria-label="Start menu view">
+                                        <button type="button" role="tab" aria-selected="true"
+                                            data-start-view="pinned">Pinned</button>
+                                        <button type="button" role="tab" aria-selected="false"
+                                            data-start-view="all">All apps</button>
                                     </div>
-                                    <div class="start-section">
-                                        <h3>Pinned</h3>
+                                    <div id="start-menu-content">
+                                    <div class="start-section" data-start-panel="pinned">
+                                        <div class="start-section-heading">
+                                            <h3>Pinned</h3>
+                                            <span id="start-pinned-count"></span>
+                                        </div>
                                         <div class="start-pinned" id="start-pinned"></div>
                                     </div>
-                                    <div class="start-section">
-                                        <h3>Browse</h3>
+                                    <div class="start-section" data-start-panel="all" hidden>
+                                        <div class="start-section-heading">
+                                            <h3>All apps</h3>
+                                            <span id="start-app-count"></span>
+                                        </div>
                                         <div class="start-groups" id="start-grid"></div>
+                                    </div>
+                                    <div class="start-empty" id="start-empty" hidden>
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        <strong>No installed apps found</strong>
+                                        <span>Try a different app name or category.</span>
+                                    </div>
                                     </div>
                                 </div>
                             </div>
@@ -1380,14 +1402,14 @@
     <script src="data/systems.js?v=1.0.54"></script>
     <script src="data/mobile-apps.js?v=1.2.2"></script>
     <script src="data/mobile-home.js?v=1.2.2"></script>
-    <script src="data/apps.js?v=1.0.67"></script>
+    <script src="data/apps.js?v=1.0.68"></script>
     <script src="data/users.js?v=1.0.58"></script>
     <script src="data/bookmarks.js?v=1.0.51"></script>
     <script src="data/config.js?v=1.0.53"></script>
     
     <!-- Desktop Components -->
     <script src="desktop/taskbar.js?v=1.0.46"></script>
-    <script src="desktop/start-menu.js?v=1.0.61"></script>
+    <script src="desktop/start-menu.js?v=1.0.62"></script>
     <script src="desktop/desktop-icons.js?v=1.0.47"></script>
     <script src="desktop/context-menu.js?v=1.0.47"></script>
     <script src="desktop/dossier.js?v=1.0.47"></script>

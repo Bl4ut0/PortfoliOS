@@ -20,6 +20,16 @@ window.startMenuPinnedIds = [
     "network", "taskmgr", "linux", "devhub"
 ];
 
+// Start menu organization lives with the app registry so new apps only need a
+// category and an optional position in startMenuPinnedIds.
+window.startMenuCategories = [
+    { id: "system", label: "System" },
+    { id: "productivity", label: "Productivity" },
+    { id: "development", label: "Development" },
+    { id: "media", label: "Media" },
+    { id: "games", label: "Games" }
+];
+
 window.startMenuGroups = [
     {
         id: "system",
@@ -57,28 +67,28 @@ window.defaultDesktopIconLayout = {
 };
 
 window.desktopApps = [
-    { id: "profile", title: "Identity", icon: "fa-solid fa-id-card", pinned: true, modular: true, meta: "Identity profile" },
-    { id: "dossier", title: "Dossier", icon: "fa-solid fa-folder-open", pinned: true, modular: true, meta: "Project dossier" },
-    { id: "browser", title: "Browser", icon: "fa-brands fa-chrome", pinned: true, modular: true, meta: "Portfolio browser" },
-    { id: "network", title: "Network Map", icon: "fa-solid fa-diagram-project", pinned: true, modular: true, meta: "Systems topology" },
-    { id: "linux", title: "lab@bl4ut0", icon: "fa-brands fa-linux", pinned: true, modular: true, meta: "Linux lab view" },
-    { id: "cli", title: "Portfolio CLI", icon: "fa-solid fa-terminal", pinned: true, modular: true, meta: "Interactive shell" },
-    { id: "local-ai", title: "Local AI", icon: "fa-solid fa-brain", pinned: false, modular: true, meta: "AI runtime control" },
-    { id: "store", title: "Store", icon: "fa-solid fa-shop", pinned: true, modular: true, meta: "Application catalog" },
-    { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", pinned: true, modular: true, meta: "File manager" },
-    { id: "office", title: "LibreOffice WASM", icon: "fa-solid fa-file-signature", pinned: true, modular: true, meta: "Document workspace" },
-    { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", pinned: false, modular: true, meta: "System monitor" },
-    { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", pinned: false, modular: true, meta: "Classic media player" },
-    { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", pinned: true, modular: true, meta: "Local music player" },
-    { id: "iptv", title: "IPTV Stream", icon: "fa-solid fa-tv", pinned: false, modular: true, meta: "Live TV and XMLTV guide" },
-    { id: "settings", title: "Settings", icon: "fa-solid fa-sliders", pinned: false, modular: true, meta: "System preferences" },
-    { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", pinned: true, modular: true, meta: "Emulator launcher" },
-    { id: "openrct2", title: "OpenRCT2", icon: "fa-solid fa-train", pinned: false, modular: true, meta: "Theme park engine" },
-    { id: "doomsource", title: "Doom", icon: "doom-icon.png", pinned: false, modular: true, meta: "WASM game" },
-    { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", pinned: false, modular: true, meta: "Browser game" },
-    { id: "diablo", title: "Diablo", icon: "diablo-icon.png", pinned: false, modular: true, meta: "Browser game" },
-    { id: "quake", title: "Quake", icon: "quake-icon.png", pinned: false, modular: true, meta: "Browser game" },
-    { id: "ut99", title: "UT99", icon: "fa-solid fa-crosshairs", pinned: false, modular: true, meta: "Browser game" }
+    { id: "profile", title: "Identity", icon: "fa-solid fa-id-card", category: "productivity", pinned: true, modular: true, meta: "Identity profile" },
+    { id: "dossier", title: "Dossier", icon: "fa-solid fa-folder-open", category: "productivity", pinned: true, modular: true, meta: "Project dossier" },
+    { id: "browser", title: "Browser", icon: "fa-brands fa-chrome", category: "system", pinned: true, modular: true, meta: "Portfolio browser" },
+    { id: "network", title: "Network Map", icon: "fa-solid fa-diagram-project", category: "development", pinned: true, modular: true, meta: "Systems topology" },
+    { id: "linux", title: "lab@bl4ut0", icon: "fa-brands fa-linux", category: "development", pinned: true, modular: true, meta: "Linux lab view" },
+    { id: "cli", title: "Portfolio CLI", icon: "fa-solid fa-terminal", category: "development", pinned: true, modular: true, meta: "Interactive shell" },
+    { id: "local-ai", title: "Local AI", icon: "fa-solid fa-brain", category: "development", pinned: false, modular: true, meta: "AI runtime control" },
+    { id: "store", title: "Store", icon: "fa-solid fa-shop", category: "system", pinned: true, modular: true, meta: "Application catalog" },
+    { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", category: "system", pinned: true, modular: true, meta: "File manager" },
+    { id: "office", title: "LibreOffice WASM", icon: "fa-solid fa-file-signature", category: "productivity", pinned: true, modular: true, meta: "Document workspace" },
+    { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", category: "system", pinned: false, modular: true, meta: "System monitor" },
+    { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", category: "media", pinned: false, modular: true, meta: "Classic media player" },
+    { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", category: "media", pinned: true, modular: true, meta: "Local music player" },
+    { id: "iptv", title: "IPTV Stream", icon: "fa-solid fa-tv", category: "media", pinned: false, modular: true, meta: "Live TV and XMLTV guide" },
+    { id: "settings", title: "Settings", icon: "fa-solid fa-sliders", category: "system", pinned: false, modular: true, meta: "System preferences" },
+    { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", category: "games", pinned: true, modular: true, meta: "Emulator launcher" },
+    { id: "openrct2", title: "OpenRCT2", icon: "fa-solid fa-train", category: "games", pinned: false, modular: true, meta: "Theme park engine" },
+    { id: "doomsource", title: "Doom", icon: "doom-icon.png", category: "games", pinned: false, modular: true, meta: "WASM game" },
+    { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", category: "games", pinned: false, modular: true, meta: "Browser game" },
+    { id: "diablo", title: "Diablo", icon: "diablo-icon.png", category: "games", pinned: false, modular: true, meta: "Browser game" },
+    { id: "quake", title: "Quake", icon: "quake-icon.png", category: "games", pinned: false, modular: true, meta: "Browser game" },
+    { id: "ut99", title: "UT99", icon: "fa-solid fa-crosshairs", category: "games", pinned: false, modular: true, meta: "Browser game" }
 ];
 
 window.modularApps = window.desktopApps
