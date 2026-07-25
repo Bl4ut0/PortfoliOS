@@ -380,21 +380,31 @@ window.renderStartMenu = () => {
     if (empty) empty.hidden = activeView === "pinned" ? pinnedApps.length > 0 : installedApps.length > 0;
 };
 
-document.addEventListener("input", (event) => {
-    if (event.target.id !== "start-search-input") return;
-    window.startMenuState.query = event.target.value;
-    window.renderStartMenu();
-});
+const startMenuRoot = document.getElementById("start-menu");
+if (startMenuRoot) {
+    startMenuRoot.addEventListener("input", (event) => {
+        if (event.target.id !== "start-search-input") return;
+        window.startMenuState.query = event.target.value;
+        window.renderStartMenu();
+    });
 
-document.addEventListener("click", (event) => {
-    const viewButton = event.target.closest("[data-start-view]");
-    if (!viewButton) return;
-    window.startMenuState.view = viewButton.dataset.startView;
-    window.startMenuState.query = "";
-    const input = document.getElementById("start-search-input");
-    if (input) input.value = "";
-    window.renderStartMenu();
-});
+    startMenuRoot.addEventListener("click", (event) => {
+        const viewButton = event.target.closest("[data-start-view]");
+        if (viewButton) {
+            window.startMenuState.view = viewButton.dataset.startView;
+            window.startMenuState.query = "";
+            const input = document.getElementById("start-search-input");
+            if (input) input.value = "";
+            window.renderStartMenu();
+        }
+
+        // Search and view controls are internal menu interactions. Keep their
+        // click from reaching desktop-level dismiss/minimize handlers.
+        if (viewButton || event.target.closest(".start-search")) {
+            event.stopPropagation();
+        }
+    });
+}
 
 document.addEventListener("keydown", (event) => {
     if (!(event.ctrlKey || event.metaKey) || event.key.toLocaleLowerCase() !== "k") return;
