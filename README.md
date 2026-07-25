@@ -97,7 +97,7 @@ This is defence in depth, not a substitute for operating-system antivirus or a p
 
 ### Browser hardening
 
-The Apache security header policy provides MIME sniffing protection, frame restrictions, a restricted CSP baseline, referrer controls, and HSTS. If Cloudflare is in front of the host, configure Cloudflare's HSTS policy too; a Cloudflare HSTS setting can override an origin header. A future CSP tightening pass should externalize remaining inline scripts before removing the legacy inline-script allowance safely.
+The document also enforces its baseline CSP and referrer policy with HTML metadata, so those protections remain active if an upstream CDN does not forward origin headers. The Apache security header policy provides MIME sniffing protection, frame restrictions, the same CSP baseline, referrer controls, and HSTS. If Cloudflare is in front of the host, configure Cloudflare's HSTS policy and response headers too; a Cloudflare setting can override an origin header. A future CSP tightening pass should externalize remaining inline scripts before adding a restrictive `script-src` directive.
 
 ## Useful CLI Commands
 
