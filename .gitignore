@@ -4,8 +4,7 @@ node_modules/
 # Environment / secrets
 .env
 
-# Deployment tooling (not part of the site)
-deploy.js
+# Local package metadata is not part of the published site.
 package.json
 package-lock.json
 !services/*/package.json
