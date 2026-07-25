@@ -15,6 +15,7 @@ window.GDriveSync = {
     scopes: "openid email profile https://www.googleapis.com/auth/drive.file",
     authFileName: "google-drive.json",
     gsiLoadPromise: null,
+    pendingReconnectReason: null,
 
     getAuthRecordPath(userId = this.getCurrentSyncScope().userId) {
         return `/home/${userId}/.auth/${this.authFileName}`;
@@ -141,8 +142,9 @@ window.GDriveSync = {
 
         if (record?.requiresReconnect || record?.sessionMode === "memory-only") {
             this.googleProfile = record.profile || this.getSavedGoogleProfile();
+            this.pendingReconnectReason = record.reason || "Google Drive needs you to sign in again.";
             this.emitAuthChanged("invalid", { reason: record.reason });
-            if (promptOnInvalid) this.showReconnectPrompt(record.reason || "Google Drive needs you to sign in again.");
+            if (promptOnInvalid) this.showReconnectPrompt(this.pendingReconnectReason);
             return { status: "invalid" };
         }
 
@@ -178,6 +180,7 @@ window.GDriveSync = {
         const profile = this.googleProfile || this.getSavedGoogleProfile();
         this.clearBrowserSession();
         this.googleProfile = profile;
+        this.pendingReconnectReason = reason;
         await this.persistReconnectRecord(reason);
         this.emitAuthChanged("invalid", { reason });
     },
@@ -186,7 +189,21 @@ window.GDriveSync = {
         document.getElementById("gdrive-reconnect-prompt")?.remove();
     },
 
+    canPresentReconnectPrompt() {
+        const view = window.state?.view || document.body?.dataset?.view;
+        const bootScreen = document.getElementById("boot-screen");
+        const experienceChosen = window.state?.systemStarted === true || bootScreen?.classList.contains("hidden") === true;
+        return experienceChosen && ["desktop", "mobile"].includes(view);
+    },
+
+    presentPendingReconnectPrompt() {
+        if (!this.pendingReconnectReason || !this.canPresentReconnectPrompt()) return false;
+        return this.showReconnectPrompt(this.pendingReconnectReason);
+    },
+
     showReconnectPrompt(reason = "Your saved Google Drive session is no longer valid.") {
+        this.pendingReconnectReason = reason;
+        if (!this.canPresentReconnectPrompt()) return false;
         if (document.getElementById("gdrive-reconnect-prompt")) return;
         const profile = this.googleProfile || this.getSavedGoogleProfile();
         const account = profile?.email || profile?.name || "your Google account";
@@ -214,6 +231,7 @@ window.GDriveSync = {
         `;
         prompt.addEventListener("click", async (event) => {
             if (event.target.closest("[data-gdrive-reconnect-later]")) {
+                this.pendingReconnectReason = null;
                 this.closeReconnectPrompt();
                 return;
             }
@@ -227,6 +245,7 @@ window.GDriveSync = {
                 const clientId = window.Storage?.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId;
                 await this.loadGsiLibrary();
                 await this.login(clientId);
+                this.pendingReconnectReason = null;
                 this.closeReconnectPrompt();
                 window.showDesktopToast?.("Google Drive reconnected. Syncing progress...");
                 window.triggerGDriveSync?.();
@@ -902,6 +921,19 @@ if (window.EventBus) {
             const result = await window.GDriveSync.validateSession({ promptOnInvalid: true });
             if (result.valid) window.triggerGDriveSync?.({ silent: true });
         }
+    });
+}
+
+if (window.EventBus) {
+    window.EventBus.on("view:changed", (view) => {
+        const targetView = view === "cli" ? "desktop" : view;
+        if (targetView === "quick") {
+            window.GDriveSync.closeReconnectPrompt();
+            return;
+        }
+        // Experience selection finishes immediately after switchView returns.
+        // Deferring one task lets the boot selector mark the system as started.
+        window.setTimeout(() => window.GDriveSync.presentPendingReconnectPrompt(), 0);
     });
 }
 

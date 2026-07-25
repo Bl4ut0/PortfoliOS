@@ -80,7 +80,9 @@ window.boot = async () => {
     }
 
     if (window.GDriveSync?.restoreSession) {
-        await window.GDriveSync.restoreSession({ promptOnInvalid: true });
+        // The boot selector must stay unobstructed. A saved reconnect request is
+        // presented only after Desktop or Mobile has been explicitly selected.
+        await window.GDriveSync.restoreSession({ promptOnInvalid: false });
     }
 
     if (window.applyCurrentUserProfile) {
@@ -99,9 +101,9 @@ window.boot = async () => {
     if (window.applyDesktopPreferences) window.applyDesktopPreferences();
     if (window.initWindowManagement) window.initWindowManagement();
 
-    // Validate the restored token after the desktop has rendered so network
-    // latency never blocks startup. Invalid tokens trigger the reconnect prompt.
-    window.GDriveSync?.validateSession?.({ promptOnInvalid: true }).then((result) => {
+    // Validate after rendering so network latency never blocks startup. Invalid
+    // sessions retain a reconnect request until an experience is selected.
+    window.GDriveSync?.validateSession?.({ promptOnInvalid: false }).then((result) => {
         if (result?.valid) window.triggerGDriveSync?.({ silent: true });
     });
 

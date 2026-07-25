@@ -89,6 +89,13 @@ vm.runInNewContext(
     assert.strictEqual(syncSource.includes("accessToken: this.token"), false, "Cloud Sync must not serialize the raw access token into SystemFS");
     assert.strictEqual(syncSource.includes('local.set("bl4ut0_gdrive_token"'), false, "Cloud Sync must not persist the raw token in browser storage");
     const sync = windowObject.GDriveSync;
+    assert.strictEqual(sync.canPresentReconnectPrompt(), false, "the reconnect prompt must stay hidden behind the experience selector");
+    windowObject.state.systemStarted = true;
+    windowObject.state.view = "quick";
+    assert.strictEqual(sync.canPresentReconnectPrompt(), false, "the reconnect prompt must never be shown in Quick");
+    windowObject.state.view = "desktop";
+    assert.strictEqual(sync.canPresentReconnectPrompt(), true, "Desktop may present a pending reconnect request after selection");
+    windowObject.state.systemStarted = false;
     const freshInstall = await sync.restoreSession({ promptOnInvalid: false });
     assert.strictEqual(freshInstall.status, "disconnected", "a fresh browser without a saved account must remain disconnected");
     sync.token = "test-access-token";
