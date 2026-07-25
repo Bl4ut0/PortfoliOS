@@ -4,6 +4,7 @@
  */
 window.GDriveSync = {
     token: null,
+    tokenExpiresAt: 0,
     parentFolderId: null,
     rootFolderId: null,
     scopeFolderIds: {},
@@ -12,6 +13,255 @@ window.GDriveSync = {
     productionOrigin: "https://os.bl4ut0.dev",
     rootFolderName: "PortfoliOS",
     scopes: "openid email profile https://www.googleapis.com/auth/drive.file",
+    authFileName: "google-drive.json",
+
+    getAuthRecordPath(userId = this.getCurrentSyncScope().userId) {
+        return `/home/${userId}/.auth/${this.authFileName}`;
+    },
+
+    async readAuthRecord() {
+        if (!window.SystemFS) return null;
+        const record = await window.SystemFS.readFile(this.getAuthRecordPath());
+        if (!record?.data) return null;
+        const text = window.readFilesystemRecordText
+            ? await window.readFilesystemRecordText(record)
+            : (record.data instanceof Blob ? await record.data.text() : String(record.data));
+        try {
+            const parsed = JSON.parse(text);
+            return parsed && typeof parsed === "object" ? parsed : null;
+        } catch (error) {
+            console.warn("PortfoliOS: Cloud auth record could not be parsed.", error);
+            return null;
+        }
+    },
+
+    async persistAuthRecord() {
+        if (!window.SystemFS || !this.token) return;
+        const scope = this.getCurrentSyncScope();
+        const authDir = `/home/${scope.userId}/.auth`;
+        const record = {
+            provider: "google-drive",
+            accessToken: this.token,
+            expiresAt: this.tokenExpiresAt,
+            clientId: (window.Storage?.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId),
+            profile: this.googleProfile || this.getSavedGoogleProfile(),
+            scopeId: scope.id,
+            updatedAt: Date.now()
+        };
+        const json = JSON.stringify(record, null, 2);
+        await window.SystemFS.ensureDirectory(authDir, {
+            silent: true,
+            metadata: { sync: false, kind: "auth-directory" }
+        });
+        await window.SystemFS.writeFile(
+            this.getAuthRecordPath(scope.userId),
+            this.authFileName,
+            authDir,
+            json,
+            json.length,
+            "application/json",
+            false,
+            { silent: true, metadata: { sync: false, kind: "oauth-session" } }
+        );
+    },
+
+    async persistReconnectRecord(reason) {
+        if (!window.SystemFS) return;
+        const scope = this.getCurrentSyncScope();
+        const authDir = `/home/${scope.userId}/.auth`;
+        const record = {
+            provider: "google-drive",
+            requiresReconnect: true,
+            reason,
+            clientId: window.Storage?.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId,
+            profile: this.googleProfile || this.getSavedGoogleProfile(),
+            scopeId: scope.id,
+            updatedAt: Date.now()
+        };
+        const json = JSON.stringify(record, null, 2);
+        await window.SystemFS.ensureDirectory(authDir, {
+            silent: true,
+            metadata: { sync: false, kind: "auth-directory" }
+        });
+        await window.SystemFS.writeFile(
+            this.getAuthRecordPath(scope.userId),
+            this.authFileName,
+            authDir,
+            json,
+            json.length,
+            "application/json",
+            false,
+            { silent: true, metadata: { sync: false, kind: "oauth-session" } }
+        );
+    },
+
+    emitAuthChanged(status, detail = {}) {
+        if (window.EventBus) {
+            window.EventBus.emit("gdrive:auth-changed", {
+                status,
+                profile: this.googleProfile,
+                expiresAt: this.tokenExpiresAt,
+                ...detail
+            });
+        }
+    },
+
+    clearBrowserSession() {
+        this.token = null;
+        this.tokenExpiresAt = 0;
+        this.parentFolderId = null;
+        this.rootFolderId = null;
+        this.scopeFolderIds = {};
+        if (window.Storage) {
+            window.Storage.local.remove("bl4ut0_gdrive_token");
+            window.Storage.local.remove("bl4ut0_gdrive_token_expiry");
+        }
+        if (window.state) window.state.gdriveConnected = false;
+    },
+
+    async restoreSession({ promptOnInvalid = true } = {}) {
+        let record = null;
+        try {
+            record = await this.readAuthRecord();
+        } catch (error) {
+            console.warn("PortfoliOS: SystemFS cloud session lookup failed.", error);
+        }
+
+        // Migrate the previous browser-only session into the user's SystemFS.
+        if (!record && window.Storage) {
+            const legacyToken = window.Storage.local.get("bl4ut0_gdrive_token");
+            const legacyExpiry = Number(window.Storage.local.get("bl4ut0_gdrive_token_expiry") || 0);
+            if (legacyToken) {
+                record = {
+                    accessToken: legacyToken,
+                    expiresAt: legacyExpiry,
+                    clientId: window.Storage.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId,
+                    profile: this.getSavedGoogleProfile(),
+                    migrated: true
+                };
+            }
+        }
+
+        if (record?.requiresReconnect) {
+            this.googleProfile = record.profile || this.getSavedGoogleProfile();
+            this.clearBrowserSession();
+            this.emitAuthChanged("invalid", { reason: record.reason });
+            if (promptOnInvalid) this.showReconnectPrompt(record.reason || "Google Drive needs you to sign in again.");
+            return { status: "invalid" };
+        }
+
+        if (!record?.accessToken) {
+            this.clearBrowserSession();
+            this.emitAuthChanged("disconnected");
+            return { status: "disconnected" };
+        }
+
+        const expiresAt = Number(record.expiresAt || 0);
+        if (!expiresAt || Date.now() >= expiresAt) {
+            this.googleProfile = record.profile || this.getSavedGoogleProfile();
+            this.clearBrowserSession();
+            await this.persistReconnectRecord("Your Google Drive session expired.");
+            this.emitAuthChanged("expired", { reason: "Your Google Drive session expired." });
+            if (promptOnInvalid) this.showReconnectPrompt("Your Google Drive session expired.");
+            return { status: "expired" };
+        }
+
+        this.token = record.accessToken;
+        this.tokenExpiresAt = expiresAt;
+        this.googleProfile = record.profile || this.getSavedGoogleProfile();
+        if (record.clientId && window.Storage) {
+            window.Storage.local.set("bl4ut0_gdrive_client_id", record.clientId);
+            window.Storage.local.set("bl4ut0_gdrive_token", this.token);
+            window.Storage.local.set("bl4ut0_gdrive_token_expiry", String(expiresAt));
+        }
+        if (window.state) window.state.gdriveConnected = true;
+        if (record.migrated) await this.persistAuthRecord();
+        this.emitAuthChanged("restored");
+        return { status: "restored", profile: this.googleProfile };
+    },
+
+    async validateSession({ promptOnInvalid = true } = {}) {
+        const token = this.getToken();
+        if (!token) return { valid: false, reason: "missing" };
+        try {
+            await this.fetchGoogleProfile();
+            await this.persistAuthRecord();
+            this.emitAuthChanged("connected");
+            return { valid: true, profile: this.googleProfile };
+        } catch (error) {
+            const message = String(error?.message || error);
+            const invalid = /\b(401|403)\b/.test(message);
+            if (!invalid) {
+                this.emitAuthChanged("offline", { reason: message });
+                return { valid: null, reason: "network" };
+            }
+            await this.invalidateSession("Google Drive rejected the saved session.");
+            if (promptOnInvalid) this.showReconnectPrompt("Google Drive needs you to sign in again.");
+            return { valid: false, reason: "invalid" };
+        }
+    },
+
+    async invalidateSession(reason = "Google Drive needs you to sign in again.") {
+        const profile = this.googleProfile || this.getSavedGoogleProfile();
+        this.clearBrowserSession();
+        this.googleProfile = profile;
+        await this.persistReconnectRecord(reason);
+        this.emitAuthChanged("invalid", { reason });
+    },
+
+    closeReconnectPrompt() {
+        document.getElementById("gdrive-reconnect-prompt")?.remove();
+    },
+
+    showReconnectPrompt(reason = "Your saved Google Drive session is no longer valid.") {
+        if (document.getElementById("gdrive-reconnect-prompt")) return;
+        const profile = this.googleProfile || this.getSavedGoogleProfile();
+        const account = profile?.email || profile?.name || "your Google account";
+        const prompt = document.createElement("aside");
+        prompt.id = "gdrive-reconnect-prompt";
+        prompt.className = "gdrive-reconnect-prompt";
+        prompt.setAttribute("role", "dialog");
+        prompt.setAttribute("aria-modal", "true");
+        prompt.setAttribute("aria-labelledby", "gdrive-reconnect-title");
+        prompt.innerHTML = `
+            <div class="gdrive-reconnect-icon"><i class="fa-brands fa-google-drive"></i></div>
+            <div class="gdrive-reconnect-copy">
+                <span>Cloud Sync paused</span>
+                <h2 id="gdrive-reconnect-title">Sign in again to keep progress synced</h2>
+                <p>${window.escapeHtml ? window.escapeHtml(reason) : reason}</p>
+                <small>Reconnect ${window.escapeHtml ? window.escapeHtml(account) : account} to resume syncing your SystemFS files and saved progress.</small>
+            </div>
+            <div class="gdrive-reconnect-actions">
+                <button type="button" data-gdrive-reconnect-later>Not now</button>
+                <button type="button" class="primary" data-gdrive-reconnect-now>
+                    <i class="fa-brands fa-google"></i> Sign in again
+                </button>
+            </div>
+        `;
+        prompt.addEventListener("click", async (event) => {
+            if (event.target.closest("[data-gdrive-reconnect-later]")) {
+                this.closeReconnectPrompt();
+                return;
+            }
+            const reconnect = event.target.closest("[data-gdrive-reconnect-now]");
+            if (!reconnect) return;
+            reconnect.disabled = true;
+            reconnect.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
+            try {
+                const clientId = window.Storage?.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId;
+                await this.loadGsiLibrary();
+                await this.login(clientId);
+                this.closeReconnectPrompt();
+                window.showDesktopToast?.("Google Drive reconnected. Syncing progress...");
+                window.triggerGDriveSync?.();
+            } catch (error) {
+                reconnect.disabled = false;
+                reconnect.innerHTML = '<i class="fa-brands fa-google"></i> Sign in again';
+                window.showDesktopToast?.("Google Drive sign-in was not completed.");
+            }
+        });
+        document.body.appendChild(prompt);
+    },
 
     getOAuthStatus() {
         const origin = window.location?.origin || this.productionOrigin;
@@ -110,6 +360,7 @@ window.GDriveSync = {
         } else {
             window.localStorage.setItem("bl4ut0_gdrive_profile", JSON.stringify(this.googleProfile));
         }
+        this.emitAuthChanged("profile-updated");
         return this.googleProfile;
     },
 
@@ -257,9 +508,10 @@ window.GDriveSync = {
                         reject(response);
                     } else {
                         this.token = response.access_token;
+                        this.tokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) * 1000);
                         if (window.Storage) {
                             window.Storage.local.set("bl4ut0_gdrive_token", this.token);
-                            window.Storage.local.set("bl4ut0_gdrive_token_expiry", String(Date.now() + (response.expires_in * 1000)));
+                            window.Storage.local.set("bl4ut0_gdrive_token_expiry", String(this.tokenExpiresAt));
                             window.Storage.local.set("bl4ut0_gdrive_client_id", clientId);
                         }
                         if (window.state) {
@@ -270,6 +522,9 @@ window.GDriveSync = {
                         } catch (error) {
                             console.warn("PortfoliOS: Google profile lookup failed after login.", error);
                         }
+                        await this.persistAuthRecord();
+                        this.closeReconnectPrompt();
+                        this.emitAuthChanged("connected");
                         resolve(this.token);
                     }
                 }
@@ -279,11 +534,16 @@ window.GDriveSync = {
     },
     
     getToken() {
+        if (this.token && this.tokenExpiresAt && Date.now() < this.tokenExpiresAt) {
+            if (window.state) window.state.gdriveConnected = true;
+            return this.token;
+        }
         if (!window.Storage) return null;
         const token = window.Storage.local.get("bl4ut0_gdrive_token");
-        const expiry = window.Storage.local.get("bl4ut0_gdrive_token_expiry");
-        if (token && expiry && Date.now() < Number(expiry)) {
+        const expiry = Number(window.Storage.local.get("bl4ut0_gdrive_token_expiry") || 0);
+        if (token && expiry && Date.now() < expiry) {
             this.token = token;
+            this.tokenExpiresAt = expiry;
             if (window.state) {
                 window.state.gdriveConnected = true;
             }
@@ -295,21 +555,19 @@ window.GDriveSync = {
         return null;
     },
     
-    logout() {
-        this.token = null;
-        this.parentFolderId = null;
-        this.rootFolderId = null;
-        this.scopeFolderIds = {};
+    async logout() {
+        const authPath = this.getAuthRecordPath();
+        this.clearBrowserSession();
         this.googleProfile = null;
         if (window.Storage) {
-            window.Storage.local.remove("bl4ut0_gdrive_token");
-            window.Storage.local.remove("bl4ut0_gdrive_token_expiry");
             window.Storage.local.remove("bl4ut0_gdrive_profile");
         }
+        try {
+            if (window.SystemFS) await window.SystemFS.deleteFile(authPath, { silent: true });
+        } catch (error) {}
         this.clearScopedSyncState();
-        if (window.state) {
-            window.state.gdriveConnected = false;
-        }
+        this.closeReconnectPrompt();
+        this.emitAuthChanged("disconnected");
     },
     
     async fetchRemoteFiles() {
@@ -567,6 +825,7 @@ window.GDriveSync = {
                 }
             } catch (err) {
                 console.error(`Failed to sync ${path}:`, err);
+                if (/\b(401|403)\b/.test(String(err?.message || err))) throw err;
             }
 
             processed++;
@@ -587,3 +846,25 @@ window.GDriveSync = {
         }
     }
 };
+
+if (window.EventBus) {
+    window.EventBus.on("user:changed", async () => {
+        window.GDriveSync.closeReconnectPrompt();
+        window.GDriveSync.clearBrowserSession();
+        window.GDriveSync.googleProfile = null;
+        const restored = await window.GDriveSync.restoreSession({ promptOnInvalid: true });
+        if (restored.status === "restored") {
+            const result = await window.GDriveSync.validateSession({ promptOnInvalid: true });
+            if (result.valid) window.triggerGDriveSync?.({ silent: true });
+        }
+    });
+}
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" || window.GDriveSync.getToken()) return;
+    window.GDriveSync.restoreSession({ promptOnInvalid: false }).then((restored) => {
+        if (restored.status === "restored") {
+            window.GDriveSync.validateSession({ promptOnInvalid: true });
+        }
+    });
+});

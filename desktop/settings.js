@@ -175,6 +175,12 @@ function updateGDriveUI() {
     const clientIdInput = document.getElementById("settings-gdrive-client-id");
     const originText = document.getElementById("settings-gdrive-origin");
     const returnModeText = document.getElementById("settings-gdrive-return-mode");
+    const description = document.getElementById("settings-gdrive-description");
+    const accountCard = document.getElementById("settings-gdrive-account");
+    const accountAvatar = document.getElementById("settings-gdrive-account-avatar");
+    const accountName = document.getElementById("settings-gdrive-account-name");
+    const accountEmail = document.getElementById("settings-gdrive-account-email");
+    const lastSyncText = document.getElementById("settings-gdrive-last-sync");
     
     if (clientIdInput) {
         const defaultId = window.GDriveSync?.defaultClientId || "";
@@ -194,8 +200,26 @@ function updateGDriveUI() {
         indicator.className = `status-indicator-dot ${isConnected ? "connected" : "disconnected"}`;
     }
     if (statusText) {
-        const folderLabel = window.GDriveSync?.getCurrentFolderLabel ? window.GDriveSync.getCurrentFolderLabel() : "Google Drive";
-        statusText.textContent = isConnected ? `Connected to ${folderLabel}` : "Not Connected";
+        statusText.textContent = isConnected ? "Cloud Sync enabled" : "Not Connected";
+    }
+    if (description) {
+        description.textContent = isConnected
+            ? "Your SystemFS files and saved progress are connected to Google Drive."
+            : "Sign in to link Google Drive for PortfoliOS documents, configuration, and game save backups.";
+    }
+    const profile = window.GDriveSync?.googleProfile || window.GDriveSync?.getSavedGoogleProfile?.();
+    if (accountCard) accountCard.hidden = !isConnected;
+    if (accountAvatar) {
+        accountAvatar.src = profile?.picture || "";
+        accountAvatar.hidden = !profile?.picture;
+    }
+    if (accountName) accountName.textContent = profile?.name || "Google Drive account";
+    if (accountEmail) accountEmail.textContent = profile?.email || window.GDriveSync?.getCurrentFolderLabel?.() || "";
+    if (lastSyncText && window.GDriveSync?.getScopedStorageKey) {
+        const lastSync = Number(window.Storage?.local.get(window.GDriveSync.getScopedStorageKey("last_sync_time")) || 0);
+        lastSyncText.textContent = lastSync
+            ? `Last synced ${new Date(lastSync).toLocaleString()}`
+            : "Not synced yet";
     }
     if (connectBtn) {
         connectBtn.style.display = isConnected ? "none" : "inline-flex";
@@ -247,9 +271,9 @@ function initGDriveSettings() {
     }
 
     if (disconnectBtn) {
-        disconnectBtn.addEventListener("click", () => {
+        disconnectBtn.addEventListener("click", async () => {
             if (window.GDriveSync) {
-                window.GDriveSync.logout();
+                await window.GDriveSync.logout();
                 if (window.showDesktopToast) window.showDesktopToast("Google Drive Disconnected.");
             }
             updateGDriveUI();
@@ -266,7 +290,7 @@ function initGDriveSettings() {
     updateGDriveUI();
 }
 
-async function triggerGDriveSync() {
+async function triggerGDriveSync({ silent = false } = {}) {
     const syncBtn = document.getElementById("settings-gdrive-sync-btn");
     const progressContainer = document.getElementById("settings-gdrive-progress-container");
     const progressBar = document.getElementById("settings-gdrive-progress-bar");
@@ -300,11 +324,18 @@ async function triggerGDriveSync() {
         if (window.showDesktopToast) window.showDesktopToast(`Synced ${folderLabel}`);
         if (progressText) progressText.textContent = "Sync complete!";
         if (progressBar) progressBar.style.width = "100%";
+        updateGDriveUI();
     } catch (err) {
         console.error("GDrive Sync error:", err);
+        if (/\b(401|403)\b/.test(String(err?.message || err))) {
+            await window.GDriveSync.invalidateSession("Google Drive rejected the saved session.");
+            window.GDriveSync.showReconnectPrompt("Google Drive needs you to sign in again.");
+        }
         if (progressText) progressText.textContent = "Sync failed.";
         if (progressBar) progressBar.style.width = "0%";
-        alert("Synchronization failed: " + err.message);
+        if (!silent && !/\b(401|403)\b/.test(String(err?.message || err))) {
+            alert("Synchronization failed: " + err.message);
+        }
     } finally {
         if (syncBtn) syncBtn.disabled = false;
         if (disconnectBtn) disconnectBtn.disabled = false;
@@ -313,6 +344,7 @@ async function triggerGDriveSync() {
         }, 3000);
     }
 }
+window.triggerGDriveSync = triggerGDriveSync;
 
 // Wallpaper Picker
 window.renderWallpaperOptions = () => {
@@ -965,6 +997,7 @@ if (window.EventBus) {
     window.EventBus.on("user:changed", () => renderSettingsUser());
     window.EventBus.on("volume:changed", (val) => updateVolumeUI(val));
     window.EventBus.on("state:changed:gdriveConnected", () => updateGDriveUI());
+    window.EventBus.on("gdrive:auth-changed", () => updateGDriveUI());
     window.EventBus.on("local-ai:status", () => updateLocalAiSettingsUI());
     window.EventBus.on("local-ai:model-changed", () => updateLocalAiSettingsUI());
     window.EventBus.on("local-ai:mirror-changed", () => updateLocalAiSettingsUI());

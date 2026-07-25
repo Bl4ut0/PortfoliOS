@@ -73,6 +73,10 @@ window.boot = async () => {
         await window.loadPreferencesFromFilesystem();
     }
 
+    if (window.GDriveSync?.restoreSession) {
+        await window.GDriveSync.restoreSession({ promptOnInvalid: true });
+    }
+
     if (window.applyCurrentUserProfile) {
         window.applyCurrentUserProfile();
     }
@@ -88,6 +92,12 @@ window.boot = async () => {
     if (window.renderTaskbar) window.renderTaskbar();
     if (window.applyDesktopPreferences) window.applyDesktopPreferences();
     if (window.initWindowManagement) window.initWindowManagement();
+
+    // Validate the restored token after the desktop has rendered so network
+    // latency never blocks startup. Invalid tokens trigger the reconnect prompt.
+    window.GDriveSync?.validateSession?.({ promptOnInvalid: true }).then((result) => {
+        if (result?.valid) window.triggerGDriveSync?.({ silent: true });
+    });
 
     // Programmatically open default windows from state
     if (state.openApps) {

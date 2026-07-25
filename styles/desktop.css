@@ -563,6 +563,142 @@
     color: var(--text);
 }
 
+.gdrive-reconnect-prompt {
+    position: fixed;
+    z-index: 1200;
+    inset: 50% auto auto 50%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1rem;
+    width: min(32rem, calc(100% - 2rem));
+    padding: 1.15rem;
+    color: var(--text-soft);
+    background: rgba(10, 14, 22, 0.97);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    border-radius: 14px;
+    box-shadow: 0 32px 100px rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(28px);
+    transform: translate(-50%, -50%);
+}
+
+.gdrive-reconnect-icon {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    color: var(--theme-primary);
+    background: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.24);
+    border-radius: 10px;
+    font-size: 1.4rem;
+}
+
+.gdrive-reconnect-copy > span {
+    color: var(--theme-primary);
+    font: 700 0.68rem var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.gdrive-reconnect-copy h2 {
+    margin: 0.25rem 0 0.45rem;
+    color: var(--text);
+    font: 700 1.2rem var(--heading);
+}
+
+.gdrive-reconnect-copy p,
+.gdrive-reconnect-copy small {
+    display: block;
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.gdrive-reconnect-copy p {
+    color: var(--text-soft);
+    font-size: 0.84rem;
+}
+
+.gdrive-reconnect-copy small {
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+}
+
+.gdrive-reconnect-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+}
+
+.gdrive-reconnect-actions button {
+    min-height: 2.4rem;
+    padding: 0.55rem 0.8rem;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.gdrive-reconnect-actions button.primary {
+    color: #061014;
+    background: var(--theme-primary);
+    border-color: transparent;
+}
+
+.gdrive-account {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0.75rem 0;
+    padding: 0.65rem;
+    background: rgba(34, 211, 238, 0.06);
+    border: 1px solid rgba(34, 211, 238, 0.18);
+    border-radius: 9px;
+}
+
+.gdrive-account[hidden] {
+    display: none;
+}
+
+.gdrive-account img {
+    width: 2.25rem;
+    height: 2.25rem;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.gdrive-account strong,
+.gdrive-account small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gdrive-account strong {
+    color: var(--text);
+    font-size: 0.82rem;
+}
+
+.gdrive-account small,
+.settings-sync-last {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.gdrive-account > i {
+    color: #34d399;
+}
+
+.settings-sync-last {
+    margin: -0.25rem 0 0.75rem;
+    font-family: var(--mono);
+}
+
 .start-footer {
     margin-top: 0.85rem;
     padding-top: 0.85rem;
