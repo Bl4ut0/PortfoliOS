@@ -624,6 +624,14 @@
     font-size: 0.72rem;
 }
 
+.gdrive-reconnect-copy .gdrive-reconnect-error {
+    color: #fb7185;
+}
+
+.gdrive-reconnect-error[hidden] {
+    display: none;
+}
+
 .gdrive-reconnect-actions {
     grid-column: 1 / -1;
     display: flex;

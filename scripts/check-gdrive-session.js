@@ -61,7 +61,8 @@ const windowObject = {
     readFilesystemRecordText: async (record) => String(record.data || ""),
     getSavedPrivateProfile: () => null,
     escapeHtml: (value) => String(value),
-    setTimeout
+    setTimeout,
+    clearTimeout
 };
 
 const sandbox = {
@@ -71,7 +72,8 @@ const sandbox = {
     Blob,
     URLSearchParams,
     fetch: async () => ({ ok: true, json: async () => ({}) }),
-    setTimeout
+    setTimeout,
+    clearTimeout
 };
 windowObject.window = windowObject;
 windowObject.document = documentMock;
@@ -113,7 +115,49 @@ vm.runInNewContext(
     assert.strictEqual(invalid.status, "invalid");
     assert.strictEqual(windowObject.state.gdriveConnected, false);
 
-    console.log("Google Drive session audit passed: SystemFS persistence, restore, token isolation, and reconnect state checked.");
+    windowObject.google = {
+        accounts: {
+            oauth2: {
+                initTokenClient: (config) => ({
+                    requestAccessToken: () => config.error_callback({ type: "popup_closed" })
+                })
+            }
+        }
+    };
+    await assert.rejects(
+        sync.login("test-client-id", { timeoutMs: 100 }),
+        /closed before it finished/,
+        "closing the Google popup must release the connecting state"
+    );
+
+    windowObject.google.accounts.oauth2.initTokenClient = () => ({
+        requestAccessToken: () => {}
+    });
+    await assert.rejects(
+        sync.login("test-client-id", { timeoutMs: 10 }),
+        /timed out/,
+        "a missing Google callback must not leave login pending forever"
+    );
+
+    const persistAuthRecord = sync.persistAuthRecord;
+    sync.persistAuthRecord = async () => {
+        throw new Error("SystemFS session save failed.");
+    };
+    windowObject.google.accounts.oauth2.initTokenClient = (config) => ({
+        requestAccessToken: () => config.callback({
+            access_token: "new-access-token",
+            expires_in: 3600
+        })
+    });
+    await assert.rejects(
+        sync.login("test-client-id", { timeoutMs: 100 }),
+        /SystemFS session save failed/,
+        "async callback failures must reject the outer login promise"
+    );
+    assert.strictEqual(windowObject.state.gdriveConnected, false, "a session that could not be saved must not appear connected");
+    sync.persistAuthRecord = persistAuthRecord;
+
+    console.log("Google Drive session audit passed: persistence, restore, reconnect state, popup errors, callback failures, and timeouts checked.");
 })().catch((error) => {
     console.error(error);
     process.exitCode = 1;

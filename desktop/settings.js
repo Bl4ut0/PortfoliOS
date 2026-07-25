@@ -237,6 +237,10 @@ function initGDriveSettings() {
     const connectBtn = document.getElementById("settings-gdrive-connect-btn");
     const disconnectBtn = document.getElementById("settings-gdrive-disconnect-btn");
     const syncBtn = document.getElementById("settings-gdrive-sync-btn");
+
+    window.GDriveSync?.loadGsiLibrary().catch((error) => {
+        console.warn("PortfoliOS: Google sign-in could not be prepared.", error);
+    });
     
     if (connectBtn) {
         connectBtn.addEventListener("click", async () => {
@@ -261,7 +265,7 @@ function initGDriveSettings() {
                 await triggerGDriveSync();
             } catch (err) {
                 console.error("GDrive Connection error:", err);
-                alert("Connection failed. Please check your credentials.");
+                alert(err?.message || "Connection failed. Please check your credentials.");
             } finally {
                 connectBtn.disabled = false;
                 connectBtn.innerHTML = '<i class="fa-brands fa-google-drive"></i> Sign in with Google Drive';

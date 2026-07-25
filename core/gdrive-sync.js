@@ -14,6 +14,7 @@ window.GDriveSync = {
     rootFolderName: "PortfoliOS",
     scopes: "openid email profile https://www.googleapis.com/auth/drive.file",
     authFileName: "google-drive.json",
+    gsiLoadPromise: null,
 
     getAuthRecordPath(userId = this.getCurrentSyncScope().userId) {
         return `/home/${userId}/.auth/${this.authFileName}`;
@@ -230,6 +231,7 @@ window.GDriveSync = {
                 <h2 id="gdrive-reconnect-title">Sign in again to keep progress synced</h2>
                 <p>${window.escapeHtml ? window.escapeHtml(reason) : reason}</p>
                 <small>Reconnect ${window.escapeHtml ? window.escapeHtml(account) : account} to resume syncing your SystemFS files and saved progress.</small>
+                <small class="gdrive-reconnect-error" data-gdrive-reconnect-error hidden></small>
             </div>
             <div class="gdrive-reconnect-actions">
                 <button type="button" data-gdrive-reconnect-later>Not now</button>
@@ -245,6 +247,8 @@ window.GDriveSync = {
             }
             const reconnect = event.target.closest("[data-gdrive-reconnect-now]");
             if (!reconnect) return;
+            const errorMessage = prompt.querySelector("[data-gdrive-reconnect-error]");
+            errorMessage.hidden = true;
             reconnect.disabled = true;
             reconnect.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
             try {
@@ -257,10 +261,19 @@ window.GDriveSync = {
             } catch (error) {
                 reconnect.disabled = false;
                 reconnect.innerHTML = '<i class="fa-brands fa-google"></i> Sign in again';
-                window.showDesktopToast?.("Google Drive sign-in was not completed.");
+                const message = error?.message || "Google Drive sign-in was not completed.";
+                errorMessage.textContent = message;
+                errorMessage.hidden = false;
+                window.showDesktopToast?.(message);
             }
         });
         document.body.appendChild(prompt);
+        this.loadGsiLibrary().catch((error) => {
+            const errorMessage = prompt.querySelector("[data-gdrive-reconnect-error]");
+            if (!errorMessage) return;
+            errorMessage.textContent = error?.message || "Google sign-in could not be prepared.";
+            errorMessage.hidden = false;
+        });
     },
 
     getOAuthStatus() {
@@ -485,51 +498,104 @@ window.GDriveSync = {
     },
     
     loadGsiLibrary() {
-        if (window.google) return Promise.resolve();
-        return new Promise((resolve, reject) => {
+        if (window.google?.accounts?.oauth2?.initTokenClient) return Promise.resolve();
+        if (this.gsiLoadPromise) return this.gsiLoadPromise;
+        this.gsiLoadPromise = new Promise((resolve, reject) => {
+            const existing = document.getElementById("google-gsi-client");
+            if (existing) {
+                existing.addEventListener("load", () => resolve(), { once: true });
+                existing.addEventListener("error", () => reject(new Error("Failed to load Google Identity Services library.")), { once: true });
+                return;
+            }
             const script = document.createElement("script");
             script.id = "google-gsi-client";
             script.src = "https://accounts.google.com/gsi/client";
             script.onload = () => resolve();
-            script.onerror = () => reject(new Error("Failed to load Google Identity Services library"));
+            script.onerror = () => reject(new Error("Failed to load Google Identity Services library."));
             document.head.appendChild(script);
+        }).catch((error) => {
+            this.gsiLoadPromise = null;
+            throw error;
         });
+        return this.gsiLoadPromise;
+    },
+
+    getLoginError(error) {
+        const type = error?.type || error?.error;
+        if (type === "popup_failed_to_open") {
+            return new Error("Google sign-in was blocked. Allow popups for this site, then try again.");
+        }
+        if (type === "popup_closed") {
+            return new Error("Google sign-in was closed before it finished. Please try again.");
+        }
+        const detail = error?.error_description || error?.message;
+        return new Error(detail || "Google sign-in could not be completed. Please try again.");
     },
     
-    login(clientId) {
+    login(clientId, { timeoutMs = 60_000 } = {}) {
         return new Promise((resolve, reject) => {
             if (!clientId) return reject(new Error("Google Client ID is required."));
-            const client = window.google.accounts.oauth2.initTokenClient({
-                client_id: clientId,
-                scope: this.scopes,
-                include_granted_scopes: true,
-                callback: async (response) => {
-                    if (response.error) {
-                        reject(response);
-                    } else {
-                        this.token = response.access_token;
-                        this.tokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) * 1000);
-                        if (window.Storage) {
-                            window.Storage.local.set("bl4ut0_gdrive_token", this.token);
-                            window.Storage.local.set("bl4ut0_gdrive_token_expiry", String(this.tokenExpiresAt));
-                            window.Storage.local.set("bl4ut0_gdrive_client_id", clientId);
-                        }
-                        if (window.state) {
-                            window.state.gdriveConnected = true;
+            if (!window.google?.accounts?.oauth2?.initTokenClient) {
+                return reject(new Error("Google sign-in is not ready. Check your connection and try again."));
+            }
+
+            let settled = false;
+            let timeoutId = null;
+            const finish = (handler, value) => {
+                if (settled) return;
+                settled = true;
+                if (timeoutId !== null) window.clearTimeout(timeoutId);
+                handler(value);
+            };
+            const fail = (error) => finish(reject, this.getLoginError(error));
+
+            try {
+                const client = window.google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: this.scopes,
+                    include_granted_scopes: true,
+                    callback: async (response) => {
+                        if (settled) return;
+                        if (response?.error) {
+                            fail(response);
+                            return;
                         }
                         try {
-                            await this.fetchGoogleProfile();
+                            this.token = response.access_token;
+                            this.tokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) * 1000);
+                            if (window.Storage) {
+                                window.Storage.local.set("bl4ut0_gdrive_token", this.token);
+                                window.Storage.local.set("bl4ut0_gdrive_token_expiry", String(this.tokenExpiresAt));
+                                window.Storage.local.set("bl4ut0_gdrive_client_id", clientId);
+                            }
+                            if (window.state) {
+                                window.state.gdriveConnected = true;
+                            }
+                            try {
+                                await this.fetchGoogleProfile();
+                            } catch (error) {
+                                console.warn("PortfoliOS: Google profile lookup failed after login.", error);
+                            }
+                            await this.persistAuthRecord();
+                            this.closeReconnectPrompt();
+                            this.emitAuthChanged("connected");
+                            finish(resolve, this.token);
                         } catch (error) {
-                            console.warn("PortfoliOS: Google profile lookup failed after login.", error);
+                            const profile = this.googleProfile;
+                            this.clearBrowserSession();
+                            this.googleProfile = profile;
+                            fail(new Error(`Google signed in, but the session could not be saved: ${error?.message || error}`));
                         }
-                        await this.persistAuthRecord();
-                        this.closeReconnectPrompt();
-                        this.emitAuthChanged("connected");
-                        resolve(this.token);
-                    }
-                }
-            });
-            client.requestAccessToken({ prompt: "consent" });
+                    },
+                    error_callback: (error) => fail(error)
+                });
+                timeoutId = window.setTimeout(() => {
+                    fail(new Error("Google sign-in timed out. Close any open sign-in window and try again."));
+                }, Math.max(1, Number(timeoutMs) || 60_000));
+                client.requestAccessToken({ prompt: "consent" });
+            } catch (error) {
+                fail(error);
+            }
         });
     },
     
