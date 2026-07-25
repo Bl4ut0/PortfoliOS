@@ -51,7 +51,7 @@ window.renderBrowserPage = (id) => {
 
     browserPage.innerHTML = canEmbed ? `
         <iframe class="browser-frame" ${isBrowserOpen ? `src="${bookmark.url}"` : `data-src="${bookmark.url}"`} title="${bookmark.label} embedded preview"
-            loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+            loading="lazy" sandbox="allow-scripts allow-forms allow-popups"></iframe>
     ` : `
         <div class="browser-fallback is-primary">
             <div class="browser-page-header">

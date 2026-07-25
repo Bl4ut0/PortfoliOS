@@ -352,21 +352,19 @@
         if (!selected.length) return;
         setNotice(`Importing ${selected.length} file${selected.length === 1 ? "" : "s"}…`);
         let imported = 0;
+        let quarantined = 0;
         for (const file of selected) {
             const path = await uniquePath(currentPath, file.name);
-            await window.SystemFS.writeFile(
-                path,
-                window.SystemFS.getName(path),
-                currentPath,
-                file,
-                file.size,
-                file.type || "application/octet-stream",
-                false,
-                { lastModified: file.lastModified || Date.now() }
-            );
-            imported++;
+            if (!window.SecurityKernel?.importFile) throw new Error("Security Center is unavailable; import was blocked.");
+            const outcome = await window.SecurityKernel.importFile({
+                path, name: window.SystemFS.getName(path), parent: currentPath, data: file, size: file.size,
+                type: file.type || "application/octet-stream", source: "mobile-file-import",
+                options: { lastModified: file.lastModified || Date.now() }
+            });
+            if (outcome.status === "accepted") imported++;
+            else quarantined++;
         }
-        setNotice(`${imported} file${imported === 1 ? "" : "s"} imported.`);
+        setNotice(`${imported} file${imported === 1 ? "" : "s"} imported.${quarantined ? ` ${quarantined} moved to Security Center.` : ""}`);
         await refresh();
     }
 

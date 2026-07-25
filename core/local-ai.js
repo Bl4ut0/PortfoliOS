@@ -1282,7 +1282,9 @@
             run: async (args) => {
                 if (window.SystemFS) {
                     try {
-                        const items = await window.SystemFS.readDir(args.path || "/");
+                        if (!window.SecurityKernel?.assertAgentAccess) throw new Error("Security Center is unavailable; agent file access is blocked.");
+                        const safePath = window.SecurityKernel.assertAgentAccess(args.path || "/", "list");
+                        const items = await window.SystemFS.readDir(safePath);
                         const list = items.map(item => `${item.isDirectory || item.type === "directory" ? "[DIR] " : ""}${item.name} (${item.size || 0} bytes)`).join("\n");
                         return list || "(directory is empty)";
                     } catch (e) {
@@ -1297,7 +1299,9 @@
             run: async (args) => {
                 if (window.SystemFS) {
                     try {
-                        const record = await window.SystemFS.readFile(args.path);
+                        if (!window.SecurityKernel?.assertAgentAccess) throw new Error("Security Center is unavailable; agent file access is blocked.");
+                        const safePath = window.SecurityKernel.assertAgentAccess(args.path, "read");
+                        const record = await window.SystemFS.readFile(safePath);
                         if (!record) return `File not found: ${args.path}`;
                         if (record.type === "directory" || record.isDirectory) return `${args.path} is a directory.`;
                         
@@ -1316,11 +1320,17 @@
             run: async (args) => {
                 if (window.SystemFS) {
                     try {
-                        const pathParts = args.path.split("/");
+                        if (!window.SecurityKernel?.assertAgentAccess || !window.SecurityKernel?.importFile) throw new Error("Security Center is unavailable; agent file access is blocked.");
+                        const safePath = window.SecurityKernel.assertAgentAccess(args.path, "write");
+                        const pathParts = safePath.split("/");
                         const name = pathParts.pop();
                         const parent = pathParts.join("/") || "/";
-                        await window.SystemFS.writeFile(args.path, name, parent, args.content || "", (args.content || "").length, "text/plain", false);
-                        return `Successfully wrote file: ${args.path}`;
+                        const outcome = await window.SecurityKernel.importFile({
+                            path: safePath, name, parent, data: args.content || "", size: (args.content || "").length,
+                            type: "text/plain", source: "local-ai"
+                        });
+                        if (!outcome || outcome.status !== "accepted") return "The requested file was quarantined by Security Center.";
+                        return `Successfully wrote file: ${safePath}`;
                     } catch (e) {
                         return `Error writing file: ${e.message}`;
                     }

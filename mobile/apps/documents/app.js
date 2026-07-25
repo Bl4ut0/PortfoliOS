@@ -492,20 +492,19 @@
             const kind = window.MobileFileIntents?.classify?.(previewRecord) || "unknown";
             if (!["text", "markdown", "html", "pdf"].includes(kind)) continue;
             const path = await uniqueImportPath(file.name);
-            lastRecord = await window.SystemFS.writeFile(
-                path,
-                window.SystemFS.getName(path),
-                DOCUMENT_ROOT,
-                file,
-                file.size,
-                file.type || mimeForKind(kind),
-                false,
-                { lastModified: file.lastModified || Date.now(), metadata: { kind: kind === "pdf" ? "pdf" : "document", editor: kind } }
-            );
-            imported++;
+            if (!window.SecurityKernel?.importFile) throw new Error("Security Center is unavailable; import was blocked.");
+            const outcome = await window.SecurityKernel.importFile({
+                path, name: window.SystemFS.getName(path), parent: DOCUMENT_ROOT, data: file, size: file.size,
+                type: file.type || mimeForKind(kind), source: "mobile-document-import",
+                options: { lastModified: file.lastModified || Date.now(), metadata: { kind: kind === "pdf" ? "pdf" : "document", editor: kind } }
+            });
+            if (outcome.status === "accepted") {
+                lastRecord = outcome.record;
+                imported++;
+            }
         }
         if (!imported) {
-            setNotice("Choose a text, Markdown, HTML, or PDF file.", true);
+            setNotice("No document was accepted. Review Security Center for quarantined files.", true);
             return;
         }
         setNotice(`${imported} document${imported === 1 ? "" : "s"} imported.`);

@@ -69,6 +69,12 @@ window.boot = async () => {
         }
     }
 
+    try {
+        await window.SecurityKernel?.init?.();
+    } catch (err) {
+        console.error("SecurityKernel init error:", err);
+    }
+
     if (window.loadPreferencesFromFilesystem) {
         await window.loadPreferencesFromFilesystem();
     }

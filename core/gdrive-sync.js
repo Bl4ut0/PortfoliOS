@@ -37,13 +37,14 @@ window.GDriveSync = {
     },
 
     async persistAuthRecord() {
-        if (!window.SystemFS || !this.token) return;
+        if (!window.SystemFS) return;
         const scope = this.getCurrentSyncScope();
         const authDir = `/home/${scope.userId}/.auth`;
         const record = {
             provider: "google-drive",
-            accessToken: this.token,
-            expiresAt: this.tokenExpiresAt,
+            requiresReconnect: true,
+            sessionMode: "memory-only",
+            reason: "Cloud Sync uses a memory-only access token. Sign in again to resume syncing.",
             clientId: (window.Storage?.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId),
             profile: this.googleProfile || this.getSavedGoogleProfile(),
             scopeId: scope.id,
@@ -128,57 +129,28 @@ window.GDriveSync = {
             console.warn("PortfoliOS: SystemFS cloud session lookup failed.", error);
         }
 
-        // Migrate the previous browser-only session into the user's SystemFS.
-        if (!record && window.Storage) {
-            const legacyToken = window.Storage.local.get("bl4ut0_gdrive_token");
-            const legacyExpiry = Number(window.Storage.local.get("bl4ut0_gdrive_token_expiry") || 0);
-            if (legacyToken) {
-                record = {
-                    accessToken: legacyToken,
-                    expiresAt: legacyExpiry,
-                    clientId: window.Storage.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId,
-                    profile: this.getSavedGoogleProfile(),
-                    migrated: true
-                };
-            }
+        // Remove the previous browser-persistent token. A raw bearer token must
+        // never survive the browser session in localStorage or SystemFS.
+        const legacyToken = window.Storage?.local.get("bl4ut0_gdrive_token");
+        this.clearBrowserSession();
+        if (legacyToken) {
+            this.googleProfile = record?.profile || this.getSavedGoogleProfile();
+            await this.persistReconnectRecord("For your protection, Cloud Sync now uses a memory-only session. Sign in again to continue.");
+            record = await this.readAuthRecord();
         }
 
-        if (record?.requiresReconnect) {
+        if (record?.requiresReconnect || record?.sessionMode === "memory-only") {
             this.googleProfile = record.profile || this.getSavedGoogleProfile();
-            this.clearBrowserSession();
             this.emitAuthChanged("invalid", { reason: record.reason });
             if (promptOnInvalid) this.showReconnectPrompt(record.reason || "Google Drive needs you to sign in again.");
             return { status: "invalid" };
         }
 
-        if (!record?.accessToken) {
-            this.clearBrowserSession();
-            this.emitAuthChanged("disconnected");
-            return { status: "disconnected" };
-        }
-
-        const expiresAt = Number(record.expiresAt || 0);
-        if (!expiresAt || Date.now() >= expiresAt) {
-            this.googleProfile = record.profile || this.getSavedGoogleProfile();
-            this.clearBrowserSession();
-            await this.persistReconnectRecord("Your Google Drive session expired.");
-            this.emitAuthChanged("expired", { reason: "Your Google Drive session expired." });
-            if (promptOnInvalid) this.showReconnectPrompt("Your Google Drive session expired.");
-            return { status: "expired" };
-        }
-
-        this.token = record.accessToken;
-        this.tokenExpiresAt = expiresAt;
-        this.googleProfile = record.profile || this.getSavedGoogleProfile();
-        if (record.clientId && window.Storage) {
+        if (record?.clientId && window.Storage) {
             window.Storage.local.set("bl4ut0_gdrive_client_id", record.clientId);
-            window.Storage.local.set("bl4ut0_gdrive_token", this.token);
-            window.Storage.local.set("bl4ut0_gdrive_token_expiry", String(expiresAt));
         }
-        if (window.state) window.state.gdriveConnected = true;
-        if (record.migrated) await this.persistAuthRecord();
-        this.emitAuthChanged("restored");
-        return { status: "restored", profile: this.googleProfile };
+        this.emitAuthChanged("disconnected");
+        return { status: "disconnected" };
     },
 
     async validateSession({ promptOnInvalid = true } = {}) {
@@ -563,11 +535,7 @@ window.GDriveSync = {
                         try {
                             this.token = response.access_token;
                             this.tokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) * 1000);
-                            if (window.Storage) {
-                                window.Storage.local.set("bl4ut0_gdrive_token", this.token);
-                                window.Storage.local.set("bl4ut0_gdrive_token_expiry", String(this.tokenExpiresAt));
-                                window.Storage.local.set("bl4ut0_gdrive_client_id", clientId);
-                            }
+                            if (window.Storage) window.Storage.local.set("bl4ut0_gdrive_client_id", clientId);
                             if (window.state) {
                                 window.state.gdriveConnected = true;
                             }
@@ -604,17 +572,6 @@ window.GDriveSync = {
             if (window.state) window.state.gdriveConnected = true;
             return this.token;
         }
-        if (!window.Storage) return null;
-        const token = window.Storage.local.get("bl4ut0_gdrive_token");
-        const expiry = Number(window.Storage.local.get("bl4ut0_gdrive_token_expiry") || 0);
-        if (token && expiry && Date.now() < expiry) {
-            this.token = token;
-            this.tokenExpiresAt = expiry;
-            if (window.state) {
-                window.state.gdriveConnected = true;
-            }
-            return token;
-        }
         if (window.state) {
             window.state.gdriveConnected = false;
         }
@@ -623,6 +580,7 @@ window.GDriveSync = {
     
     async logout() {
         const authPath = this.getAuthRecordPath();
+        const token = this.token;
         this.clearBrowserSession();
         this.googleProfile = null;
         if (window.Storage) {
@@ -630,6 +588,9 @@ window.GDriveSync = {
         }
         try {
             if (window.SystemFS) await window.SystemFS.deleteFile(authPath, { silent: true });
+        } catch (error) {}
+        try {
+            window.google?.accounts?.oauth2?.revoke?.(token, () => {});
         } catch (error) {}
         this.clearScopedSyncState();
         this.closeReconnectPrompt();
@@ -656,8 +617,9 @@ window.GDriveSync = {
         const result = await response.json();
         return (result.files || []).filter(f => f.appProperties && f.appProperties.path).map(f => {
             let path = f.appProperties.path;
-            if (!path.startsWith("/")) path = "/" + path;
-            if (path.endsWith("/") && path !== "/") path = path.slice(0, -1);
+            path = window.SystemFS?.normalizePath
+                ? window.SystemFS.normalizePath(path)
+                : (path.startsWith("/") ? path : "/" + path);
             f.appProperties.path = path;
             return f;
         });
@@ -802,6 +764,9 @@ window.GDriveSync = {
     },
     
     async sync(onProgress) {
+        if (!window.SecurityKernel?.importFile || !window.SecurityKernel?.scanExisting) {
+            throw new Error("Security Center is unavailable; Cloud Sync is blocked to protect your files.");
+        }
         const scope = this.getCurrentSyncScope();
         const remoteFiles = await this.fetchRemoteFiles();
         const localFiles = await window.SystemFS.getAllFiles();
@@ -856,7 +821,12 @@ window.GDriveSync = {
                         if (local.isDirectory) {
                             await this.createRemoteFolder(path, local.name);
                         } else {
-                            await this.uploadFile(path, local.name, local.type, local.data);
+                            const checked = await window.SecurityKernel.scanExisting(local, "cloud-upload");
+                            if (checked.status !== "accepted") {
+                                console.warn(`PortfoliOS: Cloud upload quarantined ${path}.`);
+                            } else {
+                                await this.uploadFile(path, checked.record.name, checked.record.type, checked.record.data);
+                            }
                         }
                     } else {
                         if (local.isDirectory) {
@@ -871,7 +841,10 @@ window.GDriveSync = {
                             await window.SystemFS.writeFile(path, remote.name, getParentPath(path), null, 0, "directory", true);
                         } else {
                             const fileBlob = await this.downloadFile(remote.id);
-                            await window.SystemFS.writeFile(path, remote.name, getParentPath(path), fileBlob, fileBlob.size, remote.mimeType, false);
+                            await window.SecurityKernel.importFile({
+                                path, name: remote.name, parent: getParentPath(path), data: fileBlob,
+                                size: fileBlob.size, type: remote.mimeType, source: "cloud-download"
+                            });
                         }
                     } else {
                         await this.deleteFile(remote.id);
@@ -882,10 +855,16 @@ window.GDriveSync = {
                         const remoteTime = new Date(remote.modifiedTime).getTime();
 
                         if (localTime > remoteTime + 2000) {
-                            await this.updateFile(remote.id, local.type, local.data);
+                            const checked = await window.SecurityKernel.scanExisting(local, "cloud-upload");
+                            if (checked.status === "accepted") {
+                                await this.updateFile(remote.id, checked.record.type, checked.record.data);
+                            }
                         } else if (remoteTime > localTime + 2000) {
                             const fileBlob = await this.downloadFile(remote.id);
-                            await window.SystemFS.writeFile(path, remote.name, getParentPath(path), fileBlob, fileBlob.size, remote.mimeType, false);
+                            await window.SecurityKernel.importFile({
+                                path, name: remote.name, parent: getParentPath(path), data: fileBlob,
+                                size: fileBlob.size, type: remote.mimeType, source: "cloud-download"
+                            });
                         }
                     }
                 }

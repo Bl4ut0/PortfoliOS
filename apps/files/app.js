@@ -446,15 +446,20 @@
             const files = dt.files;
             if (!files.length) return;
 
+            let accepted = 0;
+            let quarantined = 0;
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const cleanName = sanitizeName(file.name);
                 if (!cleanName) continue;
                 const path = childPath(cleanName);
-                await window.SystemFS.writeFile(path, cleanName, currentPath, file, file.size, file.type, false);
+                if (!window.SecurityKernel?.importFile) throw new Error("Security Center is unavailable; import was blocked.");
+                const outcome = await window.SecurityKernel.importFile({ path, name: cleanName, parent: currentPath, data: file, size: file.size, type: file.type, source: "desktop-file-drop" });
+                if (outcome.status === "accepted") accepted++;
+                else quarantined++;
             }
             renderFilesGrid(windowEl);
-            window.showDesktopToast?.(`Saved ${files.length} file(s) locally in ${currentPath}.`);
+            window.showDesktopToast?.(`${accepted} file(s) saved; ${quarantined} moved to Security Center.`);
         });
     }
 
@@ -490,6 +495,9 @@
                             <span><i class="fa-solid fa-hard-drive"></i> Saved locally</span>
                             <button type="button" data-open-settings-panel="cloud-sync" title="Open Cloud Sync settings">
                                 <i class="fa-solid fa-cloud-arrow-up"></i> Cloud settings
+                            </button>
+                            <button type="button" data-open-app="security-center" title="Open Security Center">
+                                <i class="fa-solid fa-shield-halved"></i> Security Center
                             </button>
                         </div>
                     </aside>
@@ -582,15 +590,20 @@
                 fileInput.addEventListener("change", async () => {
                     const files = fileInput.files;
                     if (!files.length) return;
+                    let accepted = 0;
+                    let quarantined = 0;
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
                         const cleanName = sanitizeName(file.name);
                         if (!cleanName) continue;
                         const path = childPath(cleanName);
-                        await window.SystemFS.writeFile(path, cleanName, currentPath, file, file.size, file.type, false);
+                        if (!window.SecurityKernel?.importFile) throw new Error("Security Center is unavailable; import was blocked.");
+                        const outcome = await window.SecurityKernel.importFile({ path, name: cleanName, parent: currentPath, data: file, size: file.size, type: file.type, source: "desktop-file-upload" });
+                        if (outcome.status === "accepted") accepted++;
+                        else quarantined++;
                     }
                     renderFilesGrid(windowEl);
-                    window.showDesktopToast?.(`Saved ${files.length} file(s) locally.`);
+                    window.showDesktopToast?.(`${accepted} file(s) saved; ${quarantined} moved to Security Center.`);
                     fileInput.value = "";
                 });
             }

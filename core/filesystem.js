@@ -11,7 +11,15 @@ window.SystemFS = {
 
     normalizePath(path = "/") {
         if (typeof path !== "string" || path.trim() === "") return "/";
-        const parts = path.replace(/\\/g, "/").split("/").filter(Boolean);
+        const parts = [];
+        path.replace(/\\/g, "/").split("/").forEach((part) => {
+            if (!part || part === ".") return;
+            if (part === "..") {
+                parts.pop();
+                return;
+            }
+            parts.push(part);
+        });
         return parts.length ? `/${parts.join("/")}` : "/";
     },
 

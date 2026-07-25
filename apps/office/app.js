@@ -41,14 +41,14 @@
     function getSaveSpec() {
         return officeState.activeView === "calc"
             ? { extension: ".ods", defaultName: "Untitled.ods", mimeType: "application/json" }
-            : { extension: ".odt", defaultName: "Untitled.odt", mimeType: "text/html" };
+            : { extension: ".txt", defaultName: "Untitled.txt", mimeType: "text/plain" };
     }
 
     function getActiveFileData(windowEl) {
         const spec = getSaveSpec();
         if (officeState.activeView === "writer") {
             return {
-                data: windowEl.querySelector(".writer-page")?.innerHTML || "",
+                data: windowEl.querySelector(".writer-page")?.textContent || "",
                 mimeType: spec.mimeType
             };
         }
@@ -443,12 +443,9 @@
 
             const page = windowEl.querySelector(".writer-page");
             if (page) {
-                // If it is stored as plain HTML, load directly. Otherwise convert text newlines to paragraphs
-                if (text.trim().startsWith("<p") || text.trim().startsWith("<div") || text.trim().includes("</p>")) {
-                    page.innerHTML = text;
-                } else {
-                    page.innerHTML = text.split("\n").map(p => p.trim() ? `<p>${p}</p>` : "<p><br></p>").join("");
-                }
+                // Imported and synced documents are always treated as text. This
+                // prevents document markup from executing in the OS origin.
+                page.textContent = text;
             }
 
             updateActiveView(windowEl, "writer");

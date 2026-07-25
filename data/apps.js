@@ -5,7 +5,7 @@
 
 window.standardInstalledAppIds = [
     "devhub", "profile", "dossier", "browser", "network", "linux", "cli",
-    "settings", "store", "files", "addons", "guildcraft", "homelab",
+    "settings", "store", "files", "security-center", "addons", "guildcraft", "homelab",
     "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office"
 ];
 
@@ -15,7 +15,7 @@ window.desktopPinnedIds = [
 ];
 
 window.startMenuPinnedIds = [
-    "store", "settings", "files", "office", "browser",
+    "store", "settings", "files", "security-center", "office", "browser",
     "cli", "local-ai", "musicmini", "profile", "dossier",
     "network", "taskmgr", "linux", "devhub"
 ];
@@ -34,7 +34,7 @@ window.startMenuGroups = [
     {
         id: "system",
         label: "System",
-        ids: ["store", "files", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
+        ids: ["store", "files", "security-center", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
     },
     {
         id: "portfolio",
@@ -76,6 +76,7 @@ window.desktopApps = [
     { id: "local-ai", title: "Local AI", icon: "fa-solid fa-brain", category: "development", pinned: false, modular: true, meta: "AI runtime control" },
     { id: "store", title: "Store", icon: "fa-solid fa-shop", category: "system", pinned: true, modular: true, meta: "Application catalog" },
     { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", category: "system", pinned: true, modular: true, meta: "File manager" },
+    { id: "security-center", title: "Security Center", icon: "fa-solid fa-shield-halved", category: "system", pinned: true, modular: true, meta: "Local file protection" },
     { id: "office", title: "LibreOffice WASM", icon: "fa-solid fa-file-signature", category: "productivity", pinned: true, modular: true, meta: "Document workspace" },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", category: "system", pinned: false, modular: true, meta: "System monitor" },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", category: "media", pinned: false, modular: true, meta: "Classic media player" },

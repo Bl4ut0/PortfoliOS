@@ -5,7 +5,7 @@
 
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-v1.2.2";
+const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-v1.2.3";
 const MOBILE_SHELL_ASSETS = [
     "/",
     "/index.html",
@@ -31,6 +31,7 @@ const MOBILE_SHELL_ASSETS = [
     "/core/state.js",
     "/core/utils.js",
     "/core/filesystem.js",
+    "/core/security-service.js",
     "/core/file-intents.js",
     "/core/media-service.js",
     "/apps/musicmini/vendor/jsmediatags.min.js",

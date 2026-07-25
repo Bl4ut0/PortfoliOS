@@ -6,6 +6,7 @@ const path = require("path");
 const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
+const syncSource = fs.readFileSync(path.join(root, "core", "gdrive-sync.js"), "utf8");
 const records = new Map();
 const storage = new Map();
 const listeners = new Map();
@@ -85,7 +86,11 @@ vm.runInNewContext(
 );
 
 (async () => {
+    assert.strictEqual(syncSource.includes("accessToken: this.token"), false, "Cloud Sync must not serialize the raw access token into SystemFS");
+    assert.strictEqual(syncSource.includes('local.set("bl4ut0_gdrive_token"'), false, "Cloud Sync must not persist the raw token in browser storage");
     const sync = windowObject.GDriveSync;
+    const freshInstall = await sync.restoreSession({ promptOnInvalid: false });
+    assert.strictEqual(freshInstall.status, "disconnected", "a fresh browser without a saved account must remain disconnected");
     sync.token = "test-access-token";
     sync.tokenExpiresAt = Date.now() + 60_000;
     sync.googleProfile = { name: "Test User", email: "test@example.com" };
@@ -95,15 +100,17 @@ vm.runInNewContext(
     const saved = records.get(authPath);
     assert(saved, "auth record should be written to the current user's SystemFS home");
     assert.strictEqual(saved.metadata.sync, false, "auth records must never be uploaded to Drive");
-    assert.match(saved.data, /test-access-token/, "auth record should contain the restorable access token");
+    const savedAuth = JSON.parse(saved.data);
+    assert.strictEqual(savedAuth.accessToken, undefined, "SystemFS auth records must never retain a bearer token");
+    assert.strictEqual(savedAuth.sessionMode, "memory-only", "Cloud Sync must declare its local-only memory session policy");
 
     sync.clearBrowserSession();
     storage.delete("bl4ut0_gdrive_token");
     storage.delete("bl4ut0_gdrive_token_expiry");
     const restored = await sync.restoreSession({ promptOnInvalid: false });
-    assert.strictEqual(restored.status, "restored");
-    assert.strictEqual(sync.getToken(), "test-access-token");
-    assert.strictEqual(windowObject.state.gdriveConnected, true);
+    assert.strictEqual(restored.status, "invalid");
+    assert.strictEqual(sync.getToken(), null);
+    assert.strictEqual(windowObject.state.gdriveConnected, false);
 
     await sync.invalidateSession("Session rejected.");
     const invalidRecord = JSON.parse(records.get(authPath).data);
@@ -157,7 +164,7 @@ vm.runInNewContext(
     assert.strictEqual(windowObject.state.gdriveConnected, false, "a session that could not be saved must not appear connected");
     sync.persistAuthRecord = persistAuthRecord;
 
-    console.log("Google Drive session audit passed: persistence, restore, reconnect state, popup errors, callback failures, and timeouts checked.");
+    console.log("Google Drive session audit passed: memory-only session policy, reconnect state, popup errors, callback failures, and timeouts checked.");
 })().catch((error) => {
     console.error(error);
     process.exitCode = 1;

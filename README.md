@@ -6,7 +6,7 @@ The shell runs independently in each visitor's browser. Server-side pieces can b
 
 ## Directory Structure
 
-* **[core/](core/)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, Google Drive sync, preferences loader, and app-loader).
+* **[core/](core/)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, SecurityKernel, Google Drive sync, preferences loader, and app-loader).
 * **[data/](data/)**: Shared static dataset arrays (portfolio project nodes, catalogs, settings, bookmarks).
 * **[desktop/](desktop/)**: Desktop UI components and shell boot orchestration (start launcher, taskbar window mapping, snapping desktop icons, context menus, and custom WAD inspector).
 * **[mobile/](mobile/)**: Independent mobile OS framework, lazy loader, lifecycle, app registry, and mobile-only app modules. It shares neutral data/services with Desktop but not the desktop app catalog or window framework.
@@ -76,10 +76,28 @@ To allow visitors to connect their Google Drive and backup their filesystem:
 1. **Google Cloud Console**: Go to the [Google Cloud Console](https://console.cloud.google.com/).
 2. **OAuth Client ID**: Create an OAuth 2.0 Web Application Client ID.
 3. **Authorized Origins**: Under **Authorized JavaScript origins**, you **must** add:
-   * Local address for testing: `http://localhost:8080` (or your local port).
+   * Local address for testing: `http://localhost:8005` (or your local port).
    * Your production domain: `https://os.yourdomain.com`.
+   * Do not add an authorized redirect URI for the current Google Identity Services popup-token flow.
 4. **Client ID Input**: Configure this Client ID only in the **Cloud Sync** panel of the Settings app. Individual apps always save to local `SystemFS` and do not own cloud authentication or synchronization.
 5. **Security Scopes**: The sync engine requires the `drive.file` scope. This is a secure scope that restricts the app's access to only read/write files that *this specific application* created.
+
+## Local Security Center
+
+PortfoliOS includes a default-installed **Security Center** app. It is a local-only policy scanner: user imports and Google Drive restores are inspected inside the browser before they enter the normal SystemFS workspace. No files are sent to PortfoliOS, VirusTotal, or another scanning service.
+
+- Executables, scripts, WebAssembly modules, and active code are blocked from normal file imports.
+- HTML and SVG files, large archives, and files larger than 64 MiB are placed in a local `.quarantine` area for review instead of being opened, synced, or served as normal workspace files.
+- Accepted files receive a local SHA-256 integrity record and scanner metadata.
+- Cloud Sync fails closed if the SecurityKernel is unavailable, and it scans files before upload and before restore.
+- Cloud access tokens are memory-only. PortfoliOS stores connection metadata locally, never a raw Google bearer token, so users sign in again when a browser session ends.
+- Local AI file tools are restricted from hidden authentication data, quarantine, app binaries, ROMs, and system configuration paths.
+
+This is defence in depth, not a substitute for operating-system antivirus or a promise to detect every malware family. Browser code cannot protect against a compromised operating system or a browser extension/agent granted unrestricted access. The Security Center is intended to make untrusted synced content inert by default and to limit the impact of a compromised page session.
+
+### Browser hardening
+
+The Apache security header policy provides MIME sniffing protection, frame restrictions, a restricted CSP baseline, referrer controls, and HSTS. If Cloudflare is in front of the host, configure Cloudflare's HSTS policy too; a Cloudflare HSTS setting can override an origin header. A future CSP tightening pass should externalize remaining inline scripts before removing the legacy inline-script allowance safely.
 
 ## Useful CLI Commands
 
@@ -132,5 +150,3 @@ All game data files, WADs, MPQs, PAKs, audio/texture archives, and ROMs referenc
 - Expand single-turn local AI skills library in `core/simple-brain.js`.
 - Add screenshots or release media for key projects.
 - Add analytics only after deciding what privacy posture the site should have.
-
-
