@@ -242,10 +242,10 @@ window.systems = [
         status: "Active",
         icon: "fa-solid fa-briefcase",
         color: "#f59e0b",
-        summary: "The professional/business node for systems administration, support experience, infrastructure work, and client-facing services.",
-        signal: "The WardenIT website has been created as the professional services route. Next: connect its live URL, service details, and contact flow to this portfolio.",
-        tech: ["Linux admin", "SLA support", "PowerShell", "Active Directory", "Infrastructure"],
-        links: [],
+        summary: "Independent managed IT and systems engineering: infrastructure, secure networks, communications, and software automation.",
+        signal: "The live WardenIT website connects professional services, network infrastructure, client support, and assessment requests in one public route.",
+        tech: ["Managed IT", "Systems engineering", "Infrastructure", "Network security", "Automation"],
+        links: [["WardenIT Website", "https://wardenit.com/", "fa-solid fa-globe"]],
         position: [86, 45]
     }
 ];

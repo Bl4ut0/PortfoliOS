@@ -17,7 +17,7 @@ The modular app contracts, separate mobile lifecycle, IndexedDB filesystem, and 
 7. Restoring preferences accepted arbitrary local-storage keys. Restoration now restricts writes to the active profile's settings, app selections, and icon positions.
 8. Production responds with COOP same-origin and COEP require-corp, which can interfere with Google OAuth popups. A dedicated popup page gets explicit PHP headers because this production host does not apply the Apache rules to static HTML; the main PHP shell keeps isolation.
 9. Sync could record success after path failures. Failed paths now prevent the success manifest/timestamp from advancing.
-10. WardenIT still said Planned after website creation. It now says Active; an outbound URL awaits the supplied address.
+10. WardenIT still said Planned after website creation. It now says Active and links to the verified https://wardenit.com/ website.
 
 ## Highest-value remaining work
 
@@ -28,7 +28,7 @@ The modular app contracts, separate mobile lifecycle, IndexedDB filesystem, and 
 - **Verify engine save coverage.** SystemFS namespaces isolate SystemFS game saves. Some engines maintain their own IndexedDB/Emscripten state; test export/import and account transitions per engine before claiming every game save is account-isolated.
 - **Make builds reproducible.** .gitignore excludes root package.json and package-lock.json even though README and deployment depend on npm scripts and basic-ftp. Track manifests and lock versions, then add CI and a release manifest.
 - **Improve deploy recoverability.** Assets-before-entry upload is good, but a deployment is not atomic. Add immutable release directories or a rollback manifest and remote hash verification. Review FTP TLS configuration separately; do not expose credentials in logs or commit .env.
-- **Bring portfolio content forward.** WardenIT needs its real link; Status Console remains a placeholder. Add screenshots, concise outcomes, and real status timestamps before expanding the catalog further.
+- **Bring portfolio content forward.** WardenIT now has its real link; Status Console remains a placeholder. Add screenshots, concise outcomes, and real status timestamps before expanding the catalog further.
 - **Measure the visitor path.** Keep Quick available without login, verify navigation and chooser accessibility on real phones, and measure cold-start script/asset cost. Existing mock/contract checks are useful but should be complemented by a repeatable browser smoke suite.
 
 ## Authentication boundary

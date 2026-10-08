@@ -145,7 +145,7 @@ All game data files, WADs, MPQs, PAKs, audio/texture archives, and ROMs referenc
 
 See [ROADMAP.md](ROADMAP.md) for prioritized milestones and acceptance criteria, and [docs/PROJECT_REVIEW.md](docs/PROJECT_REVIEW.md) for review evidence and remaining work.
 
-Next: reliable sync recovery/conflicts, account and backup controls, cross-device restore, WardenIT's live link, reproducible releases, and real public service health.
+Next: reliable sync recovery/conflicts, account and backup controls, cross-device restore, WardenIT case studies, reproducible releases, and real public service health.
 
 ## Private sessions
 
