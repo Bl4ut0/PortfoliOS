@@ -100,6 +100,7 @@ async function saveUsers(users) {
 
 async function ensureUserHomeDirectories(users) {
     for (const username in users) {
+        if (username !== window.state?.currentUserId && !(username === "guest" && window.state?.currentUserId === "bl4ut0")) continue;
         const homePath = users[username].home;
         if (homePath) {
             try {
@@ -174,7 +175,7 @@ function updatePrompt() {
     let displayUser = user;
     if (user === "bl4ut0") {
         displayUser = "Bl4ut0";
-    } else if (user === "private") {
+    } else if (window.isPrivateUser(user)) {
         const privateUser = window.getCurrentUser ? window.getCurrentUser() : null;
         displayUser = privateUser?.handle || "private";
     }
@@ -1057,7 +1058,7 @@ async function runLocalAICommand(args) {
 }
 
 function isPrivateDesktopProfile() {
-    return (window.getCurrentUser ? window.getCurrentUser()?.id : window.state?.currentUserId) === "private";
+    return window.isPrivateUser();
 }
 
 function getCliHelpText() {
@@ -1393,7 +1394,7 @@ window.handleCommand = async (rawValue) => {
     let displayUser = currentUser;
     if (currentUser === "bl4ut0") {
         displayUser = "Bl4ut0";
-    } else if (currentUser === "private") {
+    } else if (window.isPrivateUser(currentUser)) {
         const privateUser = window.getCurrentUser ? window.getCurrentUser() : null;
         displayUser = privateUser?.handle || "private";
     }
@@ -1568,7 +1569,8 @@ async function initCli() {
 
         // Initialize based on signed-in desktop user
         const systemUser = window.getCurrentUser ? window.getCurrentUser()?.id : null;
-        if (systemUser && users[systemUser]) {
+        if (systemUser && (users[systemUser] || window.isPrivateUser?.(systemUser))) {
+            users[systemUser] ||= { home: `/home/${systemUser}`, username: systemUser, groups: ["private"] };
             currentUser = systemUser;
             currentDir = users[systemUser].home || `/home/${systemUser}`;
         }
@@ -1586,7 +1588,8 @@ window.initializeCliWindow = () => {
 // Listen for user changes on the desktop to automatically update the CLI user session
 if (window.EventBus) {
     window.EventBus.on("user:changed", (user) => {
-        if (user && userDirMap && userDirMap[user.id]) {
+        if (user && userDirMap && (userDirMap[user.id] || window.isPrivateUser?.(user.id))) {
+            userDirMap[user.id] ||= { home: `/home/${user.id}`, username: user.id, groups: ["private"] };
             currentUser = user.id;
             currentDir = userDirMap[user.id].home || `/home/${user.id}`;
             updatePrompt();

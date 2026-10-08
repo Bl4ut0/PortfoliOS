@@ -11,3 +11,12 @@ DirectoryIndex index.php index.html
     Header always set Content-Security-Policy "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://accounts.google.com"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 </IfModule>
+
+# Google OAuth needs popup communication; the game/AI shell remains isolated.
+<Files "google.html">
+    <IfModule mod_headers.c>
+        Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+        Header always unset Cross-Origin-Embedder-Policy
+        Header always set Cache-Control "no-store"
+    </IfModule>
+</Files>

@@ -4,6 +4,8 @@
  */
 window.GDriveSync = {
     token: null,
+    tokenUserId: null,
+    accountSessions: {},
     tokenExpiresAt: 0,
     parentFolderId: null,
     rootFolderId: null,
@@ -16,6 +18,8 @@ window.GDriveSync = {
     authFileName: "google-drive.json",
     gsiLoadPromise: null,
     pendingReconnectReason: null,
+    pendingSyncTimer: null,
+    authInProgress: false,
 
     getAuthRecordPath(userId = this.getCurrentSyncScope().userId) {
         return `/home/${userId}/.auth/${this.authFileName}`;
@@ -111,6 +115,7 @@ window.GDriveSync = {
 
     clearBrowserSession() {
         this.token = null;
+        this.tokenUserId = null;
         this.tokenExpiresAt = 0;
         this.parentFolderId = null;
         this.rootFolderId = null;
@@ -123,12 +128,16 @@ window.GDriveSync = {
     },
 
     async restoreSession({ promptOnInvalid = true } = {}) {
+        const restoringUserId = window.state?.currentUserId;
         let record = null;
         try {
             record = await this.readAuthRecord();
         } catch (error) {
             console.warn("PortfoliOS: SystemFS cloud session lookup failed.", error);
         }
+
+        if (window.state?.currentUserId !== restoringUserId) return { status: "superseded" };
+        if (this.getToken()) return { status: "restored" };
 
         // Remove the previous browser-persistent token. A raw bearer token must
         // never survive the browser session in localStorage or SystemFS.
@@ -190,6 +199,7 @@ window.GDriveSync = {
     },
 
     canPresentReconnectPrompt() {
+        if (document.getElementById("session-chooser")) return false;
         const view = window.state?.view || document.body?.dataset?.view;
         const bootScreen = document.getElementById("boot-screen");
         const experienceChosen = window.state?.systemStarted === true || bootScreen?.classList.contains("hidden") === true;
@@ -303,15 +313,15 @@ window.GDriveSync = {
 
     getCurrentSyncScope() {
         const userId = window.state?.currentUserId || "bl4ut0";
-        if (userId === "private") {
+        if (window.isPrivateUser ? window.isPrivateUser(userId) : userId === "private") {
             const profile = window.getSavedPrivateProfile ? window.getSavedPrivateProfile() : null;
             const displayName = this.sanitizeFolderName(profile?.name || profile?.email || "Private User", "Private User");
             const slug = this.slugify(displayName, "private-user");
             return {
-                id: `private-${slug}`,
-                userId: "private",
+                id: profile?.sub ? `google-${profile.sub}` : `private-${slug}`,
+                userId,
                 label: displayName,
-                folderName: `Private - ${displayName}`
+                folderName: profile?.sub ? `Private - ${profile.sub}` : `Private - ${displayName}`
             };
         }
 
@@ -329,6 +339,7 @@ window.GDriveSync = {
     },
 
     getSavedGoogleProfile() {
+        if (window.isPrivateUser?.()) return window.getSavedPrivateProfile?.() || null;
         try {
             const raw = window.Storage
                 ? window.Storage.local.get("bl4ut0_gdrive_profile")
@@ -489,6 +500,7 @@ window.GDriveSync = {
     },
     
     loadGsiLibrary() {
+        if (window.crossOriginIsolated) return Promise.resolve();
         if (window.google?.accounts?.oauth2?.initTokenClient) return Promise.resolve();
         if (this.gsiLoadPromise) return this.gsiLoadPromise;
         this.gsiLoadPromise = new Promise((resolve, reject) => {
@@ -523,8 +535,71 @@ window.GDriveSync = {
         return new Error(detail || "Google sign-in could not be completed. Please try again.");
     },
     
-    login(clientId, { timeoutMs = 60_000 } = {}) {
+    async acceptLoginResponse(response, clientId, { expectedSub = null } = {}) {
+        this.authInProgress = true;
+        try {
+        if (!response?.access_token) throw new Error("Google did not return an access token.");
+        this.rememberLiveSession();
+        this.clearBrowserSession();
+        this.token = response.access_token;
+        this.tokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) * 1000);
+        if (window.Storage) window.Storage.local.set("bl4ut0_gdrive_client_id", clientId);
+        if (window.state) {
+            window.state.gdriveConnected = true;
+        }
+        // Never activate a workspace from stale cached identity.
+        this.googleProfile = null;
+        const profile = await this.fetchGoogleProfile();
+        if (!profile?.sub || !profile?.email) throw new Error("Google did not return an account identity.");
+        if (expectedSub && profile.sub !== expectedSub) throw new Error("Choose the Google account matching this saved profile, or use Sign in with another account.");
+        await window.activateGooglePrivateProfile?.(profile);
+        this.tokenUserId = window.state?.currentUserId || "private";
+        await this.persistAuthRecord();
+        this.closeReconnectPrompt();
+        this.emitAuthChanged("connected");
+
+        return this.token;
+        } finally { this.authInProgress = false; }
+    },
+
+    loginThroughBroker(clientId, { timeoutMs = 90_000, selectAccount = false, expectedSub = null } = {}) {
         return new Promise((resolve, reject) => {
+            if (!clientId) return reject(new Error("Google Client ID is required."));
+            if (this.syncInProgress) return reject(new Error("Wait for the current Drive backup to finish before switching accounts."));
+            if (!window.BroadcastChannel || !window.crypto?.randomUUID) return reject(new Error("This browser cannot open an isolated Google sign-in. Use a current browser."));
+            const nonce = window.crypto.randomUUID();
+            const channel = new window.BroadcastChannel("portfolios-google-" + nonce);
+            let settled = false;
+            const timeout = window.setTimeout(() => finish(reject, new Error("Google sign-in timed out. Close the sign-in window and try again.")), timeoutMs);
+            const finish = (handler, value) => {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timeout);
+                channel.close();
+                handler(value);
+            };
+            channel.onmessage = async event => {
+                const message = event.data;
+                if (settled || message?.nonce !== nonce || message.type !== "google-auth-result") return;
+                if (message.error) { finish(reject, this.getLoginError(message.error)); return; }
+                try {
+                    await this.acceptLoginResponse(message.response, clientId, { expectedSub });
+                    finish(resolve, this.token);
+                } catch (error) {
+                    this.clearBrowserSession();
+                    finish(reject, error);
+                }
+            };
+            const params = new URLSearchParams({ nonce, clientId, scope: this.scopes, prompt: selectAccount ? "select_account" : "", hint: selectAccount ? "" : (this.getSavedGoogleProfile()?.email || "") });
+            const popup = window.open("/auth/google.html#" + params, "portfolios-google-signin", "popup,width=520,height=650");
+            if (!popup) finish(reject, new Error("Google sign-in was blocked. Allow popups for this site, then try again."));
+        });
+    },
+
+    login(clientId, { timeoutMs = 60_000, selectAccount = false, expectedSub = null } = {}) {
+        if (window.crossOriginIsolated) return this.loginThroughBroker(clientId, { timeoutMs, selectAccount, expectedSub });
+        return new Promise((resolve, reject) => {
+            if (this.syncInProgress) return reject(new Error("Wait for the current Drive backup to finish before switching accounts."));
             if (!clientId) return reject(new Error("Google Client ID is required."));
             if (!window.google?.accounts?.oauth2?.initTokenClient) {
                 return reject(new Error("Google sign-in is not ready. Check your connection and try again."));
@@ -552,20 +627,7 @@ window.GDriveSync = {
                             return;
                         }
                         try {
-                            this.token = response.access_token;
-                            this.tokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) * 1000);
-                            if (window.Storage) window.Storage.local.set("bl4ut0_gdrive_client_id", clientId);
-                            if (window.state) {
-                                window.state.gdriveConnected = true;
-                            }
-                            try {
-                                await this.fetchGoogleProfile();
-                            } catch (error) {
-                                console.warn("PortfoliOS: Google profile lookup failed after login.", error);
-                            }
-                            await this.persistAuthRecord();
-                            this.closeReconnectPrompt();
-                            this.emitAuthChanged("connected");
+                            await this.acceptLoginResponse(response, clientId, { expectedSub });
                             finish(resolve, this.token);
                         } catch (error) {
                             const profile = this.googleProfile;
@@ -579,13 +641,31 @@ window.GDriveSync = {
                 timeoutId = window.setTimeout(() => {
                     fail(new Error("Google sign-in timed out. Close any open sign-in window and try again."));
                 }, Math.max(1, Number(timeoutMs) || 60_000));
-                client.requestAccessToken({ prompt: "consent" });
+                client.requestAccessToken({ prompt: selectAccount ? "select_account" : "", hint: selectAccount ? "" : (this.getSavedGoogleProfile()?.email || "") });
             } catch (error) {
                 fail(error);
             }
         });
     },
     
+    scheduleAutomaticSync() {
+        const userId = window.state?.currentUserId;
+        if (!window.isPrivateUser?.(userId) || !this.getToken()) return;
+        if (this.pendingSyncTimer !== null) window.clearTimeout(this.pendingSyncTimer);
+        this.pendingSyncTimer = window.setTimeout(() => {
+            this.pendingSyncTimer = null;
+            if (window.state?.currentUserId !== userId || !this.getToken()) return;
+            if (this.syncInProgress || this.authInProgress) { this.scheduleAutomaticSync(); return; }
+            window.triggerGDriveSync?.({ silent: true });
+        }, 1500);
+    },
+
+    rememberLiveSession() {
+        if (this.token && this.tokenUserId && Date.now() < this.tokenExpiresAt) {
+            this.accountSessions[this.tokenUserId] = { token: this.token, expiresAt: this.tokenExpiresAt, profile: this.googleProfile };
+        }
+    },
+
     getToken() {
         if (this.token && this.tokenExpiresAt && Date.now() < this.tokenExpiresAt) {
             if (window.state) window.state.gdriveConnected = true;
@@ -598,7 +678,9 @@ window.GDriveSync = {
     },
     
     async logout() {
+        delete this.accountSessions[window.state?.currentUserId];
         const authPath = this.getAuthRecordPath();
+        const scopeId = this.getCurrentSyncScope().id;
         const token = this.token;
         this.clearBrowserSession();
         this.googleProfile = null;
@@ -611,7 +693,7 @@ window.GDriveSync = {
         try {
             window.google?.accounts?.oauth2?.revoke?.(token, () => {});
         } catch (error) {}
-        this.clearScopedSyncState();
+        this.clearScopedSyncState(scopeId);
         this.closeReconnectPrompt();
         this.emitAuthChanged("disconnected");
     },
@@ -783,6 +865,10 @@ window.GDriveSync = {
     },
     
     async sync(onProgress) {
+        if (this.authInProgress) throw new Error("Google sign-in is still completing.");
+        if (this.syncInProgress) throw new Error("A Drive backup is already running.");
+        this.syncInProgress = true;
+        try {
         if (!window.SecurityKernel?.importFile || !window.SecurityKernel?.scanExisting) {
             throw new Error("Security Center is unavailable; Cloud Sync is blocked to protect your files.");
         }
@@ -828,8 +914,9 @@ window.GDriveSync = {
             return parts.join("/") || "/";
         };
 
+        const failedPaths = [];
         for (const path of sortedPaths) {
-            const local = localMap.get(path);
+            const local = isFirstSync && path === `/home/${scope.userId}/settings.json` && remoteMap.has(path) ? null : localMap.get(path);
             const remote = remoteMap.get(path);
 
             if (onProgress) onProgress(processed, total, path);
@@ -862,7 +949,7 @@ window.GDriveSync = {
                             const fileBlob = await this.downloadFile(remote.id);
                             await window.SecurityKernel.importFile({
                                 path, name: remote.name, parent: getParentPath(path), data: fileBlob,
-                                size: fileBlob.size, type: remote.mimeType, source: "cloud-download"
+                                size: fileBlob.size, type: remote.mimeType, source: "cloud-download", options: { lastModified: new Date(remote.modifiedTime).getTime() }
                             });
                         }
                     } else {
@@ -888,6 +975,7 @@ window.GDriveSync = {
                     }
                 }
             } catch (err) {
+                failedPaths.push(path);
                 console.error(`Failed to sync ${path}:`, err);
                 if (/\b(401|403)\b/.test(String(err?.message || err))) throw err;
             }
@@ -895,6 +983,7 @@ window.GDriveSync = {
             processed++;
         }
 
+        if (failedPaths.length) throw new Error(`Backup incomplete: ${failedPaths.length} file(s) failed. Retry to finish syncing.`);
         const finalLocalFiles = await window.SystemFS.getAllFiles();
         const finalPaths = finalLocalFiles.map(f => f.path).filter(isPathSyncable);
         
@@ -908,14 +997,29 @@ window.GDriveSync = {
         if (window.EventBus) {
             window.EventBus.emit("fs:changed", { action: "sync", paths: finalPaths });
         }
+        } finally { this.syncInProgress = false; }
     }
 };
 
 if (window.EventBus) {
-    window.EventBus.on("user:changed", async () => {
+    window.EventBus.on("user:changed", async (user = {}) => {
+        window.clearTimeout(window.GDriveSync.pendingSyncTimer);
+        window.GDriveSync.pendingSyncTimer = null;
+        if (user.preserveGoogleSession && window.GDriveSync.getToken()) return;
+        window.GDriveSync.rememberLiveSession();
+        const cached = window.GDriveSync.accountSessions[user.id];
         window.GDriveSync.closeReconnectPrompt();
         window.GDriveSync.clearBrowserSession();
-        window.GDriveSync.googleProfile = null;
+        window.GDriveSync.googleProfile = window.getSavedPrivateProfile?.(user.id) || null;
+        if (cached && Date.now() < cached.expiresAt) {
+            window.GDriveSync.token = cached.token;
+            window.GDriveSync.tokenExpiresAt = cached.expiresAt;
+            window.GDriveSync.tokenUserId = user.id;
+            window.GDriveSync.googleProfile = cached.profile;
+            window.GDriveSync.pendingReconnectReason = null;
+            window.GDriveSync.emitAuthChanged("connected");
+            return;
+        }
         const restored = await window.GDriveSync.restoreSession({ promptOnInvalid: true });
         if (restored.status === "restored") {
             const result = await window.GDriveSync.validateSession({ promptOnInvalid: true });
@@ -945,3 +1049,10 @@ document.addEventListener("visibilitychange", () => {
         }
     });
 });
+
+if (window.EventBus) {
+    window.EventBus.on("fs:changed", event => {
+        if (event?.action !== "sync") window.GDriveSync.scheduleAutomaticSync();
+    });
+    window.EventBus.on("preferences:saved", () => window.GDriveSync.scheduleAutomaticSync());
+}

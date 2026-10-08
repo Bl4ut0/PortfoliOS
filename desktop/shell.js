@@ -270,16 +270,7 @@ window.boot = async () => {
 
         const privateProfileButton = event.target.closest("[data-open-private-profile]");
         if (privateProfileButton) {
-            const hasSavedProfile = !!(window.getSavedPrivateProfile ? window.getSavedPrivateProfile() : null);
-            const isPrivate = (window.getCurrentUser ? window.getCurrentUser()?.id : "") === "private";
-            
-            if (isPrivate) {
-                if (window.openUserProfilePrompt) window.openUserProfilePrompt();
-            } else if (hasSavedProfile) {
-                if (window.setCurrentUser) window.setCurrentUser("private");
-            } else {
-                if (window.openUserProfilePrompt) window.openUserProfilePrompt();
-            }
+            window.openSessionChooser?.();
             const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
             if (startMenu) startMenu.hidden = true;
             return;

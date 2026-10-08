@@ -1,0 +1,33 @@
+<!doctype html><meta charset="utf-8"><title>Profile filesystem regression audit</title><style>body{font:16px system-ui;background:#101827;color:#e2e8f0;padding:24px}li{margin:12px 0}.pass{color:#6ee7b7}.fail{color:#fda4af}</style><h1>Profile filesystem regression audit</h1><p>Uses a disposable test database. Does not change the live PortfoliOS filesystem.</p><ol id="results"></ol><h2 id="summary">Running…</h2>
+<script>window.state={currentUserId:"bl4ut0"};window.EventBus={emit(){}};</script><script src="../core/filesystem.js?test=profiles-1"></script>
+<script>
+(async()=>{
+ const system=window.SystemFS;system.dbName="PortfoliOS_Profile_Test_"+Date.now();
+ const check=(ok,label)=>{if(!ok)throw new Error(label);const li=document.createElement('li');li.className='pass';li.textContent='PASS: '+label;document.getElementById('results').append(li);};
+ try{
+  await system.init();
+  await system.writeFile('/documents/account.txt','account.txt','/documents','public',6,'text/plain');
+  window.state.currentUserId='private_111';await system.ensureDefaultFiles();
+  await system.writeFile('/documents/account.txt','account.txt','/documents','first',5,'text/plain');
+  await system.writeFile('/home/private_111/settings.json','settings.json','/home/private_111','{"theme":"first"}',17,'application/json');
+  await system.ensureSavedGameDirectory('Test Game');await system.writeFile('/Saved Games/Test Game/save.dat','save.dat','/Saved Games/Test Game','first-save',10,'application/octet-stream');
+  check((await system.readFile('/documents/account.txt')).data==='first','First account owns its document');
+  check((await system.readDir('/')).some(f=>f.path==='/documents'),'Root exposes virtual workspace directories');
+  const firstAll=await system.getAllFiles();check(firstAll.every(f=>!f.path.startsWith('/.workspaces/')),'Backup receives virtual paths only');
+  window.state.currentUserId='private_222';await system.ensureDefaultFiles();
+  check(await system.readFile('/documents/account.txt')===null,'Second account cannot read first account document');
+  check(await system.readFile('/Saved Games/Test Game/save.dat')===null,'Second account cannot read first account game save');
+  check(!(await system.getAllFiles()).some(f=>f.path.includes('private_111')),'Second account backup omits first account home');
+  await system.writeFile('/documents/account.txt','account.txt','/documents','second',6,'text/plain');
+  check((await system.readDir('/documents')).find(f=>f.name==='account.txt').data==='second','Directory index reads the second account namespace');
+  await system.deleteFileRecursive('/documents');check(await system.readFile('/documents/account.txt')===null,'Recursive delete stays within the selected namespace');
+  window.state.currentUserId='private_111';check((await system.readFile('/documents/account.txt')).data==='first','Deleting second account files preserves first account');
+  let blocked=false;try{await system.readFile('/home/private_222/settings.json');}catch(e){blocked=true;}check(blocked,'Direct access to another profile home is blocked');
+  const pending=system.writeFile('/documents/race.txt','race.txt','/documents','bad',3,'text/plain');window.state.currentUserId='private_222';let race=false;try{await pending;}catch(e){race=true;}check(race,'A pending save rejects if the profile changes');
+  window.state.currentUserId='bl4ut0';check((await system.readFile('/documents/account.txt')).data==='public','Public workspace retains its original document');
+  check(!(await system.getAllFiles()).some(f=>f.path.startsWith('/.workspaces/')),'Public file listing hides every private workspace');
+  document.getElementById('summary').textContent='All profile filesystem checks passed';
+ }catch(error){document.getElementById('summary').textContent='FAILED: '+error.message;document.getElementById('summary').className='fail';console.error(error);}
+ finally{system.db?.close();indexedDB.deleteDatabase(system.dbName);}
+})();
+</script>

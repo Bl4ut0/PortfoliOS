@@ -289,6 +289,7 @@
         const { signal } = activeController;
 
         root.addEventListener("click", async (event) => {
+            if (event.target.closest("[data-settings-account]")) { window.openSessionChooser?.(); return; }
             const wallpaper = event.target.closest("[data-settings-wallpaper]");
             if (wallpaper) {
                 await applyPreference(root, "wallpaper", wallpaper.dataset.settingsWallpaper, "Wallpaper updated.");
@@ -376,6 +377,7 @@
         icon: "fa-solid fa-gear",
         viewClass: "mobile-settings-app",
         render: () => `
+            <section class="mobile-settings-section"><h3>Account</h3><p>Desktop and Mobile share your private profiles and Google Drive backup.</p><button type="button" class="mobile-settings-choice" data-settings-account>Choose profile / Google sign-in</button></section>
             <header class="mobile-settings-heading">
                 <span><i class="fa-solid fa-gear"></i></span>
                 <div>

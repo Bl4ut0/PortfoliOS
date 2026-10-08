@@ -1,6 +1,6 @@
 /** PortfoliOS Mobile: lazy loader for mobile-only app modules. */
 (function() {
-    const assetVersion = "1.2.2";
+    const assetVersion = "2026.10.08.1";
     window.mobileAppLoadPromises = window.mobileAppLoadPromises || {};
 
     function isMobileApp(appId) {

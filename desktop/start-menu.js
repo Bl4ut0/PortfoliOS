@@ -145,17 +145,23 @@ window.renderStartUser = () => {
     }
 
     if (userAvatarBtn) {
-        const isPrivate = user.id === "private";
+        const isPrivate = window.isPrivateUser(user.id);
         userAvatarBtn.classList.toggle("active-profile", isPrivate);
         userAvatarBtn.style.opacity = isPrivate ? "1" : "0.55";
 
         const savedProfile = window.getSavedPrivateProfile ? window.getSavedPrivateProfile() : null;
         if (isPrivate) {
-            userAvatarBtn.innerHTML = `<img src="${user.avatar}" alt="${user.displayName}">`;
+            const image = document.createElement("img");
+            image.src = user.avatar;
+            image.alt = user.displayName;
+            userAvatarBtn.replaceChildren(image);
             userAvatarBtn.title = `${user.displayName} (Active Private Profile)`;
         } else if (savedProfile) {
             const displayName = savedProfile.name || savedProfile.email || "Private User";
-            userAvatarBtn.innerHTML = `<img src="${savedProfile.avatar}" alt="${displayName}">`;
+            const image = document.createElement("img");
+            image.src = savedProfile.avatar;
+            image.alt = displayName;
+            userAvatarBtn.replaceChildren(image);
             userAvatarBtn.title = `Switch to ${displayName}`;
         } else {
             userAvatarBtn.innerHTML = `<i class="fa-solid fa-circle-question" style="font-size: 1.25rem;"></i>`;
@@ -169,78 +175,7 @@ window.closeUserProfilePrompt = () => {
     if (prompt) prompt.remove();
 };
 
-window.openUserProfilePrompt = () => {
-    window.closeUserProfilePrompt();
-
-    const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
-    const isPrivate = currentUser?.id === "private";
-    const desktop = window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience");
-    const host = desktop?.querySelector(".desktop-wallpaper") || desktop || document.body;
-
-    const prompt = document.createElement("aside");
-    prompt.id = "user-profile-prompt";
-    prompt.className = "user-profile-prompt";
-    prompt.setAttribute("aria-label", "Private profile");
-
-    prompt.innerHTML = isPrivate ? `
-        <div class="user-profile-prompt-head">
-            <i class="fa-solid fa-user-shield"></i>
-            <span>
-                <strong>Private profile active</strong>
-                <small>Local private desktop</small>
-            </span>
-            <button type="button" data-close-user-profile-prompt title="Close">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <p>Your private desktop hides the owner project nodes and keeps Store downloads scoped to this profile.</p>
-        <div class="user-profile-prompt-actions">
-            <button type="button" class="primary" data-restore-owner-profile>
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                Return to Owner
-            </button>
-            <button type="button" data-open-settings-panel="cloud-sync">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
-                Cloud Sync Settings
-            </button>
-            <button type="button" id="btn-delete-profile" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.35); color: #ef4444; font-weight: bold; min-height: 2rem; padding: 0.42rem 0.62rem; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;">
-                <i class="fa-solid fa-trash-can"></i>
-                Delete Profile
-            </button>
-            <button type="button" data-close-user-profile-prompt>Close</button>
-        </div>
-    ` : `
-        <div class="user-profile-prompt-head">
-            <i class="fa-solid fa-user-plus"></i>
-            <span>
-                <strong>Create Private Profile</strong>
-                <small>Local PortfoliOS account</small>
-            </span>
-            <button type="button" data-close-user-profile-prompt title="Close">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <label class="cloud-sync-field">
-            <span>Profile Name</span>
-            <input type="text" id="private-profile-name" placeholder="Private Account" autocomplete="off">
-        </label>
-        <p>This profile is created in local browser storage. Cloud backup can be connected separately through Settings.</p>
-        <div class="user-profile-prompt-actions">
-            <button type="button" class="primary" data-create-private-profile>
-                <i class="fa-solid fa-user-plus"></i>
-                Create Local Profile
-            </button>
-            <button type="button" data-open-settings-panel="cloud-sync">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
-                Cloud Sync Settings
-            </button>
-            <button type="button" data-close-user-profile-prompt>Cancel</button>
-        </div>
-    `;
-
-    host.appendChild(prompt);
-    prompt.querySelector("input")?.focus({ preventScroll: true });
-};
+window.openUserProfilePrompt = () => window.openSessionChooser?.();
 
 window.createPrivateProfile = async () => {
     const nameInput = document.getElementById("private-profile-name");

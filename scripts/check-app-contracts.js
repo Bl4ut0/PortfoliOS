@@ -441,7 +441,7 @@ function collectJavaScriptFiles(directory) {
 }
 
 function validateSyntax(modularIds) {
-    const sourceDirectories = ["core", "data", "desktop", "mobile", "quick", "scripts"];
+    const sourceDirectories = ["core", "auth", "data", "desktop", "mobile", "quick", "scripts"];
     const files = sourceDirectories.flatMap((directory) => collectJavaScriptFiles(path.join(ROOT, directory)));
     ["main.js", "flappy.js", "volume-hook.js", "deploy.js"].forEach((file) => {
         const absolutePath = path.join(ROOT, file);

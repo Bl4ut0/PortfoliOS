@@ -9,7 +9,7 @@
             const query = (rawQuery || "").toLowerCase().trim();
             if (!query) return null;
 
-            const isPrivate = (window.getCurrentUser ? window.getCurrentUser()?.id : window.state?.currentUserId) === "private";
+            const isPrivate = window.isPrivateUser();
 
             // Private checks
             if (isPrivate) {

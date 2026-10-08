@@ -141,12 +141,18 @@ All game data files, WADs, MPQs, PAKs, audio/texture archives, and ROMs referenc
 
 **Self-Hosting Requirement**: This repository contains web engine runners, WebAssembly source ports, and UI shells only. Commercial game data binaries are strictly excluded from git tracking via `.gitignore`. If you wish to host your own version of these playable web applications (such as DOOM, Quake, Diablo, Unreal Tournament 99, Duke Nukem 3D, or OpenRCT2), you will need to provide your own legally acquired game source files.
 
-## Next Build Pass
+## Roadmap and review
 
-- Add real status endpoints for public services.
-- Add dedicated project dossier pages.
-- Wire WardenIT to a professional route or separate domain.
-- Expand productivity/service apps and hosted tools/PDF surfaces (Office Document app complete).
-- Expand single-turn local AI skills library in `core/simple-brain.js`.
-- Add screenshots or release media for key projects.
-- Add analytics only after deciding what privacy posture the site should have.
+See [ROADMAP.md](ROADMAP.md) for prioritized milestones and acceptance criteria, and [docs/PROJECT_REVIEW.md](docs/PROJECT_REVIEW.md) for review evidence and remaining work.
+
+Next: reliable sync recovery/conflicts, account and backup controls, cross-device restore, WardenIT's live link, reproducible releases, and real public service health.
+
+## Private sessions
+
+Choosing Desktop or Mobile opens the shared account chooser. Continue with Bl4ut0's public profile, reconnect a remembered private Google profile, or sign in with another Google account. Google sign-in activates that account's private workspace and backs up its SystemFS files and preferences. Desktop and Mobile use the same profile registry. File and preference changes schedule automatic backup while connected.
+
+Each Google account uses a stable subject ID, a separate SystemFS home, and a separate virtual documents/downloads/music/pictures/save workspace. App engine binaries and ROM installation files are shared device resources. Legacy private data is copied during the first account migration without deleting the original files.
+
+Account identity remains remembered after reload, while cloud credentials stay in memory. Reconnect to resume Drive backup. Production uses auth/google.html as a popup endpoint with compatible COOP headers while the main game/AI shell remains isolated. The endpoint must be deployed with .htaccess.
+
+For filesystem changes, serve the repo and open scripts/check-profile-filesystem.html. It uses a disposable test database to verify account isolation, recursive deletes, backup paths, and pending-save races.

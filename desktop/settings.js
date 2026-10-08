@@ -200,15 +200,15 @@ function updateGDriveUI() {
         indicator.className = `status-indicator-dot ${isConnected ? "connected" : "disconnected"}`;
     }
     if (statusText) {
-        statusText.textContent = isConnected ? "Cloud Sync enabled" : "Not Connected";
+        statusText.textContent = isConnected ? "Private session / Cloud Sync enabled" : (window.getSavedPrivateProfile?.()?.source === "google" ? "Private profile remembered / Cloud Sync paused" : "Not Connected");
     }
     if (description) {
         description.textContent = isConnected
-            ? "Your SystemFS files and saved progress are connected to Google Drive."
-            : "Sign in to link Google Drive for PortfoliOS documents, configuration, and game save backups.";
+            ? "Your Google private profile is active. SystemFS files, preferences, and saved progress are connected to Google Drive."
+            : "Sign in with Google to activate your private profile and back up SystemFS. Your profile stays remembered after reload; reconnect to resume cloud backup.";
     }
     const profile = window.GDriveSync?.googleProfile || window.GDriveSync?.getSavedGoogleProfile?.();
-    if (accountCard) accountCard.hidden = !isConnected;
+    if (accountCard) accountCard.hidden = !profile;
     if (accountAvatar) {
         accountAvatar.src = profile?.picture || "";
         accountAvatar.hidden = !profile?.picture;
@@ -325,7 +325,7 @@ async function triggerGDriveSync({ silent = false } = {}) {
             await window.loadPreferencesFromFilesystem();
         }
         const folderLabel = window.GDriveSync?.getCurrentFolderLabel ? window.GDriveSync.getCurrentFolderLabel() : "Google Drive";
-        if (window.showDesktopToast) window.showDesktopToast(`Synced ${folderLabel}`);
+        if (!silent && window.showDesktopToast) window.showDesktopToast(`Synced ${folderLabel}`);
         if (progressText) progressText.textContent = "Sync complete!";
         if (progressBar) progressBar.style.width = "100%";
         updateGDriveUI();

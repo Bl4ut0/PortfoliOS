@@ -58,6 +58,8 @@ const DEPLOY_FILES = [
     "volume-hook.js",
     "apps",
     "core",
+    "auth",
+    ".htaccess",
     "data",
     "desktop",
     "mobile",

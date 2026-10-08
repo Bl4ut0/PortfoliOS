@@ -1,0 +1,20 @@
+.session-chooser { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: radial-gradient(ellipse at top, #133344 0%, #090d14 65%); color: #f1f5f9; }
+.session-chooser-panel { width: min(100%, 580px); margin: auto; }
+.session-chooser-eyebrow { color: #67e8f9; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.session-chooser h1 { margin: 12px 0; font-size: clamp(26px, 5vw, 38px); }
+.session-chooser p { color: #b5c5d5; line-height: 1.6; }
+.session-chooser-accounts { display: grid; gap: 12px; margin: 24px 0; }
+.session-account { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; border: 1px solid #395065; background: #142131; color: #f1f5f9; padding: 18px; border-radius: 16px; cursor: pointer; min-height: 88px; }
+.session-account:hover { border-color: #67e8f9; background: #1b3044; }
+.session-account:focus-visible, .session-chooser-offline:focus-visible { outline: 3px solid #67e8f9; outline-offset: 3px; }
+.session-account > span:nth-child(2) { flex: 1; min-width: 0; }
+.session-account strong, .session-account small { display: block; overflow-wrap: anywhere; }
+.session-account strong { font-size: 16px; }
+.session-account small { color: #b5c5d5; margin-top: 5px; line-height: 1.4; }
+.session-account-icon { width: 34px; flex-shrink: 0; font-size: 24px; color: #67e8f9; text-align: center; }
+.session-account-google { border-color: #3b827e; }
+.session-chooser-note { font-size: 12px; }
+.session-chooser .session-chooser-error { color: #fda4af; }
+.session-chooser-offline { border: 1px solid #395065; background: #142131; color: #f1f5f9; border-radius: 10px; padding: 12px 16px; cursor: pointer; }
+.session-chooser button:disabled { opacity: .5; cursor: wait; }
+@media (max-width: 480px) { .session-account { padding: 15px; gap: 12px; } }

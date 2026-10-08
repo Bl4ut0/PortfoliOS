@@ -35,8 +35,17 @@
 
     // Load initial values from storage if available
     if (window.Storage) {
-        const hasPersonalProfile = localStorage.getItem("bl4ut0_private_user_profile") !== null;
-        const userId = hasPersonalProfile ? "private" : "bl4ut0";
+        let hasPersonalProfile = false;
+        try {
+            const profile = JSON.parse(window.Storage.local.get("bl4ut0_private_user_profile") || "null");
+            hasPersonalProfile = !!(profile && (profile.name || profile.email) && profile.avatar);
+        } catch (error) {}
+        const selectedUser = window.Storage.local.get("bl4ut0CurrentUser");
+        let profiles = {};
+        try { profiles = JSON.parse(window.Storage.local.get("bl4ut0_private_profiles") || "{}"); } catch (error) {}
+        const selectedProfile = profiles?.[selectedUser];
+        const userId = selectedProfile?.sub && selectedProfile?.email && /^private_[a-zA-Z0-9_-]+$/.test(selectedUser)
+            ? selectedUser : (hasPersonalProfile && selectedUser !== "bl4ut0" ? "private" : "bl4ut0");
         rawState.currentUserId = userId;
         
         const getKey = (k) => `bl4ut0_${userId}_${k}`;

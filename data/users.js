@@ -79,7 +79,9 @@ window.syncPrivateAccountFromSavedProfile = () => {
 // Initialize private profile credentials from localStorage if saved
 window.syncPrivateAccountFromSavedProfile();
 
-window.getSavedPrivateProfile = () => {
+window.getSavedPrivateProfile = (userId = window.state?.currentUserId) => {
+    const profiles = window.getPrivateProfiles?.() || {};
+    if (profiles[userId]) return profiles[userId];
     try {
         const raw = localStorage.getItem("bl4ut0_private_user_profile");
         if (!raw) return null;
@@ -91,6 +93,25 @@ window.getSavedPrivateProfile = () => {
     return null;
 };
 
+window.getPrivateProfiles = () => {
+    try {
+        const parsed = JSON.parse(localStorage.getItem("bl4ut0_private_profiles") || "{}");
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+        return Object.fromEntries(Object.entries(parsed).filter(([id, profile]) => /^(private|private_[a-zA-Z0-9_-]+)$/.test(id) && profile && typeof profile === "object" && profile.sub && profile.email));
+    } catch (error) { return {}; }
+};
+window.isPrivateUser = (id = window.state?.currentUserId) => id === "private" || /^private_[a-zA-Z0-9_-]+$/.test(id || "");
+window.refreshPrivateAccounts = () => {
+    const template = window.userAccounts.find(user => user.id === "private");
+    window.userAccounts = window.userAccounts.filter(user => !user.id.startsWith("private_"));
+    Object.entries(window.getPrivateProfiles()).forEach(([id, profile]) => {
+        if (!window.isPrivateUser(id) || !profile?.email || !profile?.sub) return;
+        const account = { ...template, id, displayName: profile.name || profile.email, handle: profile.email, avatar: profile.avatar || DEFAULT_PRIVATE_AVATAR };
+        if (id === "private") Object.assign(template, account);
+        else window.userAccounts.push(account);
+    });
+};
+window.refreshPrivateAccounts();
 window.getUserAccounts = () => window.userAccounts || [];
 
 window.getCurrentUser = () => {
@@ -178,20 +199,61 @@ window.applyCurrentUserProfile = () => {
     if (window.renderStore) window.renderStore();
 };
 
-window.setCurrentUser = (userId) => {
+window.prepareProfileSwitch = async () => {
+    if (window.GDriveSync?.syncInProgress) throw new Error("Wait for the current Drive backup to finish before switching accounts.");
+    await Promise.all(Array.from(window.state?.openApps || []).map(appId => window.closeDesktopWindow?.(appId)));
+    await window.MobileOS?.clearTasks?.();
+};
+
+window.setCurrentUser = (userId, { preserveGoogleSession = false } = {}) => {
     const user = window.getUserAccounts().find((account) => account.id === userId);
     if (!user || !window.state) return;
-
+    if (window.GDriveSync?.syncInProgress && window.state.currentUserId !== user.id) return;
     window.state.currentUserId = user.id;
     if (window.Storage) {
         window.Storage.local.set("bl4ut0CurrentUser", user.id);
     }
     if (window.EventBus) {
-        window.EventBus.emit("user:changed", user);
+        window.EventBus.emit("user:changed", { ...user, preserveGoogleSession });
     }
     if (window.applyCurrentUserProfile) {
         window.applyCurrentUserProfile();
     }
+};
+
+// Remembered identity customizes a local workspace; it is not a Google credential.
+window.activateGooglePrivateProfile = async (googleProfile) => {
+    if (!googleProfile?.sub || !googleProfile?.email || !/^[a-zA-Z0-9_-]+$/.test(googleProfile.sub)) throw new Error("Google did not return an account identity. Please sign in again.");
+    const profiles = window.getPrivateProfiles();
+    const existingId = Object.keys(profiles).find(id => profiles[id]?.sub === googleProfile.sub);
+    const legacy = window.getSavedPrivateProfile("private");
+    const id = "private_" + googleProfile.sub;
+    const migrateLegacy = !existingId && !Object.keys(profiles).length && legacy && (!legacy.sub || legacy.sub === googleProfile.sub);
+    const profile = {
+        name: googleProfile.name || googleProfile.email, email: googleProfile.email,
+        sub: googleProfile.sub, picture: googleProfile.picture || "",
+        avatar: /^https:\/\//i.test(googleProfile.picture || "") ? googleProfile.picture : DEFAULT_PRIVATE_AVATAR, source: "google"
+    };
+    if (migrateLegacy) {
+        const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index));
+        keys.forEach(key => {
+            if (key?.startsWith("bl4ut0_private_") && !["bl4ut0_private_user_profile", "bl4ut0_private_profiles", "bl4ut0_private_workspace_migrated"].includes(key)) {
+                localStorage.setItem(key.replace("bl4ut0_private_", "bl4ut0_" + id + "_"), localStorage.getItem(key));
+            } else if (key?.startsWith("desktop_pos_private_")) {
+                localStorage.setItem(key.replace("desktop_pos_private_", "desktop_pos_" + id + "_"), localStorage.getItem(key));
+            } else if (key === "bl4ut0_installed_apps_private") localStorage.setItem("bl4ut0_installed_apps_" + id, localStorage.getItem(key));
+        });
+        await window.SystemFS?.migrateProfileWorkspace?.("private", id);
+    }
+    if (existingId && existingId !== id) delete profiles[existingId];
+    profiles[id] = profile;
+    localStorage.setItem("bl4ut0_private_profiles", JSON.stringify(profiles));
+    await window.prepareProfileSwitch();
+    window.refreshPrivateAccounts();
+    window.setCurrentUser(id, { preserveGoogleSession: true });
+    await window.SystemFS?.ensureDefaultFiles?.();
+    await window.savePreferencesToFilesystem?.();
+    return profile;
 };
 
 window.readFilesystemRecordText = async (record) => {
@@ -203,36 +265,26 @@ window.readFilesystemRecordText = async (record) => {
 };
 
 window.clearPrivateProfileData = async () => {
-    const shouldRemoveKey = (key) => {
-        if (!key) return false;
-        return key === "bl4ut0_private_user_profile"
-            || key === "bl4ut0_installed_apps_private"
-            || key.startsWith("bl4ut0_private_")
-            || key.startsWith("desktop_pos_private_")
-            || key.startsWith("bl4ut0_sync_manifest_private-")
-            || key.startsWith("bl4ut0_last_sync_time_private-");
-    };
-
-    [window.localStorage, window.sessionStorage].forEach((storage) => {
+    const userId = window.state?.currentUserId;
+    if (!window.isPrivateUser(userId)) return;
+    const profiles = window.getPrivateProfiles();
+    const otherIds = Object.keys(profiles).filter(id => id !== userId);
+    [window.localStorage, window.sessionStorage].forEach(storage => {
         try {
-            const keys = [];
-            for (let i = 0; i < storage.length; i += 1) {
-                const key = storage.key(i);
-                if (shouldRemoveKey(key)) keys.push(key);
-            }
-            keys.forEach((key) => storage.removeItem(key));
+            const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index));
+            keys.forEach(key => {
+                if (!key || otherIds.some(id => key.startsWith("bl4ut0_" + id + "_") || key.startsWith("desktop_pos_" + id + "_"))) return;
+                if (key.startsWith("bl4ut0_" + userId + "_") && key !== "bl4ut0_private_profiles" || key === "bl4ut0_installed_apps_" + userId || key.startsWith("desktop_pos_" + userId + "_")) storage.removeItem(key);
+            });
         } catch (error) {}
     });
-
-    window.GDriveSync?.clearScopedSyncState?.("private");
-
-    if (window.SystemFS) {
-        try {
-            await window.SystemFS.deleteFile("/home/private/settings.json", { silent: true });
-        } catch (error) {}
-    }
-
-    window.resetPrivateAccountDisplay();
+    delete profiles[userId];
+    localStorage.setItem("bl4ut0_private_profiles", JSON.stringify(profiles));
+    delete window.GDriveSync?.accountSessions?.[userId];
+    await window.GDriveSync?.logout();
+    await window.SystemFS?.deleteFileRecursive("/home/" + userId, { silent: true });
+    window.refreshPrivateAccounts();
+    if (userId === "private") window.resetPrivateAccountDisplay();
 };
 
 window.savePreferencesToFilesystem = async () => {
@@ -250,7 +302,7 @@ window.savePreferencesToFilesystem = async () => {
 
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && (key.startsWith(prefix) || key === installedAppsKey || (userId === "private" && key === "bl4ut0_private_user_profile"))) {
+            if (key && (key.startsWith(prefix) || key.startsWith("desktop_pos_" + userId + "_") || key === installedAppsKey || (userId === "private" && key === "bl4ut0_private_user_profile"))) {
                 settings[key] = localStorage.getItem(key);
             }
         }
@@ -260,7 +312,10 @@ window.savePreferencesToFilesystem = async () => {
         const name = "settings.json";
         const parent = `/home/${userId}`;
         
+        const existing = await window.SystemFS.readFile(path);
+        if (existing && await window.readFilesystemRecordText(existing) === jsonStr) return;
         await window.SystemFS.writeFile(path, name, parent, jsonStr, jsonStr.length, "application/json", false, { silent: true });
+        window.EventBus?.emit("preferences:saved", { userId });
         console.log(`PortfoliOS: Saved ${userId} profile preferences to virtual filesystem.`);
     } catch (e) {
         console.error("Failed to save preferences to filesystem", e);
@@ -278,8 +333,10 @@ window.loadPreferencesFromFilesystem = async () => {
             const settingsText = await window.readFilesystemRecordText(record);
             const settings = JSON.parse(settingsText);
             let changed = false;
+            const prefix = "bl4ut0_" + user.id + "_";
+            const installedKey = window.getInstalledStoreAppsKey?.(user.id) || (user.id === "bl4ut0" ? "bl4ut0_installed_apps" : "bl4ut0_installed_apps_" + user.id);
             Object.entries(settings).forEach(([key, val]) => {
-                if (val !== null && val !== undefined) {
+                if ((key.startsWith(prefix) || key.startsWith("desktop_pos_" + user.id + "_") || key === installedKey) && val !== null && val !== undefined) {
                     if (localStorage.getItem(key) !== String(val)) {
                         localStorage.setItem(key, String(val));
                         changed = true;

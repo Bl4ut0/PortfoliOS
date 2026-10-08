@@ -9,6 +9,36 @@ window.SystemFS = {
     dbVersion: 2,
     savedGamesRoot: "/Saved Games",
 
+    workspacePrefix(userId = window.state?.currentUserId) {
+        return userId === "private" || /^private_[a-zA-Z0-9_-]+$/.test(userId || "") ? "/.workspaces/" + userId : "";
+    },
+
+    isSharedPath(path) {
+        return ["/apps", "/ROMs", "/etc", "/home"].some(root => path === root || path.startsWith(root + "/"));
+    },
+
+    storagePath(path, prefix = this.workspacePrefix()) {
+        if (path.startsWith("/.workspaces")) throw new Error("Workspace storage paths are internal.");
+        const publicGuest = window.state?.currentUserId === "bl4ut0" && (path === "/home/guest" || path.startsWith("/home/guest/"));
+        if (!publicGuest && path.startsWith("/home/") && !path.startsWith("/home/" + (window.state?.currentUserId || "bl4ut0") + "/") && path !== "/home/" + (window.state?.currentUserId || "bl4ut0")) {
+            throw new Error("That home belongs to another profile.");
+        }
+        return prefix && !this.isSharedPath(path) ? prefix + (path === "/" ? "" : path) : path;
+    },
+
+    visibleRecord(record, prefix = this.workspacePrefix()) {
+        if (!record) return null;
+        if (record.path.startsWith("/.workspaces/")) {
+            if (!prefix || !(record.path === prefix || record.path.startsWith(prefix + "/"))) return null;
+            const path = record.path.slice(prefix.length) || "/";
+            if (path === "/") return null;
+            return { ...record, path, parent: record.parent.slice(prefix.length) || "/" };
+        }
+        const publicGuest = window.state?.currentUserId === "bl4ut0" && (record.path === "/home/guest" || record.path.startsWith("/home/guest/"));
+        if (!publicGuest && record.path.startsWith("/home/") && record.path !== "/home/" + (window.state?.currentUserId || "bl4ut0") && !record.path.startsWith("/home/" + (window.state?.currentUserId || "bl4ut0") + "/")) return null;
+        return prefix && !this.isSharedPath(record.path) ? null : record;
+    },
+
     normalizePath(path = "/") {
         if (typeof path !== "string" || path.trim() === "") return "/";
         const parts = [];
@@ -114,6 +144,7 @@ window.SystemFS = {
                 };
 
                 try {
+                    await this.migrateLegacyPrivateWorkspace();
                     await this.cleanupLegacyPaths();
                     await this.ensureDefaultFiles();
                     if (window.EventBus) {
@@ -146,7 +177,7 @@ window.SystemFS = {
             if (!file || !file.path) return;
 
             if (file.path === "/DOOM.WAD") {
-                store.delete(file.path);
+                store.delete(this.storagePath(file.path));
                 console.log("PortfoliOS: Cleaned up legacy visible DOOM.WAD.");
                 return;
             }
@@ -158,19 +189,76 @@ window.SystemFS = {
             if (cleanPath !== file.path || cleanParent !== file.parent || cleanName !== file.name) {
                 store.put({
                     ...file,
-                    path: cleanPath,
-                    parent: cleanParent,
+                    path: this.storagePath(cleanPath),
+                    parent: this.storagePath(cleanParent),
                     name: cleanName,
                     lastModified: file.lastModified || Date.now()
                 });
                 if (cleanPath !== file.path) {
-                    store.delete(file.path);
+                    store.delete(this.storagePath(file.path));
                     console.log(`PortfoliOS: Migrated legacy path ${file.path} -> ${cleanPath}`);
                 }
             }
         });
 
         await this.transactionDone(transaction);
+    },
+
+    async migrateProfileWorkspace(fromId, toId) {
+        await this.ensureReady();
+        await new Promise((resolve, reject) => {
+            const tx = this.db.transaction(["files"], "readwrite");
+            const store = tx.objectStore("files");
+            const request = store.openCursor();
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+            request.onsuccess = () => {
+                const cursor = request.result;
+                if (!cursor) return;
+                const record = cursor.value;
+                const home = "/home/" + fromId;
+                const workspace = "/.workspaces/" + fromId;
+                let copy = null;
+                if (record.path === home || record.path.startsWith(home + "/")) {
+                    copy = { ...record, path: record.path.replace(home, "/home/" + toId), parent: record.parent.replace(home, "/home/" + toId) };
+                } else if (record.path.startsWith(workspace + "/")) {
+                    copy = { ...record, path: record.path.replace(workspace, "/.workspaces/" + toId), parent: record.parent.replace(workspace, "/.workspaces/" + toId) };
+                } else if (fromId === "private" && !record.path.startsWith("/.") && !this.isSharedPath(record.path)) {
+                    copy = { ...record, path: "/.workspaces/" + toId + record.path, parent: "/.workspaces/" + toId + (record.parent === "/" ? "" : record.parent) };
+                }
+                if (copy) {
+                    // The new namespace's preferences are generated from migrated local keys.
+                    if (copy.path.endsWith("/settings.json")) { cursor.continue(); return; }
+                    const existing = store.get(copy.path);
+                    existing.onsuccess = () => { if (!existing.result) store.put(copy); };
+                }
+                cursor.continue();
+            };
+        });
+    },
+
+    async migrateLegacyPrivateWorkspace() {
+        if (window.state?.currentUserId !== "private" || !window.localStorage?.getItem("bl4ut0_private_user_profile") || window.localStorage.getItem("bl4ut0_private_workspace_migrated")) return;
+        await this.ensureReady();
+        await new Promise((resolve, reject) => {
+            const tx = this.db.transaction(["files"], "readwrite");
+            const store = tx.objectStore("files");
+            const request = store.openCursor();
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+            request.onsuccess = () => {
+                const cursor = request.result;
+                if (!cursor) return;
+                const record = cursor.value;
+                if (!record.path.startsWith("/.") && !this.isSharedPath(record.path)) {
+                    const copy = { ...record, path: "/.workspaces/private" + record.path, parent: "/.workspaces/private" + (record.parent === "/" ? "" : record.parent) };
+                    const existing = store.get(copy.path);
+                    existing.onsuccess = () => { if (!existing.result) store.put(copy); };
+                }
+                cursor.continue();
+            };
+        });
+        window.localStorage.setItem("bl4ut0_private_workspace_migrated", "1");
     },
 
     async ensureDefaultFiles() {
@@ -256,13 +344,15 @@ window.SystemFS = {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(["files"], "readonly");
             const store = transaction.objectStore("files");
-            const request = store.get(cleanPath);
-            request.onsuccess = () => resolve(request.result || null);
+            const prefix = this.workspacePrefix();
+            const request = store.get(this.storagePath(cleanPath, prefix));
+            request.onsuccess = () => resolve(this.visibleRecord(request.result, prefix));
             request.onerror = () => reject(request.error || new Error(`Failed to read ${cleanPath}`));
         });
     },
 
     async writeFile(path, name, parent, data, size, type, isDirectory = false, options = {}) {
+        const writingUser = window.state?.currentUserId;
         await this.ensureReady();
 
         const cleanPath = this.normalizePath(path);
@@ -277,6 +367,7 @@ window.SystemFS = {
             await this.ensureDirectory(cleanParent, { silent: true });
         }
 
+        if (window.state?.currentUserId !== writingUser) throw new Error("Profile changed before the file could be saved. Please retry in the intended workspace.");
         const record = {
             path: cleanPath,
             name: cleanName,
@@ -291,7 +382,8 @@ window.SystemFS = {
 
         const transaction = this.db.transaction(["files"], "readwrite");
         const store = transaction.objectStore("files");
-        store.put(record);
+        const prefix = this.workspacePrefix();
+        store.put({ ...record, path: this.storagePath(cleanPath, prefix), parent: this.storagePath(cleanParent, prefix) });
         await this.transactionDone(transaction);
 
         if (!options.silent && window.EventBus) {
@@ -314,7 +406,7 @@ window.SystemFS = {
 
         const transaction = this.db.transaction(["files"], "readwrite");
         const store = transaction.objectStore("files");
-        store.delete(cleanPath);
+        store.delete(this.storagePath(cleanPath));
         await this.transactionDone(transaction);
 
         if (!options.silent && window.EventBus) {
@@ -332,6 +424,7 @@ window.SystemFS = {
 
         const record = await this.readFile(cleanPath);
         const parent = record ? record.parent : this.getParentPath(cleanPath);
+        const storedPath = this.storagePath(cleanPath);
 
         await new Promise((resolve, reject) => {
             const transaction = this.db.transaction(["files"], "readwrite");
@@ -347,7 +440,7 @@ window.SystemFS = {
                 if (!cursor) return;
 
                 const item = cursor.value;
-                if (item.path === cleanPath || item.path.startsWith(`${cleanPath}/`)) {
+                if (item.path === storedPath || item.path.startsWith(`${storedPath}/`)) {
                     cursor.delete();
                 }
                 cursor.continue();
@@ -365,6 +458,8 @@ window.SystemFS = {
         await this.ensureReady();
 
         const cleanParent = this.normalizePath(parentDir);
+        const prefix = this.workspacePrefix();
+        const storedParent = this.storagePath(cleanParent, prefix);
 
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(["files"], "readonly");
@@ -378,13 +473,14 @@ window.SystemFS = {
                 resolve(files);
             };
 
-            if (store.indexNames.contains("parent")) {
+            if (cleanParent !== "/" && store.indexNames.contains("parent")) {
                 const index = store.index("parent");
-                const request = index.openCursor(IDBKeyRange.only(cleanParent));
+                const request = index.openCursor(IDBKeyRange.only(storedParent));
                 request.onsuccess = () => {
                     const cursor = request.result;
                     if (cursor) {
-                        files.push(cursor.value);
+                        const visible = this.visibleRecord(cursor.value, prefix);
+                        if (visible) files.push(visible);
                         cursor.continue();
                     } else {
                         finish();
@@ -398,8 +494,9 @@ window.SystemFS = {
             request.onsuccess = () => {
                 const cursor = request.result;
                 if (cursor) {
-                    if (cursor.value.parent === cleanParent) {
-                        files.push(cursor.value);
+                    if (cursor.value.parent === storedParent || (cleanParent === "/" && cursor.value.parent === "/")) {
+                        const visible = this.visibleRecord(cursor.value, prefix);
+                    if (visible) files.push(visible);
                     }
                     cursor.continue();
                 } else {
@@ -412,6 +509,7 @@ window.SystemFS = {
 
     async getAllFiles() {
         await this.ensureReady();
+        const prefix = this.workspacePrefix();
 
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(["files"], "readonly");
@@ -422,7 +520,8 @@ window.SystemFS = {
             request.onsuccess = () => {
                 const cursor = request.result;
                 if (cursor) {
-                    files.push(cursor.value);
+                    const visible = this.visibleRecord(cursor.value, prefix);
+                    if (visible) files.push(visible);
                     cursor.continue();
                 } else {
                     files.sort((a, b) => a.path.localeCompare(b.path, undefined, { sensitivity: "base" }));

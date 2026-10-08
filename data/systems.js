@@ -238,12 +238,12 @@ window.systems = [
     {
         id: "wardenit",
         title: "WardenIT",
-        type: "Professional services identity",
-        status: "Planned",
+        type: "Professional services website",
+        status: "Active",
         icon: "fa-solid fa-briefcase",
         color: "#f59e0b",
         summary: "The professional/business node for systems administration, support experience, infrastructure work, and client-facing services.",
-        signal: "This can become the clean route for resume material, consulting language, client trust signals, and professional contact flow.",
+        signal: "The WardenIT website has been created as the professional services route. Next: connect its live URL, service details, and contact flow to this portfolio.",
         tech: ["Linux admin", "SLA support", "PowerShell", "Active Directory", "Infrastructure"],
         links: [],
         position: [86, 45]

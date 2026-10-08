@@ -116,7 +116,7 @@
             { id: "guildcraft-dev", sourceId: "guildcraft", headline: "GuildCraft community operations platform", appId: "guildcraft" },
             { id: "survival-ai-roadmap", sourceId: "survival-ai", headline: "Survival AI local-first knowledge system", appId: "survival-ai" },
             { id: "status-roadmap", sourceId: "status", headline: "Public Status Console roadmap", appId: "status" },
-            { id: "wardenit-roadmap", sourceId: "wardenit", headline: "WardenIT professional services route", appId: "wardenit" }
+            { id: "wardenit-roadmap", sourceId: "wardenit", headline: "WardenIT professional services website launched", appId: "wardenit" }
         ]
     };
 
