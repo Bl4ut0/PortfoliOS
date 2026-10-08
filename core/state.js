@@ -33,6 +33,17 @@
         gdriveConnected: false
     };
 
+    // Public visits are disposable; reset before state reads saved preferences.
+    window.resetPublicLocalState = (storage = typeof localStorage !== "undefined" ? localStorage : window.localStorage) => {
+        if (!storage) return;
+        const legacy = new Set(['bl4ut0_installed_apps', 'bl4ut0Wallpaper', 'bl4ut0Volume', 'bl4ut0ThemeId', 'bl4ut0ThemePrimary', 'bl4ut0ThemeAccent', 'bl4ut0DesktopResolution', 'bl4ut0Screensaver', 'bl4ut0ScreensaverDelay']);
+        const keys = Array.from({length:storage.length}, (_, index) => storage.key(index));
+        keys.forEach(key => {
+            if (key && (key.startsWith('bl4ut0_bl4ut0_') || key.startsWith('desktop_pos_bl4ut0_') || legacy.has(key))) storage.removeItem(key);
+        });
+    };
+    window.resetPublicLocalState();
+
     // Load initial values from storage if available
     if (window.Storage) {
         let hasPersonalProfile = false;

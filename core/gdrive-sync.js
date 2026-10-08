@@ -199,6 +199,8 @@ window.GDriveSync = {
     },
 
     canPresentReconnectPrompt() {
+        const userId = window.state?.currentUserId;
+        if (!(userId === "private" || /^private_[a-zA-Z0-9_-]+$/.test(userId || ""))) return false;
         if (document.getElementById("session-chooser")) return false;
         const view = window.state?.view || document.body?.dataset?.view;
         const bootScreen = document.getElementById("boot-screen");
@@ -1018,6 +1020,11 @@ if (window.EventBus) {
             window.GDriveSync.googleProfile = cached.profile;
             window.GDriveSync.pendingReconnectReason = null;
             window.GDriveSync.emitAuthChanged("connected");
+            return;
+        }
+        if (user.id === "bl4ut0") {
+            window.GDriveSync.pendingReconnectReason = null;
+            window.GDriveSync.googleProfile = null;
             return;
         }
         const restored = await window.GDriveSync.restoreSession({ promptOnInvalid: true });

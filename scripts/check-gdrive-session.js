@@ -94,7 +94,13 @@ vm.runInNewContext(
     windowObject.state.view = "quick";
     assert.strictEqual(sync.canPresentReconnectPrompt(), false, "the reconnect prompt must never be shown in Quick");
     windowObject.state.view = "desktop";
-    assert.strictEqual(sync.canPresentReconnectPrompt(), true, "Desktop may present a pending reconnect request after selection");
+    assert.strictEqual(sync.canPresentReconnectPrompt(), false, 'Public Desktop must never request Drive reconnect');
+    windowObject.state.view = 'mobile';
+    assert.strictEqual(sync.showReconnectPrompt('expired'), false, 'Public Mobile must never show Drive reconnect');
+    windowObject.state.currentUserId = 'private_example';
+    windowObject.state.view = 'desktop';
+    assert.strictEqual(sync.canPresentReconnectPrompt(), true, 'Private Desktop can request Drive reconnect');
+    windowObject.state.currentUserId = 'bl4ut0';
     windowObject.state.systemStarted = false;
     const freshInstall = await sync.restoreSession({ promptOnInvalid: false });
     assert.strictEqual(freshInstall.status, "disconnected", "a fresh browser without a saved account must remain disconnected");
@@ -185,9 +191,19 @@ vm.runInNewContext(
     assert.strictEqual(privateProfile.email, "test@example.com");
     assert(records.has("/home/private_google-test-user/settings.json"), "private preferences must enter SystemFS before backup");
     assert(records.has("/home/private_google-test-user/.auth/google-drive.json"), "connection metadata must belong to the private workspace");
+    localApi.set('bl4ut0_bl4ut0_Wallpaper', 'custom');
+    localApi.set('bl4ut0_installed_apps', '["diablo"]');
+    localApi.set('desktop_pos_bl4ut0_store', '{"x":999}');
+    localApi.set('bl4ut0_bl4ut0_mobile_home_v1', '{"custom":true}');
+    localApi.set('bl4ut0_private_google-test-user_Wallpaper', 'private-custom');
     const reloadWindow = { Storage: { local: localApi } };
     vm.runInNewContext(fs.readFileSync(path.join(root, "core/state.js"), "utf8"), { window: reloadWindow, localStorage: windowObject.localStorage, console });
     assert.strictEqual(reloadWindow.state.currentUserId, "private_google-test-user", "a reload must restore the remembered Google private workspace");
+    assert.strictEqual(localApi.get('bl4ut0_installed_apps'), null, 'reload removes public installed apps');
+    assert.strictEqual(localApi.get('bl4ut0_bl4ut0_Wallpaper'), null, 'reload removes public preferences');
+    assert.strictEqual(localApi.get('desktop_pos_bl4ut0_store'), null, 'reload removes public icon layout');
+    assert.strictEqual(localApi.get('bl4ut0_bl4ut0_mobile_home_v1'), null, 'reload removes public mobile layout');
+    assert.strictEqual(localApi.get('bl4ut0_private_google-test-user_Wallpaper'), 'private-custom', 'reload preserves private preferences');
     assert.strictEqual(reloadWindow.state.gdriveConnected, false, "remembered identity must not impersonate a live Google authorization");
     sandbox.fetch = async () => ({ ok: true, json: async () => ({ sub: "another-user", email: "other@example.com" }) });
     windowObject.google.accounts.oauth2.initTokenClient = config => ({ requestAccessToken: options => {

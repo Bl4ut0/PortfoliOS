@@ -40,7 +40,7 @@
                 <div class="session-chooser-accounts">
                     <button type="button" class="session-account" data-session-public>
                         <span class="session-account-icon"><img data-session-avatar="public" alt=""></span>
-                        <span><strong>Bl4ut0 public profile</strong><small>Public workspace · Enter</small></span>
+                        <span><strong>Bl4ut0 public profile</strong><small>Fresh public workspace · Enter</small></span>
                         <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                     </button>
                     ${Object.entries(profiles).filter(([id]) => window.isPrivateUser?.(id)).map(([id, profile]) => `
@@ -112,6 +112,7 @@
             if (button.hasAttribute("data-session-public")) {
                 await window.prepareProfileSwitch();
                 window.setCurrentUser("bl4ut0");
+                await window.SystemFS?.ensureDefaultFiles?.();
                 complete();
                 return;
             }

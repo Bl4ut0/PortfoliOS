@@ -156,3 +156,5 @@ Each Google account uses a stable subject ID, a separate SystemFS home, and a se
 Account identity remains remembered after reload, while cloud credentials stay in memory. Reconnect to resume Drive backup. Production uses auth/google.php as a popup endpoint with compatible COOP headers while the main game/AI shell remains isolated. The endpoint sends its own PHP response headers, with .htaccess as a fallback on Apache hosts.
 
 For filesystem changes, serve the repo and open scripts/check-profile-filesystem.html. It uses a disposable test database to verify account isolation, recursive deletes, backup paths, and pending-save races.
+
+Public Bl4ut0 sessions are disposable: each page reload clears public SystemFS documents, saves, ROM imports, installed-app selections, preferences, and desktop/mobile layout. Built-in portfolio apps and default welcome files remain. Private account files and preferences persist. Downloaded app runtime binaries remain as shared device caches; resetting public installation selections does not remove a private account’s cached apps.

@@ -23,11 +23,17 @@ window.SystemFS = {
         if (!publicGuest && path.startsWith("/home/") && !path.startsWith("/home/" + (window.state?.currentUserId || "bl4ut0") + "/") && path !== "/home/" + (window.state?.currentUserId || "bl4ut0")) {
             throw new Error("That home belongs to another profile.");
         }
+        if (!prefix && (path === '/ROMs' || path.startsWith('/ROMs/'))) return '/.public' + path;
         return prefix && !this.isSharedPath(path) ? prefix + (path === "/" ? "" : path) : path;
     },
 
     visibleRecord(record, prefix = this.workspacePrefix()) {
         if (!record) return null;
+        if (record.path.startsWith('/.public/')) {
+            if (prefix) return null;
+            return { ...record, path:record.path.slice('/.public'.length), parent:record.parent.slice('/.public'.length) || '/' };
+        }
+        if (!prefix && (record.path === '/ROMs' || record.path.startsWith('/ROMs/'))) return null;
         if (record.path.startsWith("/.workspaces/")) {
             if (!prefix || !(record.path === prefix || record.path.startsWith(prefix + "/"))) return null;
             const path = record.path.slice(prefix.length) || "/";
@@ -145,6 +151,7 @@ window.SystemFS = {
 
                 try {
                     await this.migrateLegacyPrivateWorkspace();
+                    await this.resetPublicWorkspace();
                     await this.cleanupLegacyPaths();
                     await this.ensureDefaultFiles();
                     if (window.EventBus) {
@@ -164,6 +171,24 @@ window.SystemFS = {
     async ensureReady() {
         if (this.db) return this.db;
         return this.init();
+    },
+
+    async resetPublicWorkspace() {
+        // Work directly on physical records so the remembered private user is
+        // irrelevant. Never delete private homes, workspaces, or shared caches.
+        const tx = this.db.transaction(['files'], 'readwrite');
+        const done = this.transactionDone(tx);
+        const cursorRequest = tx.objectStore('files').openCursor();
+        cursorRequest.onsuccess = () => {
+            const cursor = cursorRequest.result;
+            if (!cursor) return;
+            const path = cursor.value.path;
+            const publicHome = ['/home/bl4ut0', '/home/guest'].some(root => path === root || path.startsWith(root + '/'));
+            const publicRom = path === '/.public' || path.startsWith('/.public/');
+            if (publicHome || publicRom || (!path.startsWith('/.') && !this.isSharedPath(path))) cursor.delete();
+            cursor.continue();
+        };
+        await done;
     },
 
     async cleanupLegacyPaths() {
