@@ -591,7 +591,7 @@ window.GDriveSync = {
                 }
             };
             const params = new URLSearchParams({ nonce, clientId, scope: this.scopes, prompt: selectAccount ? "select_account" : "", hint: selectAccount ? "" : (this.getSavedGoogleProfile()?.email || "") });
-            const popup = window.open("/auth/google.html#" + params, "portfolios-google-signin", "popup,width=520,height=650");
+            const popup = window.open("/auth/google.php#" + params, "portfolios-google-signin", "popup,width=520,height=650");
             if (!popup) finish(reject, new Error("Google sign-in was blocked. Allow popups for this site, then try again."));
         });
     },

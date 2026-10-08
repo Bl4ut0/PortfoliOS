@@ -13,10 +13,10 @@ DirectoryIndex index.php index.html
 </IfModule>
 
 # Google OAuth needs popup communication; the game/AI shell remains isolated.
-<Files "google.html">
+<FilesMatch "^google\.(html|php)$">
     <IfModule mod_headers.c>
         Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
         Header always unset Cross-Origin-Embedder-Policy
         Header always set Cache-Control "no-store"
     </IfModule>
-</Files>
+</FilesMatch>

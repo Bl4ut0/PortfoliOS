@@ -15,7 +15,7 @@ The modular app contracts, separate mobile lifecycle, IndexedDB filesystem, and 
 5. Name-derived cloud folders were unstable and could collide. Google profiles use subject-derived folders.
 6. Settings rewrites advanced modification times even without changes. Equal content now retains its timestamp, and first sync restores an existing cloud preferences file before uploading local defaults.
 7. Restoring preferences accepted arbitrary local-storage keys. Restoration now restricts writes to the active profile's settings, app selections, and icon positions.
-8. Production responds with COOP same-origin and COEP require-corp, which can interfere with Google OAuth popups. A dedicated popup page gets compatible headers; the main shell keeps isolation.
+8. Production responds with COOP same-origin and COEP require-corp, which can interfere with Google OAuth popups. A dedicated popup page gets explicit PHP headers because this production host does not apply the Apache rules to static HTML; the main PHP shell keeps isolation.
 9. Sync could record success after path failures. Failed paths now prevent the success manifest/timestamp from advancing.
 10. WardenIT still said Planned after website creation. It now says Active; an outbound URL awaits the supplied address.
 

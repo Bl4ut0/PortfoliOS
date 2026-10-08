@@ -228,7 +228,7 @@ vm.runInNewContext(
         close() { this.closed = true; }
     };
     windowObject.open = url => {
-        assert(url.startsWith("/auth/google.html#"));
+        assert(url.startsWith("/auth/google.php#"));
         assert(!url.includes("access_token"), "the popup URL must never contain a bearer token");
         const params = new URLSearchParams(url.split("#")[1]);
         assert.strictEqual(params.get("prompt"), "select_account");

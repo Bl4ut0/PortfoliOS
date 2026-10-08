@@ -153,6 +153,6 @@ Choosing Desktop or Mobile opens the shared account chooser. Continue with Bl4ut
 
 Each Google account uses a stable subject ID, a separate SystemFS home, and a separate virtual documents/downloads/music/pictures/save workspace. App engine binaries and ROM installation files are shared device resources. Legacy private data is copied during the first account migration without deleting the original files.
 
-Account identity remains remembered after reload, while cloud credentials stay in memory. Reconnect to resume Drive backup. Production uses auth/google.html as a popup endpoint with compatible COOP headers while the main game/AI shell remains isolated. The endpoint must be deployed with .htaccess.
+Account identity remains remembered after reload, while cloud credentials stay in memory. Reconnect to resume Drive backup. Production uses auth/google.php as a popup endpoint with compatible COOP headers while the main game/AI shell remains isolated. The endpoint sends its own PHP response headers, with .htaccess as a fallback on Apache hosts.
 
 For filesystem changes, serve the repo and open scripts/check-profile-filesystem.html. It uses a disposable test database to verify account isolation, recursive deletes, backup paths, and pending-save races.
