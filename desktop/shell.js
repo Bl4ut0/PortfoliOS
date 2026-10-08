@@ -107,14 +107,17 @@ window.boot = async () => {
         if (result?.valid) window.triggerGDriveSync?.({ silent: true });
     });
 
-    // Programmatically open default windows from state
-    if (state.openApps) {
-        Array.from(state.openApps).forEach((appId) => {
-            if (window.openDesktopWindow) {
-                window.openDesktopWindow(appId);
+    // App runtimes start only after the session entry screen has completed.
+    window.startSelectedWorkspace = () => {
+        if (!state.workspaceStarted) {
+            state.workspaceStarted = true;
+            if (state.view === 'desktop') {
+                Array.from(state.openApps || []).forEach(appId => window.openDesktopWindow?.(appId));
+                window.startCanvas?.();
             }
-        });
-    }
+            if (window.updateClock) setInterval(window.updateClock, 30000);
+        }
+    };
 
     if (window.initDesktopIconDragging) window.initDesktopIconDragging();
     if (window.updateClock) window.updateClock();
@@ -678,14 +681,12 @@ window.boot = async () => {
         const enterButton = event.target.closest("[data-enter-view]");
         if (enterButton) {
             const bootScreen = window.byId ? window.byId("boot-screen") : document.getElementById("boot-screen");
-            if (bootScreen) bootScreen.classList.add("hidden");
+            // Build the sign-in screen synchronously under the boot screen.
+            state.systemStarted = true;
             if (window.switchView) window.switchView(enterButton.dataset.enterView);
+            if (bootScreen) bootScreen.classList.add("hidden");
             
-            if (!state.systemStarted) {
-                state.systemStarted = true;
-                if (window.startCanvas) window.startCanvas();
-                if (window.updateClock) setInterval(window.updateClock, 30000);
-            }
+            if (enterButton.dataset.enterView === "quick") window.startSelectedWorkspace?.();
         }
 
         if (!event.target.closest(".topbar")) {

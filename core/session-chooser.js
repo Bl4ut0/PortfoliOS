@@ -9,6 +9,7 @@
         window.clearInterval(clockTimer);
         clockTimer = null;
         document.getElementById("session-chooser")?.remove();
+        document.body.classList.remove("session-locked");
         inerted.forEach(([node, value]) => { node.inert = value; });
         inerted = [];
         previousFocus?.focus?.();
@@ -61,9 +62,25 @@
             </div>
             <footer class="session-lock-footer"><button type="button" data-session-experience><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Change experience</button><span><i class="fa-solid fa-lock" aria-hidden="true"></i> Your personal workspace</span></footer>
         `;
-        inerted = Array.from(document.body.children).filter(node => node instanceof HTMLElement).map(node => [node, node.inert]);
+        const mobile = overlay.dataset.experience === 'mobile';
+        const host = mobile ? document.getElementById('mobile-device') : document.body;
+        // Inert only sibling branches: never inert the phone containing sign-in.
+        inerted = [];
+        let branch = host;
+        const capture = node => { if (node instanceof HTMLElement) inerted.push([node, node.inert]); };
+        Array.from(host.children).forEach(capture);
+        while (branch !== document.body) {
+            Array.from(branch.parentElement.children).filter(node => node !== branch).forEach(capture);
+            branch = branch.parentElement;
+        }
         inerted.forEach(([node]) => { node.inert = true; });
-        document.body.appendChild(overlay);
+        document.body.classList.add('session-locked');
+        if (mobile) {
+            overlay.querySelector('.session-lock-header').innerHTML = '<span data-session-status-time></span><span aria-label="Device status"><i class="fa-solid fa-signal" aria-hidden="true"></i><i class="fa-solid fa-wifi" aria-hidden="true"></i><i class="fa-solid fa-battery-full" aria-hidden="true"></i></span>';
+            overlay.querySelector('#session-chooser-title').textContent = 'Choose a user';
+            overlay.querySelector('.session-lock-footer > span').innerHTML = '<span class="session-mobile-gesture" aria-hidden="true"></span>';
+        }
+        host.appendChild(overlay);
         overlay.querySelectorAll('[data-session-avatar]').forEach(image => {
             const id = image.dataset.sessionAvatar;
             window.setProfileAvatar(image, id === 'public' ? 'identity-portrait.jpg' : profiles[id]?.avatar, '');
@@ -71,6 +88,8 @@
         const updateClock = () => {
             const now = new Date();
             overlay.querySelector('[data-session-time]').textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            const statusTime = overlay.querySelector('[data-session-status-time]');
+            if (statusTime) statusTime.textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             overlay.querySelector('[data-session-date]').textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
         };
         updateClock();
@@ -79,14 +98,15 @@
         const complete = () => {
             window.state.sessionChosen = true;
             window.GDriveSync.pendingReconnectReason = null;
+            window.startSelectedWorkspace?.();
             window.closeSessionChooser();
         };
         overlay.addEventListener("click", async event => {
             const button = event.target.closest("button");
             if (!button || button.disabled) return;
             if (button.hasAttribute('data-session-experience')) {
-                window.closeSessionChooser();
                 document.getElementById('boot-screen')?.classList.remove('hidden');
+                window.closeSessionChooser();
                 return;
             }
             if (button.hasAttribute("data-session-public")) {
@@ -151,8 +171,6 @@
 
     window.EventBus?.on("view:changed", view => {
         if (!["desktop", "mobile"].includes(view)) return;
-        window.setTimeout(() => {
-            if (window.state?.systemStarted && !window.state.sessionChosen) window.openSessionChooser();
-        }, 0);
+        if (window.state?.systemStarted && !window.state.sessionChosen) window.openSessionChooser();
     });
 })();

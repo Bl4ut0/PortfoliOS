@@ -35,3 +35,24 @@
  .session-lock-footer { flex-wrap:wrap; justify-content:center; font-size:12px; }
 }
 @media(prefers-reduced-motion:reduce) { .session-account { transition:none; } .session-account:hover { transform:none; } }
+
+/* The selected shell stays covered until an account has entered. */
+body.session-locked [data-view-panel="desktop"], body.session-locked .topbar, body.session-locked #topbar-tab { visibility:hidden; }
+body.session-locked #mobile-device > :not(.session-chooser) { visibility:hidden; }
+#mobile-device > .session-chooser[data-experience=mobile] { position:absolute; inset:0; z-index:200; border-radius:inherit; padding:0; background:radial-gradient(ellipse at 20% 10%,#254959,transparent 65%),var(--mobile-bg); color:var(--mobile-fg); font-family:inherit; }
+#mobile-device .session-lock-header { flex-shrink:0; min-height:2.75rem; padding:0 22px; font-size:12px; color:var(--mobile-fg); letter-spacing:0; }
+#mobile-device .session-lock-header i { margin:0 0 0 9px; font-size:11px; }
+#mobile-device .session-chooser-panel { width:100%; padding:24px 20px; margin:auto 0; }
+#mobile-device .session-lock-clock { margin-bottom:26px; gap:6px; }
+#mobile-device [data-session-time] { font-size:52px; }
+#mobile-device [data-session-date] { font-size:13px; }
+#mobile-device .session-chooser h1 { font-size:25px; }
+#mobile-device .session-chooser-panel > p { font-size:13px; }
+#mobile-device .session-chooser-accounts { gap:10px; margin:22px 0; }
+#mobile-device .session-account { min-height:88px; padding:14px; border-radius:18px; background:var(--mobile-surface-raised); border-color:var(--mobile-outline-strong); }
+#mobile-device .session-account strong { font-size:14px; } #mobile-device .session-account small { font-size:11px; }
+#mobile-device .session-account-icon { width:48px; height:48px; }
+#mobile-device .session-chooser-note { font-size:11px; }
+#mobile-device .session-lock-footer { flex-shrink:0; flex-direction:column; gap:16px; padding:0 20px 12px; }
+#mobile-device .session-lock-footer button { border:0; background:transparent; font-size:12px; }
+.session-mobile-gesture { display:block; width:100px; height:4px; border-radius:4px; background:#f8fafc; opacity:.65; }

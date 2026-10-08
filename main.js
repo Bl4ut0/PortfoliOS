@@ -12,7 +12,7 @@ window.addEventListener("DOMContentLoaded", () => {
             window.addSystemLog?.(level, data.message || "Service Worker message", data.detail || null);
         });
 
-        navigator.serviceWorker.register("/sw.js?v=2026.10.08.6")
+        navigator.serviceWorker.register("/sw.js?v=2026.10.08.7")
             .then((reg) => console.log("PortfoliOS: Service Worker registered. Scope:", reg.scope))
             .catch((err) => console.warn("PortfoliOS: Service Worker registration failed:", err));
     }
