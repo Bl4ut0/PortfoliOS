@@ -37,8 +37,7 @@ function renderSettingsUser() {
     ];
     avatarEls.forEach((avatar) => {
         if (!avatar) return;
-        avatar.src = user.avatar || "";
-        avatar.alt = `${user.displayName} profile picture`;
+        window.setProfileAvatar(avatar, user.avatar, `${user.displayName} profile picture`);
     });
 
     const settingsName = document.getElementById("settings-user-name");
@@ -210,7 +209,7 @@ function updateGDriveUI() {
     const profile = window.GDriveSync?.googleProfile || window.GDriveSync?.getSavedGoogleProfile?.();
     if (accountCard) accountCard.hidden = !profile;
     if (accountAvatar) {
-        accountAvatar.src = profile?.picture || "";
+        window.setProfileAvatar(accountAvatar, profile?.picture, `${profile?.name || "Google account"} profile picture`);
         accountAvatar.hidden = !profile?.picture;
     }
     if (accountName) accountName.textContent = profile?.name || "Google Drive account";

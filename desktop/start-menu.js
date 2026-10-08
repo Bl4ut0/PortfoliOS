@@ -125,8 +125,7 @@ window.renderStartUser = () => {
 
     const stripAvatar = window.byId ? window.byId("start-user-strip-avatar") : document.getElementById("start-user-strip-avatar");
     if (stripAvatar) {
-        stripAvatar.src = user.avatar || "";
-        stripAvatar.alt = `${user.displayName} profile picture`;
+        window.setProfileAvatar(stripAvatar, user.avatar, `${user.displayName} profile picture`);
     }
 
     const name = window.byId ? window.byId("start-user-name") : document.getElementById("start-user-name");
@@ -152,15 +151,13 @@ window.renderStartUser = () => {
         const savedProfile = window.getSavedPrivateProfile ? window.getSavedPrivateProfile() : null;
         if (isPrivate) {
             const image = document.createElement("img");
-            image.src = user.avatar;
-            image.alt = user.displayName;
+            window.setProfileAvatar(image, user.avatar, user.displayName);
             userAvatarBtn.replaceChildren(image);
             userAvatarBtn.title = `${user.displayName} (Active Private Profile)`;
         } else if (savedProfile) {
             const displayName = savedProfile.name || savedProfile.email || "Private User";
             const image = document.createElement("img");
-            image.src = savedProfile.avatar;
-            image.alt = displayName;
+            window.setProfileAvatar(image, savedProfile.avatar, displayName);
             userAvatarBtn.replaceChildren(image);
             userAvatarBtn.title = `Switch to ${displayName}`;
         } else {

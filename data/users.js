@@ -5,6 +5,19 @@
 
 const DEFAULT_PRIVATE_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='26' fill='%23090d14'/%3E%3Ccircle cx='48' cy='37' r='16' fill='%2322d3ee'/%3E%3Cpath d='M22 78c4-18 18-28 26-28s22 10 26 28' fill='%232dd4bf'/%3E%3C/svg%3E";
 
+// CORS image requests work with the shell's COEP isolation policy.
+window.setProfileAvatar = (image, source, label = 'Profile picture') => {
+    if (!image) return;
+    image.crossOrigin = 'anonymous';
+    image.referrerPolicy = 'no-referrer';
+    image.alt = label;
+    image.onerror = () => {
+        image.onerror = null;
+        image.src = DEFAULT_PRIVATE_AVATAR;
+    };
+    image.src = source || DEFAULT_PRIVATE_AVATAR;
+};
+
 window.userAccounts = [
     {
         id: "bl4ut0",
