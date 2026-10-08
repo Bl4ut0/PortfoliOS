@@ -15,7 +15,7 @@
         previousFocus?.focus?.();
     };
 
-    window.openSessionChooser = () => {
+    window.openSessionChooser = (experience = document.body.dataset.view) => {
         if (document.getElementById("session-chooser")) return;
         if (window.GDriveSync?.syncInProgress) { window.showDesktopToast?.("Wait for the current Drive backup to finish before switching accounts."); return; }
         window.GDriveSync?.closeReconnectPrompt();
@@ -26,7 +26,7 @@
         const overlay = document.createElement("section");
         overlay.id = "session-chooser";
         overlay.className = "session-chooser";
-        overlay.dataset.experience = document.body.dataset.view === "mobile" ? "mobile" : "desktop";
+        overlay.dataset.experience = experience === "mobile" ? "mobile" : "desktop";
         overlay.setAttribute("role", "dialog");
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "session-chooser-title");
@@ -171,6 +171,10 @@
 
     window.EventBus?.on("view:changed", view => {
         if (!["desktop", "mobile"].includes(view)) return;
-        if (window.state?.systemStarted && !window.state.sessionChosen) window.openSessionChooser();
+        if (window.state?.systemStarted && !window.state.sessionChosen) {
+            const existing = document.getElementById('session-chooser');
+            if (existing && existing.dataset.experience !== view) window.closeSessionChooser();
+            window.openSessionChooser(view);
+        }
     });
 })();

@@ -5,7 +5,7 @@
 
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-2026.10.08.8";
+const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-2026.10.08.9";
 const MOBILE_SHELL_ASSETS = [
     "/",
     "/index.html",
