@@ -128,15 +128,9 @@ window.boot = async () => {
         window.addEventListener("message", window.handleGameRuntimeMessage);
     }
 
-    const requestedView = new URLSearchParams(window.location.search).get("view");
-    if (["desktop", "mobile", "quick"].includes(requestedView)) {
-        document.getElementById("boot-screen")?.classList.add("hidden");
-        window.switchView?.(requestedView);
-        state.systemStarted = true;
-        if (requestedView === "desktop") window.startCanvas?.();
-    } else if (window.runBootSequence) {
-        window.runBootSequence();
-    }
+    // Always present the typed introduction and experience selector, including
+    // reloads whose URL remembers the previously selected view.
+    if (window.runBootSequence) window.runBootSequence();
 
     // Ctrl+C CLI escape keybind
     window.addEventListener("keydown", (event) => {
