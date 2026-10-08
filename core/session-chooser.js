@@ -26,7 +26,7 @@
         const overlay = document.createElement("section");
         overlay.id = "session-chooser";
         overlay.className = "session-chooser";
-        overlay.dataset.experience = window.state?.view === "mobile" ? "mobile" : "desktop";
+        overlay.dataset.experience = document.body.dataset.view === "mobile" ? "mobile" : "desktop";
         overlay.setAttribute("role", "dialog");
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "session-chooser-title");
