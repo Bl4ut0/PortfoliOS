@@ -1,20 +1,37 @@
-.session-chooser { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: radial-gradient(ellipse at top, #133344 0%, #090d14 65%); color: #f1f5f9; }
-.session-chooser-panel { width: min(100%, 580px); margin: auto; }
-.session-chooser-eyebrow { color: #67e8f9; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
-.session-chooser h1 { margin: 12px 0; font-size: clamp(26px, 5vw, 38px); }
-.session-chooser p { color: #b5c5d5; line-height: 1.6; }
-.session-chooser-accounts { display: grid; gap: 12px; margin: 24px 0; }
-.session-account { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; border: 1px solid #395065; background: #142131; color: #f1f5f9; padding: 18px; border-radius: 16px; cursor: pointer; min-height: 88px; }
-.session-account:hover { border-color: #67e8f9; background: #1b3044; }
-.session-account:focus-visible, .session-chooser-offline:focus-visible { outline: 3px solid #67e8f9; outline-offset: 3px; }
-.session-account > span:nth-child(2) { flex: 1; min-width: 0; }
-.session-account strong, .session-account small { display: block; overflow-wrap: anywhere; }
-.session-account strong { font-size: 16px; }
-.session-account small { color: #b5c5d5; margin-top: 5px; line-height: 1.4; }
-.session-account-icon { width: 34px; flex-shrink: 0; font-size: 24px; color: #67e8f9; text-align: center; }
-.session-account-google { border-color: #3b827e; }
-.session-chooser-note { font-size: 12px; }
-.session-chooser .session-chooser-error { color: #fda4af; }
-.session-chooser-offline { border: 1px solid #395065; background: #142131; color: #f1f5f9; border-radius: 10px; padding: 12px 16px; cursor: pointer; }
-.session-chooser button:disabled { opacity: .5; cursor: wait; }
-@media (max-width: 480px) { .session-account { padding: 15px; gap: 12px; } }
+
+.session-chooser { position:fixed; inset:0; z-index:100000; display:flex; flex-direction:column; overflow-y:auto; padding: max(24px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left)); background:radial-gradient(ellipse at 18% 12%, #27546b99, transparent 55%), radial-gradient(ellipse at 85% 90%, #25464e88, transparent 60%), linear-gradient(145deg,#101c2e,#07101b); color:#f1f5f9; font-family:var(--font-body, sans-serif); }
+.session-lock-header,.session-lock-footer { display:flex; justify-content:space-between; align-items:center; gap:24px; color:#cad9e4; font-size:13px; }
+.session-lock-header { letter-spacing:.06em; } .session-lock-header i,.session-lock-footer i { margin-right:8px; }
+.session-chooser-panel { width:min(100%,960px); margin:auto; padding:36px 0; text-align:center; }
+.session-lock-clock { display:grid; gap:8px; margin-bottom:42px; }
+[data-session-time] { font-size:clamp(56px,7vw,88px); font-weight:300; letter-spacing:-.04em; line-height:1.1; }
+[data-session-date] { font-size:17px; color:#d5e3ec; }
+.session-chooser-eyebrow { color:#91b9cc; font-size:12px; letter-spacing:.16em; text-transform:uppercase; }
+.session-chooser h1 { margin:10px 0; font-weight:500; font-size:clamp(24px,4vw,32px); }
+.session-chooser p { color:#b5c5d5; line-height:1.6; }
+.session-chooser-accounts { display:flex; flex-wrap:wrap; justify-content:center; gap:16px; margin:32px 0; }
+.session-account { display:flex; flex-direction:column; align-items:center; gap:18px; width:220px; text-align:center; border:1px solid #8cc4db25; background:#ffffff07; color:#f1f5f9; padding:24px 16px; border-radius:18px; cursor:pointer; min-height:230px; transition:background .18s,border-color .18s,transform .18s; }
+.session-account:hover { border-color:#8ee2ee99; background:#ffffff10; transform:translateY(-3px); }
+.session-account:focus-visible,.session-chooser-offline:focus-visible,.session-lock-footer button:focus-visible { outline:3px solid #67e8f9; outline-offset:4px; }
+.session-account > span:nth-child(2) { flex:1; min-width:0; width:100%; }
+.session-account strong,.session-account small { display:block; overflow-wrap:anywhere; }
+.session-account strong { font-size:16px; font-weight:600; } .session-account small { color:#b5c5d5; margin-top:7px; font-size:12px; line-height:1.5; }
+.session-account > i { color:#8de0e7; font-size:14px; }
+.session-account-icon { display:grid; place-items:center; width:80px; height:80px; flex-shrink:0; font-size:32px; color:#d9f8fb; border:1px solid #c5e8f344; background:#a1d8ed12; border-radius:50%; overflow:hidden; box-shadow:0 8px 24px #0003; }
+.session-account-icon img { width:100%; height:100%; object-fit:cover; }
+.session-chooser-note { max-width:480px; margin:0 auto; font-size:12px; }
+.session-chooser .session-chooser-error { color:#fda4af; }
+.session-chooser-offline,.session-lock-footer button { border:1px solid #8cc4db40; background:#ffffff08; color:#f1f5f9; border-radius:10px; padding:12px 16px; cursor:pointer; }
+.session-chooser button:disabled { opacity:.5; cursor:wait; }
+.session-chooser[aria-busy=true] .session-chooser-eyebrow::after { content:' · Signing in…'; }
+.session-chooser[data-experience=mobile] .session-chooser-accounts { flex-direction:column; align-items:stretch; max-width:480px; margin:28px auto; }
+.session-chooser[data-experience=mobile] .session-account { flex-direction:row; width:100%; min-height:98px; padding:16px; text-align:left; }
+.session-chooser[data-experience=mobile] .session-account-icon { width:56px; height:56px; font-size:24px; }
+@media(max-width:600px) {
+ .session-chooser { padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); }
+ .session-chooser-panel { padding:32px 0; } .session-lock-clock { margin-bottom:28px; }
+ .session-chooser-accounts { flex-direction:column; } .session-account { flex-direction:row; width:100%; min-height:98px; padding:16px; text-align:left; }
+ .session-account-icon { width:56px; height:56px; font-size:24px; }
+ .session-lock-footer { flex-wrap:wrap; justify-content:center; font-size:12px; }
+}
+@media(prefers-reduced-motion:reduce) { .session-account { transition:none; } .session-account:hover { transform:none; } }
