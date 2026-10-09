@@ -5,7 +5,7 @@
 
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-2026.10.08.10";
+const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-2026.10.09.1";
 const MOBILE_SHELL_ASSETS = [
     "/",
     "/index.html",
@@ -40,6 +40,7 @@ const MOBILE_SHELL_ASSETS = [
     "/core/session-chooser.js",
     "/styles/session.css",
     "/core/app-loader.js",
+    "/core/session-context.js",
     "/core/local-ai.js",
     "/core/simple-brain.js",
     "/core/preferences.js",

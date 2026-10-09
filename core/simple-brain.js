@@ -9,6 +9,8 @@
             const query = (rawQuery || "").toLowerCase().trim();
             if (!query) return null;
 
+            const sessionAnswer = window.getAssistantSessionAnswer?.(rawQuery);
+            if (sessionAnswer) return sessionAnswer;
             const isPrivate = window.isPrivateUser();
 
             // Private checks

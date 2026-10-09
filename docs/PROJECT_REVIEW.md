@@ -36,3 +36,9 @@ The modular app contracts, separate mobile lifecycle, IndexedDB filesystem, and 
 A local remembered profile is a workspace choice, not a server-validated security boundary. Profiles on the same browser origin are not protection from someone controlling that browser, page scripts, or extensions. The popup token flow requires reconnecting after reload/expiry. Continuous authenticated sessions need a server-side session design.
 
 Google references: [token model](https://developers.google.com/identity/oauth2/web/guides/use-token-model), [popup setup and COOP](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid), [server-side OAuth](https://developers.google.com/identity/protocols/oauth2/web-server).
+
+## Assistant session grounding — 9 October 2026
+
+Lobe, CLI model requests, and the offline helper now share live, token-free workspace facts. Account-status questions and greetings return deterministic application state; model prompts distinguish an active private profile from paused Google Drive backup. Private status does not disappear when a Drive token expires. Regression checks cover both surfaces, account switching, stale guest labels, and excluding tokens/account identifiers from the session facts.
+
+Recommended follow-ups: make the CLI distinguish Google-managed identity from simulated Unix accounts (the screenshot’s `passwd` command should explain why Google passwords are managed through Google); add useful `top`/`htop` aliases to Task Manager or a process summary; keep account and backup status visible in both Settings and Lobe; then address the measured mobile startup bottlenecks in PERFORMANCE_AUDIT.md.

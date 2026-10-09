@@ -1185,15 +1185,16 @@
     function getPortfolioContext() {
         const isSmallLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) < 500;
         const isConstrainedLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) <= 1000;
-        const systems = window.systems || [];
-        const bookmarks = window.bookmarks || [];
+        const privateProfile = window.getAssistantSessionInfo?.().profile === 'private';
+        const systems = window.getVisibleSystems?.() || window.systems || [];
+        const bookmarks = privateProfile ? [] : (window.bookmarks || []);
         
         let contextText = [
             "Core PortfoliOS Facts:",
             getCoreSystemOverview(),
             "",
-            "Developer Profile:",
-            "Alex (Bl4ut0) is an infrastructure operator, systems builder, addon porter, automation tinkerer, and developer.",
+            privateProfile ? 'Workspace:' : 'Developer Profile:',
+            privateProfile ? 'The current user is in their own private workspace. Do not identify them as the public portfolio owner.' : 'Alex (Bl4ut0) is an infrastructure operator, systems builder, addon porter, automation tinkerer, and developer.',
             "",
             "Key Projects/Systems:"
         ].join("\n");
@@ -1342,7 +1343,9 @@
 
     function buildSystemMessages(prompt, context = {}) {
         const cwd = context.cwd || "/";
-        const user = context.user || "guest";
+        const session = window.getAssistantSessionInfo?.();
+        const user = session?.known ? `${session.profile} profile` : (context.user || "unknown");
+        const sessionContext = window.getAssistantSessionContext?.() || "The active workspace is not available yet. Do not assume the user is signed out.";
         const isChat = context.mode === "chat";
         
         const dataset = getPortfolioContext();
@@ -1372,7 +1375,7 @@
             "}",
             "```",
             "Supported actions:",
-            "• openApp: Opens a desktop application window. Parameter: { \"action\": \"openApp\", \"appId\": string } (e.g., 'settings', 'terminal', 'identity', 'flappy', 'duke3d', 'doom').",
+            "• openApp: Opens a desktop application window. Parameter: { \"action\": \"openApp\", \"appId\": string } (e.g., 'settings', 'cli', 'files', 'browser', 'doomsource', 'diablo').",
             "• closeApp: Closes a desktop application window. Parameter: { \"action\": \"closeApp\", \"appId\": string }.",
             "• notify: Shows a temporary desktop alert/toast. Parameter: { \"action\": \"notify\", \"message\": string }.",
             "• say: Speaks text aloud using text-to-speech. Parameter: { \"action\": \"say\", \"text\": string }.",
@@ -1396,7 +1399,8 @@
         if (isChat) {
             systemPrompt = [
                 "You are 'Lobe', a helpful, chatty cartoon brain mascot assistant built into PortfoliOS.",
-                `You are currently running on ${runtimeType} executing fully in the client browser.`,
+                sessionContext,
+                isCloud ? `The browser is connected to ${runtimeType}.` : `You run on ${runtimeType} in the client browser.`,
                 "You help users learn about Alex (Bl4ut0), navigate the portfolio, play games (DOOM, Diablo), or understand shell commands.",
                 "Answer questions in a friendly, conversational, and informative tone.",
                 "Utilize the Portfolio Dataset below to provide accurate answers about projects, tech stacks, status, and links.",
@@ -1414,7 +1418,8 @@
         } else {
             systemPrompt = [
                 "You are the AI assistant inside PortfoliOS CLI.",
-                `You are currently running on ${runtimeType} executing fully in the client browser.`,
+                sessionContext,
+                isCloud ? `The browser is connected to ${runtimeType}.` : `You run on ${runtimeType} in the client browser.`,
                 "Keep answers concise and practical.",
                 tokenHygiene,
                 groundingRules,
@@ -1824,6 +1829,11 @@
     }
 
     async function chat(prompt, context = {}, onChunk = null) {
+        const sessionAnswer = window.getAssistantSessionAnswer?.(prompt);
+        if (sessionAnswer) {
+            onChunk?.(sessionAnswer);
+            return sessionAnswer;
+        }
         const isCloud = isCloudModel(modelInfo);
         if (status === "generating") {
             throw new Error("Local AI is already answering. Cancel the current response before starting another one.");

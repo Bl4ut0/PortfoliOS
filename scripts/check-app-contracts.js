@@ -954,9 +954,11 @@ async function validateLocalAIServiceRuntimeContract() {
     };
     let streamMode = "complete";
     let fetchStarted = false;
+    let lastRequestBody = null;
     const encoder = new TextEncoder();
     const fetchMock = async (url, options = {}) => {
         fetchStarted = true;
+        lastRequestBody = JSON.parse(options.body || "{}");
         if (streamMode === "cancel") {
             return {
                 ok: true,
@@ -1016,6 +1018,8 @@ async function validateLocalAIServiceRuntimeContract() {
     const windowObject = {
         EventBus: { emit: (name, value) => statusEvents.push({ name, value }) },
         addSystemLog: () => {},
+        state: { currentUserId: "bl4ut0" },
+        GDriveSync: { tokenUserId: "private_test", getToken: () => "test-secret-token" },
         systems: [],
         bookmarks: [],
         crossOriginIsolated: false,
@@ -1054,6 +1058,7 @@ async function validateLocalAIServiceRuntimeContract() {
     };
     windowObject.window = windowObject;
     vm.createContext(sandbox);
+    vm.runInContext(read("core/session-context.js"), sandbox, { filename: "core/session-context.js" });
     vm.runInContext(read("core/local-ai.js"), sandbox, { filename: "core/local-ai.js" });
 
     const migratedModelId = windowObject.LocalAI.getSelectedModelId();
@@ -1072,12 +1077,41 @@ async function validateLocalAIServiceRuntimeContract() {
 
     const chunks = [];
     fetchStarted = false;
-    const response = await windowObject.LocalAI.chat("hello", { mode: "cli" }, (delta) => chunks.push(delta));
+    const response = await windowObject.LocalAI.chat("Explain how streaming works", { mode: "cli" }, (delta) => chunks.push(delta));
     if (response.includes("<image_soft_token>") || chunks.join("").includes("<image_soft_token>")) {
         fail("core/local-ai.js", "internal model tokens escaped the final or streamed output sanitizer");
     }
     if (response !== "Hello from the model." || chunks.join("") !== "Hello from the model.") {
         fail("core/local-ai.js", "sanitized cloud streaming did not preserve normal response text");
+    }
+
+    for (const mode of ['cli', 'chat']) {
+        windowObject.state.currentUserId = 'private_test';
+        windowObject.GDriveSync.tokenUserId = 'private_test';
+        fetchStarted = false;
+        const greeted = await windowObject.LocalAI.chat('hey lobe', { mode });
+        if (fetchStarted || !greeted.includes('private profile is active') || !greeted.includes('backup is connected')) {
+            fail('core/session-context.js', 'greetings must reflect the active private session without invoking a model');
+        }
+        await windowObject.LocalAI.chat('Explain this workspace', { mode, user: 'guest' }, () => {});
+        const privatePrompt = lastRequestBody.systemInstruction.parts[0].text;
+        if (!privatePrompt.includes('Your private profile is active') || privatePrompt.includes('test-secret-token') || privatePrompt.includes('private_test') || privatePrompt.includes('Current system user: guest')) {
+            fail('core/local-ai.js', 'model prompts must contain current token-free private session facts, overriding stale caller labels');
+        }
+        windowObject.GDriveSync.tokenUserId = 'private_other';
+        const paused = await windowObject.LocalAI.chat('am i signed in?', { mode });
+        if (!paused.includes('private profile is active') || !paused.includes('backup is paused')) {
+            fail('core/session-context.js', 'an unavailable or other-account Drive token must not sign out the private workspace');
+        }
+        windowObject.state.currentUserId = 'bl4ut0';
+        const publicReply = await windowObject.LocalAI.chat('am i logged in?', { mode });
+        if (!publicReply.includes('public profile') || !publicReply.includes('no sign-in is required')) {
+            fail('core/session-context.js', 'public sessions need accurate account status without sign-in demands');
+        }
+        await windowObject.LocalAI.chat('Explain this workspace', { mode }, () => {});
+        if (!lastRequestBody.systemInstruction.parts[0].text.includes("You're using Bl4ut0's public profile")) {
+            fail('core/local-ai.js', 'each new request must rebuild session context after an account switch');
+        }
     }
 
     streamMode = "cancel";

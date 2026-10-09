@@ -686,7 +686,7 @@
             };
 
             const result = await window.LocalAI.chat(prompt, {
-                user: window.currentUser || "guest",
+                user: window.state?.currentUserId || "unknown",
                 cwd: window.currentDir || "/",
                 mode: "chat"
             }, onChunk);
