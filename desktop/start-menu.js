@@ -141,6 +141,8 @@ window.renderStartUser = () => {
         const isOwner = user.id === "bl4ut0";
         ownerAvatarBtn.classList.toggle("active-profile", isOwner);
         ownerAvatarBtn.style.opacity = isOwner ? "1" : "0.55";
+        ownerAvatarBtn.title = isOwner ? "Bl4ut0 public profile (active)" : "Switch to Bl4ut0 public profile";
+        ownerAvatarBtn.setAttribute("aria-label", ownerAvatarBtn.title);
     }
 
     if (userAvatarBtn) {
@@ -231,9 +233,8 @@ window.createPrivateProfile = async () => {
 };
 
 window.restoreOwnerProfile = () => {
-    if (window.setCurrentUser) window.setCurrentUser("bl4ut0");
-    window.closeUserProfilePrompt();
-    window.showDesktopToast?.("Owner desktop restored.");
+    window.openSessionChooser?.();
+    document.querySelector("[data-session-public]")?.click();
 };
 
 window.renderStartMenu = () => {

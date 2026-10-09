@@ -1085,7 +1085,7 @@ async function validateLocalAIServiceRuntimeContract() {
         fail("core/local-ai.js", "sanitized cloud streaming did not preserve normal response text");
     }
 
-    for (const mode of ['cli', 'chat']) {
+    for (const mode of ['cli', 'chat', 'mobile']) {
         windowObject.state.currentUserId = 'private_test';
         windowObject.GDriveSync.tokenUserId = 'private_test';
         fetchStarted = false;

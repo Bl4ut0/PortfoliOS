@@ -292,6 +292,85 @@ vm.runInNewContext(
     assert.strictEqual(storage.get(manifestKey), undefined, "a partial backup must not advance the deletion manifest");
     assert.strictEqual(sync.syncInProgress, false, "a failed backup must release the profile-switch lock");
 
+    // Save-and-switch must finish private writes before backup and account change.
+    vm.runInNewContext(fs.readFileSync(path.join(root, 'core', 'profile-switch.js'), 'utf8'), sandbox, { filename: 'core/profile-switch.js' });
+    const realSync = sync.sync;
+    const realSavePreferences = windowObject.savePreferencesToFilesystem;
+    const realPrepare = windowObject.prepareProfileSwitch;
+    const switchUser = windowObject.state.currentUserId;
+    const order = [];
+    sync.sync = async () => { order.push('backup:' + windowObject.state.currentUserId); };
+    windowObject.savePreferencesToFilesystem = async options => { assert.strictEqual(options.strict, true); order.push('save:' + windowObject.state.currentUserId); };
+    windowObject.prepareProfileSwitch = async options => { assert.strictEqual(options.allowProfileSwitch, true); order.push('close:' + windowObject.state.currentUserId); };
+    await windowObject.switchToPublicProfile({ saveToDrive: true });
+    assert.deepStrictEqual(order, ['close:' + switchUser, 'save:' + switchUser, 'backup:' + switchUser]);
+    assert.strictEqual(windowObject.state.currentUserId, 'bl4ut0');
+    assert.strictEqual(sync.token, null, 'public must detach the active Google credential');
+    assert(sync.accountSessions[switchUser]?.token, 'private credential stays only in the account memory cache');
+    assert.strictEqual(sync.profileSwitchInProgress, false);
+    windowObject.setCurrentUser(switchUser);
+    order.length = 0;
+    sync.sync = async () => { throw Error('Backup incomplete: offline'); };
+    await assert.rejects(windowObject.switchToPublicProfile({ saveToDrive: true }), /Backup incomplete/);
+    assert.strictEqual(windowObject.state.currentUserId, switchUser, 'failed backup must retain private profile');
+    assert.strictEqual(sync.profileSwitchInProgress, false, 'failure must release switching lock');
+    sync.tokenExpiresAt = 0;
+    await assert.rejects(windowObject.switchToPublicProfile({ saveToDrive: true }), /Reconnect/);
+    await windowObject.switchToPublicProfile();
+    assert.strictEqual(windowObject.state.currentUserId, 'bl4ut0', 'local-only switch must work offline');
+    windowObject.setCurrentUser(switchUser);
+    sync.token = 'fixture-token'; sync.tokenUserId = switchUser; sync.tokenExpiresAt = Date.now() + 60_000;
+    let releaseBackup;
+    let backupStarted;
+    const backupReady = new Promise(resolve => { backupStarted = resolve; });
+    sync.sync = () => new Promise(resolve => { releaseBackup = resolve; backupStarted(); });
+    const firstSwitch = windowObject.switchToPublicProfile({ saveToDrive: true });
+    assert.strictEqual(windowObject.switchToPublicProfile({ saveToDrive: true }), firstSwitch, 'repeat clicks must share one transition');
+    await backupReady;
+    windowObject.setCurrentUser('bl4ut0');
+    assert.strictEqual(windowObject.state.currentUserId, switchUser, 'unrelated switches must not bypass save-and-switch lock');
+    releaseBackup(); await firstSwitch;
+    windowObject.setCurrentUser(switchUser);
+    windowObject.prepareProfileSwitch = realPrepare;
+    windowObject.savePreferencesToFilesystem = realSavePreferences;
+    sync.sync = realSync;
+    windowObject.state.installingApps = { romplayer: 20 };
+    await assert.rejects(windowObject.switchToPublicProfile(), /installation/);
+    assert.strictEqual(windowObject.state.currentUserId, switchUser);
+    windowObject.state.installingApps = {};
+
+    // Preference snapshots must remain ordered, and the final save must surface quota failures.
+    const originalReadFile = windowObject.SystemFS.readFile;
+    const originalWriteFile = windowObject.SystemFS.writeFile;
+    const snapshots = [];
+    let releasePreferenceWrite, preferenceStarted;
+    const preferenceReady = new Promise(resolve => { preferenceStarted = resolve; });
+    windowObject.SystemFS.readFile = async () => null;
+    windowObject.SystemFS.writeFile = async (path, name, parent, data) => {
+        snapshots.push(JSON.parse(data));
+        if (snapshots.length === 1) await new Promise(resolve => { releasePreferenceWrite = resolve; preferenceStarted(); });
+    };
+    const themeKey = 'bl4ut0_' + switchUser + '_queue_test';
+    storage.set(themeKey, 'first');
+    const firstPreference = windowObject.savePreferencesToFilesystem();
+    await preferenceReady;
+    storage.set(themeKey, 'latest');
+    const latestPreference = windowObject.savePreferencesToFilesystem({ strict: true });
+    await Promise.resolve();
+    assert.strictEqual(snapshots.length, 1, 'a second preference snapshot must wait for the first write');
+    releasePreferenceWrite(); await Promise.all([firstPreference, latestPreference]);
+    assert.strictEqual(snapshots[1][themeKey], 'latest');
+    windowObject.SystemFS.writeFile = async () => { throw Error('Storage quota exceeded'); };
+    console.error = () => {};
+    try { await assert.rejects(windowObject.switchToPublicProfile(), /quota/); } finally { console.error = originalError; }
+    assert.strictEqual(windowObject.state.currentUserId, switchUser, 'local-save failure must retain private identity');
+    windowObject.SystemFS.readFile = originalReadFile;
+    windowObject.SystemFS.writeFile = originalWriteFile;
+    storage.delete(themeKey);
+    sync.profileSwitchInProgress = true;
+    await assert.rejects(sync.sync(), /profile switch/);
+    sync.profileSwitchInProgress = false;
+
     const nativeTimeout = windowObject.setTimeout;
     const nativeClear = windowObject.clearTimeout;
     let scheduledSync;

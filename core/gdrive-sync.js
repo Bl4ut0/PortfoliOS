@@ -567,7 +567,7 @@ window.GDriveSync = {
     loginThroughBroker(clientId, { timeoutMs = 90_000, selectAccount = false, expectedSub = null } = {}) {
         return new Promise((resolve, reject) => {
             if (!clientId) return reject(new Error("Google Client ID is required."));
-            if (this.syncInProgress) return reject(new Error("Wait for the current Drive backup to finish before switching accounts."));
+            if (this.syncInProgress || this.profileSwitchInProgress) return reject(new Error("Wait for the current Drive backup to finish before switching accounts."));
             if (!window.BroadcastChannel || !window.crypto?.randomUUID) return reject(new Error("This browser cannot open an isolated Google sign-in. Use a current browser."));
             const nonce = window.crypto.randomUUID();
             const channel = new window.BroadcastChannel("portfolios-google-" + nonce);
@@ -601,7 +601,7 @@ window.GDriveSync = {
     login(clientId, { timeoutMs = 60_000, selectAccount = false, expectedSub = null } = {}) {
         if (window.crossOriginIsolated) return this.loginThroughBroker(clientId, { timeoutMs, selectAccount, expectedSub });
         return new Promise((resolve, reject) => {
-            if (this.syncInProgress) return reject(new Error("Wait for the current Drive backup to finish before switching accounts."));
+            if (this.syncInProgress || this.profileSwitchInProgress) return reject(new Error("Wait for the current Drive backup to finish before switching accounts."));
             if (!clientId) return reject(new Error("Google Client ID is required."));
             if (!window.google?.accounts?.oauth2?.initTokenClient) {
                 return reject(new Error("Google sign-in is not ready. Check your connection and try again."));
@@ -652,11 +652,11 @@ window.GDriveSync = {
     
     scheduleAutomaticSync() {
         const userId = window.state?.currentUserId;
-        if (!window.isPrivateUser?.(userId) || !this.getToken()) return;
+        if (this.profileSwitchInProgress || !window.isPrivateUser?.(userId) || !this.getToken()) return;
         if (this.pendingSyncTimer !== null) window.clearTimeout(this.pendingSyncTimer);
         this.pendingSyncTimer = window.setTimeout(() => {
             this.pendingSyncTimer = null;
-            if (window.state?.currentUserId !== userId || !this.getToken()) return;
+            if (this.profileSwitchInProgress || window.state?.currentUserId !== userId || !this.getToken()) return;
             if (this.syncInProgress || this.authInProgress) { this.scheduleAutomaticSync(); return; }
             window.triggerGDriveSync?.({ silent: true });
         }, 1500);
@@ -866,7 +866,8 @@ window.GDriveSync = {
         }
     },
     
-    async sync(onProgress) {
+    async sync(onProgress, { allowProfileSwitch = false } = {}) {
+        if (this.profileSwitchInProgress && !allowProfileSwitch) throw new Error("A profile switch is in progress. Try backup again afterward.");
         if (this.authInProgress) throw new Error("Google sign-in is still completing.");
         if (this.syncInProgress) throw new Error("A Drive backup is already running.");
         this.syncInProgress = true;

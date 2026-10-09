@@ -71,6 +71,7 @@
     function savePreferences() {
         try {
             localStorage.setItem(preferenceKey(currentMobileUserId), JSON.stringify(prefs));
+            window.savePreferencesToFilesystem?.();
         } catch (error) {
             console.warn("PortfoliOS Mobile: settings could not be saved.", error);
         }
@@ -247,9 +248,7 @@
 
     function getVisibleMobileCatalog() {
         return (window.mobileAppCatalog || []).filter((app) => {
-            const visibilitySourceId = app.visibilitySourceId || app.sourceId;
-            if (!visibilitySourceId || !window.isVisibleForCurrentUser) return true;
-            return window.isVisibleForCurrentUser(visibilitySourceId);
+            return window.isMobileAppAvailable(app) && window.isMobileAppInstalled(app);
         });
     }
 
@@ -1150,6 +1149,8 @@
         });
         window.EventBus?.on("view:changed", handleViewChange);
         window.EventBus?.on("user:changed", handleUserChange);
+        window.EventBus?.on("app:installed", renderMobileApps);
+        window.EventBus?.on("app:uninstalled", async id => { await closeTask(id, "uninstalled"); renderMobileApps(); });
         window.EventBus?.on("volume:changed", (value) => {
             const slider = document.querySelector("[data-mobile-volume]");
             if (slider) slider.value = String(value);

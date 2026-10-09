@@ -51,6 +51,11 @@ function renderSettingsUser() {
     if (profileName) profileName.textContent = user.displayName;
     if (profileHandle) profileHandle.textContent = user.handle;
     if (profileType) profileType.textContent = user.accountType || user.role;
+    const controls = document.querySelector("[data-account-switch-controls]");
+    if (controls) {
+        controls.innerHTML = window.renderProfileSwitchControls?.() || "";
+        if (!controls.dataset.bound) { window.bindProfileSwitchControls?.(controls); controls.dataset.bound = "1"; }
+    }
 }
 
 // Volume Controls & Sync Logic
@@ -1000,7 +1005,7 @@ if (window.EventBus) {
     window.EventBus.on("user:changed", () => renderSettingsUser());
     window.EventBus.on("volume:changed", (val) => updateVolumeUI(val));
     window.EventBus.on("state:changed:gdriveConnected", () => updateGDriveUI());
-    window.EventBus.on("gdrive:auth-changed", () => updateGDriveUI());
+    window.EventBus.on("gdrive:auth-changed", () => { updateGDriveUI(); renderSettingsUser(); });
     window.EventBus.on("local-ai:status", () => updateLocalAiSettingsUI());
     window.EventBus.on("local-ai:model-changed", () => updateLocalAiSettingsUI());
     window.EventBus.on("local-ai:mirror-changed", () => updateLocalAiSettingsUI());

@@ -1346,7 +1346,8 @@
         const session = window.getAssistantSessionInfo?.();
         const user = session?.known ? `${session.profile} profile` : (context.user || "unknown");
         const sessionContext = window.getAssistantSessionContext?.() || "The active workspace is not available yet. Do not assume the user is signed out.";
-        const isChat = context.mode === "chat";
+        const isMobileChat = context.mode === "mobile";
+        const isChat = context.mode === "chat" || isMobileChat;
         
         const dataset = getPortfolioContext();
         let systemPrompt = "";
@@ -1394,7 +1395,9 @@
             "For ordinary questions, do not output action JSON; just answer normally.",
             "#############################"
         ].join("\n");
-        const skillsSection = isConstrainedLocal ? compactSkillsSection : fullSkillsSection;
+        const skillsSection = isMobileChat
+            ? "You are in the phone experience. Answer in plain text. Do not produce action blocks, execute tools, or open desktop windows. Refer users to mobile apps such as Settings, Files, Store, Documents, Music, Task Manager, and ROM Player."
+            : isConstrainedLocal ? compactSkillsSection : fullSkillsSection;
 
         if (isChat) {
             systemPrompt = [

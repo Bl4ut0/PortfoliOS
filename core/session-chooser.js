@@ -57,10 +57,11 @@
                     </button>
                 </div>
                 <p class="session-chooser-note">Your files and settings belong to your account. Sign in with Google to connect Drive backup.</p>
+                <div data-session-public-actions hidden><p>Keep your private workspace on this device, or back up your latest changes before switching.</p><button type="button" class="session-public-action" data-session-public-save>Save to Drive &amp; switch to public</button><button type="button" class="session-public-action" data-session-public-local>Switch to public · Keep local changes</button></div>
                 <p class="session-chooser-error" data-session-error role="alert" hidden></p>
                 <button type="button" class="session-chooser-offline" data-session-offline hidden>Continue this remembered profile offline</button>
             </div>
-            <footer class="session-lock-footer"><button type="button" data-session-experience><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Change experience</button><span><i class="fa-solid fa-lock" aria-hidden="true"></i> Your personal workspace</span></footer>
+            <footer class="session-lock-footer"><button type="button" data-session-cancel ${window.state?.sessionChosen ? "" : "hidden"}>Return to workspace</button><button type="button" data-session-experience><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Change experience</button><span><i class="fa-solid fa-lock" aria-hidden="true"></i> Your personal workspace</span></footer>
         `;
         const mobile = overlay.dataset.experience === 'mobile';
         const host = mobile ? document.getElementById('mobile-device') : document.body;
@@ -104,16 +105,34 @@
         overlay.addEventListener("click", async event => {
             const button = event.target.closest("button");
             if (!button || button.disabled) return;
+            if (button.hasAttribute('data-session-cancel')) { window.closeSessionChooser(); return; }
             if (button.hasAttribute('data-session-experience')) {
                 document.getElementById('boot-screen')?.classList.remove('hidden');
                 window.closeSessionChooser();
                 return;
             }
             if (button.hasAttribute("data-session-public")) {
-                await window.prepareProfileSwitch();
-                window.setCurrentUser("bl4ut0");
+                if (window.isPrivateUser?.(window.state.currentUserId)) {
+                    overlay.querySelector("[data-session-public-actions]").hidden = false;
+                    overlay.querySelector("[data-session-public-save]").disabled = !window.GDriveSync?.getToken();
+                    return;
+                }
                 await window.SystemFS?.ensureDefaultFiles?.();
                 complete();
+                return;
+            }
+            if (button.hasAttribute("data-session-public-save") || button.hasAttribute("data-session-public-local")) {
+                const error = overlay.querySelector("[data-session-error]");
+                const buttons = [...overlay.querySelectorAll("button")];
+                const disabled = buttons.map(node => node.disabled);
+                buttons.forEach(node => { node.disabled = true; });
+                error.hidden = false;
+                error.textContent = "Saving local changes…";
+                try {
+                    await window.switchToPublicProfile({ saveToDrive: button.hasAttribute("data-session-public-save"), onProgress: message => { error.textContent = message; } });
+                    complete();
+                } catch (reason) { error.textContent = reason.message; }
+                finally { buttons.forEach((node, index) => { node.disabled = disabled[index]; }); }
                 return;
             }
             if (button.hasAttribute("data-session-offline")) {

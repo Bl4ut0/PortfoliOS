@@ -212,13 +212,16 @@ window.applyCurrentUserProfile = () => {
     if (window.renderStore) window.renderStore();
 };
 
-window.prepareProfileSwitch = async () => {
+window.prepareProfileSwitch = async ({ allowProfileSwitch = false } = {}) => {
+    if (window.GDriveSync?.profileSwitchInProgress && !allowProfileSwitch) throw new Error("A profile switch is already in progress.");
+    if (Object.keys(window.state?.installingApps || {}).length) throw new Error("Wait for app installation to finish before switching accounts.");
     if (window.GDriveSync?.syncInProgress) throw new Error("Wait for the current Drive backup to finish before switching accounts.");
     await Promise.all(Array.from(window.state?.openApps || []).map(appId => window.closeDesktopWindow?.(appId)));
     await window.MobileOS?.clearTasks?.();
 };
 
-window.setCurrentUser = (userId, { preserveGoogleSession = false } = {}) => {
+window.setCurrentUser = (userId, { preserveGoogleSession = false, allowProfileSwitch = false } = {}) => {
+    if (window.GDriveSync?.profileSwitchInProgress && !allowProfileSwitch) return;
     const user = window.getUserAccounts().find((account) => account.id === userId);
     if (!user || !window.state) return;
     if (window.GDriveSync?.syncInProgress && window.state.currentUserId !== user.id) return;
@@ -300,12 +303,13 @@ window.clearPrivateProfileData = async () => {
     if (userId === "private") window.resetPrivateAccountDisplay();
 };
 
-window.savePreferencesToFilesystem = async () => {
+const profilePreferenceWrites = new Map();
+window.savePreferencesToFilesystem = async ({ strict = false } = {}) => {
     const user = window.getCurrentUser ? window.getCurrentUser() : null;
-    if (!user) return;
+    if (!user) { if (strict) throw new Error("The current profile is unavailable."); return; }
 
     try {
-        if (!window.SystemFS) return;
+        if (!window.SystemFS) { if (strict) throw new Error("Local storage is unavailable."); return; }
         const userId = user.id;
         const prefix = `bl4ut0_${userId}_`;
         const installedAppsKey = window.getInstalledStoreAppsKey
@@ -325,13 +329,19 @@ window.savePreferencesToFilesystem = async () => {
         const name = "settings.json";
         const parent = `/home/${userId}`;
         
-        const existing = await window.SystemFS.readFile(path);
-        if (existing && await window.readFilesystemRecordText(existing) === jsonStr) return;
-        await window.SystemFS.writeFile(path, name, parent, jsonStr, jsonStr.length, "application/json", false, { silent: true });
-        window.EventBus?.emit("preferences:saved", { userId });
-        console.log(`PortfoliOS: Saved ${userId} profile preferences to virtual filesystem.`);
+        // Serialize snapshots so a slower earlier write cannot overwrite newer settings.
+        const previous = profilePreferenceWrites.get(userId) || Promise.resolve();
+        const operation = previous.catch(() => {}).then(async () => {
+            const existing = await window.SystemFS.readFile(path);
+            if (existing && await window.readFilesystemRecordText(existing) === jsonStr) return;
+            await window.SystemFS.writeFile(path, name, parent, jsonStr, jsonStr.length, "application/json", false, { silent: true });
+            window.EventBus?.emit("preferences:saved", { userId });
+        });
+        profilePreferenceWrites.set(userId, operation);
+        try { await operation; } finally { if (profilePreferenceWrites.get(userId) === operation) profilePreferenceWrites.delete(userId); }
     } catch (e) {
         console.error("Failed to save preferences to filesystem", e);
+        if (strict) throw e;
     }
 };
 

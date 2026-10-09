@@ -31,12 +31,18 @@ const catalog = catalogWindow.mobileAppCatalog;
 const systems = systemsWindow.systems;
 const privateCatalog = catalog.filter((app) => !(app.visibilitySourceId || app.sourceId));
 
-assert.equal(catalog.length, 16);
+assert.equal(catalog.length, 23);
+["store", "local-ai", "taskmgr", "security-center", "profile", "dossier", "romplayer"].forEach(id => assert.ok(catalog.some(app => app.id === id)));
+const rom = catalog.find(app => app.id === "romplayer");
+assert.equal(catalogWindow.isMobileAppInstalled(rom), false);
+catalogWindow.isStoreAppInstalled = id => id === "romplayer";
+assert.equal(catalogWindow.isMobileAppInstalled(rom), true);
 assert.equal(catalog.find((app) => app.id === "media")?.sourceId, undefined);
 assert.equal(catalog.find((app) => app.id === "media")?.visibilitySourceId, "media");
 assert.deepEqual(homeData.config.dock, ["browser", "documents", "music", "settings"]);
-assert.equal(homeData.searchApps(catalog).length, 16);
-assert.equal(homeData.searchApps(privateCatalog).length, 7);
+assert.equal(homeData.searchApps(catalog).length, catalog.length);
+assert.equal(homeData.searchApps(privateCatalog).length, 14);
+assert.equal(homeData.searchApps(privateCatalog, "app store")[0]?.id, "store");
 assert.equal(homeData.searchApps(catalog, "pdf")[0]?.id, "documents");
 assert.equal(homeData.searchApps(catalog, "photos")[0]?.id, "media");
 assert.equal(homeData.searchApps(privateCatalog, "photos").length, 0);
@@ -103,4 +109,4 @@ assert.match(shellSource, /window\.MobileHome\?\.openDrawer/);
 assert.match(swSource, /\/data\/mobile-home\.js/);
 assert.match(swSource, /\/mobile\/home\.js/);
 
-console.log("Mobile Home audit passed: two launcher pages, PortfoliOS feed, folders, widgets, searchable 16-app drawer, per-user layout, long press, and profile pruning checked.");
+console.log("Mobile Home audit passed: two launcher pages, PortfoliOS feed, folders, widgets, searchable mobile app drawer and Store installation visibility, per-user layout, long press, and profile pruning checked.");

@@ -1,0 +1,51 @@
+.mobile-native-app.mobile-romplayer-app {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 16px;
+  min-width: 0;
+}
+.mobile-romplayer-app p {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mobile-romplayer-app label,
+.mobile-romplayer-app [data-rom-list] {
+  display: grid;
+  gap: 10px;
+}
+.mobile-romplayer-app select,
+.mobile-romplayer-app button {
+  min-height: 44px;
+  padding: 12px;
+  border: 1px solid var(--mobile-outline-strong);
+  border-radius: 12px;
+  background: var(--mobile-surface-raised);
+  color: var(--mobile-fg);
+  font: inherit;
+  text-align: left;
+}
+.mobile-romplayer-app iframe {
+  width: 100%;
+  height: 430px;
+  height: min(62dvh, 520px);
+  min-height: 300px;
+  border: 0;
+  border-radius: 12px;
+  background: #000;
+}
+.mobile-romplayer-app iframe[hidden] {
+  display: none;
+}
+.mobile-romplayer-app input {
+  width: 100%;
+  min-width: 0;
+}
+
+.mobile-native-app.mobile-romplayer-app button:focus-visible,
+.mobile-native-app.mobile-romplayer-app input:focus-visible,
+.mobile-native-app.mobile-romplayer-app select:focus-visible {
+  outline: 2px solid var(--mobile-accent-ink);
+  outline-offset: 2px;
+}

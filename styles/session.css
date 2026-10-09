@@ -56,3 +56,15 @@ body.session-locked #mobile-device > :not(.session-chooser) { visibility:hidden;
 #mobile-device .session-lock-footer { flex-shrink:0; flex-direction:column; gap:16px; padding:0 20px 12px; }
 #mobile-device .session-lock-footer button { border:0; background:transparent; font-size:12px; }
 .session-mobile-gesture { display:block; width:100px; height:4px; border-radius:4px; background:#f8fafc; opacity:.65; }
+
+.profile-switch-controls { display:grid; gap:10px; }
+.profile-switch-controls p,.profile-switch-controls small { margin:0; line-height:1.5; overflow-wrap:anywhere; }
+.profile-switch-controls button { min-height:44px; padding:10px 14px; border:1px solid #397481; border-radius:12px; background:#142b37; color:#e9f8ff; text-align:left; cursor:pointer; font:inherit; }
+.profile-switch-controls button:disabled { opacity:.5; cursor:default; }
+.profile-switch-controls button:focus-visible { outline:2px solid #22d3ee; outline-offset:2px; }
+
+.session-public-action { display:block; width:100%; max-width:480px; min-height:44px; margin:10px auto; padding:12px; border:1px solid #397481; border-radius:12px; background:#142b37; color:#e9f8ff; cursor:pointer; font:inherit; }
+.session-public-action:focus-visible { outline:2px solid #22d3ee; outline-offset:2px; }
+.session-lock-footer { flex-wrap:wrap; }
+
+#mobile-device .profile-switch-controls button { background:var(--mobile-surface-high); color:var(--mobile-fg); border-color:var(--mobile-outline-strong); }

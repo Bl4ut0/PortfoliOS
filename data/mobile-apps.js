@@ -5,6 +5,13 @@
  * utilities are designed for touch and portfolio apps use mobile-specific views.
  */
 window.mobileAppCatalog = [
+    { id: "store", title: "Store", icon: "fa-solid fa-shop", color: "#a78bfa", category: "system", pinned: true, description: "Discover mobile apps and desktop alternatives." },
+    { id: "local-ai", title: "Lobe", icon: "fa-solid fa-brain", color: "#22d3ee", category: "productivity", description: "Chat with your session-aware assistant." },
+    { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", color: "#34d399", category: "system", description: "Review, resume, and close running mobile apps." },
+    { id: "security-center", title: "Security Center", icon: "fa-solid fa-shield-halved", color: "#38bdf8", category: "system", description: "Check local file policy and scan your workspace." },
+    { id: "profile", title: "Identity", icon: "fa-solid fa-id-card", color: "#e879f9", category: "system", description: "Your active account and backup status." },
+    { id: "dossier", title: "Dossier", icon: "fa-solid fa-folder-open", color: "#60a5fa", category: "portfolio", description: "Browse projects available in this profile." },
+    { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", color: "#f59e0b", category: "games", installable: true, description: "Play your NES, SNES, Game Boy, GBA, and Sega ROMs with touch controls. Cores download when launched." },
     { id: "browser", title: "Browser", icon: "fa-solid fa-compass", color: "#38bdf8", category: "system", pinned: true },
     { id: "documents", title: "Documents", icon: "fa-solid fa-file-pen", color: "#60a5fa", category: "productivity", pinned: true },
     { id: "music", title: "Music", icon: "fa-solid fa-headphones", color: "#f472b6", category: "media", pinned: true },
@@ -25,3 +32,11 @@ window.mobileAppCatalog = [
 
 window.mobileAppIds = window.mobileAppCatalog.map((app) => app.id);
 window.mobilePinnedAppIds = window.mobileAppCatalog.filter((app) => app.pinned).map((app) => app.id);
+
+window.isMobileAppAvailable = function(app) {
+    const visibilityId = app.visibilitySourceId || app.sourceId;
+    return (!visibilityId || !window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(visibilityId));
+};
+window.isMobileAppInstalled = function(app) {
+    return !app.installable || Boolean(window.isStoreAppInstalled?.(app.id));
+};

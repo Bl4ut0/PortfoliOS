@@ -48,6 +48,7 @@
             const DATA_PATH = "https://cdn.emulatorjs.org/stable/data/";
             const emptyEl = document.getElementById("runtime-empty");
             let loaderStarted = false;
+            let pausedByShell = false;
 
             function post(type, detail) {
                 window.parent.postMessage({
@@ -81,6 +82,7 @@
                 window.EJS_color = "#22d3ee";
                 window.EJS_backgroundColor = "#050608";
                 window.EJS_threads = false;
+                if (payload.touch) window.EJS_defaultOptions = { "virtual-gamepad": "enabled" };
                 window.EJS_volume = typeof payload.volume === "number" ? payload.volume : 0.7;
                 window.EJS_alignStartButton = "center";
                 window.EJS_ready = function() {
@@ -88,6 +90,7 @@
                 };
                 window.EJS_onGameStart = function() {
                     post("started", payload.name);
+                    if (pausedByShell) window.EJS_emulator?.pause?.();
                 };
             }
 
@@ -116,6 +119,14 @@
 
                 if (data.type === "launch" && data.payload) {
                     launch(data.payload);
+                }
+
+                if (data.type === "pause" || data.type === "resume") {
+                    pausedByShell = data.type === "pause";
+                    if (window.EJS_emulator?.started) {
+                        if (pausedByShell) window.EJS_emulator.pause?.();
+                        else window.EJS_emulator.play?.();
+                    }
                 }
 
                 if (data.type === "volume" && window.EJS_emulator) {

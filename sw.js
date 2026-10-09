@@ -5,7 +5,7 @@
 
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-2026.10.09.1";
+const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-2026.10.09.2";
 const MOBILE_SHELL_ASSETS = [
     "/",
     "/index.html",
@@ -38,6 +38,7 @@ const MOBILE_SHELL_ASSETS = [
     "/core/app-framework.js",
     "/core/gdrive-sync.js",
     "/core/session-chooser.js",
+    "/core/profile-switch.js",
     "/styles/session.css",
     "/core/app-loader.js",
     "/core/session-context.js",
@@ -75,6 +76,21 @@ const MOBILE_SHELL_ASSETS = [
     "/mobile/app-loader.js",
     "/mobile/home.js",
     "/mobile/shell.js",
+    "/mobile/apps/store/app.js",
+    "/mobile/apps/store/app.css",
+    "/mobile/apps/local-ai/app.js",
+    "/mobile/apps/local-ai/app.css",
+    "/mobile/apps/taskmgr/app.js",
+    "/mobile/apps/taskmgr/app.css",
+    "/mobile/apps/security-center/app.js",
+    "/mobile/apps/security-center/app.css",
+    "/mobile/apps/profile/app.js",
+    "/mobile/apps/profile/app.css",
+    "/mobile/apps/dossier/app.js",
+    "/mobile/apps/dossier/app.css",
+    "/mobile/apps/romplayer/app.js",
+    "/mobile/apps/romplayer/app.css",
+    "/apps/romplayer/runtime.html",
     "/mobile/apps/browser/app.js",
     "/mobile/apps/browser/app.css",
     "/mobile/apps/documents/app.js",

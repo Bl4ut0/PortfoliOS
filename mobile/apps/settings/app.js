@@ -203,6 +203,8 @@
     }
 
     async function refreshControls(root) {
+        const account = root?.querySelector("[data-mobile-account-controls]");
+        if (account) account.innerHTML = window.renderProfileSwitchControls?.() || "";
         const preferences = await getPreferences();
         updateSelection(root, "wallpaper", preferences.wallpaper);
         updateSelection(root, "theme", preferences.theme);
@@ -287,6 +289,7 @@
         activeController?.abort();
         activeController = new AbortController();
         const { signal } = activeController;
+        window.bindProfileSwitchControls?.(root, { signal });
 
         root.addEventListener("click", async (event) => {
             if (event.target.closest("[data-settings-account]")) { window.openSessionChooser?.(); return; }
@@ -377,7 +380,7 @@
         icon: "fa-solid fa-gear",
         viewClass: "mobile-settings-app",
         render: () => `
-            <section class="mobile-settings-section"><h3>Account</h3><p>Desktop and Mobile share your private profiles and Google Drive backup.</p><button type="button" class="mobile-settings-choice" data-settings-account>Choose profile / Google sign-in</button></section>
+            <section class="mobile-settings-card"><h3>Account &amp; Drive backup</h3><div data-mobile-account-controls>${window.renderProfileSwitchControls?.() || ""}</div></section>
             <header class="mobile-settings-heading">
                 <span><i class="fa-solid fa-gear"></i></span>
                 <div>

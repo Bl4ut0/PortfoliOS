@@ -43,6 +43,7 @@
         });
     };
     window.resetPublicLocalState();
+    window.resetPublicLocalState(window.sessionStorage);
 
     // Load initial values from storage if available
     if (window.Storage) {

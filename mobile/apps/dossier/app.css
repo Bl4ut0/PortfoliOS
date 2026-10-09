@@ -1,0 +1,44 @@
+.mobile-native-app.mobile-dossier-app {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+  color: var(--mobile-fg);
+}
+.mobile-native-app.mobile-dossier-app button,
+.mobile-native-app.mobile-dossier-app select {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--mobile-outline-strong);
+  border-radius: 12px;
+  background: var(--mobile-surface-raised);
+  color: var(--mobile-fg);
+  font: inherit;
+}
+.mobile-native-app.mobile-dossier-app article {
+  padding: 14px;
+  border: 1px solid var(--mobile-outline-strong);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+.mobile-native-app.mobile-dossier-app p {
+  margin: 0;
+  line-height: 1.5;
+}
+.mobile-native-app.mobile-dossier-app h2,
+.mobile-native-app.mobile-dossier-app h3 {
+  margin: 0;
+}
+.mobile-dossier-app [data-dossier-list] {
+  display: grid;
+  gap: 12px;
+}
+.mobile-native-app.mobile-dossier-app button:focus-visible,
+.mobile-native-app.mobile-dossier-app input:focus-visible,
+.mobile-native-app.mobile-dossier-app select:focus-visible {
+  outline: 2px solid var(--mobile-accent-ink);
+  outline-offset: 2px;
+}

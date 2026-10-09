@@ -158,3 +158,15 @@ Account identity remains remembered after reload, while cloud credentials stay i
 For filesystem changes, serve the repo and open scripts/check-profile-filesystem.html. It uses a disposable test database to verify account isolation, recursive deletes, backup paths, and pending-save races.
 
 Public Bl4ut0 sessions are disposable: each page reload clears public SystemFS documents, saves, ROM imports, installed-app selections, preferences, and desktop/mobile layout. Built-in portfolio apps and default welcome files remain. Private account files and preferences persist. Downloaded app runtime binaries remain as shared device caches; resetting public installation selections does not remove a private account’s cached apps.
+
+### Switching back to the public profile
+
+Open **Settings → Accounts** on Desktop, or **Settings → Account & Drive backup** on Mobile. **Save to Drive & switch to public** closes apps to flush drafts, saves profile preferences, completes the current account's backup, then enters Bl4ut0's public workspace. A failed backup keeps the private account active. **Switch to Bl4ut0 public profile** works offline and keeps private changes on the device. Switching is blocked during app installation, Google sign-in, or an existing backup. Choosing public does not forget the private account or delete its Drive backup.
+
+### Mobile App Store and app parity
+
+**Store** is available on the default Mobile Home and in All apps. Search or filter the catalog, open built-in apps, and add/remove ROM Player. The mobile catalog now has 23 native apps, including Lobe, Task Manager, Security Center, Identity, and Dossier. Mobile appearance and Home layout changes are included in automatic private-profile backup. Installation selections are shared between Desktop and Mobile for compatible apps.
+
+ROM Player supports NES, SNES, Game Boy/Color, GBA, Genesis, Master System, and Game Gear with EmulatorJS touch controls. Its launcher loads when added; emulator cores download on Play. ROM imports remain on-device, outside Drive backup. Home pauses the emulator and Recents resumes it. Use emulator-native save controls before stopping/closing a game. Heavy desktop games are listed with their availability.
+
+See [mobile app parity](docs/MOBILE_APP_PARITY.md) for the adaptation map and remaining work. Run the optional isolated browser smoke with Playwright installed: `node scripts/check-mobile-apps-browser.js`. Set `PORTFOLIOS_PLAYWRIGHT` to a Playwright module path when using a bundled runtime. It creates its own loopback server and disposable Chromium contexts; its ROM fixture is an original diagnostic program and it uses no real Google account.

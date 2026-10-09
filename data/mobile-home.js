@@ -24,6 +24,13 @@
             { id: "system", label: "System" }
         ],
         aliases: {
+            store: "app store install applications library games",
+            "local-ai": "lobe assistant ai chat",
+            taskmgr: "tasks processes running apps monitor",
+            "security-center": "security scan quarantine protection",
+            profile: "identity account private public google backup",
+            dossier: "projects portfolio overview",
+            romplayer: "rom emulator nes snes game boy gba sega games",
             browser: "web internet compass links",
             documents: "docs pdf writer markdown html notes",
             music: "audio songs albums player sound",
@@ -78,6 +85,7 @@
                 title: "Daily",
                 items: [
                     { type: "widget", widgetId: "at-a-glance" },
+                    { type: "app", appId: "store" },
                     { type: "app", appId: "files" },
                     { type: "app", appId: "calculator" },
                     { type: "app", appId: "media" },

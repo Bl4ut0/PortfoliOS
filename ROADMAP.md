@@ -1,6 +1,6 @@
 # PortfoliOS roadmap
 
-Updated 2026-10-08. Priorities describe delivery order rather than promised dates. A milestone is complete only after checks, commit, push, production deployment, and release verification.
+Updated 2026-10-09. Priorities describe delivery order rather than promised dates. A milestone is complete only after checks, commit, push, production deployment, and release verification.
 
 ## Delivered in the account-session release
 
@@ -13,14 +13,24 @@ Updated 2026-10-08. Priorities describe delivery order rather than promised date
 - Compatible Google popup endpoint while the main shell retains game/AI cross-origin isolation.
 - WardenIT moved from Planned to Active, with its verified website link at https://wardenit.com/.
 
+## Delivered in the mobile app and public-switch release
+
+- Explicit private-to-public controls in Desktop and Mobile Settings and the shared chooser, with save-to-Drive and offline local-only options.
+- Backup failure retains the private profile; switching is serialized and waits for editors, imports, and scans before changing account scope.
+- Mobile Store with search, categories, built-in app launch, optional ROM Player install/removal, and desktop game availability notes.
+- Seven native mobile additions bring the catalog to 23 apps: Store, Lobe, Task Manager, Security Center, Identity, Dossier, and ROM Player.
+- Mobile appearance and launcher layout changes now schedule private backup. Public chat/task state also resets on reload.
+- Touch ROM launcher with lazy core loading and Home/Recents pause/resume; original NES diagnostic ROM checked in an isolated browser test.
+
 ## Next milestones
 
 | Priority | Milestone | Acceptance criteria | Dependencies |
 | --- | --- | --- | --- |
 | P0 | Sync recovery and conflict handling | Interrupted sync can retry; paginated remote discovery covers large backups; edit/delete conflicts retain recoverable versions; simultaneous tabs cannot overwrite each other silently. | Account-scoped storage |
-| P0 | Account and backup controls | Show active email, connected/paused/offline state, last successful backup, restore preview, storage use, and per-account disconnect/forget controls on both Desktop and Mobile. Forgetting a local account never deletes its Drive backup. | Shared chooser |
+| P0 | Account and backup controls | Extend delivered account/safe-switch controls with last successful backup, restore preview, storage use, and per-account disconnect/forget controls on both Desktop and Mobile. Forgetting a local account never deletes its Drive backup. | Shared chooser |
 | P1 | Restore across devices | Two browsers restore the same account's documents, preferences, app-install selections, and desktop/mobile layouts. Other accounts' homes and metadata never enter the backup. Validate restore before applying it. | Stable subject IDs and conflict handling |
 | P1 | Persistent authenticated sessions | If continuous authorization after reload is required, add a server-side Google code flow and protected session cookie, with expiry, CSRF protection, logout, and revocation. Keep refresh tokens on the server. Remembered local identity alone is not authentication. | Hosting/session design decision |
+| P1 | Mobile app parity | Prioritize touch/controller support for Doom, Diablo, and Quake; measure real-phone memory before enabling them. Adapt IPTV and useful CLI operations with native navigation. Test import/save/resume and per-profile state for each port. See docs/MOBILE_APP_PARITY.md. | Mobile Store and lifecycle suite |
 | P1 | Public portfolio and WardenIT | Add WardenIT/project screenshots and concise case studies, verify public contact/services flows, and keep portfolio milestones current. | Project media and outcomes |
 | P1 | Release reproducibility | Track root dependency manifests, add CI for app contracts and session/isolation regressions, record a release manifest, verify remote asset hashes, and document rollback. | Repository configuration |
 | P2 | Observable services | Status Console uses real service checks with checked-at timestamps, degraded/outage states, incident history, and maintenance notes. Keep public health independent of private workspace data. | Monitored service list |

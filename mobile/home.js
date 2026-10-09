@@ -66,6 +66,7 @@
     function saveLayout() {
         try {
             localStorage.setItem(storageKey(), JSON.stringify(layout));
+            window.savePreferencesToFilesystem?.();
         } catch (error) {
             console.warn("PortfoliOS Mobile: Home layout could not be saved.", error);
         }
