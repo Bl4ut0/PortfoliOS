@@ -86,10 +86,9 @@ function diagnosticRom() {
       .first()
       .click();
     await page.locator("[data-store-list]").waitFor();
-    await page.screenshot({
-      path: path.join(root, "docs/mobile-app-store-smoke.png"),
-      fullPage: true,
-    });
+    if (process.env.PORTFOLIOS_SCREENSHOT) {
+      await page.screenshot({ path: process.env.PORTFOLIOS_SCREENSHOT, fullPage: true });
+    }
     assert.equal(await page.locator('[data-store-open="local-ai"]').count(), 1);
     await page.locator('[data-store-add="romplayer"]').click();
     await page.locator('[data-store-open="romplayer"]').waitFor();
@@ -145,6 +144,7 @@ function diagnosticRom() {
       .getByRole("button", { name: "Open all apps", exact: true })
       .click();
     await page.getByRole("button", { name: "Open Lobe", exact: true }).click();
+    assert.equal(await page.locator("[data-lobe-status]").textContent(), await page.evaluate(() => window.LocalAI.getStatus().statusText));
     await page.locator("#mobile-lobe-input").fill("am i signed in");
     await page.locator('.mobile-local-ai-app [type="submit"]').click();
     assert.match(

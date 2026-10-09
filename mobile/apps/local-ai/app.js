@@ -21,7 +21,7 @@
       window.getAssistantSessionStatus?.() || "";
     const status = window.LocalAI?.getStatus?.();
     root.querySelector("[data-lobe-status]").textContent =
-      status?.message ||
+      status?.statusText ||
       "Basic assistant ready. Enable an AI model for longer conversations.";
     const select = root.querySelector("select");
     if (document.activeElement !== select) {
