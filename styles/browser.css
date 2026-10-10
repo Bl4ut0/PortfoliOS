@@ -1,5 +1,5 @@
 /* Scoped Browser UI follows appearance tokens on both device experiences. */
-.web-browser { display: flex; flex-direction: column; gap: 1rem; min-width: 0; padding: 1.1rem; color: var(--text); background: var(--panel); overflow: auto; height: 100%; }
+.web-browser { position:relative; display: flex; flex-direction: column; gap: 1rem; min-width: 0; padding: 1.1rem; color: var(--text); background: var(--panel); overflow: auto; height: 100%; }
 .web-browser [hidden] { display: none !important; }
 .web-browser h2, .web-browser h3, .web-browser p { margin: 0; }
 .web-browser h2 { font-size: 1.5rem; }
@@ -56,9 +56,7 @@
     .web-provider > span:last-child { grid-column: 2; grid-row: 1; }
 }
 
-/* The provider owns real navigation; PortfoliOS contributes only the service switcher. */
-.web-browser-service-bar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-shrink: 0; font-size: .72rem; color: var(--text-soft); }
-.web-browser-service-bar button { padding: .35rem .65rem; font-size: .75rem; }
+/* Browser.js owns its navigation and native Proxy settings. */
 .web-browser-external { border-top: 1px solid var(--line); padding-top: .8rem; }
 .web-browser-external > summary { cursor: pointer; font-size: .85rem; padding: .4rem 0; }
 .web-browser-external > p { color: var(--text-soft); font-size: .8rem; margin: .5rem 0; }
@@ -67,7 +65,6 @@
 .web-browser.is-embedded > .web-browser-address,
 .web-browser.is-embedded > .web-browser-bookmarks,
 .web-browser.is-embedded > footer { display: none; }
-.web-browser.is-embedded > .web-browser-service-bar { padding: .35rem .6rem; border-bottom: 1px solid var(--line); }
 .web-browser.is-embedded > .web-browser-message:not(:empty) { padding: .4rem .6rem; flex-shrink: 0; }
 .web-browser-relay { display: flex; flex: 1; min-width: 0; min-height: 0; }
 .web-browser-relay-frame { display: block; width: 100%; height: 100%; flex: 1; min-width: 0; min-height: 0; border: 0; background: var(--surface); }
@@ -77,3 +74,11 @@
 .mobile-browser-app:has(.web-browser.is-embedded) details.mobile-browser-portfolio { margin-top: 0; padding-top: .2rem; }
 .mobile-browser-app:has(.web-browser.is-embedded) .mobile-browser-portfolio > summary { padding: .35rem 0; font-size: .8rem; }
 .mobile-browser-app:has(.web-browser.is-embedded):has(.mobile-browser-portfolio[open]) { height: auto; grid-template-rows: minmax(25rem, 60vh) auto; }
+
+.web-browser.is-settings { overflow:auto; padding:1rem; gap:1rem; }
+.web-browser.is-settings > .web-browser-heading { display:flex; }
+.web-browser.is-settings > .web-browser-chooser { flex-shrink:0; }
+.web-browser-native-settings { position:absolute; bottom:.5rem; right:.5rem; z-index:2; font-size:.75rem !important; }
+.web-browser-recovery { flex-shrink:0; }
+
+.web-browser.is-settings > .web-browser-address, .web-browser.is-settings > .web-browser-bookmarks { display:flex; }

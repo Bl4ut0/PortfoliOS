@@ -1,0 +1,2 @@
+# Imported browser release assets must retain their checksum-pinned bytes.
+apps/browser/browserjs/** -text -whitespace linguist-generated=true

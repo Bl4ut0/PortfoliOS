@@ -20,3 +20,13 @@ DirectoryIndex index.php index.html
         Header always set Cache-Control "no-store"
     </IfModule>
 </FilesMatch>
+
+# Trusted Browser.js chrome; rewritten websites use external isolation origins.
+<FilesMatch "^browserjs\.php$">
+    <IfModule mod_headers.c>
+        Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+        Header always set Cross-Origin-Embedder-Policy "unsafe-none"
+        Header always set Cache-Control "no-store"
+        Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https: wss: data:; frame-src https://*.puter.zone; worker-src 'self' blob:; img-src 'self' data: blob: https:; font-src 'self' data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'"
+    </IfModule>
+</FilesMatch>

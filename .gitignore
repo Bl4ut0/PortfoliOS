@@ -39,3 +39,6 @@ apps/romplayer/roms/
 *.sfc
 *.gba
 *.z64
+
+# Local development scratch files
+.tmp/

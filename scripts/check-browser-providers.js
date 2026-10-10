@@ -8,8 +8,8 @@ const { spawn } = require('node:child_process');
 const { chromium } = require(process.env.PORTFOLIOS_PLAYWRIGHT || 'playwright');
 const root = path.resolve(__dirname, '..');
 async function mockRelays(context) {
-    for (const host of ['browser.puter.com', 'scramjet.mercurywork.shop']) await context.route('https://' + host + '/**', route => route.fulfill({
-        contentType: 'text/html', body: '<!doctype html><title>Relay fixture</title><input aria-label="Provider address bar"><main>Embedded relay fixture</main><script>localStorage.setItem("relay-fixture", localStorage.getItem("relay-fixture") || crypto.randomUUID())</script>'
+    for (const host of ['**/apps/browser/browserjs.php*', 'https://scramjet.mercurywork.shop/**']) await context.route(host, route => route.fulfill({
+        contentType: 'text/html', headers: { 'Cross-Origin-Embedder-Policy':'unsafe-none' }, body: '<!doctype html><title>Relay fixture</title><input aria-label="Provider address bar"><main>Embedded relay fixture</main><script>localStorage.setItem("relay-fixture", localStorage.getItem("relay-fixture") || crypto.randomUUID())</script>'
     }));
 }
 (async () => {
@@ -61,7 +61,7 @@ async function mockRelays(context) {
             assert.equal(await page.evaluate(() => !!window.BrowserWorkspace), false, 'Browser code loaded during startup');
             assert.equal(requests.length, 0);
             assert.equal(statusRequests, 0);
-            assert.equal(page.frames().filter(frame => /browser.puter.com|scramjet.mercurywork.shop/.test(frame.url())).length, 0, 'Relay loaded during boot/login');
+            assert.equal(page.frames().filter(frame => /browserjs.php|scramjet.mercurywork.shop/.test(frame.url())).length, 0, 'Relay loaded during boot/login');
             const open = async () => {
                 await page.evaluate(mobile => mobile ? window.MobileOS.openApp('browser') : window.openDesktopWindow('browser'), mobile);
                 await page.locator('[data-web-browser]').waitFor();
@@ -70,12 +70,13 @@ async function mockRelays(context) {
             const relay = page.locator('.web-browser-relay-frame');
             await page.frameLocator('.web-browser-relay-frame').getByText('Embedded relay fixture').waitFor();
             assert.equal(statusRequests, 0, 'Opening the free browser contacted the remote-session backend');
-            assert.equal(await relay.getAttribute('src'), 'https://browser.puter.com/');
+            assert.equal(new URL(await relay.getAttribute('src')).pathname, '/apps/browser/browserjs.php');
             assert.equal(await relay.evaluate(frame => frame.credentialless), true);
             assert.equal(await relay.getAttribute('referrerpolicy'), 'no-referrer');
             assert.doesNotMatch(await relay.getAttribute('sandbox'), /allow-top-navigation|allow-popups-to-escape-sandbox|allow-storage-access/);
-            const providerFrame = page.frames().find(frame => frame.url().startsWith('https://browser.puter.com/'));
-            assert.equal(await providerFrame.evaluate(() => { try { return parent.localStorage.length; } catch { return 'blocked'; } }), 'blocked');
+            const providerFrame = page.frames().find(frame => frame.url().includes('/apps/browser/browserjs.php'));
+            await page.evaluate(() => localStorage.setItem('portfolios-parent-sentinel', 'private-only'));
+            assert.equal(await providerFrame.evaluate(() => localStorage.getItem('portfolios-parent-sentinel')), null, 'Credentialless chrome storage inherited parent storage');
             assert.equal(await relay.evaluate(element => element.getBoundingClientRect().height > 220), true, 'Embedded viewport is too short');
             const partition = await providerFrame.evaluate(() => localStorage.getItem('relay-fixture'));
             await page.frameLocator('.web-browser-relay-frame').getByRole('textbox', { name: 'Provider address bar' }).fill('keep this tab');
@@ -83,11 +84,11 @@ async function mockRelays(context) {
             else await page.evaluate(() => window.minimizeDesktopWindow('browser'));
             await open();
             assert.equal(await page.frameLocator('.web-browser-relay-frame').getByRole('textbox', { name: 'Provider address bar' }).inputValue(), 'keep this tab', 'Home/minimize discarded the live browsing tab');
-            assert.equal(await page.frames().find(frame => frame.url().startsWith('https://browser.puter.com/')).evaluate(() => localStorage.getItem('relay-fixture')), partition, 'Minimizing/Home recreated the free browser');
-            await page.locator('[data-web-change]').click();
+            assert.equal(await page.frames().find(frame => frame.url().includes('/apps/browser/browserjs.php')).evaluate(() => localStorage.getItem('relay-fixture')), partition, 'Minimizing/Home recreated the free browser');
+            await page.evaluate(() => window.BrowserWorkspace.openSettings());
             await page.locator('[data-web-quota]').filter({ hasText: 'Not configured' }).waitFor();
             assert.equal(await page.evaluate(() => crossOriginIsolated), true, 'Main OS lost WASM isolation');
-            assert.equal(await page.locator('[data-web-provider]').count(), 5);
+            assert.equal(await page.locator('[data-web-provider]').count(), 6);
             assert.equal(await page.locator('.web-provider[aria-pressed=true]').count(), 1);
             await page.locator('[data-web-provider=hyperbeam]').click();
             assert.equal(await page.locator('[data-web-start]').isDisabled(), true);
@@ -103,7 +104,7 @@ async function mockRelays(context) {
             await page.locator('[data-web-address-form] button[type=submit]').click();
             assert.equal(await page.locator('[data-web-destination]').textContent(), 'https://example.com/');
             assert.equal(await page.locator('[data-web-reopen]').getAttribute('href'), 'https://www.proxysite.com/');
-            await page.locator('[data-web-change]').click();
+            await page.evaluate(() => window.BrowserWorkspace.openSettings());
             await page.locator('[data-web-provider=hideme]').click();
             assert.equal(await page.locator('[data-web-remember]').isVisible(), false, 'External handoff became a default embedded provider');
             assert.equal(await page.locator('[data-web-launch]').getAttribute('href'), 'https://hide.me/en/proxy');
@@ -123,7 +124,7 @@ async function mockRelays(context) {
             if (process.env.PORTFOLIOS_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.PORTFOLIOS_SCREENSHOT_DIR, 'browser-' + (mobile ? 'mobile' : 'desktop') + '.png') });
             // Restore an available provider, allocate exactly once, and exercise the real credentialless viewer with a mocked SDK.
             enabled = true;
-            await page.locator('[data-web-change]').click();
+            await page.evaluate(() => window.BrowserWorkspace.openSettings());
             await page.locator('[data-web-quota]').filter({ hasText: 'min available' }).waitFor();
             await page.locator('[data-web-provider=hyperbeam]').click();
             await page.locator('[data-web-start]').click();
@@ -136,7 +137,7 @@ async function mockRelays(context) {
             await page.waitForTimeout(200);
             assert.equal(stops.length, 1, 'Pause did not terminate the remote session');
             await open();
-            await page.locator('[data-web-change]').click();
+            await page.evaluate(() => window.BrowserWorkspace.openSettings());
             // Backgrounding during allocation must cancel the eventual lease, too.
             let releaseStart;
             startGate = new Promise(resolve => { releaseStart = resolve; });
@@ -163,7 +164,7 @@ async function mockRelays(context) {
             await page.locator('[data-web-message]').filter({ hasText: 'Remote usage cannot be verified' }).waitFor();
             assert.equal(stops.length, stopsBeforeMonitor + 1, 'Failed active usage monitoring did not end the session');
             failStatus = false;
-            await page.locator('[data-web-change]').click();
+            await page.evaluate(() => window.BrowserWorkspace.openSettings());
             await page.locator('[data-web-quota]').filter({ hasText: 'min available' }).waitFor();
             failStart = true;
             await page.locator('[data-web-provider=hyperbeam]').click();
@@ -211,7 +212,7 @@ async function mockRelays(context) {
         await pp.evaluate(async () => { await window.prepareProfileSwitch(); window.setCurrentUser('private_other'); });
         assert.equal(await pp.locator('.web-browser-relay-frame').count(), 0);
         await pp.evaluate(() => window.MobileOS.openApp('browser'));
-        await mobileRoot.locator('[data-web-change]').click();
+        await pp.evaluate(() => window.BrowserWorkspace.openSettings());
         await mobileRoot.locator('[data-web-provider=scramjet]').click();
         await mobileRoot.locator('[data-web-embedded-start]').click();
         await mobileRoot.locator('[data-web-fresh]').waitFor();
@@ -219,7 +220,7 @@ async function mockRelays(context) {
         assert.match(await mobileRoot.locator('[data-web-message]').textContent(), /different profile/);
         await mobileRoot.locator('[data-web-provider=browserjs]').click();
         await mobileRoot.locator('[data-web-embedded-start]').click();
-        assert.equal(new URL(await mobileRoot.locator('.web-browser-relay-frame').getAttribute('src')).hostname, 'browser.puter.com');
+        assert.equal(new URL(await mobileRoot.locator('.web-browser-relay-frame').getAttribute('src')).pathname, '/apps/browser/browserjs.php');
         await privateContext.close();
         const unsupported = await browser.newContext({ serviceWorkers: 'block', reducedMotion: 'reduce' });
         await unsupported.route('**/*', route => route.request().url().startsWith(origin) ? route.continue() : route.abort());

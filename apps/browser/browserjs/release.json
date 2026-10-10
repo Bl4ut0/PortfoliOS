@@ -1,0 +1,32 @@
+{
+  "dirty": false,
+  "schemaVersion": 1,
+  "repository": "https://github.com/Bl4ut0/PortfoliOS-Browser.JS",
+  "revision": "285daf63bf5d191b5476926c74fb8831c1ace867",
+  "source": "https://github.com/Bl4ut0/PortfoliOS-Browser.JS/tree/285daf63bf5d191b5476926c74fb8831c1ace867",
+  "build": "node scripts/build-portfolios.mjs --install",
+  "node": "v25.1.0",
+  "inputs": {
+    "repository": "https://github.com/HeyPuter/browser.js",
+    "commit": "4bc4f86b226027f25cdce076c7124d1e0e6b36a3",
+    "dreamlandCommit": "44f8a9033a1244606ae3d4eb9400386c3c3b3cda",
+    "scramjet": {
+      "version": "2.0.67-alpha.2",
+      "integrity": "sha512-E/vmwQTqIoYmPLDb76t8Nv7O9kUdv8C6mRejdsT8APk5vBUYyIMI6CO0gyUVRX77Fc/NyoopfZNSaJ4qufJEww=="
+    },
+    "inject": {
+      "url": "https://browser.puter.com/assets/inject-BdIepyW2.js",
+      "sha256": "dc0f827a58687f3abce884b6426474e73e83868643fef3fdb8c6e5fed4a782a9"
+    }
+  },
+  "files": {
+    "defaultfavicon.png": "23f0e422d8692d6a2243937df8d75069e1b7806975b5350bb937b7e335329b68",
+    "icon.png": "4c7d4720cefc5e7430caea53566b5d0547ebeed74b8a6a22a8adcd26d4b3a6ff",
+    "index.html": "8dc4cea6cece2460379db6cbc4734b8c48939a711d914bbda54040f8064dd976",
+    "LICENSE": "e0eedba615d5cd1b986afb6c5b3a4b1ae33713e7e9dc74d19daec5e3221f9d2e",
+    "assets/index-COVHOBlm.js": "64b6b7aeaa42cf0ef04c645412a0409f76a28096e642a81e655c541a943419ac",
+    "assets/index-DvBH7BaU.css": "8e21a9d7087b41a41b781b9916019a7236804cc5d56f1594529e19b861351c22",
+    "assets/inject-BdIepyW2.js": "dc0f827a58687f3abce884b6426474e73e83868643fef3fdb8c6e5fed4a782a9",
+    "assets/scramjet-C3jhu0IA.wasm": "c8740c340a506686d9e46feb82894ab710cf57cd20564d001d0aef04310661e8"
+  }
+}

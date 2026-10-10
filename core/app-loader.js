@@ -5,7 +5,7 @@
 
 window.appRegistry = window.appRegistry || {};
 window.modularApps = window.modularApps || [];
-window.appAssetVersion = "2026.10.10.4";
+window.appAssetVersion = "2026.10.10.5";
 window.appLoadPromises = window.appLoadPromises || {};
 window.appLoadErrors = window.appLoadErrors || {};
 

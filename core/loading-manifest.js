@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.10.10.4";
+    const release = "2026.10.10.5";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "data/systems.js", "data/apps.js",

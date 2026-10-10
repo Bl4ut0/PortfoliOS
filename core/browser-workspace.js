@@ -2,7 +2,8 @@
 (function () {
     const home = 'https://www.google.com/';
     const providers = [
-        { id: 'browserjs', name: 'Browser.js', embed: 'https://browser.puter.com/', icon: 'fa-solid fa-window-maximize', detail: 'In-window browser · tabs, address bar and search · external relay' },
+        { id: 'browserjs', name: 'Browser.js', embed: '/apps/browser/browserjs.php', icon: 'fa-solid fa-window-maximize', detail: 'In-window browser · tabs, address bar and search · external relay' },
+        { id: 'browserjs-hosted', name: 'Hosted Browser.js', embed: 'https://browser.puter.com/', partition: 'browserjs', icon: 'fa-solid fa-window-maximize', detail: 'Upstream hosted browser · opens its own New Tab page' },
         { id: 'scramjet', name: 'Scramjet', embed: 'https://scramjet.mercurywork.shop/', icon: 'fa-solid fa-globe', detail: 'In-window Google start page · community relay · desktop-oriented controls' },
         { id: 'proxysite', name: 'ProxySite', url: 'https://www.proxysite.com/', icon: 'fa-solid fa-globe', detail: 'Free web proxy · opens in a separate tab' },
         { id: 'hideme', name: 'hide.me', url: 'https://hide.me/en/proxy', icon: 'fa-solid fa-shield-halved', detail: 'External proxy website · opens in a separate tab' },
@@ -26,14 +27,31 @@
     function remembered(id) {
         try { const value = localStorage.getItem(preferenceKey(id)); return providers.some(p => p.id === value) ? value : null; } catch { return null; }
     }
+    const connectionKey = id => `bl4ut0_${id}_BrowserProxy`;
+    function normalizeProxyEndpoint(raw) {
+        try {
+            const url = new URL(String(raw || '').trim());
+            if (url.protocol !== 'wss:' || url.username || url.password || url.search || url.hash) return null;
+            if (!url.pathname.endsWith('/')) url.pathname += '/';
+            return url.href;
+        } catch { return null; }
+    }
+    function readConnection(id) {
+        try {
+            const config = JSON.parse(localStorage.getItem(connectionKey(id)));
+            if (config?.mode === 'automatic') return { mode: 'automatic', endpoint: '', remember: true };
+            if (config?.mode === 'custom' && normalizeProxyEndpoint(config.endpoint)) return { mode: 'custom', endpoint: normalizeProxyEndpoint(config.endpoint), remember: true };
+        } catch {}
+        return { mode: 'automatic', endpoint: '', remember: false };
+    }
     function render() {
         return `<section class="web-browser" data-web-browser>
-            <div class="web-browser-service-bar"><span data-web-service-label>Browser</span><button type="button" data-web-change>Services</button></div>
+
             <header class="web-browser-heading"><span aria-hidden="true">◎</span><div><p>Your window to the web</p><h2>Browser</h2></div></header>
             <form class="web-browser-address" data-web-address-form><input data-web-address aria-label="Website address" autocomplete="off" spellcheck="false" inputmode="url" placeholder="Enter a website address"><button type="submit">Go</button></form>
             <nav class="web-browser-bookmarks" data-web-bookmarks aria-label="Website bookmarks"></nav>
             <div class="web-browser-message" data-web-message role="status" aria-live="polite"></div>
-            <section class="web-browser-chooser" data-web-chooser><h3>Choose your browsing service</h3><p>Websites are fetched by your chosen provider. Browsing traffic stays off the PortfoliOS server.</p>
+            <section class="web-browser-chooser" data-web-chooser><button type="button" data-web-return hidden>Back to browser</button><h3>Choose your browsing service</h3><p>Websites are fetched by your chosen provider. Browsing traffic stays off the PortfoliOS server.</p>
                 <div class="web-provider-list" role="group" aria-label="Browsing services">${providers.filter(p => !p.url).map(p => `<button type="button" class="web-provider" data-web-provider="${p.id}" aria-pressed="false"><i class="${p.icon}" aria-hidden="true"></i><span><strong>${p.name}</strong><small>${p.detail}</small>${p.id === 'hyperbeam' ? '<small data-web-quota>Checking availability…</small>' : ''}</span><span aria-hidden="true">›</span></button>`).join('')}</div>
                 <details class="web-browser-external"><summary>External web proxy websites</summary><p>These sites block embedding and open separately.</p><div class="web-provider-list">${providers.filter(p => p.url).map(p => `<button type="button" class="web-provider" data-web-provider="${p.id}" aria-pressed="false"><span><strong>${p.name}</strong><small>${p.detail}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></details>
                 <label class="web-browser-remember"><input type="checkbox" data-web-remember> Remember my choice for this profile</label>
@@ -42,6 +60,7 @@
                 <p class="web-browser-note">Browser.js opens its search/New Tab page; Scramjet starts at Google. Community services may be unavailable or restrict websites. Browsing state is temporary and clears when PortfoliOS reloads.</p>
             </section>
             <section class="web-browser-handoff" data-web-handoff hidden><h3 data-web-handoff-title></h3><p>Enter your destination on the provider’s page. You can copy the address below before opening it.</p><div class="web-browser-destination"><code data-web-destination></code><button type="button" data-web-copy>Copy address</button></div><a class="web-browser-primary" data-web-reopen target="_blank" rel="noopener noreferrer">Open provider in new tab ↗</a><p class="web-browser-note">PortfoliOS cannot read or control that tab. Use its browser controls to navigate.</p></section>
+            <button type="button" class="web-browser-recovery" data-web-recover hidden>Connection options</button><button type="button" class="web-browser-native-settings" data-web-native hidden>Browser settings</button>
             <section class="web-browser-relay" data-web-relay hidden></section>
             <section class="web-browser-remote" data-web-remote hidden><div class="web-browser-remote-bar"><span data-web-countdown></span><button type="button" data-web-stop>End session</button></div><div data-web-viewport></div></section>
             <footer class="web-browser-note">Your provider handles the websites you visit. A private workspace does not make browsing invisible to that provider.</footer>
@@ -55,7 +74,7 @@
         const address = find('[data-web-address]'), remember = find('[data-web-remember]');
         remember.checked = stored === selected;
         address.value = home;
-        let relayFrame = null, relayTimer = null;
+        let relayFrame = null, relayTimer = null, activeProvider = null, connection = readConnection(owner);
         const message = text => { if (!disposed) find('[data-web-message]').textContent = text || ''; };
         const validOwner = () => !disposed && profile() === owner;
         function saveChoice() {
@@ -91,18 +110,18 @@
             const launch = find('[data-web-launch]'), start = find('[data-web-start]');
             const embedded = find('[data-web-embedded-start]');
             embedded.hidden = !provider?.embed; embedded.disabled = busy;
-            find('[data-web-fresh]').hidden = !provider?.embed || !relayOwners.has(provider.id) || relayOwners.get(provider.id) === owner || !!relayFrame;
+            find('[data-web-fresh]').hidden = !provider?.embed || !relayOwners.has(provider.partition || provider.id) || relayOwners.get(provider.partition || provider.id) === owner || !!relayFrame;
             embedded.textContent = selected === 'scramjet' ? 'Open website in Browser' : 'Open browser';
             remember.closest('label').hidden = !!provider?.url;
             find('[data-web-address-form]').hidden = selected === 'browserjs';
-            find('[data-web-service-label]').textContent = (relayFrame || lease) ? 'Relay: ' + provider.name : 'Browser';
+            find('[data-web-native]').hidden = !((relayFrame && activeProvider !== 'browserjs') || lease);
             root.classList.toggle('is-embedded', !!relayFrame || !!lease);
             launch.hidden = !provider?.url;
             if (provider?.url) { launch.href = provider.url; launch.textContent = `Continue with ${provider.name} ↗`; }
             start.hidden = selected !== 'hyperbeam'; start.disabled = busy || !status?.available;
             start.textContent = busy ? 'Starting remote browser…' : 'Start remote browser';
             find('[data-web-quota]').textContent = status?.available ? `${Math.floor(status.remainingSeconds / 60).toLocaleString()} min available under the shared safety cap` : status?.message || 'Checking availability…';
-            find('[data-web-change]').disabled = busy;
+
             address.readOnly = !!lease || busy;
             find('[data-web-address-form] button[type="submit"]').disabled = !!lease || busy;
         }
@@ -115,6 +134,7 @@
             clearTimeout(relayTimer); relayTimer = null;
             relayFrame?.remove(); relayFrame = null;
             find('[data-web-relay]').hidden = true;
+            find('[data-web-recover]').hidden = true;
         }
         function openRelay() {
             if (busy || !validOwner()) return;
@@ -127,27 +147,40 @@
                 showChooser(); find('[data-web-fresh]').hidden = false;
                 message('Reload PortfoliOS before using this provider with a different profile. This keeps the previous browsing session separate. Reloading may require reconnecting Drive.'); update(); return;
             }
-            const target = normalizeAddress(address.value) || home;
-            relayOwners.set(provider.id, owner); stopRelay(); saveChoice();
+            const target = address.value === 'puter://settings/proxy' ? address.value : normalizeAddress(address.value) || home;
+            relayOwners.set(provider.partition || provider.id, owner); stopRelay(); saveChoice();
             const frame = document.createElement('iframe');
             frame.className = 'web-browser-relay-frame'; frame.title = provider.name + ' relay browser';
             frame.credentialless = true; frame.referrerPolicy = 'no-referrer';
             frame.sandbox = 'allow-scripts allow-same-origin allow-forms allow-downloads allow-popups';
             frame.allow = 'autoplay; fullscreen; clipboard-write';
-            const url = new URL(provider.embed);
+            const url = new URL(provider.embed, location.origin);
             if (provider.id === 'scramjet') url.searchParams.set('goto', target);
+            if (provider.id === 'browserjs') {
+                url.searchParams.set('workspace', owner);
+                if (options.mobile) url.searchParams.set('mobile', '1');
+                url.searchParams.set('v', window.PortfolioLoadingManifest?.release || '1');
+                if (target !== home) url.searchParams.set('openUrl', target);
+            }
+            activeProvider = provider.id;
+            root.classList.remove('is-settings');
             frame.src = url.href; relayFrame = frame;
             find('[data-web-relay]').replaceChildren(frame);
             find('[data-web-relay]').hidden = false;
             find('[data-web-chooser]').hidden = true; find('[data-web-handoff]').hidden = true; find('[data-web-remote]').hidden = true;
             find('[data-web-fresh]').hidden = true;
             message('Loading ' + provider.name + '…'); update();
-            relayTimer = setTimeout(() => { if (relayFrame === frame) message('The relay provider is taking longer to load. Open Services to reconnect or choose another provider.'); }, 20000);
+            relayTimer = setTimeout(() => { if (relayFrame === frame) { message('The browser is taking longer to load. You can retry or choose a different connection.'); find('[data-web-recover]').hidden = false; } }, 20000);
             frame.addEventListener('load', () => { if (validOwner() && relayFrame === frame) { clearTimeout(relayTimer); message(''); } }, { signal });
         }
-        function showChooser() {
-            stopRelay(); find('[data-web-fresh]').hidden = true;
+        function showChooser(preserve = false) {
+            if (!preserve) stopRelay();
+            find('[data-web-relay]').hidden = true;
+            root.classList.add('is-settings');
+            find('[data-web-return]').hidden = !relayFrame;
+            find('[data-web-fresh]').hidden = true;
             find('[data-web-chooser]').hidden = false; find('[data-web-handoff]').hidden = true; find('[data-web-remote]').hidden = true;
+            if (preserve && relayFrame) find('[data-web-return]').focus({ preventScroll: true });
         }
         function handoff(provider) {
             saveChoice(); find('[data-web-chooser]').hidden = true; find('[data-web-handoff]').hidden = false;
@@ -180,6 +213,7 @@
                 const result = await api('start', { url: target, mobile: !!options.mobile, requestId: crypto.randomUUID() });
                 if (!validOwner() || epoch !== generation) { await api('stop', { lease: result.lease }, true); return; }
                 lease = result;
+                root.classList.remove('is-settings');
                 const frame = document.createElement('iframe');
                 frame.className = 'web-browser-remote-frame'; frame.title = 'Hyperbeam remote browser'; frame.credentialless = true;
                 frame.allow = 'autoplay; fullscreen; clipboard-read; clipboard-write'; frame.referrerPolicy = 'no-referrer';
@@ -210,7 +244,11 @@
             if (event.target.closest('[data-web-launch], [data-web-reopen]')) {
                 const provider = providers.find(p => p.id === selected); if (provider?.url) handoff(provider);
             }
-            if (event.target.closest('[data-web-change]')) { void stop(); void refreshStatus(); }
+            if (event.target.closest('[data-web-return]')) returnToBrowser();
+            if (event.target.closest('[data-web-recover]')) { showChooser(true); void refreshStatus(); }
+            if (event.target.closest('[data-web-native]')) {
+                void stop().then(() => { selected = 'browserjs'; address.value = 'puter://settings/proxy'; openRelay(); });
+            }
             if (event.target.closest('[data-web-embedded-start]')) openRelay();
             if (event.target.closest('[data-web-fresh]')) location.reload();
             if (event.target.closest('[data-web-start]')) void start();
@@ -233,7 +271,38 @@
             else { const provider = providers.find(p => p.id === selected); if (provider) handoff(provider); else { showChooser(); message('Choose a browsing service to continue.'); } }
         }, { signal });
         remember.addEventListener('change', saveChoice, { signal });
+        function returnToBrowser() {
+            if (!relayFrame) return;
+            selected = activeProvider; root.classList.remove('is-settings');
+            find('[data-web-chooser]').hidden = true; find('[data-web-handoff]').hidden = true;
+            find('[data-web-relay]').hidden = false; message(''); update(); relayFrame.focus();
+        }
+        root.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && root.classList.contains('is-settings') && relayFrame) { event.preventDefault(); returnToBrowser(); }
+        }, { signal });
         window.addEventListener('message', event => {
+            if (!validOwner()) return;
+            if (event.origin === location.origin && event.source === relayFrame?.contentWindow && activeProvider === 'browserjs' && event.data?.source === 'portfolios-browser') {
+                const data = event.data;
+                if (!['ready', 'configure', 'options'].includes(data.type) || typeof data.requestId !== 'string') return;
+                let error = null;
+                if (data.type === 'configure') {
+                    const value = data.config;
+                    const endpoint = value?.mode === 'custom' ? normalizeProxyEndpoint(value.endpoint) : '';
+                    if (!['custom', 'automatic'].includes(value?.mode) || (value.mode === 'custom' && !endpoint)) error = 'Use a secure wss:// Wisp endpoint without credentials or query parameters.';
+                    else {
+                        connection = { mode: value.mode, endpoint, remember: value.remember === true };
+                        try {
+                            if (connection.remember) localStorage.setItem(connectionKey(owner), JSON.stringify({ mode: connection.mode, endpoint }));
+                            else localStorage.removeItem(connectionKey(owner));
+                            void window.savePreferencesToFilesystem?.();
+                        } catch { error = 'The connection could not be remembered on this device.'; }
+                    }
+                }
+                relayFrame.contentWindow.postMessage({ source: 'portfolios-browser-host', requestId: data.requestId, config: connection, error }, location.origin);
+                if (data.type === 'options') { showChooser(true); void refreshStatus(); update(); }
+                return;
+            }
             const frame = find('.web-browser-remote-frame');
             if (event.origin !== location.origin || event.source !== frame?.contentWindow || event.data?.source !== 'portfolios-remote') return;
             if (event.data.type === 'ended') void stop('Remote session ended. Choose a service to continue.');
@@ -244,13 +313,14 @@
         function navigate(value) {
             if (lease) { message('Use the remote browser’s address bar, or end its session before choosing another destination.'); return; }
             const target = normalizeAddress(value); if (!target) return;
-            address.value = target; showChooser();
-            if (selected === 'browserjs') { selected = 'scramjet'; message('Choose Open website in Browser to load this address through Scramjet. Browser.js navigation uses its own address bar.'); }
+            address.value = target;
+            if (selected === 'browserjs') { openRelay(); return; }
+            showChooser();
             update(); address.focus({ preventScroll: true });
         }
         find('[data-web-bookmarks]').innerHTML = (window.browserBookmarks || []).filter(b => normalizeAddress(b.url) && (!window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(b.systemId))).map(b => `<button type="button" data-web-bookmark="${esc(b.url)}">${esc(b.label)}</button>`).join('');
         const controller = {
-            navigate, stop, refreshStatus: () => selected === 'hyperbeam' ? refreshStatus() : Promise.resolve(), pause: reason => (lease || busy) ? stop(reason) : Promise.resolve(), get disposed() { return disposed; },
+            navigate, stop, openSettings: () => { showChooser(true); update(); void refreshStatus(); }, refreshStatus: () => selected === 'hyperbeam' ? refreshStatus() : Promise.resolve(), pause: reason => (lease || busy) ? stop(reason) : Promise.resolve(), get disposed() { return disposed; },
             snapshot: () => ({ address: normalizeAddress(address.value) || '', provider: selected }),
             restore: saved => {
                 const previousAddress = address.value;
@@ -262,7 +332,7 @@
                 update();
             },
             back: () => { if (relayFrame) return false; if (!lease && !find('[data-web-chooser]').hidden) return false; void stop(); return true; },
-            destroy: async () => { disposed = true; controllers.delete(controller); aborter.abort(); await stop(); }, owner, mobile: !!options.mobile
+            destroy: async () => { disposed = true; controllers.delete(controller); aborter.abort(); await stop(); }, owner, root, mobile: !!options.mobile
         };
         controllers.add(controller); update();
         if (providers.find(p => p.id === selected)?.embed) openRelay();
@@ -271,5 +341,5 @@
     }
     window.EventBus?.on('view:changed', view => { for (const controller of controllers) if (view !== (controller.mobile ? 'mobile' : 'desktop')) void controller.pause('Remote browsing ended when changing experiences.'); });
     window.EventBus?.on('user:changed', () => { for (const controller of [...controllers]) void controller.destroy(); });
-    window.BrowserWorkspace = { render, mount, normalizeAddress, providers, preferenceKey };
+    window.BrowserWorkspace = { render, mount, normalizeAddress, providers, preferenceKey, connectionKey, normalizeProxyEndpoint, openSettings: () => { for (const controller of controllers) if (!controller.disposed && controller.root.getClientRects().length) { controller.openSettings(); return; } } };
 })();

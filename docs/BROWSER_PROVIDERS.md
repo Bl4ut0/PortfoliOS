@@ -1,26 +1,49 @@
 # Browser providers
 
-The Browser loads only when opened. Desktop and Mobile share `core/browser-workspace.js`; mobile keeps its portfolio explorer. Remembered providers use `bl4ut0_<profile>_BrowserProvider`, so existing profile settings and Drive backup carry the choice between experiences. Public profile storage resets with the existing public-session reset. Remote access credentials never enter localStorage, SystemFS, browser task snapshots, or Drive.
+Browser loads only when opened. Desktop and Mobile share `core/browser-workspace.js`; Mobile keeps its portfolio explorer. The browser source is maintained in [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS), with its build and host protocol documented there. This repository owns the host adapter and imports generated releases rather than maintaining a second editable browser source copy.
 
-## In-window browsing
+## Native browser settings
 
-Opening Browser immediately embeds **Browser.js by HeyPuter**, with real tabs, an address bar, search, back/forward and reload controls. Its upstream New Tab page is the default homepage on desktop and mobile. Google can be opened from that page. The provider does not accept a documented initial-URL command from our origin, so PortfoliOS does not simulate navigation with an outer address bar.
+Browser opens directly to its own tabs, address bar, search, Back/Forward, and Reload controls. The extra Relay toolbar and Services button have been removed.
 
-The **Services** button offers **Scramjet** as an alternative. Its hosted demo accepts an initial destination and starts at Google. Its developer-oriented toolbar is cramped on phones; Browser.js is the mobile default. Remembering an embedded provider applies to the current workspace profile and follows it between desktop and mobile. Neither engine nor relay loads during PortfoliOS boot/login: this happens only when Browser is opened. Minimizing or using mobile Home preserves community browser tabs; closing the app removes the frame.
+Use the browser menu → Settings → Proxy to choose automatic Browser.js relay discovery or a custom secure Wisp endpoint. Custom endpoints must use `wss:` and contain no username, password, query, or fragment. HTTP/SOCKS proxies and proxy websites are different protocols and cannot be entered as Wisp endpoints. Automatic discovery URLs stay in memory.
 
-Both browsers are hosted on external origins and use an external Wisp relay to fetch destination websites. PortfoliOS serves the app interface only. No HTTP/SOCKS traffic relay, HTML rewriting proxy, third-party engine script, or service worker is installed on the PortfoliOS origin. Provider accounts and destinations can be restricted, public endpoints can fail or change, and these community instances have no uptime or permanent-free guarantee. This is browser compatibility through a community relay, not the full compatibility of a native browser.
+The optional Remember control stores the choice at `bl4ut0_<profile>_BrowserProxy`. Remembered provider choices use `bl4ut0_<profile>_BrowserProvider`. Both use the existing profile preferences/Drive mechanism, follow the same workspace between Desktop and Mobile, and reset with the public experience on reload. Browser cookies, website credentials, and history are not backed up to Drive. OS Google tokens and private files never enter this bridge.
 
-**ProxySite** and **hide.me** remain under External web proxy websites. Both prohibit framing with SAMEORIGIN headers. These are explicitly separate-tab tools, not routes for the embedded browser. PortfoliOS does not invent form/API URLs or bypass embedding restrictions. External browser-tab cookies are managed by the user's real browser and are outside our profile isolation.
+Settings → Proxy → Open connection options offers Hosted Browser.js, Scramjet, external ProxySite/hide.me launchers, and optional Hyperbeam. Back to browser or Escape closes these options without replacing the current frame or its tabs. Choosing another provider explicitly switches the browser. Alternate embedded providers have a Browser settings control to return to native settings. A slow-loading browser offers recovery options.
 
-**Hyperbeam** remains an optional embedded remote Chromium browser, allocated only after an explicit Start action. The PHP endpoint only controls sessions and accounting; it does not relay website content. It remains disabled until the server is configured and free-only billing is confirmed.
+## Loading and isolation
 
-## Workspace isolation and browser state
+The trusted Browser.js interface is served through `apps/browser/browserjs.php` in a credentialless sandboxed iframe. This maintained interface is same-origin trusted code: credentialless storage does not prevent it from accessing same-origin DOM. Rewritten destination pages and their proxy service workers remain on external `*.puter.zone` origins. No proxy service worker is installed on the PortfoliOS origin. The parent retains cross-origin isolation for WASM/AI.
 
-Community frames use a separate origin, a credentialless context, no referrer, and a sandbox without top navigation, escaping popups, or parent storage access. Parent WASM/AI cross-origin isolation remains enabled. No PortfoliOS Google authorization, SystemFS files, profile details or Drive credentials are sent to these providers. Browsing cookies/history are temporary provider state and are not part of Drive backup. The relay can observe the destinations and traffic it handles; workspace sign-in does not provide anonymity from the provider.
+Browser code, engine assets, and relay connections stay out of boot/login. Home or minimize preserves Browser.js tabs. Closing the app disposes its frames. Credentialless frames require a supporting Chromium browser; unsupported clients retain external proxy options.
 
-Credentialless frames require supporting Chromium browsers (current Chrome/Edge). Unsupported clients receive an explicit message and retain external proxy options; PortfoliOS does not weaken its isolation headers or silently navigate directly.
+Credentialless storage is partitioned by the top-level document and child origin, not by individual iframe. The first workspace to use a provider owns that partition until root reload. Profile changes destroy Browser frames. A different account must reload before reusing that provider; it may choose an unused provider meanwhile. Reload is explicit because it can interrupt memory-only Drive authorization. Browser UI keys also include the workspace identifier. Desktop and Mobile in the same workspace may share temporary provider storage, with separate live tabs per view.
 
-Credentialless cookies/storage are partitioned by the top-level document and child origin, **not by each iframe**. Removing a frame does not immediately clear its partition. The first workspace using a provider owns that provider partition until PortfoliOS reloads. Switching workspace profiles destroys all Browser frames. A different profile cannot reuse that provider during the same document lifetime: it is offered an explicit reload to obtain fresh storage, or can choose an unused provider. Reload is never forced because it can interrupt memory-only Drive authorization. Normal app close/reopen by the same workspace may retain provider state until root reload. Desktop and mobile in that workspace can share that temporary partition; individual live tabs are managed by each provider view.
+During this integration, the upstream automatic discovery endpoint returned an authorization error for our origin. A failed navigation opens Proxy settings with a clear recovery message. Configure a Wisp endpoint that permits PortfoliOS, or explicitly choose Hosted Browser.js in connection options. It opens its own New Tab page and receives no requested destination from PortfoliOS. Demo-only relay services are not configured as production fallbacks.
+
+The relay operator handles website traffic and can observe the traffic it carries. PortfoliOS serves browser assets and does not relay destination traffic through its server. Upstream automatic discovery/isolation availability and website compatibility remain external dependencies.
+
+## Build and import a release
+
+In the independent fork:
+
+```sh
+git submodule update --init external/dreamlandjs
+node scripts/build-portfolios.mjs --install
+# Commit validated source changes, then build from the clean revision.
+node scripts/build-portfolios.mjs
+```
+
+In PortfoliOS:
+
+```sh
+node scripts/import-browserjs.mjs /path/to/PortfoliOS-Browser.JS
+```
+
+The importer verifies a clean checkout, the exact fork revision, required files, safe paths, and every asset checksum. `apps/browser/browserjs/release.json` records the revision, corresponding-source URL, input pins, and checksums. Native About/Proxy source links identify that revision. Generated runtime assets and the AGPL license are committed here; dependencies and editable engine source stay in the fork. The fork's build profile rebuilds the browser UI using pinned official precompiled Scramjet/injection inputs; it does not claim a fresh Rust engine build.
+
+Bump the OS release/cache version, run the checks below, publish engine assets before browser/OS entry points, and verify the live revision and file hashes. Roll back using a previously validated fork artifact with a fresh OS release version.
 
 ## Configure Hyperbeam
 
@@ -61,34 +84,27 @@ Lease IDs, access URLs and participant secrets remain in process memory and the 
 
 ## Remote viewer and isolation
 
-Only `apps/browser/remote.php` opts out of COEP. It loads in a credentialless iframe under the isolated parent, preserving WASM/AI isolation. Embedded Hyperbeam therefore requires a browser with credentialless iframe support (current Chromium-based browsers). Other browsers retain the external proxy options. The viewer loads the pinned official `@hyperbeam/web@0.0.38` SDK only after a session is started and validates parent origin, message source, provider hostname and expiration. No third-party SDK runs in the main OS document.
+The remote viewer at `apps/browser/remote.php` opts out of COEP, alongside the trusted Browser.js document. It loads in a credentialless iframe under the isolated parent, preserving WASM/AI isolation. Embedded Hyperbeam therefore requires a browser with credentialless iframe support (current Chromium-based browsers). Other browsers retain the external proxy options. The viewer loads the pinned official `@hyperbeam/web@0.0.38` SDK only after a session is started and validates parent origin, message source, provider hostname and expiration. No third-party SDK runs in the main OS document.
 
 ## Validation
 
-Live community-provider checks on 2026-10-10 loaded Google inside the integrated desktop and phone layouts and observed external Wisp connections. Desktop address-bar navigation and a physical Back click passed Google → Wikipedia → Google. Google under an Android user agent returned an upstream 404 in one check, so phone website compatibility is not assured. Browser.js also rendered a missing favicon on example.com over its Back control; keyboard Back worked. These upstream UI/content failures are not fixed by the PortfoliOS wrapper and do not establish native-browser compatibility. Services remains reachable outside the provider frame.
-
-The Browser host passed all 28 desktop/mobile, embedded/chooser theme scenarios (513 contrast checks). Automated provider tests use mocks and cover startup deferral, live-tab preservation, parent isolation, profile partition ownership, unsupported-browser fallback, provider choices, and the optional Hyperbeam accounting/lifecycle boundaries.
-
 - `npm test`
-- `node scripts/check-browser-providers.js` (set `PORTFOLIOS_PHP` and, if needed, `PORTFOLIOS_PLAYWRIGHT`)
+- `node scripts/check-browserjs-browser.js`: built browser Settings → Proxy on Desktop/Mobile, endpoint validation, profile persistence/public reset, options dismissal/tab preservation, and bridge sender validation.
+- `node scripts/check-browser-providers.js`: provider selection, startup deferral, lifecycle, partition ownership, unsupported-browser fallback, and bounded Hyperbeam behavior.
 - `php scripts/check-browser-quota.php`
 - `node scripts/check-staged-loading-browser.js`
 
-Live Hyperbeam session validation requires server credentials, verified free-only billing settings, and a public webhook URL. Mocked tests do not establish real provider billing behavior.
+Browser UI checks require PHP and Playwright; set `PORTFOLIOS_PHP` and `PORTFOLIOS_PLAYWRIGHT` when they are not available on PATH. Live destination checks must verify the actual fork build and external content isolation. Mocked relay tests establish local behavior, not external relay uptime or real Hyperbeam billing behavior. Live Hyperbeam validation requires server credentials, verified free-only settings, and a public webhook URL.
 
 ## Provider documentation
 
-- https://github.com/HeyPuter/browser.js
-- https://browser.puter.com/
-- https://github.com/MercuryWorkshop/scramjet
-- https://scramjet.mercurywork.shop/
-- https://github.com/MercuryWorkshop/wisp-protocol
-- https://developer.chrome.com/blog/iframe-credentialless
-
-- https://www.proxysite.com/
-- https://hide.me/en/proxy
-- https://hyperbeam.com/
-- https://docs.hyperbeam.com/rest-api/dispatch/get-usage
-- https://docs.hyperbeam.com/guides/timeouts
-- https://docs.hyperbeam.com/guides/authenticating-participants
-- https://docs.hyperbeam.com/client-sdk/javascript/overview
+- [Maintained browser fork](https://github.com/Bl4ut0/PortfoliOS-Browser.JS)
+- [Browser.js upstream](https://github.com/HeyPuter/browser.js)
+- [Scramjet](https://github.com/MercuryWorkshop/scramjet)
+- [Wisp protocol](https://github.com/MercuryWorkshop/wisp-protocol)
+- [Credentialless iframes](https://developer.chrome.com/blog/iframe-credentialless)
+- [ProxySite](https://www.proxysite.com/)
+- [hide.me](https://hide.me/en/proxy)
+- [Hyperbeam usage](https://docs.hyperbeam.com/rest-api/dispatch/get-usage)
+- [Hyperbeam timeouts](https://docs.hyperbeam.com/guides/timeouts)
+- [Hyperbeam participant authorization](https://docs.hyperbeam.com/guides/authenticating-participants)

@@ -1,7 +1,7 @@
 /** Offline boot plus assets actually used by a workspace. App binaries stay in SystemFS. */
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const SHELL_RELEASE = "2026.10.10.4";
+const SHELL_RELEASE = "2026.10.10.5";
 const SHELL_CACHE = "portfolio-shell-" + SHELL_RELEASE;
 const versioned = path => path + "?v=" + SHELL_RELEASE;
 const BOOT_ASSETS = ["/", "/manifest.webmanifest", ...[
