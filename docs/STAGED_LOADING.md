@@ -1,13 +1,13 @@
 # Staged loading architecture
 
-Release 2026.10.10.1. This implements the loading work identified in the [performance audit](PERFORMANCE_AUDIT.md) before expanding the WASM catalog.
+Release 2026.10.10.2. This implements the loading work identified in the [performance audit](PERFORMANCE_AUDIT.md) before expanding the WASM catalog.
 
 ## Entry points and boundaries
 
 | Stage | Entry point | Behavior |
 | --- | --- | --- |
 | Boot | index.html, core/boot.js, main.js | Critical boot styles, viewport setup, loading graph, original typed introduction and Desktop/Mobile/Quick buttons. No workspace markup, account storage initialization, app controller, model or game engine. |
-| Login | core/staged-loader.js → shared graph | Account definitions, account chooser and shared storage/auth APIs. Desktop sign-in is full screen; Mobile sign-in uses an empty phone frame. No workspace is mounted and neither shell executes. Google sign-in code loads when the user chooses Google. |
+| Login | core/staged-loader.js → shared graph | Account definitions, account chooser and shared storage/auth APIs. Desktop sign-in is full screen; Mobile sign-in uses an empty phone frame. No workspace is mounted and neither shell executes. Google sign-in code loads when the user chooses Google. Login symbols render locally without waiting for an icon font. |
 | Prepare selected experience | low-priority prefetch links | Download only the chosen shell's scripts, styles and HTML while the chooser is visible. Prefetch never evaluates scripts or mounts HTML. Data-saving browsers skip speculative downloads. |
 | Profile selected | prepareSessionStorage, startSelectedWorkspace | Initialize SystemFS/security, restore the selected account's preferences, fetch/clone its workspace HTML, then execute its shell entry. Keep sign-in over the interface until mounting finishes. |
 | Workspace ready | deferred background task | Begin eligible private Drive backup without awaiting a full backup. Optional font styling loads without blocking entry. Public reset and private backup boundaries remain intact. |

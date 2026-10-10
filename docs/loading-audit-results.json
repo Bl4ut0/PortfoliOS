@@ -1,5 +1,5 @@
 {
-  "release": "2026.10.10.1",
+  "release": "2026.10.10.2",
   "baselineCommit": "4dcc82adac65ce9a15af9afe8d67caf3d11a209f",
   "generatedAt": "2026-10-10T19:09:42.442Z",
   "scope": "Local unthrottled disposable Chrome profiles; 3 cold runs at each viewport; service workers blocked and third-party requests aborted; first-party resource decoded sizes exclude HTML, HTTP headers and compression. No Lighthouse or field INP claim.",

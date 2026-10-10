@@ -79,3 +79,11 @@ body.session-locked #mobile-device > :not(.session-chooser) { visibility:hidden;
 
 /* Keep phone sign-in visible while its workspace is mounted behind it. */
 body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
+
+/* Sign-in symbols render before any optional icon font arrives. */
+.session-symbol { display:inline-block; width:16px; height:16px; vertical-align:middle; flex-shrink:0; }
+.session-lock-header > span > .session-symbol, .session-lock-footer > span > .session-symbol { margin-right:8px; }
+.session-action-symbol { color:#8de0e7; font:20px system-ui,sans-serif; }
+.session-google-mark { font:bold 32px system-ui,sans-serif; color:inherit; }
+#mobile-device .session-lock-header .session-symbol { width:13px; height:13px; margin:0 0 0 9px; }
+#mobile-device .session-account > .session-action-symbol { color:var(--mobile-accent-ink); }

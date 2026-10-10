@@ -1,5 +1,13 @@
 /** Shared Desktop/Mobile account selection and Google private-session entry. */
 (function () {
+    const symbols = {
+        shield: '<path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/>',
+        lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+        signal: '<path d="M4 20v-3m5 3v-7m5 7V9m5 11V4"/>',
+        wifi: '<path d="M3 8a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0m-9 4a5 5 0 0 1 6 0"/><circle cx="12" cy="20" r="1"/>',
+        battery: '<rect x="2" y="6" width="18" height="12" rx="2"/><path d="M23 10v4M6 10v4m4-4v4m4-4v4"/>'
+    };
+    const symbol = name => '<svg class="session-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + symbols[name] + '</svg>';
     let clockTimer = null;
     let previousFocus = null;
     let inerted = [];
@@ -31,7 +39,7 @@
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "session-chooser-title");
         overlay.innerHTML = `
-            <header class="session-lock-header"><span><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> PortfoliOS</span><span>${overlay.dataset.experience === "mobile" ? "Mobile" : "Desktop"}</span></header>
+            <header class="session-lock-header"><span>${symbol("shield")} PortfoliOS</span><span>${overlay.dataset.experience === "mobile" ? "Mobile" : "Desktop"}</span></header>
             <div class="session-chooser-panel">
                 <div class="session-lock-clock" aria-hidden="true"><span data-session-time></span><span data-session-date></span></div>
                 <span class="session-chooser-eyebrow">Welcome back</span>
@@ -41,19 +49,19 @@
                     <button type="button" class="session-account" data-session-public>
                         <span class="session-account-icon"><img data-session-avatar="public" alt=""></span>
                         <span><strong>Bl4ut0 public profile</strong><small>Fresh public workspace · Enter</small></span>
-                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                        <span class="session-action-symbol" aria-hidden="true">→</span>
                     </button>
                     ${Object.entries(profiles).filter(([id]) => window.isPrivateUser?.(id)).map(([id, profile]) => `
                         <button type="button" class="session-account" data-session-profile="${escape(id)}">
                             <span class="session-account-icon"><img data-session-avatar="${escape(id)}" alt=""></span>
                             <span><strong>${escape(profile.name || profile.email || "Private profile")}</strong><small>${escape(profile.email || "Local private workspace")}</small><small>${window.GDriveSync?.accountSessions?.[id]?.expiresAt > Date.now() || (window.state?.currentUserId === id && window.GDriveSync?.getToken()) ? "Private workspace · Continue" : profile.source === "google" ? "Private workspace · Sign in" : "Local workspace · Continue"}</small></span>
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                            <span class="session-action-symbol" aria-hidden="true">→</span>
                         </button>
                     `).join("")}
                     <button type="button" class="session-account session-account-google" data-session-google>
-                        <span class="session-account-icon"><i class="fa-brands fa-google"></i></span>
+                        <span class="session-account-icon"><span class="session-google-mark" aria-hidden="true">G</span></span>
                         <span><strong>Other account</strong><small>Sign in with Google</small></span>
-                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        <span class="session-action-symbol" aria-hidden="true">+</span>
                     </button>
                 </div>
                 <p class="session-chooser-note">Your files and settings belong to your account. Sign in with Google to connect Drive backup.</p>
@@ -61,7 +69,7 @@
                 <p class="session-chooser-error" data-session-error role="alert" hidden></p>
                 <button type="button" class="session-chooser-offline" data-session-offline hidden>Continue this remembered profile offline</button>
             </div>
-            <footer class="session-lock-footer"><button type="button" data-session-cancel ${window.state?.sessionChosen ? "" : "hidden"}>Return to workspace</button><button type="button" data-session-experience><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Change experience</button><span><i class="fa-solid fa-lock" aria-hidden="true"></i> Your personal workspace</span></footer>
+            <footer class="session-lock-footer"><button type="button" data-session-cancel ${window.state?.sessionChosen ? "" : "hidden"}>Return to workspace</button><button type="button" data-session-experience><span class="session-action-symbol" aria-hidden="true">←</span> Change experience</button><span>${symbol("lock")} Your personal workspace</span></footer>
         `;
         const mobile = overlay.dataset.experience === 'mobile';
         const host = mobile ? document.getElementById('mobile-device') : document.body;
@@ -77,7 +85,7 @@
         inerted.forEach(([node]) => { node.inert = true; });
         document.body.classList.add('session-locked');
         if (mobile) {
-            overlay.querySelector('.session-lock-header').innerHTML = '<span data-session-status-time></span><span aria-label="Device status"><i class="fa-solid fa-signal" aria-hidden="true"></i><i class="fa-solid fa-wifi" aria-hidden="true"></i><i class="fa-solid fa-battery-full" aria-hidden="true"></i></span>';
+            overlay.querySelector('.session-lock-header').innerHTML = '<span data-session-status-time></span><span aria-label="Device status">' + symbol("signal") + symbol("wifi") + symbol("battery") + '</span>';
             overlay.querySelector('#session-chooser-title').textContent = 'Choose a user';
             overlay.querySelector('.session-lock-footer > span').innerHTML = '<span class="session-mobile-gesture" aria-hidden="true"></span>';
         }

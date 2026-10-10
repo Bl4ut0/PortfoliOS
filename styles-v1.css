@@ -1,4 +1,4 @@
 /* Critical boot styles only. Selected experience styles load after selection. */
-@import url("styles/tokens.css?v=2026.10.10.1");
-@import url("styles/reset.css?v=2026.10.10.1");
-@import url("styles/boot.css?v=2026.10.10.1");
+@import url("styles/tokens.css?v=2026.10.10.2");
+@import url("styles/reset.css?v=2026.10.10.2");
+@import url("styles/boot.css?v=2026.10.10.2");

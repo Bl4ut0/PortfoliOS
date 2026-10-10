@@ -1,6 +1,6 @@
 # Loading performance — 10 October 2026
 
-Release 2026.10.10.1 implements the [staged-loading architecture](STAGED_LOADING.md). Baseline: 4dcc82a, immediately before restructuring. Machine-readable runs: [loading-audit-results.json](loading-audit-results.json).
+Release 2026.10.10.2 implements the [staged-loading architecture](STAGED_LOADING.md). Baseline: 4dcc82a, immediately before restructuring. Machine-readable runs: [loading-audit-results.json](loading-audit-results.json).
 
 ## Comparable cold selector runs
 
