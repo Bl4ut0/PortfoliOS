@@ -2,6 +2,10 @@
 
 This document is the source of truth for building apps inside PortfoliOS. The goal is to keep each app isolated in its own folder while sharing the same window lifecycle, adaptive sizing, audio routing, save storage, and security rules.
 
+## WASM expansion references
+
+For application candidates and upstream build/API/license references, see [the WASM library](docs/wasm/README.md). The [integration guide](docs/wasm/INTEGRATION.md) documents the file/profile/Drive, worker/iframe, lifecycle, hosting, and measurement gates for future ports. It proposes evaluation requirements without changing this app registration contract.
+
 ## Runtime Pieces
 
 - `core/app-framework.js`: app validation, lifecycle hook runner, safe iframe messaging, modular teardown, and audio adapter registration.

@@ -141,6 +141,10 @@ All game data files, WADs, MPQs, PAKs, audio/texture archives, and ROMs referenc
 
 **Self-Hosting Requirement**: This repository contains web engine runners, WebAssembly source ports, and UI shells only. Commercial game data binaries are strictly excluded from git tracking via `.gitignore`. If you wish to host your own version of these playable web applications (such as DOOM, Quake, Diablo, Unreal Tournament 99, Duke Nukem 3D, or OpenRCT2), you will need to provide your own legally acquired game source files.
 
+## WASM application library
+
+See [docs/wasm/README.md](docs/wasm/README.md) for the expandable WASM application inventory, upstream documentation index, integration guide, and evaluation roadmap. It covers all seven Craft apps, creative/development engines, and the existing browser runtimes, with explicit distinctions between candidates, integrated WASM, JavaScript/WebGPU apps, and the simulated Office shell. The catalog does not install engines during startup. Run node scripts/build-wasm-catalog.js --check to validate its metadata and generated pages.
+
 ## Roadmap and review
 
 See [ROADMAP.md](ROADMAP.md) for prioritized milestones and acceptance criteria, and [docs/PROJECT_REVIEW.md](docs/PROJECT_REVIEW.md) for review evidence and remaining work.

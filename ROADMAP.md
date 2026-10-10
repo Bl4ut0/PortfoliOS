@@ -1,6 +1,6 @@
 # PortfoliOS roadmap
 
-Updated 2026-10-09. Priorities describe delivery order rather than promised dates. A milestone is complete only after checks, commit, push, production deployment, and release verification.
+Updated 2026-10-10. Priorities describe delivery order rather than promised dates. A milestone is complete only after checks, commit, push, production deployment, and release verification.
 
 ## Delivered in the account-session release
 
@@ -45,7 +45,7 @@ Updated 2026-10-09. Priorities describe delivery order rather than promised date
 | P1 | Release reproducibility | Track root dependency manifests, add CI for app contracts and session/isolation regressions, record a release manifest, verify remote asset hashes, and document rollback. | Repository configuration |
 | P2 | Observable services | Status Console uses real service checks with checked-at timestamps, degraded/outage states, incident history, and maintenance notes. Keep public health independent of private workspace data. | Monitored service list |
 | P2 | Accessibility and performance | Keyboard-only account/app flows, screen-reader checks, mobile touch/contrast checks, recovery from blocked storage, and measured cold-start budgets for Desktop/Mobile/Quick. | Browser smoke suite |
-| P3 | App and AI expansion | Prioritize useful local documents/media workflows and bounded offline AI skills after session reliability. Validate game-engine-native saves independently of SystemFS exports. | Reliable backup and lifecycle boundaries |
+| P3 | WASM application and AI expansion | Follow [the WASM expansion roadmap](docs/wasm/ROADMAP.md): evaluate PDF/image/vector/media/OCR workflows, then programming/data/CAD/publishing tools. Require pinned artifacts, profile-safe Open/Save, backup/restore, lifecycle, measured limits, and explicit Desktop/Mobile support. Validate game-engine-native saves independently of SystemFS exports. | Reliable backup and lifecycle boundaries |
 
 ## Release checks
 

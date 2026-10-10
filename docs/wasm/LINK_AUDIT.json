@@ -1,0 +1,941 @@
+{
+  "checkedAt": "2026-10-10T05:49:26.422Z",
+  "method": "Unauthenticated HTTPS GET, redirects followed, response body canceled; status checks do not validate page content, fragments, artifact availability, or software quality.",
+  "uniqueUrls": 153,
+  "passed": 153,
+  "failed": 0,
+  "results": [
+    {
+      "url": "https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html",
+      "status": 200,
+      "finalUrl": "https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html",
+      "ok": true
+    },
+    {
+      "url": "https://duckdb.org/",
+      "status": 200,
+      "finalUrl": "https://duckdb.org/",
+      "ok": true
+    },
+    {
+      "url": "https://duckdb.org/docs/stable/clients/wasm/overview.html",
+      "status": 200,
+      "finalUrl": "https://duckdb.org/docs/stable/clients/wasm/overview",
+      "ok": true
+    },
+    {
+      "url": "https://emscripten.org/docs/",
+      "status": 200,
+      "finalUrl": "https://emscripten.org/docs/",
+      "ok": true
+    },
+    {
+      "url": "https://emulatorjs.org/",
+      "status": 200,
+      "finalUrl": "https://emulatorjs.org/",
+      "ok": true
+    },
+    {
+      "url": "https://emulatorjs.org/docs/",
+      "status": 200,
+      "finalUrl": "https://emulatorjs.org/docs/",
+      "ok": true
+    },
+    {
+      "url": "https://ffmpegwasm.netlify.app/",
+      "status": 200,
+      "finalUrl": "https://ffmpegwasm.netlify.app/",
+      "ok": true
+    },
+    {
+      "url": "https://ffmpegwasm.netlify.app/docs/faq/",
+      "status": 200,
+      "finalUrl": "https://ffmpegwasm.netlify.app/docs/faq/",
+      "ok": true
+    },
+    {
+      "url": "https://ffmpegwasm.netlify.app/docs/overview/",
+      "status": 200,
+      "finalUrl": "https://ffmpegwasm.netlify.app/docs/overview/",
+      "ok": true
+    },
+    {
+      "url": "https://ffmpegwasm.netlify.app/docs/performance/",
+      "status": 200,
+      "finalUrl": "https://ffmpegwasm.netlify.app/docs/performance/",
+      "ok": true
+    },
+    {
+      "url": "https://getartcraft.com/apps/designcraft",
+      "status": 200,
+      "finalUrl": "https://getartcraft.com/apps/designcraft",
+      "ok": true
+    },
+    {
+      "url": "https://getartcraft.com/apps/effectcraft",
+      "status": 200,
+      "finalUrl": "https://getartcraft.com/apps/effectcraft",
+      "ok": true
+    },
+    {
+      "url": "https://getartcraft.com/apps/filmcraft",
+      "status": 200,
+      "finalUrl": "https://getartcraft.com/apps/filmcraft",
+      "ok": true
+    },
+    {
+      "url": "https://getartcraft.com/apps/lightcraft",
+      "status": 200,
+      "finalUrl": "https://getartcraft.com/apps/lightcraft",
+      "ok": true
+    },
+    {
+      "url": "https://getartcraft.com/apps/pdfcraft",
+      "status": 200,
+      "finalUrl": "https://getartcraft.com/apps/pdfcraft",
+      "ok": true
+    },
+    {
+      "url": "https://getartcraft.com/apps/photocraft",
+      "status": 200,
+      "finalUrl": "https://getartcraft.com/apps/photocraft",
+      "ok": true
+    },
+    {
+      "url": "https://getartcraft.com/apps/vectorcraft",
+      "status": 200,
+      "finalUrl": "https://getartcraft.com/apps/vectorcraft",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ahilss/wavacity",
+      "status": 200,
+      "finalUrl": "https://github.com/ahilss/wavacity",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ahilss/wavacity/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/ahilss/wavacity/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ahilss/wavacity/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/ahilss/wavacity/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/Bl4ut0/PortfoliOS/blob/main/MODULAR_APPS.md",
+      "status": 200,
+      "finalUrl": "https://github.com/Bl4ut0/PortfoliOS/blob/main/MODULAR_APPS.md",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/Bl4ut0/PortfoliOS/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/Bl4ut0/PortfoliOS/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/caiiiycuk/js-dos",
+      "status": 200,
+      "finalUrl": "https://github.com/caiiiycuk/js-dos",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/caiiiycuk/js-dos/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/caiiiycuk/js-dos/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/caiiiycuk/js-dos/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/caiiiycuk/js-dos/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/captbaritone/webamp",
+      "status": 200,
+      "finalUrl": "https://github.com/captbaritone/webamp",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/captbaritone/webamp/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/captbaritone/webamp/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/captbaritone/webamp/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/captbaritone/webamp/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/d07RiV/diabloweb",
+      "status": 200,
+      "finalUrl": "https://github.com/d07RiV/diabloweb",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/d07RiV/diabloweb/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/d07RiV/diabloweb/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/d07RiV/diabloweb/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/d07RiV/diabloweb/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/duckdb/duckdb-wasm",
+      "status": 200,
+      "finalUrl": "https://github.com/duckdb/duckdb-wasm",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/duckdb/duckdb-wasm/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/duckdb/duckdb-wasm/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/duckdb/duckdb-wasm/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/duckdb/duckdb-wasm/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/EmulatorJS/EmulatorJS",
+      "status": 200,
+      "finalUrl": "https://github.com/EmulatorJS/EmulatorJS",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/EmulatorJS/EmulatorJS/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/EmulatorJS/EmulatorJS/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/EmulatorJS/EmulatorJS/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/EmulatorJS/EmulatorJS/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ffmpegwasm/ffmpeg.wasm",
+      "status": 200,
+      "finalUrl": "https://github.com/ffmpegwasm/ffmpeg.wasm",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ffmpegwasm/ffmpeg.wasm/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/ffmpegwasm/ffmpeg.wasm/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ffmpegwasm/ffmpeg.wasm/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/ffmpegwasm/ffmpeg.wasm/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ggml-org/whisper.cpp",
+      "status": 200,
+      "finalUrl": "https://github.com/ggml-org/whisper.cpp",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ggml-org/whisper.cpp/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/ggml-org/whisper.cpp/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ggml-org/whisper.cpp/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/ggml-org/whisper.cpp/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ggml-org/whisper.cpp/tree/master/examples",
+      "status": 200,
+      "finalUrl": "https://github.com/ggml-org/whisper.cpp/tree/master/examples",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/godotengine/godot",
+      "status": 200,
+      "finalUrl": "https://github.com/godotengine/godot",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/godotengine/godot/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/godotengine/godot/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/godotengine/godot/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/godotengine/godot/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/GraphiteEditor/Graphite",
+      "status": 200,
+      "finalUrl": "https://github.com/GraphiteEditor/Graphite",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/GraphiteEditor/Graphite/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/GraphiteEditor/Graphite/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/GraphiteEditor/Graphite/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/GraphiteEditor/Graphite/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/id-Software/DOOM",
+      "status": 200,
+      "finalUrl": "https://github.com/id-Software/DOOM",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/id-Software/DOOM/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/id-Software/DOOM/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/id-Software/DOOM/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/id-Software/DOOM/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/id-Software/Quake",
+      "status": 200,
+      "finalUrl": "https://github.com/id-Software/Quake",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/id-Software/Quake/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/id-Software/Quake/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/id-Software/Quake/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/id-Software/Quake/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/jupyterlite/jupyterlite",
+      "status": 200,
+      "finalUrl": "https://github.com/jupyterlite/jupyterlite",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/jupyterlite/jupyterlite/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/jupyterlite/jupyterlite/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/jupyterlite/jupyterlite/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/jupyterlite/jupyterlite/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/mlc-ai/web-llm",
+      "status": 200,
+      "finalUrl": "https://github.com/mlc-ai/web-llm",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/mlc-ai/web-llm/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/mlc-ai/web-llm/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/mlc-ai/web-llm/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/mlc-ai/web-llm/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/naptha/tesseract.js",
+      "status": 200,
+      "finalUrl": "https://github.com/naptha/tesseract.js",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/naptha/tesseract.js/blob/master/docs/api.md",
+      "status": 200,
+      "finalUrl": "https://github.com/naptha/tesseract.js/blob/master/docs/api.md",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/naptha/tesseract.js/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/naptha/tesseract.js/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/naptha/tesseract.js/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/naptha/tesseract.js/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/naptha/tesseract.js/tree/master/docs",
+      "status": 200,
+      "finalUrl": "https://github.com/naptha/tesseract.js/tree/master/docs",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/OpenRCT2/OpenRCT2",
+      "status": 200,
+      "finalUrl": "https://github.com/OpenRCT2/OpenRCT2",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/OpenRCT2/OpenRCT2/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/OpenRCT2/OpenRCT2/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/OpenRCT2/OpenRCT2/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/OpenRCT2/OpenRCT2/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/OpenRCT2/OpenRCT2/tree/develop/emscripten",
+      "status": 200,
+      "finalUrl": "https://github.com/OpenRCT2/OpenRCT2/tree/develop/emscripten",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/openscad/openscad-playground",
+      "status": 200,
+      "finalUrl": "https://github.com/openscad/openscad-playground",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/openscad/openscad-playground/blob/main/LICENSE.md",
+      "status": 200,
+      "finalUrl": "https://github.com/openscad/openscad-playground/blob/main/LICENSE.md",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/openscad/openscad-playground/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/openscad/openscad-playground/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/openscad/openscad-playground/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/openscad/openscad-playground/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/pyodide/pyodide",
+      "status": 200,
+      "finalUrl": "https://github.com/pyodide/pyodide",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/pyodide/pyodide/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/pyodide/pyodide/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/pyodide/pyodide/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/pyodide/pyodide/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ruffle-rs/ruffle",
+      "status": 200,
+      "finalUrl": "https://github.com/ruffle-rs/ruffle",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ruffle-rs/ruffle/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/ruffle-rs/ruffle/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ruffle-rs/ruffle/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/ruffle-rs/ruffle/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/ruffle-rs/ruffle/wiki/Using-Ruffle",
+      "status": 200,
+      "finalUrl": "https://github.com/ruffle-rs/ruffle/wiki/Using-Ruffle",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/designcraft",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/designcraft",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/designcraft/blob/main/LICENSE-APACHE",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/designcraft/blob/main/LICENSE-APACHE",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/designcraft/blob/main/LICENSE-MIT",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/designcraft/blob/main/LICENSE-MIT",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/designcraft/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/designcraft/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/designcraft/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/designcraft/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/designcraft/tree/main/docs",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/designcraft/tree/main/docs",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/effectcraft",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/effectcraft",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/effectcraft/blob/main/LICENSE-APACHE",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/effectcraft/blob/main/LICENSE-APACHE",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/effectcraft/blob/main/LICENSE-MIT",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/effectcraft/blob/main/LICENSE-MIT",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/effectcraft/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/effectcraft/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/effectcraft/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/effectcraft/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/effectcraft/tree/main/docs",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/effectcraft/tree/main/docs",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/filmcraft",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/filmcraft",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/filmcraft/blob/main/docs/web.md",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/filmcraft/blob/main/docs/web.md",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/filmcraft/blob/main/LICENSE-APACHE",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/filmcraft/blob/main/LICENSE-APACHE",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/filmcraft/blob/main/LICENSE-MIT",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/filmcraft/blob/main/LICENSE-MIT",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/filmcraft/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/filmcraft/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/filmcraft/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/filmcraft/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/filmcraft/tree/main/docs",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/filmcraft/tree/main/docs",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/lightcraft",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/lightcraft",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/lightcraft/blob/main/LICENSE-APACHE",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/lightcraft/blob/main/LICENSE-APACHE",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/lightcraft/blob/main/LICENSE-MIT",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/lightcraft/blob/main/LICENSE-MIT",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/lightcraft/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/lightcraft/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/lightcraft/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/lightcraft/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/lightcraft/tree/main/docs",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/lightcraft/tree/main/docs",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/pdfcraft",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/pdfcraft",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/pdfcraft/blob/main/LICENSE-APACHE",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/pdfcraft/blob/main/LICENSE-APACHE",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/pdfcraft/blob/main/LICENSE-MIT",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/pdfcraft/blob/main/LICENSE-MIT",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/pdfcraft/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/pdfcraft/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/pdfcraft/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/pdfcraft/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/pdfcraft/tree/main/docs",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/pdfcraft/tree/main/docs",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/photocraft",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/photocraft",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/photocraft/blob/main/LICENSE-APACHE",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/photocraft/blob/main/LICENSE-APACHE",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/photocraft/blob/main/LICENSE-MIT",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/photocraft/blob/main/LICENSE-MIT",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/photocraft/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/photocraft/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/photocraft/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/photocraft/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/photocraft/tree/main/docs",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/photocraft/tree/main/docs",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/vectorcraft",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/vectorcraft",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/vectorcraft/blob/main/LICENSE-APACHE",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/vectorcraft/blob/main/LICENSE-APACHE",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/vectorcraft/blob/main/LICENSE-MIT",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/vectorcraft/blob/main/LICENSE-MIT",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/vectorcraft/issues",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/vectorcraft/issues",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/vectorcraft/releases",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/vectorcraft/releases",
+      "ok": true
+    },
+    {
+      "url": "https://github.com/storytold/vectorcraft/tree/main/docs",
+      "status": 200,
+      "finalUrl": "https://github.com/storytold/vectorcraft/tree/main/docs",
+      "ok": true
+    },
+    {
+      "url": "https://godotengine.org/",
+      "status": 200,
+      "finalUrl": "https://godotengine.org/",
+      "ok": true
+    },
+    {
+      "url": "https://graphite.art/",
+      "status": 200,
+      "finalUrl": "https://graphite.art/",
+      "ok": true
+    },
+    {
+      "url": "https://graphite.art/learn/",
+      "status": 200,
+      "finalUrl": "https://graphite.art/learn/",
+      "ok": true
+    },
+    {
+      "url": "https://js-dos.com/",
+      "status": 200,
+      "finalUrl": "https://js-dos.com/",
+      "ok": true
+    },
+    {
+      "url": "https://jupyterlite-pyodide-kernel.readthedocs.io/en/latest/",
+      "status": 200,
+      "finalUrl": "https://jupyterlite-pyodide-kernel.readthedocs.io/en/latest/",
+      "ok": true
+    },
+    {
+      "url": "https://jupyterlite.readthedocs.io/en/stable/",
+      "status": 200,
+      "finalUrl": "https://jupyterlite.readthedocs.io/en/stable/",
+      "ok": true
+    },
+    {
+      "url": "https://openrct2.org/",
+      "status": 200,
+      "finalUrl": "https://openrct2.io/",
+      "ok": true
+    },
+    {
+      "url": "https://openscad.org/",
+      "status": 200,
+      "finalUrl": "https://openscad.org/",
+      "ok": true
+    },
+    {
+      "url": "https://openscad.org/downloads.html",
+      "status": 200,
+      "finalUrl": "https://openscad.org/downloads.html",
+      "ok": true
+    },
+    {
+      "url": "https://pyodide.org/",
+      "status": 200,
+      "finalUrl": "https://pyodide.org/en/stable/",
+      "ok": true
+    },
+    {
+      "url": "https://pyodide.org/en/stable/",
+      "status": 200,
+      "finalUrl": "https://pyodide.org/en/stable/",
+      "ok": true
+    },
+    {
+      "url": "https://pyodide.org/en/stable/usage/file-system.html",
+      "status": 200,
+      "finalUrl": "https://pyodide.org/en/stable/usage/file-system.html",
+      "ok": true
+    },
+    {
+      "url": "https://pyodide.org/en/stable/usage/webworker.html",
+      "status": 200,
+      "finalUrl": "https://pyodide.org/en/stable/usage/webworker.html",
+      "ok": true
+    },
+    {
+      "url": "https://ruffle.rs/",
+      "status": 200,
+      "finalUrl": "https://ruffle.rs/",
+      "ok": true
+    },
+    {
+      "url": "https://sqlite.org/copyright.html",
+      "status": 200,
+      "finalUrl": "https://sqlite.org/copyright.html",
+      "ok": true
+    },
+    {
+      "url": "https://sqlite.org/download.html",
+      "status": 200,
+      "finalUrl": "https://sqlite.org/download.html",
+      "ok": true
+    },
+    {
+      "url": "https://sqlite.org/support.html",
+      "status": 200,
+      "finalUrl": "https://sqlite.org/support.html",
+      "ok": true
+    },
+    {
+      "url": "https://sqlite.org/wasm/dir",
+      "status": 200,
+      "finalUrl": "https://sqlite.org/wasm/dir",
+      "ok": true
+    },
+    {
+      "url": "https://sqlite.org/wasm/doc/trunk/index.md",
+      "status": 200,
+      "finalUrl": "https://sqlite.org/wasm/doc/trunk/index.md",
+      "ok": true
+    },
+    {
+      "url": "https://wavacity.com/",
+      "status": 200,
+      "finalUrl": "https://wavacity.com/",
+      "ok": true
+    },
+    {
+      "url": "https://webamp.org/",
+      "status": 200,
+      "finalUrl": "https://webamp.org/",
+      "ok": true
+    },
+    {
+      "url": "https://webllm.mlc.ai/",
+      "status": 200,
+      "finalUrl": "https://webllm.mlc.ai/",
+      "ok": true
+    },
+    {
+      "url": "https://webllm.mlc.ai/docs/",
+      "status": 200,
+      "finalUrl": "https://webllm.mlc.ai/docs/",
+      "ok": true
+    },
+    {
+      "url": "https://www.icculus.org/ut99-emscripten/",
+      "status": 200,
+      "finalUrl": "https://www.icculus.org/ut99-emscripten/",
+      "ok": true
+    },
+    {
+      "url": "https://www.libreoffice.org/",
+      "status": 200,
+      "finalUrl": "https://www.libreoffice.org/",
+      "ok": true
+    },
+    {
+      "url": "https://www.libreoffice.org/about-us/licenses/",
+      "status": 200,
+      "finalUrl": "https://www.libreoffice.org/licenses/",
+      "ok": true
+    },
+    {
+      "url": "https://www.libreoffice.org/about-us/source-code/",
+      "status": 200,
+      "finalUrl": "https://wiki.documentfoundation.org/Special:MyLanguage/Development",
+      "ok": true
+    },
+    {
+      "url": "https://www.libreoffice.org/download/download-libreoffice/",
+      "status": 200,
+      "finalUrl": "https://www.libreoffice.org/download/",
+      "ok": true
+    }
+  ],
+  "correctedReferences": [
+    {
+      "oldUrl": "https://ruffle.rs/docs/",
+      "observedStatus": 404,
+      "replacement": "https://github.com/ruffle-rs/ruffle/wiki/Using-Ruffle#web",
+      "reason": "Use the existing upstream integration wiki."
+    },
+    {
+      "oldUrl": "https://tesseract.projectnaptha.com/",
+      "observedStatus": 503,
+      "replacement": "https://github.com/naptha/tesseract.js#readme",
+      "reason": "Use the upstream source overview while the legacy demo host is unavailable."
+    }
+  ]
+}

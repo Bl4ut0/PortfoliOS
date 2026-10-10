@@ -1,0 +1,1979 @@
+{
+  "schemaVersion": 1,
+  "title": "PortfoliOS WASM application library",
+  "reviewedAt": "2026-10-10",
+  "scope": "Curated upstream candidates, existing WASM integrations, and explicitly classified related browser apps. Not an exhaustive global registry.",
+  "policy": {
+    "candidatesAreInstalled": false,
+    "runtimeTestsPerformedDuringCatalogReview": false,
+    "priorityMeaning": "Evaluation order, not a promise to ship.",
+    "documentationMeaning": "Primary upstream references and local code evidence; deployment requires exact artifact versions, hashes, and licensing review.",
+    "unmeasuredValues": null
+  },
+  "projects": [
+    {
+      "id": "photocraft",
+      "name": "PhotoCraft",
+      "category": "Image editing",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "evaluate-first",
+      "summary": "Photoshop-style layers, brushes, image editing, and PSD workflows.",
+      "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
+      "upstreamReadiness": "Early alpha; upstream explicitly says it is not yet a daily professional Photoshop replacement.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Desktop/tablet evaluation first; phone tools and pen input need separate testing.",
+      "storage": "Image documents and editable project files; export PNG/JPEG/PSD only after round-trip checks.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Open a layered sample, edit, export, reopen, then test the profile file adapter.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://getartcraft.com/apps/photocraft"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/storytold/photocraft"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/storytold/photocraft#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/storytold/photocraft/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/storytold/photocraft/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/storytold/photocraft#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Developer and integration documentation directory",
+          "url": "https://github.com/storytold/photocraft/tree/main/docs"
+        },
+        {
+          "type": "license",
+          "label": "MIT license",
+          "url": "https://github.com/storytold/photocraft/blob/main/LICENSE-MIT"
+        },
+        {
+          "type": "license",
+          "label": "Apache-2.0 license",
+          "url": "https://github.com/storytold/photocraft/blob/main/LICENSE-APACHE"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
+    },
+    {
+      "id": "pdfcraft",
+      "name": "PdfCraft",
+      "category": "Documents",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "evaluate-first",
+      "summary": "PDF reading and page organization, combining, splitting, and protection.",
+      "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
+      "upstreamReadiness": "Early alpha according to the suite overview; validate each PDF workflow independently.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Prioritize a native phone page organizer; test touch selection and small-screen dialogs.",
+      "storage": "PDF originals, edited outputs, and draft recovery must be profile-scoped.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Validate rotate/reorder/merge/split round trips using disposable documents and add SystemFS Open/Save.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://getartcraft.com/apps/pdfcraft"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/storytold/pdfcraft"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/storytold/pdfcraft#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/storytold/pdfcraft/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/storytold/pdfcraft/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/storytold/pdfcraft#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Developer and integration documentation directory",
+          "url": "https://github.com/storytold/pdfcraft/tree/main/docs"
+        },
+        {
+          "type": "license",
+          "label": "MIT license",
+          "url": "https://github.com/storytold/pdfcraft/blob/main/LICENSE-MIT"
+        },
+        {
+          "type": "license",
+          "label": "Apache-2.0 license",
+          "url": "https://github.com/storytold/pdfcraft/blob/main/LICENSE-APACHE"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
+    },
+    {
+      "id": "vectorcraft",
+      "name": "VectorCraft",
+      "category": "Graphics",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "evaluate-first",
+      "summary": "Vector illustration, paths, SVG artwork, and Illustrator-style workflows.",
+      "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
+      "upstreamReadiness": "Actively developing; upstream self-assessed feature parity is not PortfoliOS acceptance evidence.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Desktop/tablet first; full phone editing is untested.",
+      "storage": "Native vector documents, SVG/PDF exports, linked images, and fonts need an explicit file adapter.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Compare a small SVG editing workflow against Graphite before choosing the first vector app.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://getartcraft.com/apps/vectorcraft"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/storytold/vectorcraft"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/storytold/vectorcraft#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/storytold/vectorcraft/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/storytold/vectorcraft/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/storytold/vectorcraft#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Developer and integration documentation directory",
+          "url": "https://github.com/storytold/vectorcraft/tree/main/docs"
+        },
+        {
+          "type": "license",
+          "label": "MIT license",
+          "url": "https://github.com/storytold/vectorcraft/blob/main/LICENSE-MIT"
+        },
+        {
+          "type": "license",
+          "label": "Apache-2.0 license",
+          "url": "https://github.com/storytold/vectorcraft/blob/main/LICENSE-APACHE"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
+    },
+    {
+      "id": "lightcraft",
+      "name": "LightCraft",
+      "category": "Photography",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "Photo library and RAW development in a local Rust application.",
+      "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
+      "upstreamReadiness": "In development; browser support is documented, camera-format fidelity still needs evaluation.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Begin with small image adjustments; do not assume large photo catalogs fit phone memory.",
+      "storage": "RAW originals, adjustment sidecars, catalogs, and thumbnails have different backup needs.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Test representative camera files and decide which catalog data belongs in SystemFS.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://getartcraft.com/apps/lightcraft"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/storytold/lightcraft"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/storytold/lightcraft#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/storytold/lightcraft/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/storytold/lightcraft/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/storytold/lightcraft#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Developer and integration documentation directory",
+          "url": "https://github.com/storytold/lightcraft/tree/main/docs"
+        },
+        {
+          "type": "license",
+          "label": "MIT license",
+          "url": "https://github.com/storytold/lightcraft/blob/main/LICENSE-MIT"
+        },
+        {
+          "type": "license",
+          "label": "Apache-2.0 license",
+          "url": "https://github.com/storytold/lightcraft/blob/main/LICENSE-APACHE"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
+    },
+    {
+      "id": "designcraft",
+      "name": "DesignCraft",
+      "category": "Publishing",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "Page layout and publishing for brochures and other multi-page documents.",
+      "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
+      "upstreamReadiness": "In development; evaluate layout interchange and font packaging before adoption.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Desktop/tablet authoring first; phone preview/export may be more practical.",
+      "storage": "Editable layout projects, linked images, fonts, and PDF exports must travel together.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Build a two-page document and reopen it with linked assets after an account restore.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://getartcraft.com/apps/designcraft"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/storytold/designcraft"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/storytold/designcraft#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/storytold/designcraft/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/storytold/designcraft/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/storytold/designcraft#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Developer and integration documentation directory",
+          "url": "https://github.com/storytold/designcraft/tree/main/docs"
+        },
+        {
+          "type": "license",
+          "label": "MIT license",
+          "url": "https://github.com/storytold/designcraft/blob/main/LICENSE-MIT"
+        },
+        {
+          "type": "license",
+          "label": "Apache-2.0 license",
+          "url": "https://github.com/storytold/designcraft/blob/main/LICENSE-APACHE"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
+    },
+    {
+      "id": "filmcraft",
+      "name": "FilmCraft",
+      "category": "Video",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "experimental",
+      "summary": "Nonlinear video editing, color, sound, and Premiere-style workflows.",
+      "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
+      "upstreamReadiness": "In development; the repository and per-app download page list a web build even though the suite overview omits it.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Desktop first; phone import, codec support, heat, and memory need separate measurements.",
+      "storage": "Project autosave and media use browser storage/OPFS upstream; bridge them explicitly to profile storage and backup selection.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Test a short local clip, save/reload the project, and measure media cache cleanup.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://getartcraft.com/apps/filmcraft"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/storytold/filmcraft"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/storytold/filmcraft/blob/main/docs/web.md"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/storytold/filmcraft/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/storytold/filmcraft/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/storytold/filmcraft#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Developer and integration documentation directory",
+          "url": "https://github.com/storytold/filmcraft/tree/main/docs"
+        },
+        {
+          "type": "license",
+          "label": "MIT license",
+          "url": "https://github.com/storytold/filmcraft/blob/main/LICENSE-MIT"
+        },
+        {
+          "type": "license",
+          "label": "Apache-2.0 license",
+          "url": "https://github.com/storytold/filmcraft/blob/main/LICENSE-APACHE"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
+    },
+    {
+      "id": "effectcraft",
+      "name": "EffectCraft",
+      "category": "Motion graphics",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "experimental",
+      "summary": "Motion graphics, visual effects, and compositing.",
+      "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
+      "upstreamReadiness": "In development; do not equate a listed effect with verified behavior.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Desktop first; phone preview might be feasible after measurement.",
+      "storage": "Composition files, linked assets, and rendered output require separate persistence decisions.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Test a short composition, import/export, and canceling a render without losing edits.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://getartcraft.com/apps/effectcraft"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/storytold/effectcraft"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/storytold/effectcraft#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/storytold/effectcraft/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/storytold/effectcraft/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/storytold/effectcraft#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Developer and integration documentation directory",
+          "url": "https://github.com/storytold/effectcraft/tree/main/docs"
+        },
+        {
+          "type": "license",
+          "label": "MIT license",
+          "url": "https://github.com/storytold/effectcraft/blob/main/LICENSE-MIT"
+        },
+        {
+          "type": "license",
+          "label": "Apache-2.0 license",
+          "url": "https://github.com/storytold/effectcraft/blob/main/LICENSE-APACHE"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
+    },
+    {
+      "id": "graphite",
+      "name": "Graphite",
+      "category": "Graphics",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "evaluate-first",
+      "summary": "Vector editing and procedural 2D design; compare with VectorCraft to avoid duplicating the first graphics workflow.",
+      "runtime": "Rust/WebAssembly with WebGPU; browser app runs locally.",
+      "upstreamReadiness": "Alpha; current emphasis is procedural vector graphics. Do not advertise future raster/publishing features as delivered.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Professional desktop UI; phone usability is not established.",
+      "storage": "Editable Graphite documents and exported artwork need profile-scoped Open/Save.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Compare SVG import, basic editing, export, reload, and GPU fallback on the same fixture.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://graphite.art/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/GraphiteEditor/Graphite"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://graphite.art/learn/"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/GraphiteEditor/Graphite/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/GraphiteEditor/Graphite/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/GraphiteEditor/Graphite#license"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      }
+    },
+    {
+      "id": "wavacity",
+      "name": "Wavacity",
+      "category": "Audio",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "Independent browser port of Audacity for audio editing.",
+      "runtime": "C/C++ audio editor port using Emscripten/WASM and browser audio.",
+      "upstreamReadiness": "Browser port exists; upstream build instructions are sparse and native Audacity features must not be assumed available in this port.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Desktop first; phone recording, touch selection, and audio permissions need testing.",
+      "storage": "Audio project data, imported clips, and exported audio need explicit save and recovery adapters.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Verify record/import/edit/export in the exact browser build and identify its maintainable build path.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://wavacity.com/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/ahilss/wavacity"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/ahilss/wavacity#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/ahilss/wavacity/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/ahilss/wavacity/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/ahilss/wavacity#license"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Wavacity identifies GPL v2 licensing; inspect the distributed artifact and its dependencies."
+    },
+    {
+      "id": "ffmpeg-wasm",
+      "name": "FFmpeg.wasm",
+      "category": "Media utilities",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "evaluate-first",
+      "summary": "Build a native PortfoliOS media converter for short audio/video jobs, audio extraction, and GIF output.",
+      "runtime": "FFmpeg compiled to WASM with JavaScript worker API; single/multithread variants.",
+      "upstreamReadiness": "Browser engine and API available; this is not a complete editing app.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Use bounded jobs with native touch controls; benchmark single-thread mode on phones.",
+      "storage": "Import media through SecurityKernel, stage working bytes temporarily, and save output into the current workspace.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured locally. Upstream reports slower execution than native FFmpeg and higher CPU/memory with multithreading. Set conservative job-size limits from measurements.",
+      "nextAction": "Prototype one conversion, progress, cancel, failed-job cleanup, and output reopen.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://ffmpegwasm.netlify.app/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/ffmpegwasm/ffmpeg.wasm"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://ffmpegwasm.netlify.app/docs/overview/"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/ffmpegwasm/ffmpeg.wasm/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/ffmpegwasm/ffmpeg.wasm/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/ffmpegwasm/ffmpeg.wasm#license"
+        },
+        {
+          "type": "documentation",
+          "label": "FAQ, limits, and licensing",
+          "url": "https://ffmpegwasm.netlify.app/docs/faq/"
+        },
+        {
+          "type": "documentation",
+          "label": "Performance notes",
+          "url": "https://ffmpegwasm.netlify.app/docs/performance/"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "JavaScript wrapper is MIT; the compiled FFmpeg core/codecs retain their own licenses. Audit the chosen build."
+    },
+    {
+      "id": "pyodide",
+      "name": "Pyodide",
+      "category": "Development",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "Python execution for a code workspace, CLI tools, and local data analysis.",
+      "runtime": "CPython compiled to WASM; supported packages load separately.",
+      "upstreamReadiness": "Browser Python distribution; native Python packages and operating-system features are not universally supported.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "A native console or script runner is possible; measure startup and avoid blocking the main thread.",
+      "storage": "Mount only selected profile files into the interpreter; export explicit results through SystemFS.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Run a small script in a dedicated worker, interrupt it, and verify another profile cannot see its files.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://pyodide.org/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/pyodide/pyodide"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://pyodide.org/en/stable/"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/pyodide/pyodide/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/pyodide/pyodide/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/pyodide/pyodide#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Worker execution",
+          "url": "https://pyodide.org/en/stable/usage/webworker.html"
+        },
+        {
+          "type": "documentation",
+          "label": "Filesystem integration",
+          "url": "https://pyodide.org/en/stable/usage/file-system.html"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Pyodide source is MPL-2.0; CPython and individual Python packages have separate licenses."
+    },
+    {
+      "id": "openscad",
+      "name": "OpenSCAD Playground",
+      "category": "CAD",
+      "kind": "wasm-application",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "Script-based CAD and model generation.",
+      "runtime": "Limited OpenSCAD WASM port with a browser editor/viewer.",
+      "upstreamReadiness": "Limited browser port; the full native OpenSCAD GUI is not reproduced.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Responsive upstream layout exists; heavy models and phone editing remain unmeasured.",
+      "storage": "Keep SCAD source, imported models, libraries, and generated exports in deliberate profile paths.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Render a simple model, reopen source with dependencies, and test cancellation of a complex render.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://openscad.org/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/openscad/openscad-playground"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/openscad/openscad-playground#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/openscad/openscad-playground/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/openscad/openscad-playground/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/openscad/openscad-playground#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Official WASM download and limitations",
+          "url": "https://openscad.org/downloads.html"
+        },
+        {
+          "type": "license",
+          "label": "Playground and dependency licenses",
+          "url": "https://github.com/openscad/openscad-playground/blob/main/LICENSE.md"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Playground documentation describes GPL and third-party dependency obligations; review its LICENSE.md for the chosen build."
+    },
+    {
+      "id": "tesseract-js",
+      "name": "Tesseract.js OCR",
+      "category": "Documents",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "evaluate-first",
+      "summary": "Image-to-text extraction for a scanner feature and searchable documents.",
+      "runtime": "JavaScript worker interface around the Tesseract WASM OCR engine.",
+      "upstreamReadiness": "OCR library, not a complete scanner. It does not directly accept PDFs; render PDF pages with a separate component first.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Good evaluation candidate for a native phone capture/import screen; accuracy and memory still need measurement.",
+      "storage": "Images, extracted text, and user corrections belong to the selected profile; language data are shared runtime assets.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Recognize a local image with progress/cancel, edit the result, and save/reopen the text.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview and demo references",
+          "url": "https://github.com/naptha/tesseract.js#readme"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/naptha/tesseract.js"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/naptha/tesseract.js/tree/master/docs"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/naptha/tesseract.js/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/naptha/tesseract.js/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/naptha/tesseract.js#license"
+        },
+        {
+          "type": "documentation",
+          "label": "API",
+          "url": "https://github.com/naptha/tesseract.js/blob/master/docs/api.md"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Apache-2.0 source; retain notices for the OCR engine and language data."
+    },
+    {
+      "id": "duckdb-wasm",
+      "name": "DuckDB-Wasm",
+      "category": "Data analysis",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "Local SQL analysis of CSV/Parquet datasets in a future data workspace.",
+      "runtime": "DuckDB compiled to WASM with a worker-oriented JavaScript client.",
+      "upstreamReadiness": "Browser database engine; requires an app UI and file adapter.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Native query/results UI could work on mobile; dataset size must be measured.",
+      "storage": "Import selected datasets and persist query scripts/results; isolate any browser database files by profile.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Query a small local CSV, cancel a large query, and verify export/profile switching.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://duckdb.org/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/duckdb/duckdb-wasm"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://duckdb.org/docs/stable/clients/wasm/overview.html"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/duckdb/duckdb-wasm/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/duckdb/duckdb-wasm/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/duckdb/duckdb-wasm#license"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      }
+    },
+    {
+      "id": "sqlite-wasm",
+      "name": "SQLite WASM",
+      "category": "Development",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "Database viewer/editor and local application database tooling.",
+      "runtime": "Official SQLite WebAssembly/JavaScript distribution; persistence mode depends on browser support.",
+      "upstreamReadiness": "Browser/WASM support documented upstream; exact release artifact not yet evaluated in PortfoliOS.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "A small native database viewer is feasible to evaluate; OPFS requirements vary.",
+      "storage": "Do not let a shared OPFS database bypass profile isolation; bridge/import/export database files deliberately.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Inspect a disposable SQLite file, edit in a transaction, export, and reopen it.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Official WASM documentation index",
+          "url": "https://sqlite.org/wasm/doc/trunk/index.md"
+        },
+        {
+          "type": "source",
+          "label": "Official WASM source repository",
+          "url": "https://sqlite.org/wasm/dir"
+        },
+        {
+          "type": "build-api",
+          "label": "WASM APIs, loading, and storage guides",
+          "url": "https://sqlite.org/wasm/doc/trunk/index.md"
+        },
+        {
+          "type": "releases",
+          "label": "Official downloads",
+          "url": "https://sqlite.org/download.html"
+        },
+        {
+          "type": "issues",
+          "label": "SQLite support and forum",
+          "url": "https://sqlite.org/support.html"
+        },
+        {
+          "type": "license",
+          "label": "SQLite copyright and licensing",
+          "url": "https://sqlite.org/copyright.html"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "SQLite is public domain; review any added wrapper, UI, or extension separately."
+    },
+    {
+      "id": "jupyterlite",
+      "name": "JupyterLite",
+      "category": "Development",
+      "kind": "browser-app-with-wasm-kernel",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "Notebook workspace for Python experiments and data exploration.",
+      "runtime": "Browser Jupyter UI with optional Pyodide/Xeus WASM kernels; not every kernel is WASM.",
+      "upstreamReadiness": "Browser notebook application; choose and pin a compatible kernel rather than assuming a full Jupyter server.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Desktop/tablet first; phone notebook navigation and memory need testing.",
+      "storage": "Notebook storage and kernel filesystem are separate surfaces upstream; bridge both to profile-scoped files.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Use one notebook and a local CSV, then verify kernel access, save, restore, and switch.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://jupyterlite.readthedocs.io/en/stable/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/jupyterlite/jupyterlite"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://jupyterlite.readthedocs.io/en/stable/"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/jupyterlite/jupyterlite/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/jupyterlite/jupyterlite/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/jupyterlite/jupyterlite#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Pyodide kernel documentation",
+          "url": "https://jupyterlite-pyodide-kernel.readthedocs.io/en/latest/"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      }
+    },
+    {
+      "id": "ruffle",
+      "name": "Ruffle",
+      "category": "Games and preservation",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "experimental",
+      "summary": "Preserve compatible Flash animations and games in an explicit runtime app.",
+      "runtime": "Rust emulator compiled to WebAssembly for browser use.",
+      "upstreamReadiness": "Compatibility varies by Flash content; emulation is not universal.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Evaluate per title; mouse/keyboard-based content may need touch mapping.",
+      "storage": "Treat SWF files as executable content, outside normal document imports; saves need a profile adapter.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Select redistributable test content and verify compatibility, storage, input, and networking.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://ruffle.rs/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/ruffle-rs/ruffle"
+        },
+        {
+          "type": "build-api",
+          "label": "Browser integration and self-hosting guide",
+          "url": "https://github.com/ruffle-rs/ruffle/wiki/Using-Ruffle#web"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/ruffle-rs/ruffle/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/ruffle-rs/ruffle/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/ruffle-rs/ruffle#license"
+        },
+        {
+          "type": "documentation",
+          "label": "Self-hosting guide",
+          "url": "https://github.com/ruffle-rs/ruffle/wiki/Using-Ruffle#web"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Review emulator, bundled dependencies, and content redistribution rights independently."
+    },
+    {
+      "id": "js-dos",
+      "name": "js-dos",
+      "category": "Games and preservation",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "evaluate-later",
+      "summary": "General DOS application/game launcher; shares technical ancestry with the existing Duke runtime.",
+      "runtime": "Browser DOS emulator; runtime/API and licenses depend on selected major version.",
+      "upstreamReadiness": "Browser runtime available; the existing Duke integration loads js-dos 6.22, not necessarily the current API.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Per-program touch layouts are required; native DOS UI is not automatically phone-friendly.",
+      "storage": "Separate emulator bundles from user saves and imported disks; define supported save export before advertising backup.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Document current Duke 6.22 runtime first, then evaluate a separately pinned modern version.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://js-dos.com/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/caiiiycuk/js-dos"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/caiiiycuk/js-dos#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/caiiiycuk/js-dos/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/caiiiycuk/js-dos/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/caiiiycuk/js-dos#license"
+        }
+      ],
+      "localEvidence": [
+        "duke32/index.html"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Review the selected js-dos frontend/core version, associated service terms, and the rights to each DOS program."
+    },
+    {
+      "id": "whisper-cpp",
+      "name": "whisper.cpp",
+      "category": "Audio and AI",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "experimental",
+      "summary": "Local speech-to-text for recordings, notes, and caption workflows.",
+      "runtime": "C/C++ inference runtime with browser/WebAssembly examples; model files are separate assets.",
+      "upstreamReadiness": "Browser examples exist; these are a starting point for integration, not a ready PortfoliOS transcription app.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Start with a small model and short recordings; benchmark battery, heat, latency, and RAM.",
+      "storage": "Keep recordings/transcripts per profile; model cache is shared and excluded from document backup.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Evaluate one upstream WASM example with cancellation and transcript export.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://github.com/ggml-org/whisper.cpp"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/ggml-org/whisper.cpp"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/ggml-org/whisper.cpp/tree/master/examples"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/ggml-org/whisper.cpp/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/ggml-org/whisper.cpp/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/ggml-org/whisper.cpp#license"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Review source license, model license, and converted weight provenance separately."
+    },
+    {
+      "id": "godot-web",
+      "name": "Godot Web exports",
+      "category": "Games and creation",
+      "kind": "wasm-engine",
+      "status": "candidate",
+      "priority": "experimental",
+      "summary": "Host original interactive demos and games built with Godot.",
+      "runtime": "Godot web export uses WebAssembly and WebGL; export/thread constraints depend on engine version.",
+      "upstreamReadiness": "Web-export toolchain; not a claim that the complete native editor is installed here.",
+      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
+      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "mobile": "Touch support must be built into each game; test Safari/Chrome and device memory independently.",
+      "storage": "Game saves need a bridge from the export filesystem to account-scoped SystemFS.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Export an original small project, implement save/restore, and test Home/Recents pause and teardown.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://godotengine.org/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/godotengine/godot"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/godotengine/godot/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/godotengine/godot/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/godotengine/godot#license"
+        }
+      ],
+      "localEvidence": [],
+      "lastReviewed": "2026-10-10",
+      "evidence": "upstream-documentation",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Godot is MIT; include required engine notices and audit project assets/addons."
+    },
+    {
+      "id": "doomsource",
+      "name": "Doom",
+      "category": "Existing games",
+      "kind": "wasm-runtime",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing Doom loader with SystemFS save hooks.",
+      "runtime": "Emscripten engine loaded by apps/doomsource/app.js; root doom.js/doom.wasm.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Desktop integration; native mobile adaptation remains roadmap work.",
+      "storage": "Review engine save events and account-scoped restore; WAD/runtime files are excluded from backup.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Record the exact compiled source fork, version/hash, license notices, and mobile acceptance evidence.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://github.com/id-Software/DOOM"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/id-Software/DOOM"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://emscripten.org/docs/"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/id-Software/DOOM/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/id-Software/DOOM/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/id-Software/DOOM#license"
+        },
+        {
+          "type": "issues",
+          "label": "PortfoliOS integration issues",
+          "url": "https://github.com/Bl4ut0/PortfoliOS/issues"
+        }
+      ],
+      "localEvidence": [
+        "apps/doomsource/app.js"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Original source repository is context, not proof of the deployed browser fork. Game data ownership and binary license notices need separate records."
+    },
+    {
+      "id": "duke32",
+      "name": "Duke Nukem 3D",
+      "category": "Existing games",
+      "kind": "wasm-runtime",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing DOS-emulated Duke launcher and save bridge.",
+      "runtime": "Local runtime uses js-dos 6.22 / wdosbox; the app ID does not establish an EDuke32 port.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Desktop integration; phone touch/controller mapping is unverified.",
+      "storage": "Duke emulator filesystem exports are bridged to SystemFS; prove import/export and close-save integrity.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Document the actual DOS emulator bundle and test saved-game round trips before a runtime upgrade.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://js-dos.com/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/caiiiycuk/js-dos"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/caiiiycuk/js-dos#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/caiiiycuk/js-dos/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/caiiiycuk/js-dos/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/caiiiycuk/js-dos#license"
+        }
+      ],
+      "localEvidence": [
+        "apps/duke32/app.js",
+        "duke32/index.html"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Check the deployed js-dos 6.22 core/frontend licenses and Duke data distribution rights separately."
+    },
+    {
+      "id": "diablo",
+      "name": "Diablo",
+      "category": "Existing games",
+      "kind": "wasm-runtime",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing Diablo browser runtime with a local save-transfer bridge.",
+      "runtime": "Local Diablo*.wasm and MpqCmp*.wasm bundles; exact upstream fork/version not pinned in this inventory.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Desktop integration; touch UI and real-phone memory remain evaluation work.",
+      "storage": "Current wrapper transfers runtime files into SystemFS; test restore and pending-save races.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Trace the exact distributed binary to its upstream build and validate save export/restore.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://github.com/d07RiV/diabloweb"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/d07RiV/diabloweb"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/d07RiV/diabloweb#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/d07RiV/diabloweb/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/d07RiV/diabloweb/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/d07RiV/diabloweb#license"
+        },
+        {
+          "type": "issues",
+          "label": "PortfoliOS integration issues",
+          "url": "https://github.com/Bl4ut0/PortfoliOS/issues"
+        }
+      ],
+      "localEvidence": [
+        "apps/diablo/app.js",
+        "diablo/index.html"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Diabloweb is a relevant browser-port reference, not a verified identification of the deployed artifact. Review engine and game-data licenses independently."
+    },
+    {
+      "id": "openrct2",
+      "name": "OpenRCT2",
+      "category": "Existing games",
+      "kind": "wasm-runtime",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing staged OpenRCT2 Emscripten runtime.",
+      "runtime": "Official Emscripten bootstrap, staged engine/support archives, and locally configured game data.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Desktop integration; performance and touch adaptation need a phone-specific decision.",
+      "storage": "Wrapper exchanges saved park files with SystemFS; runtime/support/game archives are shared installation assets.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Record matching engine/support artifact versions and validate park saves and memory usage.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://openrct2.org/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/OpenRCT2/OpenRCT2"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/OpenRCT2/OpenRCT2/tree/develop/emscripten"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/OpenRCT2/OpenRCT2/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/OpenRCT2/OpenRCT2/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/OpenRCT2/OpenRCT2#license"
+        }
+      ],
+      "localEvidence": [
+        "apps/openrct2/app.js",
+        "apps/openrct2/runtime/README.md"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Open-source engine licensing does not grant rights to RollerCoaster Tycoon data. Audit staged archives before redistribution."
+    },
+    {
+      "id": "ut99",
+      "name": "UT99",
+      "category": "Existing games",
+      "kind": "wasm-runtime",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing UT99 flyby/practice browser runtime and relay integration work.",
+      "runtime": "Proxy/staging entry points reference the icculus UT99 Emscripten distribution.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Desktop-first; full phone play and multiplayer support are not established.",
+      "storage": "Identify actual runtime save semantics separately from SystemFS export and relay state.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Pin the remote runtime artifact and document source/licensing, save support, and multiplayer limits.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Author browser-port distribution",
+          "url": "https://www.icculus.org/ut99-emscripten/"
+        },
+        {
+          "type": "source",
+          "label": "Author distribution; complete source provenance still to establish",
+          "url": "https://www.icculus.org/ut99-emscripten/"
+        },
+        {
+          "type": "build-api",
+          "label": "Emscripten documentation",
+          "url": "https://emscripten.org/docs/"
+        },
+        {
+          "type": "releases",
+          "label": "Author runtime distribution",
+          "url": "https://www.icculus.org/ut99-emscripten/"
+        },
+        {
+          "type": "issues",
+          "label": "PortfoliOS integration issues",
+          "url": "https://github.com/Bl4ut0/PortfoliOS/issues"
+        },
+        {
+          "type": "license",
+          "label": "Author distribution; artifact license verification pending",
+          "url": "https://www.icculus.org/ut99-emscripten/"
+        }
+      ],
+      "localEvidence": [
+        "apps/ut99/app.js",
+        "apps/ut99/runtime/index.php",
+        "docs/ut99-oldunreal-bridge.md"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Do not describe UT99 as an open-source application. Source availability, runtime permissions, and commercial game data rights require exact artifact evidence."
+    },
+    {
+      "id": "romplayer",
+      "name": "ROM Player / EmulatorJS",
+      "category": "Existing games",
+      "kind": "wasm-runtime",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing emulator launcher with native Desktop and Mobile wrappers.",
+      "runtime": "EmulatorJS lazy-loads browser cores from its configured CDN.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Native phone launcher and touch controls exist; support and memory vary by core/title.",
+      "storage": "ROMs/core files are installation resources outside Drive backup; core-native save controls and SystemFS coverage must be documented separately.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Pin each core and test native save/export/resume per supported system.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://emulatorjs.org/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/EmulatorJS/EmulatorJS"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://emulatorjs.org/docs/"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/EmulatorJS/EmulatorJS/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/EmulatorJS/EmulatorJS/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/EmulatorJS/EmulatorJS#license"
+        }
+      ],
+      "localEvidence": [
+        "apps/romplayer/app.js",
+        "apps/romplayer/runtime.html",
+        "mobile/apps/romplayer/app.js"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Frontend, each emulator core, BIOS files, and ROM content have independent licensing/ownership requirements."
+    },
+    {
+      "id": "quake",
+      "name": "Quake / WebQuake",
+      "category": "Related browser apps",
+      "kind": "javascript-webgl",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing Quake launcher; useful browser app reference alongside WASM games.",
+      "runtime": "JavaScript/WebGL WebQuake files, not a WASM port in the current local runtime.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Desktop integration; native phone input and memory testing remain open.",
+      "storage": "Validate the existing save bridge and account-scoped outputs; PAK data are not user-document backups.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Identify the exact WebQuake fork/version; do not relabel it as WebAssembly.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://github.com/id-Software/Quake"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/id-Software/Quake"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/id-Software/Quake#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/id-Software/Quake/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/id-Software/Quake/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/id-Software/Quake#license"
+        },
+        {
+          "type": "issues",
+          "label": "PortfoliOS integration issues",
+          "url": "https://github.com/Bl4ut0/PortfoliOS/issues"
+        }
+      ],
+      "localEvidence": [
+        "apps/quake/app.js",
+        "quake/index.html"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Original Quake source is contextual; verify the deployed WebQuake fork and commercial data notices."
+    },
+    {
+      "id": "office",
+      "name": "Office / LibreOffice-labeled shell",
+      "category": "Related browser apps",
+      "kind": "placeholder",
+      "status": "shell-only",
+      "priority": "maintain",
+      "summary": "Existing local Writer/Calc-style workspace currently labeled LibreOffice WASM.",
+      "runtime": "First-party JavaScript editors with a simulated WASM boot sequence; no real LibreOffice engine is established by the app code.",
+      "upstreamReadiness": "This entry records a local implementation gap; native LibreOffice availability does not establish a supported browser engine.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing first-party desktop editors; no genuine LibreOffice engine identified.",
+      "mobile": "Mobile Documents is a separate native app; full Office parity is not implied.",
+      "storage": "Current editors use SystemFS; real ODF/OOXML document fidelity needs a genuine engine evaluation.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Correct product labeling in a separate implementation, or evaluate and integrate an actual maintained browser office engine.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "LibreOffice project (reference only)",
+          "url": "https://www.libreoffice.org/"
+        },
+        {
+          "type": "source",
+          "label": "LibreOffice development (not the current app engine)",
+          "url": "https://www.libreoffice.org/about-us/source-code/"
+        },
+        {
+          "type": "build-api",
+          "label": "PortfoliOS modular app documentation",
+          "url": "https://github.com/Bl4ut0/PortfoliOS/blob/main/MODULAR_APPS.md"
+        },
+        {
+          "type": "releases",
+          "label": "LibreOffice downloads (native; not evidence of a web build)",
+          "url": "https://www.libreoffice.org/download/download-libreoffice/"
+        },
+        {
+          "type": "issues",
+          "label": "PortfoliOS integration issues",
+          "url": "https://github.com/Bl4ut0/PortfoliOS/issues"
+        },
+        {
+          "type": "license",
+          "label": "LibreOffice license policy (reference only)",
+          "url": "https://www.libreoffice.org/about-us/licenses/"
+        }
+      ],
+      "localEvidence": [
+        "apps/office/app.js",
+        "mobile/apps/documents/app.js"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "No upstream LibreOffice binary was identified in this shell. Review any future engine and its format/font dependencies independently."
+    },
+    {
+      "id": "local-ai",
+      "name": "Local AI / WebLLM",
+      "category": "Related browser apps",
+      "kind": "webgpu-runtime",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing local AI worker and model-selection integration.",
+      "runtime": "WebLLM primarily performs inference through WebGPU; WASM support components do not make it a general WASM application.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Native Lobe interface exists; GPU/model support and memory depend on device.",
+      "storage": "Chats/profile preferences are user data; model weights and compiled runtime caches are shared resources.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Record model/runtime pins, measured memory, worker shutdown, and authenticated-session context.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://webllm.mlc.ai/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/mlc-ai/web-llm"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://webllm.mlc.ai/docs/"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/mlc-ai/web-llm/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/mlc-ai/web-llm/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/mlc-ai/web-llm#license"
+        }
+      ],
+      "localEvidence": [
+        "core/local-ai.js",
+        "mobile/apps/local-ai/app.js"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Inspect WebLLM, compiled model libraries, and each model's weights/license separately."
+    },
+    {
+      "id": "webamp",
+      "name": "Webamp",
+      "category": "Related browser apps",
+      "kind": "javascript-webgl",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Existing classic media player; retained as an adjacent browser app reference.",
+      "runtime": "HTML/JavaScript media player; not classified as a WASM application.",
+      "upstreamReadiness": "See linked upstream references and local evidence; exact artifact provenance must be recorded during maintenance.",
+      "portfoliosReadiness": "Existing integration found in local code; this catalog review did not re-run or certify the game/runtime.",
+      "desktop": "Existing Desktop integration; exact runtime behavior requires its own maintenance checks.",
+      "mobile": "Desktop integration; native Music app covers the main phone playback workflow.",
+      "storage": "Track playlists and imported audio deliberately; runtime/skin caches are separate from profile documents.",
+      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
+      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
+      "nextAction": "Keep its runtime classification accurate and verify playlist/profile persistence when adapting it.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://webamp.org/"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/captbaritone/webamp"
+        },
+        {
+          "type": "build-api",
+          "label": "Build, hosting, or API documentation",
+          "url": "https://github.com/captbaritone/webamp#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/captbaritone/webamp/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/captbaritone/webamp/issues"
+        },
+        {
+          "type": "license",
+          "label": "License and notices entry point",
+          "url": "https://github.com/captbaritone/webamp#license"
+        }
+      ],
+      "localEvidence": [
+        "apps/webamp/app.js"
+      ],
+      "lastReviewed": "2026-10-10",
+      "evidence": "local-code-and-upstream",
+      "artifact": {
+        "version": null,
+        "sha256": null,
+        "measurementReport": null
+      },
+      "licenseNotes": "Review player/visualizer/skin dependencies separately; do not infer rights to music or skins."
+    }
+  ]
+}
