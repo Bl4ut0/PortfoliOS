@@ -349,7 +349,7 @@
             </details>
         `,
         onOpen: bind,
-        onPause: () => webController?.stop("Remote browsing ends on Home to conserve the shared allowance."),
+        onPause: () => webController?.pause("Remote browsing ends on Home to conserve the shared allowance."),
         onResume: (root) => {
             void webController?.refreshStatus();
             bookmarks = readStoredBookmarks();

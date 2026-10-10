@@ -18,7 +18,7 @@
     };
     window.DesktopBrowser = {
         refresh: window.renderBrowser,
-        pause: () => controller?.stop('Remote browsing ends when minimized to conserve the shared allowance.'),
+        pause: () => controller?.pause('Remote browsing ends when minimized to conserve the shared allowance.'),
         close: async () => { const old = controller; controller = null; await old?.destroy(); }
     };
 })();
