@@ -152,3 +152,52 @@ if (window.EventBus) {
     window.EventBus.on("state:changed:quickSearch", () => window.renderQuick());
     window.EventBus.on("state:changed:quickActiveId", () => window.renderQuick());
 }
+
+window.mountQuick = () => {
+    window.renderQuick();
+    document.querySelector("[data-view-panel=quick]").addEventListener("click", event => {
+        const quickRouteButton = event.target.closest("[data-quick-route]");
+        if (quickRouteButton) {
+            state.quickRoute = quickRouteButton.dataset.quickRoute;
+            state.quickSearch = "";
+            const qSearch = window.byId ? window.byId("quick-search") : document.getElementById("quick-search");
+            if (qSearch) qSearch.value = "";
+            const routeItems = window.getQuickRouteItems ? window.getQuickRouteItems() : [];
+            state.quickActiveId = state.quickRoute === "overview" ? "overview" : (routeItems[0]?.id || "overview");
+            if (window.renderQuick) window.renderQuick();
+            return;
+        }
+
+        const quickFilterButton = event.target.closest("[data-quick-filter]");
+        if (quickFilterButton) {
+            state.quickFilter = quickFilterButton.dataset.quickFilter;
+            const routeItems = window.getQuickRouteItems ? window.getQuickRouteItems() : [];
+            if (state.quickActiveId !== "overview" && !routeItems.some((item) => item.id === state.quickActiveId)) {
+                state.quickActiveId = routeItems[0]?.id || "overview";
+            }
+            if (window.renderQuick) window.renderQuick();
+            return;
+        }
+
+        const quickSelectButton = event.target.closest("[data-quick-select]");
+        if (quickSelectButton) {
+            state.quickActiveId = quickSelectButton.dataset.quickSelect;
+            state.activeId = state.quickActiveId;
+            if (window.renderQuick) window.renderQuick();
+            return;
+        }
+
+    });
+    const quickSearch = window.byId ? window.byId("quick-search") : document.getElementById("quick-search");
+    if (quickSearch) {
+        quickSearch.addEventListener("input", (event) => {
+            state.quickSearch = event.target.value;
+            const routeItems = window.getQuickRouteItems ? window.getQuickRouteItems() : [];
+            if (state.quickActiveId !== "overview" && !routeItems.some((item) => item.id === state.quickActiveId)) {
+                state.quickActiveId = routeItems[0]?.id || "overview";
+            }
+            if (window.renderQuick) window.renderQuick();
+        });
+    }
+
+};

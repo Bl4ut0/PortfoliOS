@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T02:39:11.826Z",
+  "generatedAt": "2026-10-10T19:02:00.685Z",
   "results": [
     {
       "scope": "Settings/accounts",
@@ -52,7 +52,7 @@
     {
       "scope": "Start",
       "theme": "dark",
-      "checked": 39,
+      "checked": 41,
       "failures": []
     },
     {
@@ -634,43 +634,43 @@
     {
       "scope": "files",
       "theme": "dark",
-      "checked": 22,
+      "checked": 21,
       "failures": []
     },
     {
       "scope": "files",
       "theme": "light",
-      "checked": 22,
+      "checked": 21,
       "failures": []
     },
     {
       "scope": "files",
       "theme": "oled",
-      "checked": 22,
+      "checked": 21,
       "failures": []
     },
     {
       "scope": "files",
       "theme": "black-accent",
-      "checked": 22,
+      "checked": 21,
       "failures": []
     },
     {
       "scope": "files",
       "theme": "terminal",
-      "checked": 22,
+      "checked": 21,
       "failures": []
     },
     {
       "scope": "files",
       "theme": "glacier",
-      "checked": 22,
+      "checked": 21,
       "failures": []
     },
     {
       "scope": "files",
       "theme": "sunset",
-      "checked": 22,
+      "checked": 21,
       "failures": []
     },
     {
@@ -1012,43 +1012,43 @@
     {
       "scope": "office",
       "theme": "dark",
-      "checked": 23,
+      "checked": 22,
       "failures": []
     },
     {
       "scope": "office",
       "theme": "light",
-      "checked": 23,
+      "checked": 22,
       "failures": []
     },
     {
       "scope": "office",
       "theme": "oled",
-      "checked": 24,
+      "checked": 22,
       "failures": []
     },
     {
       "scope": "office",
       "theme": "black-accent",
-      "checked": 24,
+      "checked": 22,
       "failures": []
     },
     {
       "scope": "office",
       "theme": "terminal",
-      "checked": 24,
+      "checked": 22,
       "failures": []
     },
     {
       "scope": "office",
       "theme": "glacier",
-      "checked": 25,
+      "checked": 22,
       "failures": []
     },
     {
       "scope": "office",
       "theme": "sunset",
-      "checked": 25,
+      "checked": 22,
       "failures": []
     },
     {
@@ -1066,31 +1066,31 @@
     {
       "scope": "Office/Writer",
       "theme": "oled",
-      "checked": 22,
+      "checked": 11,
       "failures": []
     },
     {
       "scope": "Office/Writer",
       "theme": "black-accent",
-      "checked": 22,
+      "checked": 11,
       "failures": []
     },
     {
       "scope": "Office/Writer",
       "theme": "terminal",
-      "checked": 22,
+      "checked": 11,
       "failures": []
     },
     {
       "scope": "Office/Writer",
       "theme": "glacier",
-      "checked": 22,
+      "checked": 11,
       "failures": []
     },
     {
       "scope": "Office/Writer",
       "theme": "sunset",
-      "checked": 22,
+      "checked": 11,
       "failures": []
     },
     {
@@ -1786,7 +1786,7 @@
     {
       "scope": "Mobile/files",
       "theme": "dark/cyan",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -1930,7 +1930,7 @@
     {
       "scope": "Mobile/files",
       "theme": "dark/blue",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -2074,7 +2074,7 @@
     {
       "scope": "Mobile/files",
       "theme": "dark/violet",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -2218,7 +2218,7 @@
     {
       "scope": "Mobile/files",
       "theme": "dark/green",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -2362,7 +2362,7 @@
     {
       "scope": "Mobile/files",
       "theme": "dark/amber",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -2506,7 +2506,7 @@
     {
       "scope": "Mobile/files",
       "theme": "light/cyan",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -2650,7 +2650,7 @@
     {
       "scope": "Mobile/files",
       "theme": "light/blue",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -2794,7 +2794,7 @@
     {
       "scope": "Mobile/files",
       "theme": "light/violet",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -2938,7 +2938,7 @@
     {
       "scope": "Mobile/files",
       "theme": "light/green",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {
@@ -3082,7 +3082,7 @@
     {
       "scope": "Mobile/files",
       "theme": "light/amber",
-      "checked": 25,
+      "checked": 23,
       "failures": []
     },
     {

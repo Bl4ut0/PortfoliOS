@@ -216,3 +216,8 @@ window.createCustomDropdown = (selectEl) => {
     // Expose a clean update method on the native select
     selectEl.updateCustomDropdown = syncState;
 };
+
+// Neutral UI utilities must also be available before either app framework loads.
+window.escapeHtml = value => String(value ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#039;");

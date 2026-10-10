@@ -4,6 +4,8 @@
  */
 
 window.startCanvas = () => {
+    if (window.startCanvas.started) { window.startCanvas.refresh?.(); return; }
+    window.startCanvas.started = true;
     const canvas = window.byId ? window.byId("network-canvas") : document.getElementById("network-canvas");
     if (!canvas) return;
     
@@ -30,7 +32,12 @@ window.startCanvas = () => {
         }));
     }
 
+    let frame = null;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const eligible = () => window.state?.view === "desktop" && !document.hidden && !document.body.classList.contains("session-locked") && document.body.dataset.startupStage === "workspace" && !motion.matches;
     function draw() {
+        frame = null;
+        if (!eligible()) return;
         ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
         nodes.forEach((node, index) => {
@@ -76,7 +83,7 @@ window.startCanvas = () => {
             ctx.globalAlpha = 1;
         });
 
-        requestAnimationFrame(draw);
+        frame = requestAnimationFrame(draw);
     }
 
     window.addEventListener("resize", resize);
@@ -89,6 +96,15 @@ window.startCanvas = () => {
         pointer.active = false;
     });
 
+    const refresh = () => {
+        if (!eligible()) { if (frame !== null) cancelAnimationFrame(frame); frame = null; return; }
+        if (frame === null) frame = requestAnimationFrame(draw);
+    };
+    window.startCanvas.refresh = refresh;
+    document.addEventListener("visibilitychange", refresh);
+    motion.addEventListener("change", refresh);
+    window.EventBus?.on("view:changed", refresh);
+    new MutationObserver(refresh).observe(document.body, { attributes: true, attributeFilter: ["class", "data-startup-stage"] });
     resize();
-    draw();
+    refresh();
 };

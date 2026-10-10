@@ -3,32 +3,12 @@
  * Manages view switching, window focus updates, boot triggers, top dock panels, and global click/key event delegations.
  */
 
-let topDockDismissTimer = null;
-window.setTopDockOpen = (isOpen, autoDismissMs = 0) => {
-    if (topDockDismissTimer) {
-        window.clearTimeout(topDockDismissTimer);
-        topDockDismissTimer = null;
-    }
-    const advisory = window.byId ? window.byId("mobile-advisory") : document.getElementById("mobile-advisory");
-    const topbarTab = window.byId ? window.byId("topbar-tab") : document.getElementById("topbar-tab");
-
-    document.body.classList.toggle("top-dock-open", isOpen);
-    document.body.classList.remove("top-dock-carry");
-    if (topbarTab) topbarTab.setAttribute("aria-expanded", String(isOpen));
-
-    if (isOpen && autoDismissMs > 0) {
-        document.body.classList.add("top-dock-carry");
-        topDockDismissTimer = window.setTimeout(() => {
-            window.setTopDockOpen(false);
-        }, autoDismissMs);
-    }
-};
-
-window.openStoreBookmark = (bookmarkId) => {
+window.openStoreBookmark = async (bookmarkId) => {
     const bookmark = window.bookmarkById ? window.bookmarkById(bookmarkId) : null;
     if (!bookmark) return;
 
     state.browserBookmark = bookmark.id;
+    await window.PortfolioLoader?.loadAppDependencies("browser");
     if (window.renderBrowserPage) window.renderBrowserPage(bookmark.id);
     if (window.openDesktopWindow) window.openDesktopWindow("browser");
     
@@ -37,104 +17,15 @@ window.openStoreBookmark = (bookmarkId) => {
     if (window.showDesktopToast) window.showDesktopToast(`Opening ${bookmark.label}.`);
 };
 
-window.renderLinuxInfo = () => {
-    const systems = window.systems || [];
-    const linuxNeofetch = window.byId ? window.byId("linux-neofetch") : document.getElementById("linux-neofetch");
-    const linuxNodeList = window.byId ? window.byId("linux-node-list") : document.getElementById("linux-node-list");
-
-    if (linuxNeofetch) {
-        linuxNeofetch.textContent = [
-            "OS: Bl4ut0 Linux Lab",
-            "Host: homelab / local-first portfolio",
-            "Kernel: curiosity-13y+",
-            "Shell: bash, PowerShell, Lua, JavaScript",
-            "Services: Proxmox, Docker, Tailscale, Netdata, n8n",
-            "Theme: quiet infra, loud ideas"
-        ].join("\n");
-    }
-
-    if (linuxNodeList) {
-        linuxNodeList.textContent = systems
-            .map((item) => `${item.id.padEnd(12)} ${item.status.padEnd(8)} ${item.title}`)
-            .join("\n");
-    }
-};
-
-window.boot = async () => {
-    if (window.SystemFS) {
-        try {
-            await window.SystemFS.init();
-        } catch (err) {
-            console.error("Filesystem init error:", err);
-        }
-    }
-
-    try {
-        await window.SecurityKernel?.init?.();
-    } catch (err) {
-        console.error("SecurityKernel init error:", err);
-    }
-
-    if (window.loadPreferencesFromFilesystem) {
-        await window.loadPreferencesFromFilesystem();
-    }
-
-    if (window.GDriveSync?.restoreSession) {
-        // The boot selector must stay unobstructed. A saved reconnect request is
-        // presented only after Desktop or Mobile has been explicitly selected.
-        await window.GDriveSync.restoreSession({ promptOnInvalid: false });
-    }
-
-    if (window.applyCurrentUserProfile) {
-        window.applyCurrentUserProfile();
-    }
-
-    if (window.renderDesktopIcons) window.renderDesktopIcons();
-    if (window.renderStartMenu) window.renderStartMenu();
-    if (window.renderDossier) window.renderDossier(state.activeId);
-    if (window.renderNetworkMap) window.renderNetworkMap();
-    if (window.renderQuick) window.renderQuick();
-    if (window.renderMobileApps) window.renderMobileApps();
-    if (window.renderBrowser) window.renderBrowser();
-    window.renderLinuxInfo();
-    if (window.renderTaskbar) window.renderTaskbar();
-    if (window.applyDesktopPreferences) window.applyDesktopPreferences();
-    if (window.initWindowManagement) window.initWindowManagement();
-
-    // Validate after rendering so network latency never blocks startup. Invalid
-    // sessions retain a reconnect request until an experience is selected.
-    window.GDriveSync?.validateSession?.({ promptOnInvalid: false }).then((result) => {
-        if (result?.valid) window.triggerGDriveSync?.({ silent: true });
-    });
-
-    // App runtimes start only after the session entry screen has completed.
-    window.startSelectedWorkspace = () => {
-        if (!state.workspaceStarted) {
-            state.workspaceStarted = true;
-            if (state.view === 'desktop') {
-                Array.from(state.openApps || []).forEach(appId => window.openDesktopWindow?.(appId));
-                window.startCanvas?.();
-            }
-            if (window.updateClock) setInterval(window.updateClock, 30000);
-        }
-    };
-
-    if (window.initDesktopIconDragging) window.initDesktopIconDragging();
-    if (window.updateClock) window.updateClock();
-    
-    window.addEventListener("resize", () => {
-        if (window.renderDesktopIcons) window.renderDesktopIcons();
-        if (window.applyDesktopResolution) window.applyDesktopResolution();
-    });
-
-    if (window.handleGameRuntimeMessage) {
-        window.addEventListener("message", window.handleGameRuntimeMessage);
-    }
-
-    // Always present the typed introduction and experience selector, including
-    // reloads whose URL remembers the previously selected view.
-    if (window.runBootSequence) window.runBootSequence();
-
+window.mountDesktop = async () => {
+    window.renderDesktopIcons?.();
+    window.renderTaskbar?.();
+    window.applyDesktopPreferences?.();
+    window.initWindowManagement?.();
+    window.initDesktopIconDragging?.();
+    window.updateClock?.();
+    window.setInterval(() => { if (window.state.view === "desktop" && !document.hidden) window.updateClock?.(); }, 30000);
+    window.addEventListener("resize", () => { if (window.state.view === "desktop") { window.renderDesktopIcons?.(); window.applyDesktopResolution?.(); } });
     // Ctrl+C CLI escape keybind
     window.addEventListener("keydown", (event) => {
         if (!event.ctrlKey || event.key.toLowerCase() !== "c") return;
@@ -224,12 +115,7 @@ window.boot = async () => {
 
     // Global click delegation
     document.addEventListener("click", async (event) => {
-        const topbarTab = event.target.closest("#topbar-tab");
-        if (topbarTab) {
-            window.setTopDockOpen(!document.body.classList.contains("top-dock-open"));
-            return;
-        }
-
+        if (window.state.view !== "desktop" || document.body.classList.contains("session-locked")) return;
         const doomRetry = event.target.closest("#doom-source-retry");
         if (doomRetry) {
             if (window.appRegistry && window.appRegistry.doomsource && typeof window.appRegistry.doomsource.loadDoomEngine === "function") {
@@ -405,7 +291,7 @@ window.boot = async () => {
         if (startToggle) {
             const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
             const calPanel = window.byId ? window.byId("calendar-panel") : document.getElementById("calendar-panel");
-            if (startMenu) startMenu.hidden = !startMenu.hidden;
+            if (startMenu) { startMenu.hidden = !startMenu.hidden; if (!startMenu.hidden) window.renderStartMenu?.(); }
             if (calPanel) calPanel.hidden = true;
             if (window.closeVolumePanel) window.closeVolumePanel();
             if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
@@ -453,6 +339,8 @@ window.boot = async () => {
 
         const localAITrayToggle = event.target.closest("#local-ai-tray-toggle");
         if (localAITrayToggle) {
+            await window.PortfolioLoader?.loadAppDependencies("local-ai");
+            window.renderLocalAITray?.();
             if (window.toggleLocalAITrayPanel) window.toggleLocalAITrayPanel();
             return;
         }
@@ -587,37 +475,6 @@ window.boot = async () => {
             }
         }
 
-        const quickRouteButton = event.target.closest("[data-quick-route]");
-        if (quickRouteButton) {
-            state.quickRoute = quickRouteButton.dataset.quickRoute;
-            state.quickSearch = "";
-            const qSearch = window.byId ? window.byId("quick-search") : document.getElementById("quick-search");
-            if (qSearch) qSearch.value = "";
-            const routeItems = window.getQuickRouteItems ? window.getQuickRouteItems() : [];
-            state.quickActiveId = state.quickRoute === "overview" ? "overview" : (routeItems[0]?.id || "overview");
-            if (window.renderQuick) window.renderQuick();
-            return;
-        }
-
-        const quickFilterButton = event.target.closest("[data-quick-filter]");
-        if (quickFilterButton) {
-            state.quickFilter = quickFilterButton.dataset.quickFilter;
-            const routeItems = window.getQuickRouteItems ? window.getQuickRouteItems() : [];
-            if (state.quickActiveId !== "overview" && !routeItems.some((item) => item.id === state.quickActiveId)) {
-                state.quickActiveId = routeItems[0]?.id || "overview";
-            }
-            if (window.renderQuick) window.renderQuick();
-            return;
-        }
-
-        const quickSelectButton = event.target.closest("[data-quick-select]");
-        if (quickSelectButton) {
-            state.quickActiveId = quickSelectButton.dataset.quickSelect;
-            state.activeId = state.quickActiveId;
-            if (window.renderQuick) window.renderQuick();
-            return;
-        }
-
         const selectButton = event.target.closest("[data-select]");
         if (selectButton) {
             if (window.renderDossier) window.renderDossier(selectButton.dataset.select);
@@ -671,24 +528,6 @@ window.boot = async () => {
             if (startMenu) startMenu.hidden = true;
         }
 
-        const viewButton = event.target.closest("[data-view]");
-        if (viewButton) {
-            const shouldCarryDock = document.body.classList.contains("top-dock-open");
-            if (window.switchView) window.switchView(viewButton.dataset.view);
-            window.setTopDockOpen(shouldCarryDock, shouldCarryDock ? 2600 : 0);
-        }
-
-        const enterButton = event.target.closest("[data-enter-view]");
-        if (enterButton) {
-            const bootScreen = window.byId ? window.byId("boot-screen") : document.getElementById("boot-screen");
-            // Build the sign-in screen synchronously under the boot screen.
-            state.systemStarted = true;
-            if (window.switchView) window.switchView(enterButton.dataset.enterView);
-            if (bootScreen) bootScreen.classList.add("hidden");
-            
-            if (enterButton.dataset.enterView === "quick") window.startSelectedWorkspace?.();
-        }
-
         if (!event.target.closest(".topbar")) {
             window.setTopDockOpen(false);
         }
@@ -726,18 +565,6 @@ window.boot = async () => {
                 localStorage.setItem(key, event.target.value);
             }
             if (window.applyDesktopResolution) window.applyDesktopResolution();
-        });
-    }
-
-    const quickSearch = window.byId ? window.byId("quick-search") : document.getElementById("quick-search");
-    if (quickSearch) {
-        quickSearch.addEventListener("input", (event) => {
-            state.quickSearch = event.target.value;
-            const routeItems = window.getQuickRouteItems ? window.getQuickRouteItems() : [];
-            if (state.quickActiveId !== "overview" && !routeItems.some((item) => item.id === state.quickActiveId)) {
-                state.quickActiveId = routeItems[0]?.id || "overview";
-            }
-            if (window.renderQuick) window.renderQuick();
         });
     }
 

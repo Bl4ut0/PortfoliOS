@@ -1133,11 +1133,11 @@ async function validateLocalAIServiceRuntimeContract() {
 
 function validateCompletedMigrationContract() {
     const migratedTemplateApps = ["profile", "dossier", "browser", "network", "linux", "cli", "store", "settings"];
-    const index = read("index.html");
+    const index = read("desktop/workspace.html");
     migratedTemplateApps.forEach((appId) => {
         const templatePattern = new RegExp(`<template\\s+id=["']app-template-${appId}["'][\\s\\S]*?data-window=["']${appId}["'][\\s\\S]*?</template>`);
         if (!templatePattern.test(index)) {
-            fail(`index.html:${appId}`, "migrated shell markup must be inert inside its app template");
+            fail(`desktop/workspace.html:${appId}`, "migrated shell markup must be inert inside its app template");
         }
     });
 
@@ -1297,10 +1297,11 @@ async function run() {
 }
 
 run()
-    .then(() => {
+    .then(async () => {
         if (!process.exitCode) {
             require("./check-mobile-viewport.js");
             require("./check-mobile-home.js");
+            await require("./check-loading.js");
         }
     })
     .catch((error) => {

@@ -81,6 +81,7 @@ function diagnosticRom() {
       .locator('#boot-screen [data-enter-view="mobile"]')
       .click({ timeout: 15000 });
     await page.locator("[data-session-public]").click();
+    await page.waitForFunction(() => document.body.dataset.startupStage === "workspace");
     await page
       .getByRole("button", { name: "Open Store", exact: true })
       .first()
@@ -122,6 +123,7 @@ function diagnosticRom() {
     const frame = page
       .frames()
       .find((frame) => frame.url().includes("/apps/romplayer/runtime.html"));
+    await frame.waitForFunction(() => window.EJS_emulator.paused === true);
     assert.equal(
       await frame.evaluate(() => window.EJS_emulator.paused),
       true,
@@ -133,6 +135,7 @@ function diagnosticRom() {
     await page
       .getByRole("button", { name: "Open ROM Player", exact: true })
       .click();
+    await frame.waitForFunction(() => window.EJS_emulator.paused === false);
     assert.equal(
       await frame.evaluate(() => window.EJS_emulator.paused),
       false,
@@ -158,6 +161,7 @@ function diagnosticRom() {
     await page
       .getByRole("button", { name: "Open Settings", exact: true })
       .click();
+    await page.locator("[data-profile-choose]").waitFor();
     assert.equal(await page.locator("[data-profile-choose]").count(), 1);
     await page.locator("[data-profile-choose]").click();
     assert.equal(
@@ -213,6 +217,7 @@ function diagnosticRom() {
       .locator('#boot-screen [data-enter-view="mobile"]')
       .click({ timeout: 15000 });
     await page.locator("[data-session-public]").click();
+    await page.waitForFunction(() => document.body.dataset.startupStage === "workspace");
     assert.equal(
       await page.evaluate(() =>
         window.getInstalledStoreAppIds().includes("romplayer"),

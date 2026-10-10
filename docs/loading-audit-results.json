@@ -1,0 +1,145 @@
+{
+  "release": "2026.10.10.1",
+  "baselineCommit": "4dcc82adac65ce9a15af9afe8d67caf3d11a209f",
+  "generatedAt": "2026-10-10T19:09:42.442Z",
+  "scope": "Local unthrottled disposable Chrome profiles; 3 cold runs at each viewport; service workers blocked and third-party requests aborted; first-party resource decoded sizes exclude HTML, HTTP headers and compression. No Lighthouse or field INP claim.",
+  "before": [
+    {
+      "width": 1440,
+      "run": 0,
+      "selectorMs": 5812,
+      "cls": 0.08381387556664738,
+      "assetRequests": 65,
+      "decodedAssetBytes": 1923867,
+      "scriptRequests": 51,
+      "longTasksMs": [
+        61
+      ]
+    },
+    {
+      "width": 1440,
+      "run": 1,
+      "selectorMs": 5696,
+      "cls": 0.08381387556664738,
+      "assetRequests": 65,
+      "decodedAssetBytes": 1923867,
+      "scriptRequests": 51,
+      "longTasksMs": []
+    },
+    {
+      "width": 1440,
+      "run": 2,
+      "selectorMs": 5852,
+      "cls": 0.08381387556664738,
+      "assetRequests": 65,
+      "decodedAssetBytes": 1923867,
+      "scriptRequests": 51,
+      "longTasksMs": []
+    },
+    {
+      "width": 390,
+      "run": 0,
+      "selectorMs": 5661,
+      "cls": 0.3285528177713888,
+      "assetRequests": 65,
+      "decodedAssetBytes": 1923867,
+      "scriptRequests": 51,
+      "longTasksMs": []
+    },
+    {
+      "width": 390,
+      "run": 1,
+      "selectorMs": 5666,
+      "cls": 0.3285528177713888,
+      "assetRequests": 65,
+      "decodedAssetBytes": 1923867,
+      "scriptRequests": 51,
+      "longTasksMs": []
+    },
+    {
+      "width": 390,
+      "run": 2,
+      "selectorMs": 5743,
+      "cls": 0.3285528177713888,
+      "assetRequests": 65,
+      "decodedAssetBytes": 1923867,
+      "scriptRequests": 51,
+      "longTasksMs": []
+    }
+  ],
+  "after": [
+    {
+      "width": 1440,
+      "run": 0,
+      "selectorMs": 5421,
+      "cls": 0,
+      "assetRequests": 9,
+      "decodedAssetBytes": 43900,
+      "scriptRequests": 5,
+      "longTasksMs": []
+    },
+    {
+      "width": 1440,
+      "run": 1,
+      "selectorMs": 5450,
+      "cls": 0,
+      "assetRequests": 9,
+      "decodedAssetBytes": 43900,
+      "scriptRequests": 5,
+      "longTasksMs": []
+    },
+    {
+      "width": 1440,
+      "run": 2,
+      "selectorMs": 5434,
+      "cls": 0,
+      "assetRequests": 9,
+      "decodedAssetBytes": 43900,
+      "scriptRequests": 5,
+      "longTasksMs": []
+    },
+    {
+      "width": 390,
+      "run": 0,
+      "selectorMs": 5471,
+      "cls": 0,
+      "assetRequests": 9,
+      "decodedAssetBytes": 43900,
+      "scriptRequests": 5,
+      "longTasksMs": []
+    },
+    {
+      "width": 390,
+      "run": 1,
+      "selectorMs": 5451,
+      "cls": 0,
+      "assetRequests": 9,
+      "decodedAssetBytes": 43900,
+      "scriptRequests": 5,
+      "longTasksMs": []
+    },
+    {
+      "width": 390,
+      "run": 2,
+      "selectorMs": 5459,
+      "cls": 0,
+      "assetRequests": 9,
+      "decodedAssetBytes": 43900,
+      "scriptRequests": 5,
+      "longTasksMs": []
+    }
+  ],
+  "baselineRequiredPrecacheAssets": 119,
+  "requiredPrecacheAssets": 11,
+  "bootAssetPaths": [
+    "/mobile/viewport.js",
+    "/styles-v1.css",
+    "/styles/tokens.css",
+    "/styles/reset.css",
+    "/styles/boot.css",
+    "/core/loading-manifest.js",
+    "/core/staged-loader.js",
+    "/core/boot.js",
+    "/main.js"
+  ]
+}

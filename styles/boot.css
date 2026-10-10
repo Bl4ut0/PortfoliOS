@@ -23,7 +23,7 @@
     display: none;
 }
 
-.boot-screen:not(.is-ready) .boot-lines span,
+.boot-screen:not(.is-ready) .boot-lines > span,
 .boot-screen:not(.is-ready) .boot-mark,
 .boot-screen:not(.is-ready) .eyebrow,
 .boot-screen:not(.is-ready) #boot-title,
@@ -83,7 +83,7 @@
     text-shadow: 0 0 8px rgba(34, 211, 238, 0.24);
 }
 
-.boot-lines span:first-child {
+.boot-lines > span:first-child {
     color: var(--boot-text);
     text-shadow: 0 0 8px rgba(248, 250, 252, 0.28);
 }
@@ -232,3 +232,18 @@
     overflow: hidden;
     position: relative;
 }
+
+/* Reserve every final line while its visible copy types. Boot fonts stay local. */
+.boot-screen { --body: system-ui, sans-serif; --heading: system-ui, sans-serif; --mono: ui-monospace, Consolas, monospace; overflow-y:auto; touch-action:pan-y; }
+.boot-panel [data-boot-text] { position:relative; }
+.boot-panel [data-boot-text]::before { content:attr(data-boot-text); visibility:hidden; display:block; white-space:inherit; }
+.boot-panel .boot-typed-text { position:absolute; inset:0; }
+.boot-lines > span { min-height:1.5em; }
+.boot-screen .eyebrow { margin:0 0 .45rem; font-family:var(--mono); font-size:.73rem; font-weight:700; letter-spacing:.11em; text-transform:uppercase; }
+.boot-screen [hidden], #startup-status[hidden] { display:none; }
+.boot-screen button:focus-visible { outline:3px solid var(--boot-cyan); outline-offset:4px; }
+#startup-status { position:fixed; inset:auto 1rem 1rem; z-index:100001; margin:0 auto; width:fit-content; max-width:calc(100vw - 2rem); padding:12px 18px; border:1px solid #397481; border-radius:12px; background:#0e1b28; color:#e5f6ff; font:14px system-ui,sans-serif; }
+#startup-status.is-error { border-color:#fb7185; }
+body[data-startup-stage=boot] > .os-shell:not(#session-phone), body[data-startup-stage=mounting] > .os-shell:not(#session-phone) { visibility:hidden; }
+@media(max-width:600px) { .boot-screen { place-items:safe center; } .boot-panel { padding:1.5rem; } .mobile-boot-note { display:block; font-size:.75rem; } }
+@media(prefers-reduced-motion:reduce) { .boot-actions, .mobile-boot-note { transition:none; transform:none; } }

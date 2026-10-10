@@ -32,6 +32,14 @@ Updated 2026-10-10. Priorities describe delivery order rather than promised date
 - Next for sync: pagination, durable retry queues, conflict recovery, and verified cross-device restore. The P0 sync milestone remains open.
 
 
+## Delivered in the staged-loading release
+
+- Separate boot, account selection, Desktop, Mobile and Quick entry points; only the selected experience executes, after profile storage/preferences are ready.
+- Low-priority shell prefetch during login, deferred app controllers and optional AI/media services, and selected-experience HTML/CSS.
+- Original typed selector preserved with stable geometry; no workspace flash before sign-in. Mobile excludes Desktop controllers and component styling.
+- Small atomic boot cache, on-use app caching, download retry and upgrade migration checks, and stage timings in Debug.
+- Lab asset, layout and browser regression results: [loading performance](docs/LOADING_PERFORMANCE.md). Architecture and extension rules: [staged loading](docs/STAGED_LOADING.md).
+
 ## Next milestones
 
 | Priority | Milestone | Acceptance criteria | Dependencies |

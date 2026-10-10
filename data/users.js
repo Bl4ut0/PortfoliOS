@@ -177,7 +177,7 @@ window.applyCurrentUserProfile = () => {
         window.state.screensaverDelay = Number(window.Storage.local.get(getKey("ScreensaverDelay")) || 5);
     }
 
-    if (window.applyDesktopPreferences) {
+    if (window.state.sessionChosen && desktop && window.applyDesktopPreferences) {
         window.applyDesktopPreferences();
     }
 
@@ -202,6 +202,7 @@ window.applyCurrentUserProfile = () => {
         window.state.quickActiveId = "overview";
     }
 
+    if (!window.state.sessionChosen) return;
     if (window.renderDesktopIcons) window.renderDesktopIcons();
     if (window.renderStartMenu) window.renderStartMenu();
     if (window.renderDossier) window.renderDossier(window.state.activeId);

@@ -1,6 +1,6 @@
 /** PortfoliOS Mobile: lazy loader for mobile-only app modules. */
 (function() {
-    const assetVersion = "2026.10.09.4";
+    const assetVersion = "2026.10.10.1";
     window.mobileAppLoadPromises = window.mobileAppLoadPromises || {};
 
     function isMobileApp(appId) {
@@ -32,6 +32,7 @@
 
     window.ensureMobileAppLoaded = async (appId) => {
         if (!isMobileApp(appId)) throw new Error(`Unknown mobile app "${appId}".`);
+        await window.PortfolioLoader?.loadAppDependencies(appId, "mobile");
         if (window.mobileAppRegistry?.[appId]) return window.mobileAppRegistry[appId];
         if (window.mobileAppLoadPromises[appId]) return window.mobileAppLoadPromises[appId];
 

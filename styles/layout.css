@@ -1,3 +1,17 @@
+.workspace {
+    width: min(1480px, 100%);
+    margin: 0 auto;
+    padding: clamp(1rem, 2.2vw, 1.7rem);
+}
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
 .os-shell {
     position: relative;
     z-index: 1;
@@ -336,3 +350,4 @@ body.desktop-focus-mode .desktop-experience {
 .status-chip i {
     font-size: 0.48rem;
 }
+body[data-view="mobile"] .mobile-advisory, body[data-view="quick"] .mobile-advisory { display:none !important; }

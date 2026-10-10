@@ -22,6 +22,8 @@
         storeInstallFilter: "all",
         cliIntroStarted: false,
         systemStarted: false,
+        sessionChosen: false,
+        workspaceStarted: false,
         wallpaper: "aurora", // will be updated from storage on boot / preferences load
         volume: 70,
         themeId: "dark",

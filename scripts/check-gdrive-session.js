@@ -431,6 +431,12 @@ vm.runInNewContext(
     windowObject.setTimeout = callback => { scheduledSync = callback; return 42; };
     windowObject.clearTimeout = () => {};
     windowObject.triggerGDriveSync = () => { automaticBackups++; };
+    windowObject.state.sessionChosen = false;
+    windowObject.state.workspaceStarted = false;
+    sync.scheduleAutomaticSync();
+    assert.strictEqual(scheduledSync, undefined, "backup must wait until the profile workspace is ready");
+    windowObject.state.sessionChosen = true;
+    windowObject.state.workspaceStarted = true;
     sync.scheduleAutomaticSync();
     scheduledSync();
     assert.strictEqual(automaticBackups, 1, "a connected private workspace must schedule automatic backup");

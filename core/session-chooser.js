@@ -96,85 +96,78 @@
         updateClock();
         clockTimer = window.setInterval(updateClock, 30000);
         let offlineProfileId = null;
-        const complete = () => {
+        const complete = async () => {
             window.state.sessionChosen = true;
             window.GDriveSync.pendingReconnectReason = null;
-            window.startSelectedWorkspace?.();
+            try { await window.startSelectedWorkspace?.(); }
+            catch (error) { window.state.sessionChosen = false; throw error; }
             window.closeSessionChooser();
         };
+        let choosing = false;
         overlay.addEventListener("click", async event => {
             const button = event.target.closest("button");
-            if (!button || button.disabled) return;
-            if (button.hasAttribute('data-session-cancel')) { window.closeSessionChooser(); return; }
-            if (button.hasAttribute('data-session-experience')) {
-                document.getElementById('boot-screen')?.classList.remove('hidden');
+            if (!button || button.disabled || choosing) return;
+            if (button.hasAttribute("data-session-cancel")) { window.closeSessionChooser(); return; }
+            if (button.hasAttribute("data-session-experience")) {
+                document.getElementById("boot-screen")?.classList.remove("hidden");
+                document.body.dataset.startupStage = "boot";
                 window.closeSessionChooser();
                 return;
             }
-            if (button.hasAttribute("data-session-public")) {
-                if (window.isPrivateUser?.(window.state.currentUserId)) {
-                    overlay.querySelector("[data-session-public-actions]").hidden = false;
-                    overlay.querySelector("[data-session-public-save]").disabled = !window.GDriveSync?.getToken();
-                    return;
-                }
-                await window.SystemFS?.ensureDefaultFiles?.();
-                complete();
-                return;
-            }
-            if (button.hasAttribute("data-session-public-save") || button.hasAttribute("data-session-public-local")) {
-                const error = overlay.querySelector("[data-session-error]");
-                const buttons = [...overlay.querySelectorAll("button")];
-                const disabled = buttons.map(node => node.disabled);
-                buttons.forEach(node => { node.disabled = true; });
-                error.hidden = false;
-                error.textContent = "Saving local changes…";
-                try {
-                    await window.switchToPublicProfile({ saveToDrive: button.hasAttribute("data-session-public-save"), onProgress: message => { error.textContent = message; } });
-                    complete();
-                } catch (reason) { error.textContent = reason.message; }
-                finally { buttons.forEach((node, index) => { node.disabled = disabled[index]; }); }
-                return;
-            }
-            if (button.hasAttribute("data-session-offline")) {
-                await window.prepareProfileSwitch();
-                window.setCurrentUser(offlineProfileId);
-                await window.SystemFS?.ensureDefaultFiles?.();
-                await window.loadPreferencesFromFilesystem?.();
-                complete();
+            if (button.hasAttribute("data-session-public") && window.isPrivateUser?.(window.state.currentUserId)) {
+                overlay.querySelector("[data-session-public-actions]").hidden = false;
+                overlay.querySelector("[data-session-public-save]").disabled = !window.GDriveSync?.getToken();
                 return;
             }
             const id = button.dataset.sessionProfile;
-            if (!id && !button.hasAttribute("data-session-google")) return;
             const error = overlay.querySelector("[data-session-error]");
             const offline = overlay.querySelector("[data-session-offline]");
-            error.hidden = true;
-            offline.hidden = true;
-            overlay.querySelectorAll("button").forEach(node => { node.disabled = true; });
+            const buttons = Array.from(overlay.querySelectorAll("button"));
+            const disabled = buttons.map(node => node.disabled);
+            choosing = true; error.hidden = true; offline.hidden = true;
+            buttons.forEach(node => { node.disabled = true; });
             overlay.setAttribute("aria-busy", "true");
             try {
-                if (id) {
+                await window.prepareSessionStorage?.();
+                if (button.hasAttribute("data-session-public")) {
+                    await window.SystemFS?.ensureDefaultFiles?.();
+                    await complete();
+                } else if (button.hasAttribute("data-session-public-save") || button.hasAttribute("data-session-public-local")) {
+                    error.hidden = false; error.textContent = "Saving local changes…";
+                    await window.switchToPublicProfile({
+                        saveToDrive: button.hasAttribute("data-session-public-save"),
+                        onProgress: message => { error.textContent = message; }
+                    });
+                    await complete();
+                } else if (button.hasAttribute("data-session-offline")) {
                     await window.prepareProfileSwitch();
-                    window.setCurrentUser(id);
-                    if (profiles[id].source !== "google" || window.GDriveSync.getToken()) {
-                        await window.SystemFS?.ensureDefaultFiles?.();
-                        await window.loadPreferencesFromFilesystem?.();
-                        complete();
-                        return;
+                    window.setCurrentUser(offlineProfileId);
+                    await window.SystemFS?.ensureDefaultFiles?.();
+                    await complete();
+                } else if (id || button.hasAttribute("data-session-google")) {
+                    if (id) {
+                        await window.prepareProfileSwitch();
+                        window.setCurrentUser(id);
+                        if (profiles[id].source !== "google" || window.GDriveSync.getToken()) {
+                            await window.SystemFS?.ensureDefaultFiles?.();
+                            await complete();
+                            return;
+                        }
                     }
+                    await window.GDriveSync.loadGsiLibrary();
+                    const clientId = window.Storage?.local.get("bl4ut0_gdrive_client_id") || window.GDriveSync.defaultClientId;
+                    await window.GDriveSync.login(clientId, { selectAccount: !id, expectedSub: id ? profiles[id].sub : null });
+                    await complete();
+                    // Eligible backup starts after the workspace becomes usable.
                 }
-                await window.GDriveSync.loadGsiLibrary();
-                const clientId = window.Storage?.local.get("bl4ut0_gdrive_client_id") || window.GDriveSync.defaultClientId;
-                await window.GDriveSync.login(clientId, { selectAccount: !id, expectedSub: id ? profiles[id].sub : null });
-                await window.loadPreferencesFromFilesystem?.();
-                complete();
-                window.triggerGDriveSync?.({ silent: true });
             } catch (reason) {
-                error.textContent = reason?.message || "Sign-in could not be completed. Please try again.";
+                error.textContent = reason?.message || "Your workspace could not be opened. Please try again.";
                 error.hidden = false;
                 offlineProfileId = id || null;
                 offline.hidden = !id;
             } finally {
-                overlay.querySelectorAll("button").forEach(node => { node.disabled = false; });
+                choosing = false;
+                buttons.forEach((node, index) => { node.disabled = disabled[index]; });
                 overlay.removeAttribute("aria-busy");
             }
         });
@@ -186,7 +179,7 @@
             else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
         });
         overlay.querySelector("button")?.focus();
-        window.GDriveSync?.loadGsiLibrary().catch(() => {});
+        // Google code loads only when the user chooses Google sign-in.
     };
 
     window.EventBus?.on("view:changed", view => {

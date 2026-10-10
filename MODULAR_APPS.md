@@ -292,3 +292,7 @@ For every new modular app:
 - Saves restore on first launch and sync back into `/Saved Games` on close.
 - Console has no uncaught hook errors, missing registration errors, or cross-origin message warnings.
 - A loader failure shows a useful error and the app can retry without reloading PortfoliOS.
+
+## Startup dependency boundaries
+
+Shell initialization and workspace HTML are selected on demand. Add optional controller/service dependencies to core/loading-manifest.js, rather than adding scripts to index.html. Both app loaders resolve these dependencies before app registration. Follow [staged loading](docs/STAGED_LOADING.md) and its browser checks to keep new apps out of unrelated startup paths.

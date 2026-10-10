@@ -1,0 +1,71 @@
+    <div class="os-shell">
+        <header class="topbar">
+            <a class="brand-lockup" href="#" aria-label="PortfoliOS home">
+                <span class="brand-icon"><i class="fa-solid fa-terminal"></i></span>
+                <span>
+                    <strong>PortfoliOS</strong>
+                    <small>portfolio network</small>
+                </span>
+            </a>
+
+            <button class="topbar-tab" id="topbar-tab" type="button" aria-expanded="false"
+                aria-controls="topbar-dock" title="Open navigation">
+                <i class="fa-solid fa-grip-lines"></i>
+                <span>Nav</span>
+            </button>
+
+            <div class="topbar-dock" id="topbar-dock">
+            <nav class="mode-switch" aria-label="Experience mode">
+                <button class="mode-btn active" data-view="desktop">
+                    <i class="fa-solid fa-desktop"></i>
+                    Desktop
+                </button>
+                <button class="mode-btn" data-view="mobile">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    Mobile
+                </button>
+                <button class="mode-btn" data-view="quick">
+                    <i class="fa-solid fa-compass"></i>
+                    Quick
+                </button>
+            </nav>
+
+            <div class="system-readout" aria-label="System readout">
+                <button type="button" id="reset-resolution-btn" class="reset-resolution-btn" title="Reset resolution to Auto (Stretch to fit)" style="display: none;">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Reset Res</span>
+                </button>
+                <span class="status-chip status-online">
+                    <i class="fa-solid fa-circle"></i>
+                    Online
+                </span>
+                <time id="system-clock">--:--</time>
+            </div>
+            </div>
+        </header>
+
+        <section class="mobile-advisory" id="mobile-advisory" role="note" aria-label="Mobile experience note">
+            <div>
+                <strong>Mobile Experience Available</strong>
+                <p>Use Mobile for the phone-style app shell. Desktop stays available for draggable windows, browser
+                    bookmarks, and the game.</p>
+            </div>
+            <div class="mobile-advisory-actions">
+                <button type="button" data-view="mobile">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    Mobile
+                </button>
+                <button type="button" data-view="quick">
+                    <i class="fa-solid fa-compass"></i>
+                    Quick
+                </button>
+                <button type="button" data-dismiss-mobile-note title="Dismiss mobile note">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </section>
+
+        <main class="workspace">
+        </main>
+
+    </div>

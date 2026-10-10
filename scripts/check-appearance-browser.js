@@ -62,6 +62,7 @@ async function contrastAudit(page, selector) {
   await page.goto(origin,{waitUntil:'domcontentloaded'});
   await page.locator('[data-enter-view="desktop"]').click({timeout:15000});
   await page.locator('[data-session-public]').click();
+  await page.waitForFunction(()=>document.body.dataset.startupStage === "workspace");
   await page.evaluate(()=>window.setInstalledStoreAppIds(['romplayer','iptv']));
   const themes=await page.evaluate(()=>window.portfolioThemes.map(theme=>theme.id));
   await page.evaluate(()=>window.openDesktopWindow('settings'));
@@ -89,8 +90,8 @@ async function contrastAudit(page, selector) {
   }
   await page.locator('.settings-tab-btn[data-tab="debug"]').click();
   const report=await page.evaluate(()=>{window.addSystemLog('test','Appearance audit log');return window.getSystemDebugReport();});
-  assert.match(report,/build=2026\.10\.09\.4 loaded=\d{4}-\d{2}-\d{2}T/);
-  assert.match(report,/core\/gdrive-sync\.js\?v=2026\.10\.09\.4/);
+  assert.match(report,/build=2026\.10\.10\.1 loaded=\d{4}-\d{2}-\d{2}T/);
+  assert.match(report,/core\/gdrive-sync\.js\?v=2026\.10\.10\.1/);
   assert.match(report,/\[LocalAI Snapshot\]/);
   assert.match(report,/\[\d{4}-\d{2}-\d{2}T[^\]]+Z\] \[TEST\] Appearance audit log/);
   await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.appearanceCopiedLog=text;}}}));
@@ -106,6 +107,7 @@ async function contrastAudit(page, selector) {
    await page.evaluate(id=>window.openDesktopWindow(id),id);
    const selector='.desktop-window[data-window="'+id+'"]';
    await page.locator(selector).waitFor();
+   if(id === "office") await page.locator(selector + " .office-splash").waitFor({state:"detached",timeout:15000});
    for(const theme of themes) {
     await page.evaluate(theme=>window.setPortfolioTheme(theme),theme);
     await record(page,id,theme,selector);
@@ -150,17 +152,20 @@ async function contrastAudit(page, selector) {
   const quick=await quickContext.newPage();
   await quick.goto(origin,{waitUntil:'domcontentloaded'});
   await quick.locator('[data-enter-view="quick"]').click({timeout:15000});
+  await quick.waitForFunction(()=>document.body.dataset.startupStage === 'workspace');
   for(const theme of themes) {await quick.evaluate(theme=>window.setPortfolioTheme(theme),theme);await record(quick,'Quick',theme,'[data-view-panel="quick"]');}
   await quickContext.close();
   const phone=await browser.newContext({viewport:{width:412,height:915},isMobile:true,hasTouch:true,serviceWorkers:'block',reducedMotion:'reduce'});
   const mobile=await phone.newPage();
   await mobile.goto(origin,{waitUntil:'domcontentloaded'});
   await mobile.locator('[data-enter-view="mobile"]').click({timeout:15000});
+  await mobile.locator('#session-chooser').waitFor();
   for(const theme of ['dark','light']) {
-   await mobile.evaluate(theme=>window.MobileOS.setPreference('theme',theme),theme);
+   await mobile.evaluate(theme=>document.getElementById('mobile-device').dataset.mobileTheme=theme,theme);
    await record(mobile,'Phone sign-in',theme,'#mobile-device .session-chooser');
   }
   await mobile.locator('[data-session-public]').click();
+  await mobile.waitForFunction(()=>document.body.dataset.startupStage === 'workspace');
   for(const theme of ['dark','light']) {
    await mobile.evaluate(theme=>window.MobileOS.setPreference('theme',theme),theme);
    const wallpapers=new Set();

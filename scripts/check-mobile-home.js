@@ -83,7 +83,8 @@ privateLayout.pages.flatMap((page) => page.items).forEach((item) => {
     if (item.type === "folder") assert.ok(homeData.visibleFolder(item.folderId, privateCatalog));
 });
 
-const indexSource = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+const indexSource = fs.readFileSync(path.join(ROOT, "mobile/workspace.html"), "utf8");
+const loadingSource = fs.readFileSync(path.join(ROOT, "core/loading-manifest.js"), "utf8");
 const shellSource = fs.readFileSync(path.join(ROOT, "mobile", "shell.js"), "utf8");
 const homeSource = fs.readFileSync(path.join(ROOT, "mobile", "home.js"), "utf8");
 assert.match(homeSource, /requestedReturnFocus\?\.closest\?\.\("#mobile-launcher-actions-body"\)[\s\S]*?querySelector\("\[data-mobile-customize\]"\)/);
@@ -96,8 +97,8 @@ const swSource = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
     "mobile-launcher-actions",
     "mobile-page-indicator"
 ].forEach((id) => assert.match(indexSource, new RegExp(`id=["']${id}["']`)));
-assert.match(indexSource, /data\/mobile-home\.js/);
-assert.match(indexSource, /mobile\/home\.js/);
+assert.match(loadingSource, /data\/mobile-home\.js/);
+assert.match(loadingSource, /mobile\/home\.js/);
 assert.match(homeSource, /data-mobile-app-drawer-search/);
 assert.match(homeSource, /data-mobile-drawer-category-select/);
 assert.match(homeSource, /bl4ut0_\$\{userId\}_mobile_home_v/);
@@ -106,7 +107,7 @@ assert.match(homeSource, /panel\.setAttribute\("aria-hidden", active && !backgro
 assert.match(shellSource, /longPressTimer = setTimeout/);
 assert.match(shellSource, /window\.MobileHome\?\.stepPage/);
 assert.match(shellSource, /window\.MobileHome\?\.openDrawer/);
-assert.match(swSource, /\/data\/mobile-home\.js/);
-assert.match(swSource, /\/mobile\/home\.js/);
+assert.match(swSource, /core\|data\|desktop/);
+assert.match(swSource, /mobile/);
 
 console.log("Mobile Home audit passed: two launcher pages, PortfoliOS feed, folders, widgets, searchable mobile app drawer and Store installation visibility, per-user layout, long press, and profile pruning checked.");

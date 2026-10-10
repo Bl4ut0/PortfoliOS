@@ -652,10 +652,12 @@ window.GDriveSync = {
     
     scheduleAutomaticSync() {
         const userId = window.state?.currentUserId;
+        if (!window.state?.sessionChosen || !window.state?.workspaceStarted) return;
         if (this.profileSwitchInProgress || !window.isPrivateUser?.(userId) || !this.getToken()) return;
         if (this.pendingSyncTimer !== null) window.clearTimeout(this.pendingSyncTimer);
         this.pendingSyncTimer = window.setTimeout(() => {
             this.pendingSyncTimer = null;
+            if (!window.state?.sessionChosen || !window.state?.workspaceStarted) return;
             if (this.profileSwitchInProgress || window.state?.currentUserId !== userId || !this.getToken()) return;
             if (this.syncInProgress || this.authInProgress) { this.scheduleAutomaticSync(); return; }
             window.triggerGDriveSync?.({ silent: true });

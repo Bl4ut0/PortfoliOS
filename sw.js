@@ -1,214 +1,81 @@
-/**
- * PortfoliOS: Service Worker
- * Intercepts network requests and serves installed app binaries from SystemFS (IndexedDB).
- */
-
+/** Offline boot plus assets actually used by a workspace. App binaries stay in SystemFS. */
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const MOBILE_SHELL_CACHE = "portfolio-mobile-shell-2026.10.09.4";
-const MOBILE_SHELL_ASSETS = [
-    "/",
-    "/index.html",
-    "/manifest.webmanifest",
-    "/mobile/mobile-icon.svg",
-    "/mobile/mobile-icon-192.png",
-    "/mobile/mobile-icon-512.png",
-    "/mobile/mobile-icon-maskable-512.png",
-    "/mobile/apple-touch-icon.png",
-    "/styles-v1.css",
-    "/styles/tokens.css",
-    "/styles/reset.css",
-    "/styles/layout.css",
-    "/styles/windows.css",
-    "/styles/desktop.css",
-    "/styles/mobile.css",
-    "/styles/quick.css",
-    "/styles/boot.css",
-    "/styles/components.css",
-    "/apps/_shared/iframe-game.js",
-    "/core/event-bus.js",
-    "/core/storage.js",
-    "/core/state.js",
-    "/core/utils.js",
-    "/core/filesystem.js",
-    "/core/security-service.js",
-    "/core/file-intents.js",
-    "/core/media-service.js",
-    "/apps/musicmini/vendor/jsmediatags.min.js",
-    "/core/app-framework.js",
-    "/core/gdrive-sync.js",
-    "/core/session-chooser.js",
-    "/core/profile-switch.js",
-    "/styles/session.css",
-    "/core/app-loader.js",
-    "/core/session-context.js",
-    "/core/local-ai.js",
-    "/core/simple-brain.js",
-    "/core/preferences.js",
-    "/core/window-manager.js",
-    "/data/systems.js",
-    "/data/mobile-apps.js",
-    "/data/mobile-home.js",
-    "/data/apps.js",
-    "/data/users.js",
-    "/data/bookmarks.js",
-    "/data/config.js",
-    "/desktop/taskbar.js",
-    "/desktop/start-menu.js",
-    "/desktop/desktop-icons.js",
-    "/desktop/context-menu.js",
-    "/desktop/dossier.js",
-    "/desktop/browser.js",
-    "/desktop/terminal.js",
-    "/desktop/network-map.js",
-    "/desktop/store.js",
-    "/desktop/settings.js",
-    "/desktop/calendar.js",
-    "/desktop/toast.js",
-    "/desktop/canvas-bg.js",
-    "/desktop/matrix-rain.js",
-    "/desktop/boot.js",
-    "/desktop/wad-inspector.js",
-    "/desktop/brain-helper.js",
-    "/desktop/shell.js",
-    "/mobile/app-framework.js",
-    "/mobile/viewport.js",
-    "/mobile/app-loader.js",
-    "/mobile/home.js",
-    "/mobile/shell.js",
-    "/mobile/apps/store/app.js",
-    "/mobile/apps/store/app.css",
-    "/mobile/apps/local-ai/app.js",
-    "/mobile/apps/local-ai/app.css",
-    "/mobile/apps/taskmgr/app.js",
-    "/mobile/apps/taskmgr/app.css",
-    "/mobile/apps/security-center/app.js",
-    "/mobile/apps/security-center/app.css",
-    "/mobile/apps/profile/app.js",
-    "/mobile/apps/profile/app.css",
-    "/mobile/apps/dossier/app.js",
-    "/mobile/apps/dossier/app.css",
-    "/mobile/apps/romplayer/app.js",
-    "/mobile/apps/romplayer/app.css",
-    "/apps/romplayer/runtime.html",
-    "/mobile/apps/browser/app.js",
-    "/mobile/apps/browser/app.css",
-    "/mobile/apps/documents/app.js",
-    "/mobile/apps/documents/app.css",
-    "/mobile/apps/music/app.js",
-    "/mobile/apps/music/app.css",
-    "/mobile/apps/settings/app.js",
-    "/mobile/apps/settings/app.css",
-    "/mobile/apps/files/app.js",
-    "/mobile/apps/files/app.css",
-    "/mobile/apps/calculator/app.js",
-    "/mobile/apps/calculator/app.css",
-    "/mobile/apps/devhub/app.js",
-    "/mobile/apps/devhub/app.css",
-    "/mobile/apps/status/app.js",
-    "/mobile/apps/status/app.css",
-    "/mobile/apps/homelab/app.js",
-    "/mobile/apps/homelab/app.css",
-    "/mobile/apps/automation/app.js",
-    "/mobile/apps/automation/app.css",
-    "/mobile/apps/addons/app.js",
-    "/mobile/apps/addons/app.css",
-    "/mobile/apps/guildcraft/app.js",
-    "/mobile/apps/guildcraft/app.css",
-    "/mobile/apps/survival-ai/app.js",
-    "/mobile/apps/survival-ai/app.css",
-    "/mobile/apps/wardenit/app.js",
-    "/mobile/apps/wardenit/app.css",
-    "/mobile/apps/media/app.js",
-    "/mobile/apps/media/app.css",
-    "/mobile/apps/flappybird/app.js",
-    "/mobile/apps/flappybird/app.css",
-    "/quick/shell.js",
-    "/main.js",
-    "/flappy.js"
-];
-const OPTIONAL_EXTERNAL_ASSETS = [
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2"
-];
+const SHELL_RELEASE = "2026.10.10.1";
+const SHELL_CACHE = "portfolio-shell-" + SHELL_RELEASE;
+const versioned = path => path + "?v=" + SHELL_RELEASE;
+const BOOT_ASSETS = ["/", "/manifest.webmanifest", ...[
+    "/styles-v1.css", "/styles/tokens.css", "/styles/reset.css", "/styles/boot.css",
+    "/mobile/viewport.js", "/core/loading-manifest.js", "/core/staged-loader.js", "/core/boot.js", "/main.js"
+].map(versioned)];
 const CACHEABLE_EXTERNAL_HOSTS = new Set(["cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com"]);
-
-self.addEventListener("install", (event) => {
+self.addEventListener("install", event => {
     event.waitUntil((async () => {
-        // Each release writes to a new cache. If any required asset fails, remove
-        // that partial cache and reject installation so the active worker keeps
-        // serving the last complete shell.
-        await caches.delete(MOBILE_SHELL_CACHE);
-        const cache = await caches.open(MOBILE_SHELL_CACHE);
+        const cache = await caches.open(SHELL_CACHE);
+        const queue = [...BOOT_ASSETS];
         try {
-            await Promise.all(MOBILE_SHELL_ASSETS.map(async (path) => {
-                const response = await fetch(new Request(path, { cache: "reload" }));
-                if (!response.ok) {
-                    throw new Error(`Required shell asset ${path} returned ${response.status}.`);
-                }
-                await cache.put(path, response);
+            // Bounded downloads of the boot graph. No app, engine or other shell pre-cache.
+            const results = await Promise.allSettled(Array.from({ length: 3 }, async () => {
+                try { while (queue.length) {
+                    const path = queue.shift();
+                    const response = await fetch(new Request(path, { cache: "reload" }));
+                    if (!response.ok) throw new Error("Required boot asset " + path + " returned " + response.status);
+                    await cache.put(path, response);
+                } } catch (error) { queue.length = 0; throw error; }
             }));
-        } catch (error) {
-            await caches.delete(MOBILE_SHELL_CACHE);
-            throw error;
-        }
-        await Promise.allSettled(OPTIONAL_EXTERNAL_ASSETS.map(async (url) => {
-            const request = new Request(url, { cache: "reload", mode: "cors" });
-            const response = await fetch(request);
-            if (response.ok) await cache.put(request, response);
-        }));
+            const failed = results.find(result => result.status === "rejected");
+            if (failed) throw failed.reason;
+        } catch (error) { await caches.delete(SHELL_CACHE); throw error; }
         await self.skipWaiting();
     })());
 });
-
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", event => {
     event.waitUntil((async () => {
         const keys = await caches.keys();
-        await Promise.all(keys
-            .filter((key) => key.startsWith("portfolio-mobile-shell-") && key !== MOBILE_SHELL_CACHE)
-            .map((key) => caches.delete(key)));
+        const cache = await caches.open(SHELL_CACHE);
+        // Preserve assets this release loaded while the previous worker still controlled the page.
+        for (const key of keys.filter(key => key.startsWith("portfolio-mobile-shell-") || key.startsWith("portfolio-shell-"))) {
+            if (key === SHELL_CACHE) continue;
+            const old = await caches.open(key);
+            for (const request of await old.keys()) {
+                const url = new URL(request.url);
+                if (url.searchParams.get("v") === SHELL_RELEASE && isMobileShellAsset(url.pathname) && !await cache.match(request)) {
+                    const response = await old.match(request);
+                    if (response?.ok) await cache.put(request, response);
+                }
+            }
+        }
+        const previous = keys.filter(key => key.startsWith("portfolio-shell-") && key !== SHELL_CACHE).sort().reverse()[0];
+        await Promise.all(keys.filter(key => (key.startsWith("portfolio-mobile-shell-") || key.startsWith("portfolio-shell-")) && key !== SHELL_CACHE && key !== previous).map(key => caches.delete(key)));
         await self.clients.claim();
     })());
 });
-
-function isMobileShellAsset(pathname) {
-    return MOBILE_SHELL_ASSETS.includes(pathname)
-        || pathname.startsWith("/mobile/apps/");
+function isMobileShellAsset(path) {
+    return ["/", "/index.html", "/manifest.webmanifest", "/styles-v1.css", "/main.js", "/identity-portrait.jpg", "/doom-icon.png", "/duke3d-icon.png", "/diablo-icon.png", "/quake-icon.png"].includes(path)
+        || /^\/(core|data|desktop|quick|styles)\/[^/]+\.(js|css|html)$/.test(path)
+        || /^\/mobile\/[^/]+\.(js|css|html|svg|png)$/.test(path)
+        || /^\/(?:mobile\/)?apps\/[^/]+\/app\.(js|css)$/.test(path)
+        || path === "/apps/_shared/iframe-game.js";
 }
-
 async function serveMobileShellAsset(request) {
-    const cache = await caches.open(MOBILE_SHELL_CACHE);
-    const exactCached = await cache.match(request);
-    const offlineFallback = exactCached || await cache.match(request, { ignoreSearch: true });
-    const networkPromise = fetch(request.clone()).then(async (response) => {
+    const cache = await caches.open(SHELL_CACHE);
+    const navigation = request.mode === "navigate";
+    const cached = await caches.match(request);
+    const version = new URL(request.url).searchParams.get("v");
+    // Exact versioned assets need no repeat revalidation. Never fall back to another release's code.
+    if (!navigation && version && cached) return cached;
+    try {
+        const response = await fetch(request);
         if (response.ok) await cache.put(request, response.clone());
         return response;
-    });
-
-    if (request.mode === "navigate") {
-        try {
-            return await networkPromise;
-        } catch (error) {
-            return offlineFallback || await cache.match("/") || new Response("PortfoliOS Mobile is unavailable offline.", { status: 503 });
-        }
-    }
-
-    if (exactCached) {
-        networkPromise.catch(() => {});
-        return exactCached;
-    }
-    try {
-        return await networkPromise;
     } catch (error) {
-        if (offlineFallback) return offlineFallback;
+        if (cached) return cached;
+        if (navigation) return await cache.match("/") || new Response("PortfoliOS is unavailable offline.", { status: 503 });
         throw error;
     }
 }
-
 async function serveExternalAsset(request) {
-    const cache = await caches.open(MOBILE_SHELL_CACHE);
+    const cache = await caches.open(SHELL_CACHE);
     const cached = await cache.match(request);
     if (cached) return cached;
     const response = await fetch(request);

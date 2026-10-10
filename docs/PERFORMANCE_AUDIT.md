@@ -77,3 +77,7 @@ The roughly 5-second intentional typed sequence is product behavior and should r
 - performance-mobile-repeat-2026-10-08.json (valid repeat result; see Measurements and scope)
 
 No production behavior was changed as part of this audit.
+
+## Implementation follow-up — 10 October 2026
+
+The staged-loading release implements the boot geometry, selected-shell/app loading, hidden Start-menu images, bounded on-use caching, and background canvas changes identified here. See [the architecture](STAGED_LOADING.md) and [new loading measurements](LOADING_PERFORMANCE.md). The Lighthouse results above remain the historical 8 October baseline; the follow-up uses a separate Chrome resource/layout measurement and does not claim a replacement Lighthouse score.

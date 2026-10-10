@@ -5,7 +5,7 @@
 
 window.appRegistry = window.appRegistry || {};
 window.modularApps = window.modularApps || [];
-window.appAssetVersion = "2026.10.09.4";
+window.appAssetVersion = "2026.10.10.1";
 window.appLoadPromises = window.appLoadPromises || {};
 window.appLoadErrors = window.appLoadErrors || {};
 
@@ -55,6 +55,7 @@ window.ensureAppLoaded = async function(appId) {
     if (!window.isModularApp(appId)) {
         throw new Error(`App "${appId}" is not declared as modular in data/apps.js.`);
     }
+    await window.PortfolioLoader?.loadAppDependencies(appId);
     if (window.appRegistry[appId]) {
         if (!window.validateAppRegistration?.(appId)) {
             const error = new Error(`App "${appId}" failed registration validation.`);

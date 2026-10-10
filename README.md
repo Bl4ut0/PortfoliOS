@@ -8,14 +8,14 @@ The shell runs independently in each visitor's browser. Server-side pieces can b
 
 * **[core/](core/)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, SecurityKernel, Google Drive sync, preferences loader, and app-loader).
 * **[data/](data/)**: Shared static dataset arrays (portfolio project nodes, catalogs, settings, bookmarks).
-* **[desktop/](desktop/)**: Desktop UI components and shell boot orchestration (start launcher, taskbar window mapping, snapping desktop icons, context menus, and custom WAD inspector).
+* **[desktop/](desktop/)**: Desktop UI components, workspace markup and shell initialization (start launcher, taskbar window mapping, snapping desktop icons, context menus, and custom WAD inspector).
 * **[mobile/](mobile/)**: Independent mobile OS framework, lazy loader, lifecycle, app registry, and mobile-only app modules. It shares neutral data/services with Desktop but not the desktop app catalog or window framework.
 * **[quick/](quick/)**: Split-screen quick search index layout.
 * **[apps/](apps/)**: The complete modular desktop catalog. Every app owns its `apps/<id>/app.js` registration and `app.css` lifecycle surface. Includes Office Document Editor, IPTV Player, Webamp Player, File Explorer, Task Manager, DoomSource, OpenRCT2, and UT99.
 * **[services/](services/)**: Backend proxy services (e.g. Node.js WebSocket-to-UDP relay service for UT99 web multiplayer).
-* **[styles/](styles/)**: Segmented CSS stylesheet system imported globally via `styles-v1.css`.
+* **[styles/](styles/)**: Critical boot CSS via `styles-v1.css`; selected shell and app styles load on demand.
 * **[main.js](main.js)**: Entry point orchestrator bootstrapping the OS shell on DOM load.
-* **`index.html`** - HTML shell plus inert templates used by migrated first-party apps; no catalog window is live-mounted at startup.
+* **`index.html`** - Boot HTML and small loading entry points. Workspace markup and inert app templates load after profile selection.
 * `DOOM.WAD` can be placed in the web root for the DOOM route.
 
 ## Test Locally
@@ -178,3 +178,7 @@ See [mobile app parity](docs/MOBILE_APP_PARITY.md) for the adaptation map and re
 ## Appearance and diagnostic review (2026-10-09)
 
 See [docs/APPEARANCE_AUDIT.md](docs/APPEARANCE_AUDIT.md) for the seven-theme Desktop/Quick and native Mobile review, corrected surface/text pairs, screenshot evidence, and browser regression command. Debug exports now identify their build, loaded asset versions, page load/export dates, and current AI state. Existing Drive file updates retry temporary server/network failures with bounded exponential backoff; file creation, conflict recovery, and paginated discovery remain separate work.
+
+## Staged loading
+
+Boot, sign-in, each experience and optional apps now load in separate stages. See [the architecture and extension rules](docs/STAGED_LOADING.md) and [measured loading results](docs/LOADING_PERFORMANCE.md). Keep new WASM engines and optional services behind their app loaders.

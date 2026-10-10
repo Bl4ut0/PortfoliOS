@@ -1,11 +1,4 @@
-@import "./styles/tokens.css?v=2026.10.09.4";
-@import "./styles/reset.css?v=2026.10.09.4";
-@import "./styles/layout.css?v=2026.10.09.4";
-@import "./styles/windows.css?v=2026.10.09.4";
-@import "./styles/desktop.css?v=2026.10.09.4";
-@import "./styles/mobile.css?v=2026.10.09.4";
-@import "./styles/quick.css?v=2026.10.09.4";
-@import "./styles/boot.css?v=1.0.37";
-@import "./styles/components.css?v=2026.10.09.4";
-
-@import "./styles/session.css?v=2026.10.09.4";
+/* Critical boot styles only. Selected experience styles load after selection. */
+@import url("styles/tokens.css?v=2026.10.10.1");
+@import url("styles/reset.css?v=2026.10.10.1");
+@import url("styles/boot.css?v=2026.10.10.1");

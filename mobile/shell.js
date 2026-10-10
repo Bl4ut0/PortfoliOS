@@ -1226,7 +1226,5 @@
     window.showMobileRecents = showMobileRecents;
     window.handleMobileViewChange = handleViewChange;
 
-    bindEvents();
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootMobileOS, { once: true });
-    else bootMobileOS();
+    window.mountMobile = () => { bindEvents(); bootMobileOS(); };
 })();

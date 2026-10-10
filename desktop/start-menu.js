@@ -238,6 +238,7 @@ window.restoreOwnerProfile = () => {
 };
 
 window.renderStartMenu = () => {
+    if (document.getElementById("start-menu")?.hidden) return;
     const startPinned = window.byId ? window.byId("start-pinned") : document.getElementById("start-pinned");
     const startGrid = window.byId ? window.byId("start-grid") : document.getElementById("start-grid");
     if (!startPinned || !startGrid) return;

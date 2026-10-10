@@ -284,39 +284,6 @@ window.handleTaskbarApp = (name) => {
     window.openDesktopWindow(name);
 };
 
-window.switchView = (view) => {
-    const targetView = view === "cli" ? "desktop" : view;
-    state.view = targetView;
-    document.querySelectorAll("[data-view-panel]").forEach((panel) => {
-        panel.classList.toggle("active", panel.dataset.viewPanel === targetView);
-    });
-    document.querySelectorAll(".mode-btn").forEach((button) => {
-        button.classList.toggle("active", button.dataset.view === targetView);
-    });
-    
-    const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
-    const calendarPanel = window.byId ? window.byId("calendar-panel") : document.getElementById("calendar-panel");
-    if (startMenu) startMenu.hidden = true;
-    if (calendarPanel) calendarPanel.hidden = true;
-    if (window.closeVolumePanel) window.closeVolumePanel();
-    
-    document.body.dataset.view = targetView;
-    try {
-        const url = new URL(window.location.href);
-        url.searchParams.set("view", targetView);
-        window.history.replaceState({ ...(window.history.state || {}), view: targetView }, "", url);
-    } catch (error) {}
-    if (view === "cli") {
-        window.openDesktopWindow("cli");
-    }
-    if (targetView === "quick" && window.renderQuick) {
-        window.renderQuick();
-        const quickSearch = window.byId ? window.byId("quick-search") : document.getElementById("quick-search");
-        quickSearch?.focus({ preventScroll: true });
-    }
-    if (window.EventBus) window.EventBus.emit("view:changed", view);
-};
-
 window.getDesktopBounds = (surface) => {
     const taskbar = document.querySelector(".os-taskbar");
     const taskbarHeight = taskbar ? taskbar.offsetHeight : 0;

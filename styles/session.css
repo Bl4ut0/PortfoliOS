@@ -76,3 +76,6 @@ body.session-locked #mobile-device > :not(.session-chooser) { visibility:hidden;
 #mobile-device .session-chooser-eyebrow, #mobile-device .session-account > i { color: var(--mobile-accent-ink); }
 #mobile-device .session-account-icon { color: var(--mobile-accent-ink); background: var(--mobile-surface-raised); border-color: var(--mobile-outline-strong); }
 #mobile-device .session-mobile-gesture { background: var(--mobile-fg); }
+
+/* Keep phone sign-in visible while its workspace is mounted behind it. */
+body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
