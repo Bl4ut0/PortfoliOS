@@ -1,6 +1,8 @@
 # PortfoliOS Modular App Framework
 
-This document is the source of truth for building apps inside PortfoliOS. The goal is to keep each app isolated in its own folder while sharing the same window lifecycle, adaptive sizing, audio routing, save storage, and security rules.
+Shared lifecycle, presentation and engine principles live in [the Orchestration application standard](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/APPLICATIONS.md).
+
+This document is the executable registration and API contract for building apps inside PortfoliOS. The goal is to keep each app isolated in its own folder while sharing the same window lifecycle, adaptive sizing, audio routing, save storage, and security rules.
 
 ## WASM expansion references
 
@@ -269,7 +271,7 @@ For hosted services, set:
 - Validate `event.origin` and message shape before trusting iframe messages.
 - Treat same-origin game iframes with `allow-same-origin` as privileged code.
 - Do not place OAuth client secrets in the frontend.
-- Access tokens are sensitive. The current Google Drive flow stores a short-lived access token in local storage for convenience; this should be revisited before broader user accounts.
+- Google access tokens stay in memory. Never persist bearer tokens in local/session storage, SystemFS, logs, URLs or iframe messages; remembered profile metadata is separate from cloud authorization.
 - Sync only approved `SystemFS` paths. Hidden dotfiles and runtime assets should stay local unless explicitly exported.
 - Escape user-visible file names and external catalog text before inserting HTML.
 

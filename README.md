@@ -4,6 +4,10 @@ Client-first Experience OS concept: a personal operating environment that connec
 
 The shell runs independently in each visitor's browser. Server-side pieces can be added for data, status, PHP endpoints, or hosted assets, but the desktop/mobile/quick/CLI sessions are not shared streamed machines.
 
+## Shared design and agent decisions
+
+The workspace's common rules are maintained in [PortfoliOS-Orchestration](https://github.com/Bl4ut0/PortfoliOS-Orchestration). Start with its [agent instructions](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/AGENTS.md) and [core documentation index](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/README.md). This repository retains implementation contracts, runtime source, audits and its release roadmap.
+
 ## Repositories and portable references
 
 The canonical OS source is [Bl4ut0/PortfoliOS](https://github.com/Bl4ut0/PortfoliOS). The independently maintained browser source is [Bl4ut0/PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS); see its [workspace guide](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/WORKSPACE.md) and [build instructions](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/DEVELOPMENT.md).

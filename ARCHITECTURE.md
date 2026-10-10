@@ -1,6 +1,8 @@
 # PortfoliOS System Architecture
 
-This document describes the modular architecture of PortfoliOS. The project is split into distinct layers to separate data (portfolio content), core services, modular applications, local AI processing, and visual presentation shells (desktop, mobile, quick access).
+Shared ownership and loading decisions live in [the Orchestration architecture standard](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/ARCHITECTURE.md).
+
+This document describes the modular implementation of PortfoliOS. The project is split into distinct layers to separate data (portfolio content), core services, modular applications, local AI processing, and visual presentation shells (desktop, mobile, quick access).
 
 ---
 

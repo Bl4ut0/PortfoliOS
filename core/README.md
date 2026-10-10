@@ -1,6 +1,6 @@
 # PortfoliOS Core Systems
 
-This directory houses the foundational services that drive PortfoliOS. These services are loaded before any interface-specific script.
+This directory houses the foundational services that drive PortfoliOS. The staged loader loads essential shared services for account entry and defers optional services until their consumers open. Core file placement does not mean every service executes during boot. See [staged loading](../docs/STAGED_LOADING.md) and [the shared architecture standard](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/ARCHITECTURE.md).
 
 ---
 

@@ -1,4 +1,10 @@
-# PortfoliOS Delivery Policy
+# PortfoliOS repository instructions
+
+## Shared core guidance
+
+Apply the [PortfoliOS-Orchestration agent instructions](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/AGENTS.md) and [core documentation](https://github.com/Bl4ut0/PortfoliOS-Orchestration/tree/main/docs/core) for shared design, staged loading, app lifecycle and account/backup decisions. In the multi-repository workspace, the parent AGENTS.md supplies these instructions directly. Keep executable contracts and release commands in this repository.
+
+## Delivery policy
 
 For implementation requests in this repository, completion means the change is
 validated, committed, pushed to GitHub, deployed to the configured production

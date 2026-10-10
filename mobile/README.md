@@ -2,6 +2,8 @@
 
 Mobile is an independent browser-native operating experience. It shares neutral data and services with PortfoliOS Desktop, but it does not reuse the desktop app catalog, desktop windows, or desktop application interfaces.
 
+Shared phone/desktop consistency rules live in [Orchestration's design standard](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/DESIGN.md). This document retains the native Mobile implementation contract.
+
 ## Framework
 
 - `app-framework.js` validates mobile registrations and runs open/resume/pause/back/intent/state/close lifecycle hooks.
@@ -19,6 +21,7 @@ Home and experience changes pause an application without destroying it. Recents 
 The current catalog combines phone utilities with mobile representations of portfolio systems:
 
 - Browser, Files, Documents/PDF, Music, Gallery, Calculator, and Settings
+- Store, Lobe, Task Manager, Security Center, Identity, Dossier, and optional ROM Player
 - Dev Hub, Status, Home Lab, Automation, Addons, GuildCraft, Survival AI, and WardenIT
 - Flappy Bird as a touch-native game
 
@@ -36,6 +39,6 @@ Mobile apps share semantic surface, foreground, outline, accent-ink, and status-
 
 Physical touch devices and installed PWAs fill the live viewport, remove the simulated bezel and global top bar, and apply safe-area insets. Normal desktop browsers retain a framed phone preview independently of window width. Android's virtual desktop viewport is compensated back to the device's natural width so text, controls, and gestures remain phone-sized even when the browser reports roughly 980 CSS pixels. The runtime responds to compact phones, tall screens, landscape, split-screen, tablets, and foldable viewport changes without discarding the active task.
 
-For deterministic testing, `mobilePresentation=edge` forces the device presentation and `mobilePresentation=preview` forces the framed desktop preview. `manifest.webmanifest` provides a standalone Mobile start route, and the service worker precaches the mobile shell, viewport runtime, and first-party mobile app modules for offline startup.
+For deterministic testing, `mobilePresentation=edge` forces the device presentation and `mobilePresentation=preview` forces the framed desktop preview. `manifest.webmanifest` provides a standalone Mobile start route, and the service worker installs the small boot cache, then caches used Mobile shell/app assets on demand. A previously visited app may reopen offline; an app never downloaded is not promised offline. See [staged loading](../docs/STAGED_LOADING.md).
 
 Swipe down from the top edge for the shade, swipe up from the bottom for Home, swipe up and hold for Recents, or use the accessible Android-style navigation buttons. Gesture navigation can be selected in Mobile Settings. The shell resolves system, launcher, and in-app gestures in one controller so Home paging never replaces app-level Back behavior.

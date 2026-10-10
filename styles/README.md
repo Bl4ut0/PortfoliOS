@@ -1,6 +1,6 @@
 # PortfoliOS Styling System
 
-This directory houses the segmented CSS style sheets for PortfoliOS. The styles are split into modular files to keep them maintainable, and are imported into the main system via [styles-v1.css](../styles-v1.css).
+This directory houses the segmented CSS style sheets for PortfoliOS. Styles are split into modular files. [styles-v1.css](../styles-v1.css) imports only critical tokens, reset and boot styles; [the loading graph](../core/loading-manifest.js) loads the selected shell and app styles on demand.
 
 ---
 
@@ -35,8 +35,8 @@ This directory houses the segmented CSS style sheets for PortfoliOS. The styles 
 
 ---
 
-## 2. Design Aesthetics
+## 2. Shared design standard
 
-We utilize modern, premium web styling practices:
-- **Glassmorphism**: Translucent panels using `backdrop-filter: blur(...)` combined with thin, semi-transparent borders.
-- **Dynamic CSS Variables**: Root variables are modified on the fly by Javascript (e.g. `--theme-primary`, `--theme-accent`, `--desktop-volume`) to support real-time user customization.
+Workspace-wide visual and interaction rules have moved to [Orchestration's design standard](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/DESIGN.md). This file retains the OS stylesheet map.
+
+Use [semantic tokens](tokens.css) in first-party surfaces and follow the current [appearance audit](../docs/APPEARANCE_AUDIT.md) for rendered checks and known limitations. See [staged loading](../docs/STAGED_LOADING.md) before changing style imports.

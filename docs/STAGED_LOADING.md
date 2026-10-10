@@ -2,6 +2,8 @@
 
 Release 2026.10.10.2. This implements the loading work identified in the [performance audit](PERFORMANCE_AUDIT.md) before expanding the WASM catalog.
 
+Shared startup requirements live in [Orchestration's architecture standard](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/ARCHITECTURE.md). This document records their OS implementation and validation.
+
 ## Entry points and boundaries
 
 | Stage | Entry point | Behavior |
