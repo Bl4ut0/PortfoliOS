@@ -368,4 +368,3 @@ A release or tracker URL is a navigation reference; it does not guarantee a bina
 | releases | [Releases and downloadable artifacts](https://github.com/captbaritone/webamp/releases) |
 | issues | [Upstream issue tracker](https://github.com/captbaritone/webamp/issues) |
 | license | [License and notices entry point](https://github.com/captbaritone/webamp#license) |
-

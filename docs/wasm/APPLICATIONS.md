@@ -968,4 +968,3 @@ Existing classic media player; retained as an adjacent browser app reference.
 - [Releases and downloadable artifacts](https://github.com/captbaritone/webamp/releases) (releases).
 - [Upstream issue tracker](https://github.com/captbaritone/webamp/issues) (issues).
 - [License and notices entry point](https://github.com/captbaritone/webamp#license) (license).
-
