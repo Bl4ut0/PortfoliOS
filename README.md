@@ -57,35 +57,20 @@ Then open `http://localhost:4173`.
 
 ## Deployment
 
-You can deploy the site either by manually uploading the root files to your web server or by using the built-in automated FTP deployment script.
+Workspace build/import coordination and the FTP uploader live in [PortfoliOS-Orchestration](https://github.com/Bl4ut0/PortfoliOS-Orchestration). Follow its [build and deployment guide](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/BUILD_AND_DEPLOY.md) for setup, credentials, previews, uploads and verification.
 
-### 1. Automated FTP Deployment
-The repository includes an automated upload tool (`deploy.js`) to sync local changes to the remote web server.
+This repository owns [deploy.config.json](deploy.config.json), the deployable site paths and large-asset exclusions. Its static site does not need a bundling build. Browser.JS builds in its own repository and is imported through [scripts/import-browserjs.mjs](scripts/import-browserjs.mjs) only when that engine changes. Runtime has no production adapter yet.
 
-1. Create a `.env` file in the project root:
-   ```env
-   FTP_HOST=ftp.yourdomain.com
-   FTP_USER=your_ftp_username
-   FTP_PASS=your_ftp_password
-   FTP_PORT=21
-   FTP_SECURE=false
-   FTP_REMOTE_DIR=/public_html
-   ```
-2. Run deployment commands:
-   * **Quick Deploy** (uploads code, scripts, HTML/CSS, and small assets only):
-     ```bash
-     npm run deploy
-     ```
-   * **Full Deploy** (uploads everything including large game engines and WASM binaries):
-     ```bash
-     npm run deploy:full
-     ```
-   * **Dry Run** (simulates deployment without uploading):
-     ```bash
-     npm run deploy:dry
-     ```
+The existing commands remain compatibility entry points when this checkout is inside the orchestration repository:
 
----
+```sh
+npm run deploy:dry
+npm run deploy
+npm run deploy:full
+node deploy.js --dry-run --only=core,auth,index.html
+```
+
+Install deployment dependencies with npm ci in Orchestration. Deployment previews work without credentials. Real uploads run the OS contract/session/security checks first and publish assets before HTML entry points. An existing ignored OS .env remains a fallback when no orchestration .env exists; process environment variables take precedence. Neither credentials nor orchestration tooling belong in the web root.
 
 ## Google Drive Sync Configuration
 

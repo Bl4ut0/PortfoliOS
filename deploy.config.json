@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "paths": [
+    "index.html",
+    "manifest.webmanifest",
+    "sw.js",
+    "styles-v1.css",
+    "main.js",
+    "flappy.js",
+    "identity-portrait.jpg",
+    "doom-icon.png",
+    "duke3d-icon.png",
+    "diablo-icon.png",
+    "quake-icon.png",
+    "doom.js",
+    "doom.wasm",
+    "DOOM.WAD",
+    "volume-hook.js",
+    "apps",
+    "core",
+    "auth",
+    ".htaccess",
+    "data",
+    "desktop",
+    "mobile",
+    "quick",
+    "styles",
+    "diablo",
+    "quake",
+    "duke32"
+  ],
+  "skipLargeDefault": [
+    "DOOM.WAD",
+    "doom.wasm",
+    "doom.js",
+    "volume-hook.js",
+    "diablo",
+    "quake",
+    "duke32"
+  ],
+  "optionalPaths": [
+    "docs/wasm"
+  ]
+}

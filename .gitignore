@@ -4,11 +4,7 @@ node_modules/
 # Environment / secrets
 .env
 
-# Local package metadata is not part of the published site.
-package.json
-package-lock.json
-!services/*/package.json
-!services/*/package-lock.json
+# Package metadata is versioned for reproducible checks. It is not deployed.
 
 # OS files
 .DS_Store

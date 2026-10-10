@@ -26,6 +26,8 @@ The relay operator handles website traffic and can observe the traffic it carrie
 
 ## Build and import a release
 
+For the shared workspace, use the [Orchestration build/import/deploy commands](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/BUILD_AND_DEPLOY.md). The repository-specific commands below remain the executable build and import contracts.
+
 Clone [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS) beside the OS checkout if it is not already available:
 
 ```sh

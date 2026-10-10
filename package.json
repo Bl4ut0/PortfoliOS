@@ -1,0 +1,16 @@
+{
+  "name": "bl4ut0-portfolio-os",
+  "version": "1.0.0",
+  "description": "Client-first Experience OS concept: a personal operating environment that connects the dev hub, projects, homelab work, community resources, professional identity, and future public status pages through Desktop, Mobile, Quick, and CLI interfaces.",
+  "main": "app.js",
+  "scripts": {
+    "deploy": "node deploy.js",
+    "deploy:full": "node deploy.js --full",
+    "deploy:dry": "node deploy.js --dry-run",
+    "test": "node scripts/check-app-contracts.js && node scripts/check-gdrive-session.js && node scripts/check-security-kernel.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

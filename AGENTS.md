@@ -2,7 +2,7 @@
 
 ## Shared core guidance
 
-Apply the [PortfoliOS-Orchestration agent instructions](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/AGENTS.md) and [core documentation](https://github.com/Bl4ut0/PortfoliOS-Orchestration/tree/main/docs/core) for shared design, staged loading, app lifecycle and account/backup decisions. In the multi-repository workspace, the parent AGENTS.md supplies these instructions directly. Keep executable contracts and release commands in this repository.
+Apply the [PortfoliOS-Orchestration agent instructions](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/AGENTS.md) and [core documentation](https://github.com/Bl4ut0/PortfoliOS-Orchestration/tree/main/docs/core) for shared design, staged loading, app lifecycle and account/backup decisions. In the multi-repository workspace, the parent AGENTS.md supplies these instructions directly. Keep OS executable contracts, deployment asset policy and site release metadata in this repository. Workspace build/deploy coordination and FTP transport live in [the Orchestration runner](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/BUILD_AND_DEPLOY.md). Tooling/documentation-only changes do not require uploading unchanged website assets.
 
 ## Delivery policy
 
