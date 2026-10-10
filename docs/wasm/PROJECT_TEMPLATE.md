@@ -14,10 +14,13 @@ Copy this worksheet into a project-specific evaluation document when implementat
 
 ## Documentation and provenance
 
+Use repository-relative links for evidence stored in the same repository and full Git repository URLs for another project. Record exact commit/tag links for build and release evidence; do not use absolute checkout paths, file URLs, or a contributor's local folders.
+
 | Reference | Exact URL / evidence |
 | --- | --- |
 | Official project overview | |
-| Source repository and commit | |
+| Upstream source repository and commit | |
+| Maintained PortfoliOS fork and integration documentation | |
 | Build/hosting instructions and toolchain | |
 | API/file/worker/storage integration docs | |
 | Download/release and artifact version | |

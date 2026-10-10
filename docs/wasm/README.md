@@ -13,6 +13,8 @@ Reviewed 2026-10-10. This is a curated, expandable inventory, not a claim to lis
 
 ## Maintain the library
 
+Use canonical Git repository URLs for source and cross-project documentation, with exact commit/tag links for release evidence. Use relative links for files in this repository; never publish machine-specific checkout paths.
+
 Edit catalog.json when a project, URL, priority, or assessment changes. Regenerate and validate from the repository root:
 
 ```powershell

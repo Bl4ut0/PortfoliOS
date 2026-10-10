@@ -1,6 +1,6 @@
 # Browser providers
 
-Browser loads only when opened. Desktop and Mobile share `core/browser-workspace.js`; Mobile keeps its portfolio explorer. The browser source is maintained in [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS), with its build and host protocol documented there. This repository owns the host adapter and imports generated releases rather than maintaining a second editable browser source copy.
+Browser loads only when opened. Desktop and Mobile share `core/browser-workspace.js`; Mobile keeps its portfolio explorer. The browser source is maintained in [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS), with its [build instructions](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/DEVELOPMENT.md) and [host protocol](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/INTEGRATION.md) documented there. This repository owns the host adapter and imports generated releases rather than maintaining a second editable browser source copy.
 
 ## Native browser settings
 
@@ -26,7 +26,13 @@ The relay operator handles website traffic and can observe the traffic it carrie
 
 ## Build and import a release
 
-In the independent fork:
+Clone [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS) beside the OS checkout if it is not already available:
+
+```sh
+git clone https://github.com/Bl4ut0/PortfoliOS-Browser.JS.git
+```
+
+Run the following from the fork root:
 
 ```sh
 git submodule update --init external/dreamlandjs
@@ -35,11 +41,13 @@ node scripts/build-portfolios.mjs --install
 node scripts/build-portfolios.mjs
 ```
 
-In PortfoliOS:
+From the [PortfoliOS](https://github.com/Bl4ut0/PortfoliOS) repository root, import using the sibling checkout layout:
 
 ```sh
-node scripts/import-browserjs.mjs /path/to/PortfoliOS-Browser.JS
+node scripts/import-browserjs.mjs ../PortfoliOS-Browser.JS
 ```
+
+This relative command assumes the default clone folder names. If you choose another layout, pass that checkout's relative path; the Git repository and release receipt identify the source, not its folder name.
 
 The importer verifies a clean checkout, the exact fork revision, required files, safe paths, and every asset checksum. `apps/browser/browserjs/release.json` records the revision, corresponding-source URL, input pins, and checksums. Native About/Proxy source links identify that revision. Generated runtime assets and the AGPL license are committed here; dependencies and editable engine source stay in the fork. The fork's build profile rebuilds the browser UI using pinned official precompiled Scramjet/injection inputs; it does not claim a fresh Rust engine build.
 

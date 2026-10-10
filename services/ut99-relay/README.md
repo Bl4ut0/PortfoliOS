@@ -12,8 +12,10 @@ This service is intentionally not a generic UDP proxy. A browser client can only
 
 ## Install
 
+This service is maintained in [Bl4ut0/PortfoliOS](https://github.com/Bl4ut0/PortfoliOS/tree/main/services/ut99-relay). Start from the OS repository root; the service path is relative to that checkout.
+
 ```powershell
-cd "C:\Dev Projects\bl4ut0-portfolio-os\services\ut99-relay"
+cd services/ut99-relay
 npm install
 Copy-Item relay.config.example.json relay.config.json
 $env:UT99_RELAY_TOKEN_SECRET = "replace-with-at-least-32-random-characters"

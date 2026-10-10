@@ -4,6 +4,21 @@ Client-first Experience OS concept: a personal operating environment that connec
 
 The shell runs independently in each visitor's browser. Server-side pieces can be added for data, status, PHP endpoints, or hosted assets, but the desktop/mobile/quick/CLI sessions are not shared streamed machines.
 
+## Repositories and portable references
+
+The canonical OS source is [Bl4ut0/PortfoliOS](https://github.com/Bl4ut0/PortfoliOS). The independently maintained browser source is [Bl4ut0/PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS); see its [workspace guide](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/WORKSPACE.md) and [build instructions](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/DEVELOPMENT.md).
+
+Use repository-relative links for files in this repository and full GitHub URLs for references to another repository. Link release provenance to an exact commit or tag. Documentation must not depend on a contributor's drive, username, or absolute checkout location.
+
+Clone into a directory of your choice:
+
+```sh
+git clone https://github.com/Bl4ut0/PortfoliOS.git
+cd PortfoliOS
+```
+
+Unless stated otherwise, run the commands below from the repository root. Checkout folder names are examples, not repository identities.
+
 ## Directory Structure
 
 * **[core/](core/)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, SecurityKernel, Google Drive sync, preferences loader, and app-loader).
@@ -31,7 +46,6 @@ Open `index.html` directly in a browser for most shell work. Use a local server 
 Optional local server:
 
 ```powershell
-cd "C:\Dev Projects\bl4ut0-portfolio-os"
 python -m http.server 4173
 ```
 
@@ -121,6 +135,10 @@ The document also enforces its baseline CSP and referrer policy with HTML metada
 - Quick is a direct searchable portfolio index for visitors who want the information without using the desktop, phone, or terminal surfaces.
 - CLI is the terminal interface for the same nodes and public routes with integrated AI commands.
 
+## Browser source and releases
+
+The OS owns the Browser app adapter and imports checksum-verified builds from [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS). Editable engine source stays in that repository. See [Browser providers](docs/BROWSER_PROVIDERS.md) for native proxy settings, build/import commands, isolation, and validation; the [fork integration guide](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/INTEGRATION.md) documents the shared host protocol.
+
 ## Store Direction
 
 The PortfoliOS Store is evolving into an app catalog with categories for games, hosted services, media, and productivity tools. Current service candidates include `https://tools.bl4ut0.com` and `https://pdf.bl4ut0.com`; both launch cleanly from the Store even when security headers prevent iframe embedding.
@@ -133,7 +151,7 @@ Mobile is a dedicated experience, not a responsive desktop theme. On phone-sized
 
 The DOOM window runs a WebAssembly browser source port. Install `DOOM + DOOM II` or a classic Doom package from Steam for the classic data route. The large game named `DOOM` is the 2016 reboot and is not the IWAD source for this loader. Expected files are classic IWADs such as `DOOM.WAD`, `DOOM2.WAD`, `TNT.WAD`, or `PLUTONIA.WAD`.
 
-The current loader checks for `./DOOM.WAD` and `/DOOM.WAD` from the same origin and can inspect a local WAD header in-browser without uploading it. Example local path found during testing: `C:\Program Files (x86)\Steam\steamapps\common\Ultimate Doom\base\DOOM.WAD`.
+The current loader checks for `./DOOM.WAD` and `/DOOM.WAD` from the same origin and can inspect a local WAD header in-browser without uploading it. Use your game platform's installed-file browser to locate the classic IWAD in your own installation; its filesystem location is not part of the PortfoliOS configuration.
 
 ## Game Data & Asset Ownership Compliance
 

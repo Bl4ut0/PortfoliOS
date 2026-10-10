@@ -7,7 +7,7 @@ This document describes the modular architecture of PortfoliOS. The project is s
 ## 1. Directory Structure
 
 ```text
-bl4ut0-portfolio-os/
+PortfoliOS/
 ├── core/                         # Core system services (EventBus, State, SystemFS, Local AI, App Framework, etc.)
 ├── data/                         # Portfolio content data arrays (systems, bookmarks, configurations, users)
 ├── desktop/                      # Desktop experience modules (shell, taskbar, start menu, brain helper, etc.)
@@ -20,6 +20,12 @@ bl4ut0-portfolio-os/
 ```
 
 ---
+
+## Repository boundaries
+
+[PortfoliOS](https://github.com/Bl4ut0/PortfoliOS) owns the shells, account/storage services, app adapters, and production deployment. [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS) owns the editable browser interface and engine build. The OS imports a pinned artifact into `apps/browser/browserjs/`; it does not maintain a second editable browser checkout. See [Browser providers](docs/BROWSER_PROVIDERS.md) and the [fork host protocol](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/INTEGRATION.md).
+
+Paths in this document are relative to the OS repository root and do not prescribe a machine-specific checkout location.
 
 ## 2. Key Components
 
