@@ -90,8 +90,10 @@ async function contrastAudit(page, selector) {
   }
   await page.locator('.settings-tab-btn[data-tab="debug"]').click();
   const report=await page.evaluate(()=>{window.addSystemLog('test','Appearance audit log');return window.getSystemDebugReport();});
-  assert.match(report,/build=2026\.10\.10\.2 loaded=\d{4}-\d{2}-\d{2}T/);
-  assert.match(report,/core\/gdrive-sync\.js\?v=2026\.10\.10\.2/);
+  const release=await page.evaluate(()=>window.PortfolioLoadingManifest.release);
+  assert(report.includes('build='+release+' loaded='));
+  assert.match(report,/loaded=\d{4}-\d{2}-\d{2}T/);
+  assert(report.includes('core/gdrive-sync.js?v='+release));
   assert.match(report,/\[LocalAI Snapshot\]/);
   assert.match(report,/\[\d{4}-\d{2}-\d{2}T[^\]]+Z\] \[TEST\] Appearance audit log/);
   await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.appearanceCopiedLog=text;}}}));

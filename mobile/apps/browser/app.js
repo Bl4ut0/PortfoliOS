@@ -1,6 +1,7 @@
 (function() {
     const legacyBookmarkStorageKey = "bl4ut0_mobile_browser_bookmarks";
     let activeController = null;
+    let webController = null;
     let activeRoot = null;
     let selectedId = null;
     let filter = "all";
@@ -235,6 +236,7 @@
         activeController = new AbortController();
         const { signal } = activeController;
         activeRoot = root;
+        webController = window.BrowserWorkspace.mount(root.querySelector("[data-web-browser]"), { mobile: true });
         bookmarks = readStoredBookmarks();
         query = "";
         filter = "all";
@@ -284,6 +286,7 @@
             query,
             filter,
             selectedId,
+            browser: webController?.snapshot(),
             scrollTop: Math.max(0, Number(activeRoot?.parentElement?.scrollTop) || 0)
         };
     }
@@ -293,6 +296,7 @@
         const saved = context.state;
         if (!saved || typeof saved !== "object" || saved.version !== 1) return;
         activeRoot = root;
+        webController?.restore(saved.browser);
 
         query = typeof saved.query === "string" ? saved.query.slice(0, 160) : "";
         filter = ["all", "bookmarks", "live"].includes(saved.filter) ? saved.filter : "all";
@@ -317,6 +321,8 @@
         icon: "fa-solid fa-compass",
         viewClass: "mobile-browser-app",
         render: () => `
+            ${window.BrowserWorkspace.render()}
+            <details class="mobile-browser-portfolio"><summary>Explore the portfolio network</summary>
             <section class="mobile-browser-explorer" data-browser-explorer>
                 <header class="mobile-browser-heading">
                     <span><i class="fa-solid fa-compass"></i></span>
@@ -340,21 +346,28 @@
                 <div class="mobile-browser-results" data-browser-results aria-live="polite"></div>
             </section>
             <article class="mobile-browser-detail is-hidden" data-browser-detail></article>
+            </details>
         `,
         onOpen: bind,
+        onPause: () => webController?.stop("Remote browsing ends on Home to conserve the shared allowance."),
         onResume: (root) => {
+            void webController?.refreshStatus();
             bookmarks = readStoredBookmarks();
             if (selectedId) showDetail(root, selectedId);
             else renderResults(root);
         },
         onBack: () => {
+            if (webController?.back()) return true;
             if (!selectedId || !activeRoot) return false;
             showExplorer(activeRoot);
             return true;
         },
         serializeState,
         restoreState,
-        onClose: () => {
+        onClose: async () => {
+            const oldWebController = webController;
+            webController = null;
+            await oldWebController?.destroy();
             activeController?.abort();
             activeController = null;
             activeRoot = null;

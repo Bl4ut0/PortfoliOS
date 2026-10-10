@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.10.10.2";
+    const release = "2026.10.10.3";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "data/systems.js", "data/apps.js",
@@ -29,20 +29,22 @@
         services: {
             ai: ["core/local-ai.js", "core/simple-brain.js"],
             media: ["core/file-intents.js", "core/media-service.js"],
-            games: ["apps/_shared/iframe-game.js"]
+            games: ["apps/_shared/iframe-game.js"],
+            browser: ["data/bookmarks.js", "core/browser-workspace.js"]
         },
         desktopApps: {
             cli: ["@ai", "desktop/terminal.js", "desktop/brain-helper.js"],
             "local-ai": ["@ai", "desktop/brain-helper.js"],
             settings: ["@ai", "desktop/settings.js", "desktop/brain-helper.js"],
             dossier: ["desktop/dossier.js"], network: ["desktop/network-map.js"],
-            linux: ["desktop/linux.js"], browser: ["desktop/browser.js"], store: ["desktop/store.js"],
+            linux: ["desktop/linux.js"], browser: ["@browser", "desktop/browser.js"], store: ["desktop/store.js"],
             files: ["@media"], musicmini: ["@media"],
             doomsource: ["@games", "desktop/wad-inspector.js"],
             duke32: ["@games"], diablo: ["@games"], quake: ["@games"],
             openrct2: ["@games"], ut99: ["@games"], romplayer: ["@games"]
         },
         mobileApps: {
+            browser: ["@browser"],
             "local-ai": ["@ai"], music: ["@media"], files: ["@media"], documents: ["@media"], media: ["@media"]
         }
     };

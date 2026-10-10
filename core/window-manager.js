@@ -150,10 +150,6 @@ window.openDesktopWindow = async (name, params = null) => {
         window.renderStore();
     }
 
-    if (name === "browser" && window.renderBrowserPage) {
-        window.renderBrowserPage(state.browserBookmark);
-    }
-
     if (name === "cli" && window.startCliIntro) {
         if (!state.cliIntroStarted) {
             state.cliIntroStarted = true;
