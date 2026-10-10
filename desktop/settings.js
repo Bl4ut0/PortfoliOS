@@ -802,17 +802,26 @@ function initDebugSettings() {
         return lines;
     };
 
+    window.getSystemDebugReport = () => {
+        const build = document.querySelector('meta[name="portfolios-build"]')?.content || 'unknown';
+        const paths = ['core/gdrive-sync.js', 'desktop/settings.js', 'core/local-ai.js', 'main.js'];
+        const assets = paths.map(path => Array.from(document.scripts)
+            .map(script => script.getAttribute('src') || '')
+            .find(src => src.startsWith(path + '?')) || path + '?v=unknown');
+        return [
+            '[PortfoliOS Debug] build=' + build + ' loaded=' + (window.SystemLogStartedAt || 'unknown') + ' exported=' + new Date().toISOString(),
+            '[Assets] ' + assets.join(' '),
+            ...getLocalAIDebugLines(),
+            ...(window.SystemLogs || [])
+        ].join('\n');
+    };
+
     const renderLogs = () => {
-        const logs = window.SystemLogs || [];
-        const localAiLines = getLocalAIDebugLines();
-        if (logs.length === 0 && localAiLines.length === 0) {
-            logContainer.innerHTML = `<span style="color: var(--text-muted, #6b7280);">No logs recorded. System is running cleanly.</span>`;
-            return;
-        }
-        logContainer.textContent = [...localAiLines, ...logs].join("\n");
+        logContainer.textContent = window.getSystemDebugReport();
         logContainer.scrollTop = logContainer.scrollHeight;
     };
 
+    window.renderSystemDebugLogs = renderLogs;
     renderLogs();
 
     if (window.EventBus) {
@@ -841,11 +850,7 @@ function initDebugSettings() {
 
     if (copyBtn) {
         copyBtn.addEventListener("click", () => {
-            const textToCopy = (window.SystemLogs || []).join("\n");
-            if (!textToCopy) {
-                if (window.showDesktopToast) window.showDesktopToast("No logs to copy");
-                return;
-            }
+            const textToCopy = window.getSystemDebugReport();
             navigator.clipboard.writeText(textToCopy)
                 .then(() => {
                     if (window.showDesktopToast) window.showDesktopToast("Logs copied to clipboard!");
@@ -984,12 +989,7 @@ function refreshSettingsOnActivation(name) {
 
     const activePanel = document.querySelector(".settings-panel.active");
     if (activePanel?.dataset.panel === "debug") {
-        const logContainer = document.getElementById("settings-debug-log-container");
-        if (logContainer) {
-            const logs = window.SystemLogs || [];
-            logContainer.textContent = logs.length === 0 ? "No logs recorded." : logs.join("\n");
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
+        window.renderSystemDebugLogs?.();
     }
 }
 

@@ -65,10 +65,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background:
-        linear-gradient(180deg, rgba(15, 23, 42, 0.24), rgba(0, 0, 0, 0.8)),
-        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 4px),
-        #050509;
+    background: var(--surface-inset);
     color: var(--text);
     z-index: 5;
     padding: 2rem;
@@ -90,7 +87,7 @@
 
 .loader-icon {
     font-size: 2.5rem;
-    color: var(--rose);
+    color: var(--rose-ink);
 }
 
 .loader-status {
@@ -149,7 +146,7 @@
     max-width: min(24rem, calc(100% - 1.4rem));
     padding: 0.48rem 0.62rem;
     color: var(--text-soft);
-    background: rgba(5, 7, 12, 0.76);
+    background: var(--surface-overlay);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     font-family: var(--mono);
@@ -167,19 +164,19 @@
 }
 
 .doom-runtime-panel span {
-    color: var(--amber);
+    color: var(--amber-ink);
     font-weight: 800;
     letter-spacing: 0.12em;
 }
 
 .doom-runtime-panel.is-running span {
-    color: var(--theme-accent);
+    color: var(--theme-accent-ink);
 }
 
 .doom-runtime-panel.is-booting span {
-    color: var(--theme-primary);
+    color: var(--theme-primary-ink);
 }
 
 .doom-runtime-panel.is-error span {
-    color: var(--rose);
+    color: var(--rose-ink);
 }

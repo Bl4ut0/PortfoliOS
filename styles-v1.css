@@ -1,11 +1,11 @@
-@import "./styles/tokens.css?v=1.0.37";
-@import "./styles/reset.css?v=1.0.37";
-@import "./styles/layout.css?v=1.0.37";
-@import "./styles/windows.css?v=1.0.51";
-@import "./styles/desktop.css?v=1.0.53";
-@import "./styles/mobile.css?v=1.2.2";
-@import "./styles/quick.css?v=1.0.37";
+@import "./styles/tokens.css?v=2026.10.09.4";
+@import "./styles/reset.css?v=2026.10.09.4";
+@import "./styles/layout.css?v=2026.10.09.4";
+@import "./styles/windows.css?v=2026.10.09.4";
+@import "./styles/desktop.css?v=2026.10.09.4";
+@import "./styles/mobile.css?v=2026.10.09.4";
+@import "./styles/quick.css?v=2026.10.09.4";
 @import "./styles/boot.css?v=1.0.37";
-@import "./styles/components.css?v=1.0.54";
+@import "./styles/components.css?v=2026.10.09.4";
 
-@import "./styles/session.css?v=2026.10.09.2";
+@import "./styles/session.css?v=2026.10.09.4";

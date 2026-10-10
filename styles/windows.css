@@ -23,7 +23,7 @@
 .terminal-window {
     min-width: 0;
     overflow: hidden;
-    background: var(--panel);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -38,7 +38,7 @@
     min-height: 2.65rem;
     padding: 0.55rem 0.75rem;
     color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.035);
+    background: var(--panel-soft);
     border-bottom: 1px solid var(--line);
     font-family: var(--mono);
     font-size: 0.76rem;
@@ -61,7 +61,7 @@
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--control-hover);
 }
 
 .window-controls i:nth-child(1) {
@@ -90,8 +90,8 @@
     gap: 0.1rem;
     min-width: 13rem;
     padding: 0.75rem 0.85rem;
-    background: rgba(8, 10, 16, 0.56);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
     border-radius: 12px;
     backdrop-filter: blur(18px);
 }
@@ -136,14 +136,14 @@
     z-index: 1000;
     opacity: 0.8;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: var(--panel-soft);
+    border-color: var(--line);
 }
 
 .desktop-icon:hover,
 .desktop-icon.active {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: var(--control-hover);
+    border-color: var(--line-strong);
 }
 
 .desktop-icon i {
@@ -151,8 +151,8 @@
     place-items: center;
     width: 2.65rem;
     height: 2.65rem;
-    color: var(--tile-color, var(--theme-primary));
-    background: rgba(8, 10, 16, 0.58);
+    color: var(--tile-color, var(--theme-primary-ink));
+    background: rgba(8, 10, 16, 0.78);
     border: 1px solid color-mix(in srgb, var(--tile-color, var(--theme-primary)) 34%, transparent);
     border-radius: 10px;
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
@@ -160,7 +160,7 @@
 
 .desktop-icon span {
     max-width: 6.6rem;
-    color: var(--text);
+    color: #f8fafc;
     font-size: 0.78rem;
     line-height: 1.15;
     text-shadow: 0 2px 9px rgba(0, 0, 0, 0.8);
@@ -171,7 +171,7 @@
     z-index: 5;
     overflow: hidden;
     min-width: 18rem;
-    background: var(--panel);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: var(--glass-highlight), var(--shadow);
@@ -199,7 +199,7 @@
 
 .desktop-window.active {
     z-index: 7;
-    border-color: color-mix(in srgb, var(--active-color, var(--theme-primary)) 40%, rgba(255, 255, 255, 0.12));
+    border-color: color-mix(in srgb, var(--active-color, var(--theme-primary)) 40%, var(--line));
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 12px 0 color-mix(in srgb, var(--active-color, var(--theme-primary)) 15%, transparent);
 }
 
@@ -236,7 +236,7 @@
 .desktop-window .window-bar {
     cursor: default;
     color: var(--text-soft);
-    background: rgba(255, 255, 255, 0.045);
+    background: var(--surface-raised);
     user-select: none;
 }
 
@@ -252,7 +252,7 @@
     width: 1.75rem;
     height: 1.75rem;
     color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.045);
+    background: var(--panel-soft);
     border: 1px solid transparent;
     border-radius: 7px;
     cursor: pointer;
@@ -261,7 +261,7 @@
 .window-actions button:hover {
     color: var(--text);
     border-color: var(--line-strong);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--control-hover);
 }
 
 .desktop-window.is-dragging,
@@ -303,8 +303,8 @@
     bottom: 0.28rem;
     width: 0.55rem;
     height: 0.55rem;
-    border-right: 2px solid rgba(255, 255, 255, 0.38);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.38);
+    border-right: 2px solid var(--line-strong);
+    border-bottom: 2px solid var(--line-strong);
 }
 
 .profile-window {
@@ -323,7 +323,7 @@
     width: 16rem;
     flex-shrink: 0;
     border-right: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.015);
+    background: var(--panel-soft);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -343,7 +343,7 @@
 .profile-tabs-header {
     display: flex;
     border-bottom: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.01);
+    background: var(--panel-soft);
     padding: 0 0.5rem;
     gap: 0.25rem;
 }
@@ -366,7 +366,7 @@
 }
 
 .profile-tab.active {
-    color: var(--theme-primary);
+    color: var(--theme-primary-ink);
     border-bottom-color: var(--theme-primary);
 }
 
@@ -440,7 +440,7 @@
 .browser-page::-webkit-scrollbar-track,
 .doom-source-shell::-webkit-scrollbar-track {
     margin: 0.6rem;
-    background: rgba(255, 255, 255, 0.045);
+    background: var(--panel-soft);
     border-radius: 999px;
 }
 
@@ -495,7 +495,5 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    background:
-        radial-gradient(circle at 8% 0%, rgba(34, 211, 238, 0.13), transparent 28%),
-        rgba(2, 5, 8, 0.96);
+    background: var(--surface-inset);
 }

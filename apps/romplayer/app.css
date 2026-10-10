@@ -4,7 +4,7 @@
     --app-window-left: clamp(2rem, 5vw, 4.5rem);
     --app-window-top: 4.2rem;
     --app-window-min-height: 30rem;
-    background: #050608;
+    background: var(--surface-inset);
 }
 
 .romplayer-shell {
@@ -14,9 +14,7 @@
     min-height: 0;
     overflow: hidden;
     color: var(--text);
-    background:
-        linear-gradient(180deg, rgba(20, 184, 166, 0.08), rgba(5, 6, 8, 0) 12rem),
-        #050608;
+    background: var(--surface);
 }
 
 .romplayer-toolbar {
@@ -27,7 +25,7 @@
     min-height: 3rem;
     padding: 0.48rem 0.6rem;
     border-bottom: 1px solid var(--line);
-    background: rgba(9, 11, 16, 0.82);
+    background: var(--surface-inset);
 }
 
 .romplayer-title,
@@ -47,7 +45,7 @@
 }
 
 .romplayer-title i {
-    color: var(--theme-accent);
+    color: var(--theme-accent-ink);
 }
 
 .romplayer-path {
@@ -58,7 +56,7 @@
     padding: 0 0.65rem;
     border: 1px solid var(--line);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.035);
+    background: var(--panel-soft);
     color: var(--text-soft);
     font-family: var(--mono);
     font-size: 0.72rem;
@@ -82,7 +80,7 @@
     border: 1px solid var(--line);
     border-radius: 6px;
     color: var(--text-soft);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--panel-soft);
     cursor: pointer;
     transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
 }
@@ -95,9 +93,9 @@
 
 .romplayer-icon-button:hover,
 .romplayer-play:hover {
-    border-color: rgba(34, 211, 238, 0.7);
+    border-color: color-mix(in srgb, var(--theme-primary) 70%, transparent);
     color: var(--text);
-    background: rgba(34, 211, 238, 0.12);
+    background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
     transform: translateY(-1px);
 }
 
@@ -122,7 +120,7 @@
     overflow-y: auto;
     padding: 0.65rem;
     border-right: 1px solid var(--line);
-    background: rgba(14, 18, 26, 0.64);
+    background: var(--surface-inset);
 }
 
 .romplayer-sidebar-heading {
@@ -162,7 +160,7 @@
     height: 1.45rem;
     border-radius: 5px;
     color: var(--system-color);
-    background: rgba(255, 255, 255, 0.045);
+    background: var(--panel-soft);
 }
 
 .romplayer-system span {
@@ -178,7 +176,7 @@
     padding: 0.08rem 0.28rem;
     border-radius: 999px;
     color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.055);
+    background: var(--panel-soft);
     font-family: var(--mono);
     font-size: 0.64rem;
     text-align: center;
@@ -192,22 +190,20 @@
 }
 
 .romplayer-system.active b {
-    color: #050608;
-    background: var(--system-color);
+    color: var(--on-primary);
+    background: var(--theme-primary);
 }
 
 .romplayer-dropzone {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 8rem),
-        rgba(5, 6, 8, 0.72);
+    background: var(--surface-inset);
 }
 
 .romplayer-dropzone.is-dragging {
     box-shadow: inset 0 0 0 2px var(--theme-primary);
-    background: rgba(34, 211, 238, 0.06);
+    background: color-mix(in srgb, var(--theme-primary) 6%, transparent);
 }
 
 .romplayer-library-header {
@@ -258,12 +254,12 @@
     padding: 0.45rem;
     border: 1px solid var(--line);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.035);
+    background: var(--panel-soft);
 }
 
 .romplayer-rom:hover {
     border-color: var(--line-strong);
-    background: rgba(255, 255, 255, 0.055);
+    background: var(--panel-soft);
 }
 
 .romplayer-rom-icon {
@@ -273,7 +269,7 @@
     height: 2.35rem;
     border-radius: 7px;
     color: var(--system-color);
-    background: color-mix(in srgb, var(--system-color) 14%, rgba(255, 255, 255, 0.03));
+    background: color-mix(in srgb, var(--system-color) 14%, var(--panel-soft));
 }
 
 .romplayer-rom-body {
@@ -320,7 +316,7 @@
 }
 
 .romplayer-empty i {
-    color: var(--theme-primary);
+    color: var(--theme-primary-ink);
     font-size: 1.8rem;
 }
 
@@ -330,7 +326,7 @@
 }
 
 .romplayer-empty.is-error i {
-    color: var(--rose);
+    color: var(--rose-ink);
 }
 
 .romplayer-stage {
@@ -362,17 +358,17 @@
     gap: 0.18rem;
     max-width: min(24rem, calc(100% - 1.3rem));
     padding: 0.48rem 0.62rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--line);
     border-radius: 8px;
     color: var(--text-soft);
-    background: rgba(5, 7, 12, 0.78);
+    background: var(--surface-inset);
     font-family: var(--mono);
     font-size: 0.66rem;
     pointer-events: none;
 }
 
 .romplayer-runtime-state {
-    color: var(--theme-accent);
+    color: var(--theme-accent-ink);
     font-weight: 800;
     letter-spacing: 0.12em;
 }

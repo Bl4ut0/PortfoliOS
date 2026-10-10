@@ -14,9 +14,7 @@
     min-height: 0;
     overflow: hidden;
     color: var(--text, #f8fafc);
-    background:
-        linear-gradient(135deg, rgba(7, 10, 16, 0.96), rgba(16, 19, 28, 0.95) 52%, rgba(8, 16, 18, 0.96)),
-        #080b10;
+    background: var(--surface);
 }
 
 .musicmini-sidebar,
@@ -30,8 +28,8 @@
     flex-direction: column;
     gap: 0.75rem;
     padding: 0.9rem;
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.025);
+    border-right: 1px solid var(--line);
+    background: var(--panel-soft);
 }
 
 .musicmini-main {
@@ -46,9 +44,9 @@
     gap: 0.75rem;
     min-height: 2.15rem;
     padding: 0.35rem 0.85rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--line);
     color: var(--text-muted, #94a3b8);
-    background: rgba(4, 8, 13, 0.55);
+    background: var(--surface-inset);
     font-size: 0.68rem;
 }
 
@@ -60,7 +58,7 @@
 }
 
 .musicmini-storage-status code {
-    color: #dbeafe;
+    color: var(--text);
 }
 
 .musicmini-storage-status button {
@@ -69,7 +67,7 @@
     padding: 0.2rem 0.45rem;
     border: 1px solid rgba(103, 232, 249, 0.28);
     border-radius: 5px;
-    color: #67e8f9;
+    color: var(--theme-primary-ink);
     background: transparent;
     cursor: pointer;
     font-size: 0.66rem;
@@ -148,23 +146,23 @@
     gap: 0.45rem;
     min-height: 2.2rem;
     padding: 0 0.62rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--line);
     border-radius: 7px;
-    color: #67e8f9;
-    background: rgba(4, 8, 13, 0.62);
+    color: var(--theme-primary-ink);
+    background: var(--surface-inset);
 }
 
 .musicmini-search input {
     width: 100%;
     min-width: 0;
     border: 0;
-    color: #f8fafc;
+    color: var(--text);
     background: transparent;
     outline: none;
 }
 
 .musicmini-search input::placeholder {
-    color: rgba(226, 232, 240, 0.48);
+    color: var(--text-soft);
 }
 
 .musicmini-view-switch {
@@ -172,9 +170,9 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     min-height: 2.1rem;
     padding: 0.2rem;
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    border: 1px solid var(--line);
     border-radius: 7px;
-    background: rgba(4, 8, 13, 0.52);
+    background: var(--surface-inset);
 }
 
 .musicmini-view-switch button {
@@ -186,7 +184,7 @@
     padding: 0 0.4rem;
     border: 0;
     border-radius: 5px;
-    color: #94a3b8;
+    color: var(--text-soft);
     background: transparent;
     cursor: pointer;
     font-size: 0.7rem;
@@ -194,8 +192,8 @@
 }
 
 .musicmini-view-switch button.is-active {
-    color: #07110f;
-    background: #6ee7b7;
+    color: var(--on-primary);
+    background: var(--theme-primary);
 }
 
 .musicmini-library {
@@ -221,10 +219,10 @@
 .musicmini-controls button,
 .musicmini-empty button,
 .musicmini-url-import button {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--line);
     border-radius: 7px;
-    color: #e5edf6;
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    background: var(--panel-soft);
     cursor: pointer;
 }
 
@@ -241,7 +239,7 @@
     height: 2rem;
     border-radius: 6px;
     overflow: hidden;
-    color: #38bdf8;
+    color: var(--theme-primary-ink);
     background: rgba(56, 189, 248, 0.12);
     font-size: 0.85rem;
 }
@@ -263,8 +261,8 @@
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
-    color: #06110d;
-    background: #6ee7b7;
+    color: var(--on-primary);
+    background: var(--theme-primary);
     box-shadow: 0 0 0 1px rgba(5, 10, 12, 0.8);
     font-size: 0.48rem;
 }
@@ -277,7 +275,7 @@
 .musicmini-track-number {
     flex: 0 0 auto;
     min-width: 1.2rem;
-    color: #64748b;
+    color: var(--text-soft);
     font-size: 0.68rem;
     font-variant-numeric: tabular-nums;
     text-align: right;
@@ -286,21 +284,21 @@
 .musicmini-track-action {
     width: 2rem;
     min-height: 3rem;
-    color: #fda4af;
+    color: var(--rose-ink);
 }
 
 .musicmini-track.is-active .musicmini-track-main {
-    border-color: rgba(52, 211, 153, 0.5);
-    background: rgba(52, 211, 153, 0.13);
+    border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent);
+    background: color-mix(in srgb, var(--theme-accent) 13%, transparent);
 }
 
 .musicmini-track.is-active .musicmini-track-number {
-    color: #6ee7b7;
+    color: var(--theme-accent-ink);
 }
 
 .musicmini-library-group {
     min-width: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--line);
     padding-bottom: 0.65rem;
 }
 
@@ -323,7 +321,7 @@
 }
 
 .musicmini-group-header > i {
-    color: #34d399;
+    color: var(--theme-accent-ink);
     opacity: 0;
     transition: opacity 120ms ease;
 }
@@ -338,13 +336,13 @@
     height: 2.8rem;
     overflow: hidden;
     border-radius: 7px;
-    color: #fbbf24;
+    color: var(--amber-ink);
     background: rgba(251, 191, 36, 0.1);
     font-size: 1.1rem;
 }
 
 .musicmini-group-header.is-artist .musicmini-group-art {
-    color: #f0abfc;
+    color: var(--violet-ink);
     background: rgba(232, 121, 249, 0.1);
 }
 
@@ -361,13 +359,13 @@
 }
 
 .musicmini-group-copy strong {
-    color: #f8fafc;
+    color: var(--text);
     font-size: 0.82rem;
 }
 
 .musicmini-group-copy small {
     margin-top: 0.12rem;
-    color: #94a3b8;
+    color: var(--text-soft);
     font-size: 0.68rem;
 }
 
@@ -385,7 +383,7 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.85rem 0.95rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--line);
 }
 
 .musicmini-title-block {
@@ -393,7 +391,7 @@
 }
 
 .musicmini-title-block > span:first-child {
-    color: #34d399;
+    color: var(--theme-accent-ink);
 }
 
 .musicmini-top-actions,
@@ -418,7 +416,7 @@
     padding: 0.55rem 0.65rem;
     border: 1px solid rgba(251, 191, 36, 0.35);
     border-radius: 7px;
-    color: #fde68a;
+    color: var(--amber-ink);
     background: rgba(120, 53, 15, 0.22);
     font-size: 0.78rem;
 }
@@ -438,9 +436,8 @@
     overflow: hidden;
     color: #bfdbfe;
     font-size: 2.35rem;
-    background:
-        radial-gradient(circle at 34% 30%, rgba(251, 191, 36, 0.34), transparent 24%),
-        linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(52, 211, 153, 0.17), rgba(244, 114, 182, 0.12));
+    background: radial-gradient(circle at 34% 30%, rgba(251, 191, 36, 0.34), transparent 24%),
+        linear-gradient(135deg, rgba(56, 189, 248, 0.28), color-mix(in srgb, var(--theme-accent) 17%, transparent), rgba(244, 114, 182, 0.12));
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.09) inset;
 }
 
@@ -475,7 +472,7 @@
 
 .musicmini-progress-row small {
     width: 2.35rem;
-    color: #94a3b8;
+    color: var(--text-soft);
     font-size: 0.72rem;
     text-align: center;
 }
@@ -491,15 +488,15 @@
 }
 
 .musicmini-controls .musicmini-play {
-    color: #06110d;
-    background: #6ee7b7;
+    color: var(--on-primary);
+    background: var(--theme-primary);
     border-color: rgba(110, 231, 183, 0.72);
 }
 
 .musicmini-controls button.is-active {
-    color: #04110c;
+    color: var(--on-primary);
     border-color: rgba(56, 189, 248, 0.75);
-    background: #7dd3fc;
+    background: var(--theme-primary);
 }
 
 .musicmini-url-import {
@@ -517,23 +514,23 @@
     min-width: 0;
     min-height: 2.2rem;
     padding: 0 0.62rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--line);
     border-radius: 7px;
-    color: #67e8f9;
-    background: rgba(4, 8, 13, 0.62);
+    color: var(--theme-primary-ink);
+    background: var(--surface-inset);
 }
 
 .musicmini-url-import input {
     width: 100%;
     min-width: 0;
     border: 0;
-    color: #f8fafc;
+    color: var(--text);
     background: transparent;
     outline: none;
 }
 
 .musicmini-url-import input::placeholder {
-    color: rgba(226, 232, 240, 0.48);
+    color: var(--text-soft);
 }
 
 .musicmini-url-import button {
@@ -551,19 +548,19 @@
     flex: 1 1 auto;
     min-height: 8rem;
     margin: 0 0.95rem 0.95rem;
-    border: 1px dashed rgba(255, 255, 255, 0.16);
+    border: 1px dashed var(--line-strong);
     border-radius: 8px;
-    color: #94a3b8;
-    background: rgba(255, 255, 255, 0.025);
+    color: var(--text-soft);
+    background: var(--panel-soft);
 }
 
 .musicmini-dropzone i {
-    color: #38bdf8;
+    color: var(--theme-primary-ink);
     font-size: 1.55rem;
 }
 
 .musicmini-dropzone strong {
-    color: #e2e8f0;
+    color: var(--text);
 }
 
 .musicmini-dropzone span {
@@ -571,8 +568,8 @@
 }
 
 .musicmini-shell.is-dragging .musicmini-dropzone {
-    border-color: rgba(52, 211, 153, 0.7);
-    background: rgba(52, 211, 153, 0.1);
+    border-color: color-mix(in srgb, var(--theme-accent) 70%, transparent);
+    background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
 }
 
 .musicmini-empty {
@@ -583,15 +580,15 @@
     gap: 0.5rem;
     min-height: 9rem;
     padding: 0.7rem;
-    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border: 1px dashed var(--line);
     border-radius: 8px;
-    color: #94a3b8;
-    background: rgba(255, 255, 255, 0.025);
+    color: var(--text-soft);
+    background: var(--panel-soft);
     text-align: center;
 }
 
 .musicmini-empty i {
-    color: #38bdf8;
+    color: var(--theme-primary-ink);
     font-size: 1.45rem;
 }
 
@@ -601,9 +598,9 @@
     gap: 0.4rem;
     min-height: 2rem;
     padding: 0 0.65rem;
-    color: #04110c;
+    color: var(--on-primary);
     border-color: rgba(110, 231, 183, 0.8);
-    background: #6ee7b7;
+    background: var(--theme-primary);
     font-weight: 800;
 }
 
@@ -614,13 +611,13 @@
 .musicmini-controls button:hover,
 .musicmini-empty button:hover,
 .musicmini-url-import button:hover {
-    border-color: rgba(255, 255, 255, 0.22);
-    background: rgba(255, 255, 255, 0.09);
+    border-color: var(--line-strong);
+    background: var(--control-hover);
 }
 
 .musicmini-controls .musicmini-play:hover,
 .musicmini-empty button:hover {
-    background: #a7f3d0;
+    background: var(--theme-primary);
 }
 
 .musicmini-track-action:hover {
@@ -658,7 +655,7 @@
     .musicmini-sidebar {
         max-height: 50%;
         border-right: 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid var(--line);
     }
 
     .musicmini-now {
@@ -701,3 +698,5 @@
         margin-right: 0.72rem;
     }
 }
+
+.musicmini-empty button span { color: inherit; }

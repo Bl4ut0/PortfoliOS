@@ -22,6 +22,16 @@ Updated 2026-10-09. Priorities describe delivery order rather than promised date
 - Mobile appearance and launcher layout changes now schedule private backup. Public chat/task state also resets on reload.
 - Touch ROM launcher with lazy core loading and Home/Recents pause/resume; original NES diagnostic ROM checked in an isolated browser test.
 
+## Delivered in the appearance and diagnostic release
+
+- Consistent surfaces and readable text across all seven Desktop themes, Quick, and native Mobile light/dark palettes; custom accent buttons choose a contrasting foreground.
+- App, menu, dialog, placeholder, tray, assistant, and game-loader chrome corrected; independent document/game/media rendering retained.
+- Phone sign-in respects its own palette; four distinct light wallpapers accompany the existing dark variants.
+- Browser appearance/contrast regression audit, screenshots, and scope/limitations documented in docs/APPEARANCE_AUDIT.md.
+- Existing Drive file updates retry temporary network/server failures with bounded exponential backoff. Debug exports identify the build, dates, key loaded asset versions, and current AI state.
+- Next for sync: pagination, durable retry queues, conflict recovery, and verified cross-device restore. The P0 sync milestone remains open.
+
+
 ## Next milestones
 
 | Priority | Milestone | Acceptance criteria | Dependencies |

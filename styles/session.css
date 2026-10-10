@@ -59,7 +59,7 @@ body.session-locked #mobile-device > :not(.session-chooser) { visibility:hidden;
 
 .profile-switch-controls { display:grid; gap:10px; }
 .profile-switch-controls p,.profile-switch-controls small { margin:0; line-height:1.5; overflow-wrap:anywhere; }
-.profile-switch-controls button { min-height:44px; padding:10px 14px; border:1px solid #397481; border-radius:12px; background:#142b37; color:#e9f8ff; text-align:left; cursor:pointer; font:inherit; }
+.profile-switch-controls button { min-height:44px; padding:10px 14px; border:1px solid var(--line-strong); border-radius:12px; background:var(--surface-raised); color:var(--text); text-align:left; cursor:pointer; font:inherit; }
 .profile-switch-controls button:disabled { opacity:.5; cursor:default; }
 .profile-switch-controls button:focus-visible { outline:2px solid #22d3ee; outline-offset:2px; }
 
@@ -68,3 +68,11 @@ body.session-locked #mobile-device > :not(.session-chooser) { visibility:hidden;
 .session-lock-footer { flex-wrap:wrap; }
 
 #mobile-device .profile-switch-controls button { background:var(--mobile-surface-high); color:var(--mobile-fg); border-color:var(--mobile-outline-strong); }
+
+/* Phone sign-in follows the phone's own light/dark appearance. */
+#mobile-device > .session-chooser[data-experience=mobile] { background: var(--mobile-bg); }
+#mobile-device .session-account, #mobile-device .session-lock-footer button, #mobile-device .session-chooser-offline { color: var(--mobile-fg); }
+#mobile-device .session-chooser p, #mobile-device .session-account small, #mobile-device .session-lock-footer, #mobile-device [data-session-date] { color: var(--mobile-fg-secondary); }
+#mobile-device .session-chooser-eyebrow, #mobile-device .session-account > i { color: var(--mobile-accent-ink); }
+#mobile-device .session-account-icon { color: var(--mobile-accent-ink); background: var(--mobile-surface-raised); border-color: var(--mobile-outline-strong); }
+#mobile-device .session-mobile-gesture { background: var(--mobile-fg); }

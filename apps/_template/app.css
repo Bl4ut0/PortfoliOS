@@ -20,7 +20,7 @@
     gap: 0.5rem;
     padding: 0.55rem 0.65rem;
     border-bottom: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.035);
+    background: var(--panel-soft);
 }
 
 .myapp-action {
@@ -30,7 +30,7 @@
     min-height: 1.9rem;
     padding: 0.35rem 0.65rem;
     color: var(--text-soft);
-    background: rgba(255, 255, 255, 0.045);
+    background: var(--panel-soft);
     border: 1px solid var(--line);
     border-radius: 6px;
     cursor: pointer;

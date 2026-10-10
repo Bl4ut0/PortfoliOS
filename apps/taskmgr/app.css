@@ -26,8 +26,8 @@
 /* Tabs */
 .taskmgr-tabs {
     display: flex;
-    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
-    background: rgba(255, 255, 255, 0.015);
+    border-bottom: 1px solid var(--line, var(--line));
+    background: var(--panel-soft);
     padding: 0 8px;
 }
 
@@ -35,7 +35,7 @@
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
-    color: #94a3b8;
+    color: var(--text-soft);
     padding: 10px 16px;
     font-size: 13px;
     font-weight: 500;
@@ -47,11 +47,11 @@
 }
 
 .taskmgr-tab:hover {
-    color: #f1f5f9;
+    color: var(--text);
 }
 
 .taskmgr-tab.active {
-    color: var(--theme-primary, #22d3ee);
+    color: var(--theme-primary-ink);
     border-bottom-color: var(--theme-primary, #22d3ee);
 }
 
@@ -72,9 +72,9 @@
 .taskmgr-table-wrapper {
     flex: 1;
     overflow: auto;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--line);
     border-radius: 6px;
-    background: rgba(8, 9, 15, 0.4);
+    background: var(--surface-inset);
 }
 
 .taskmgr-table {
@@ -86,12 +86,12 @@
 .taskmgr-table th, 
 .taskmgr-table td {
     padding: 10px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--line);
 }
 
 .taskmgr-table th {
-    background: rgba(13, 15, 25, 0.8);
-    color: #94a3b8;
+    background: var(--surface-inset);
+    color: var(--text-soft);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -102,7 +102,7 @@
 }
 
 .taskmgr-table tr:hover td {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--panel-soft);
 }
 
 .proc-name-cell {
@@ -113,14 +113,14 @@
 }
 
 .proc-name-cell i {
-    color: #64748b;
+    color: var(--text-soft);
     font-size: 14px;
     width: 16px;
     text-align: center;
 }
 
 .taskmgr-memory-cell {
-    color: #e2e8f0;
+    color: var(--text);
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
     white-space: nowrap;
@@ -135,33 +135,33 @@
 }
 
 .status-indicator.active {
-    background: rgba(34, 211, 238, 0.15);
-    color: #22d3ee;
+    background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
+    color: var(--theme-primary-ink);
 }
 
 .status-indicator.running {
     background: rgba(148, 163, 184, 0.15);
-    color: #cbd5e1;
+    color: var(--text);
 }
 
 .status-indicator.minimized {
     background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    color: var(--amber-ink);
 }
 
 .status-indicator.background {
     background: rgba(168, 85, 247, 0.15);
-    color: #c084fc;
+    color: var(--violet-ink);
 }
 
 .status-indicator.loading {
     background: rgba(245, 158, 11, 0.15);
-    color: #fbbf24;
+    color: var(--amber-ink);
 }
 
 /* Action Buttons */
 .system-badge {
-    color: #64748b;
+    color: var(--text-soft);
     font-size: 11px;
     font-style: italic;
 }
@@ -169,7 +169,7 @@
 .btn-end-task {
     background: rgba(239, 68, 68, 0.15);
     border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #f87171;
+    color: var(--rose-ink);
     border-radius: 4px;
     padding: 3px 8px;
     font-size: 11px;
@@ -179,7 +179,7 @@
 
 .btn-end-task:hover {
     background: rgba(239, 68, 68, 0.3);
-    color: #ffffff;
+    color: var(--text);
     box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
 }
 
@@ -193,9 +193,9 @@
 }
 
 .taskmgr-cpu-chart {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--line);
     border-radius: 6px;
-    background: rgba(8, 9, 15, 0.5);
+    background: var(--surface-inset);
     padding: 12px;
     display: flex;
     flex-direction: column;
@@ -205,7 +205,7 @@
 
 .taskmgr-cpu-chart .chart-label {
     font-size: 11px;
-    color: #94a3b8;
+    color: var(--text-soft);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
@@ -215,7 +215,7 @@
     width: 100%;
     flex: 1;
     min-height: 0;
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--surface-inset);
     border-radius: 4px;
 }
 
@@ -241,12 +241,12 @@
     flex-direction: column;
     gap: 4px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--line);
 }
 
 .hw-item span {
     font-size: 11px;
-    color: #64748b;
+    color: var(--text-soft);
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
@@ -254,7 +254,7 @@
 .hw-item strong {
     font-size: 14px;
     font-weight: 500;
-    color: #cbd5e1;
+    color: var(--text);
 }
 
 .taskmgr-budget-control {
@@ -264,23 +264,23 @@
 .taskmgr-ram-budget-select {
     width: 100%;
     min-height: 30px;
-    border: 1px solid rgba(34, 211, 238, 0.22);
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 22%, transparent);
     border-radius: 6px;
-    background: rgba(8, 9, 15, 0.72);
-    color: #e2e8f0;
+    background: var(--surface-inset);
+    color: var(--text);
     font: 500 12px 'JetBrains Mono', monospace;
     padding: 5px 8px;
     outline: none;
 }
 
 .taskmgr-ram-budget-select:focus {
-    border-color: rgba(34, 211, 238, 0.55);
+    border-color: color-mix(in srgb, var(--theme-primary) 55.00000000000001%, transparent);
     box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.14);
 }
 
 .taskmgr-uptime {
     font-family: 'JetBrains Mono', monospace;
-    color: var(--theme-primary, #22d3ee) !important;
+    color: var(--theme-primary-ink) !important;
 }
 
 /* Footer & Global Stats */
@@ -289,8 +289,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px;
-    background: rgba(13, 15, 25, 0.8);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--surface-inset);
+    border-top: 1px solid var(--line);
     position: relative;
     z-index: 2;
 }
@@ -309,7 +309,7 @@
 
 .stat-group .label {
     font-size: 10px;
-    color: #64748b;
+    color: var(--text-soft);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -317,7 +317,7 @@
 .stat-group strong {
     font-size: 15px;
     font-weight: 600;
-    color: #f1f5f9;
+    color: var(--text);
 }
 
 .stat-value-row {
@@ -328,7 +328,7 @@
 
 .taskmgr-stat-mem-text {
     font-size: 11px;
-    color: #94a3b8;
+    color: var(--text-soft);
     font-family: 'JetBrains Mono', monospace;
     opacity: 0.85;
 }
@@ -341,7 +341,7 @@
     left: 0;
     height: 2px;
     width: 100%;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--panel-soft);
 }
 
 .taskmgr-progress-fill {
@@ -357,9 +357,9 @@
 
 /* Optimize Button */
 .btn-optimize-mem {
-    background: rgba(34, 211, 238, 0.07);
-    color: var(--theme-primary, #22d3ee);
-    border: 1px solid rgba(34, 211, 238, 0.22);
+    background: color-mix(in srgb, var(--theme-primary) 7.000000000000001%, transparent);
+    color: var(--theme-primary-ink);
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 22%, transparent);
     border-radius: 6px;
     padding: 8px 16px;
     font-size: 12px;
@@ -372,9 +372,9 @@
 }
 
 .btn-optimize-mem:hover {
-    background: rgba(34, 211, 238, 0.14);
-    color: #ffffff;
-    border-color: rgba(34, 211, 238, 0.45);
+    background: color-mix(in srgb, var(--theme-primary) 14.000000000000002%, transparent);
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--theme-primary) 45%, transparent);
     box-shadow: 0 4px 12px rgba(34, 211, 238, 0.15);
     transform: translateY(-1.5px);
 }
@@ -384,8 +384,8 @@
 }
 
 .btn-optimize-mem:disabled {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--panel-soft);
+    border: 1px solid var(--line);
     color: var(--text-muted, #71717a);
     cursor: not-allowed;
     box-shadow: none;

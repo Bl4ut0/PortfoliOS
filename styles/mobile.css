@@ -25,12 +25,22 @@
     --mobile-surface-high: #1c2633;
     --mobile-fg: #f8fafc;
     --mobile-fg-secondary: #bac4d2;
-    --mobile-fg-muted: #7f8b9d;
+    --mobile-fg-muted: #9ba7b8;
     --mobile-outline: rgba(226, 232, 240, 0.11);
     --mobile-outline-strong: rgba(226, 232, 240, 0.2);
     --mobile-scrim: rgba(1, 4, 9, 0.72);
     --mobile-system-bar-bg: #000;
     --mobile-system-bar-fg: #fff;
+    --surface-inset: var(--mobile-bg);
+    --surface: var(--mobile-surface);
+    --surface-raised: var(--mobile-surface-raised);
+    --surface-overlay: var(--mobile-surface-high);
+    --control-hover: color-mix(in srgb, var(--mobile-fg) 9%, transparent);
+    --on-primary: var(--mobile-on-accent);
+    --on-accent: #061017;
+    --theme-accent-ink: var(--mobile-success);
+    --amber-ink: var(--mobile-warning);
+    --rose-ink: var(--mobile-danger);
     --text: var(--mobile-fg);
     --text-soft: var(--mobile-fg-secondary);
     --text-muted: var(--mobile-fg-muted);
@@ -101,11 +111,12 @@
     --mobile-surface-high: #fff;
     --mobile-fg: #172033;
     --mobile-fg-secondary: #536176;
-    --mobile-fg-muted: #5f6b7d;
+    --mobile-fg-muted: #536176;
     --mobile-outline: rgba(30, 41, 59, 0.12);
     --mobile-outline-strong: rgba(30, 41, 59, 0.22);
     --mobile-scrim: rgba(15, 23, 42, 0.45);
     --mobile-accent-ink: #0e7490;
+    --on-accent: #fff;
     --mobile-success: #166534;
     --mobile-warning: #92400e;
     --mobile-danger: #b91c1c;
@@ -1178,7 +1189,7 @@ body[data-view="mobile"] .mobile-app-grid {
 
 .mobile-native-app {
     --mobile-app-accent: var(--mobile-accent);
-    --mobile-app-accent-ink: var(--mobile-app-accent);
+    --mobile-app-accent-ink: color-mix(in srgb, var(--mobile-app-accent) 75%, var(--mobile-fg));
     display: grid;
     align-content: start;
     gap: 1rem;
@@ -2172,4 +2183,14 @@ html[data-mobile-presentation="edge"][data-mobile-orientation="landscape"] body[
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+}
+
+.mobile-device[data-mobile-theme="light"][data-wallpaper="ember"] .mobile-wallpaper {
+    background: radial-gradient(circle at 20% 18%, #fdba7466, transparent 38%), radial-gradient(circle at 80% 80%, #fca5a544, transparent 40%), linear-gradient(150deg, #fff7ed, #f4dfd2);
+}
+.mobile-device[data-mobile-theme="light"][data-wallpaper="forest"] .mobile-wallpaper {
+    background: radial-gradient(circle at 78% 14%, #6ee7b755, transparent 36%), radial-gradient(circle at 16% 88%, #5eead444, transparent 38%), linear-gradient(155deg, #f0fdf4, #d8ebe3);
+}
+.mobile-device[data-mobile-theme="light"][data-wallpaper="graphite"] .mobile-wallpaper {
+    background: repeating-linear-gradient(120deg, transparent 0 26px, #4755690a 27px 28px), linear-gradient(150deg, #f1f5f9, #d9e0e8);
 }

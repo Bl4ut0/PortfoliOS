@@ -88,7 +88,7 @@
 }
 
 .breadcrumb-segment:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--control-hover);
     color: var(--text);
 }
 
@@ -171,13 +171,13 @@
 }
 
 .sidebar-shortcut:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--panel-soft);
     color: var(--text);
 }
 
 .sidebar-shortcut.active {
-    background: rgba(34, 211, 238, 0.12);
-    color: var(--theme-primary);
+    background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+    color: var(--theme-primary-ink);
     font-weight: 500;
 }
 
@@ -212,7 +212,7 @@
 
 .files-storage-status button:hover {
     border-color: var(--theme-primary);
-    color: var(--theme-primary);
+    color: var(--theme-primary-ink);
 }
 
 .files-grid-container {
@@ -225,7 +225,7 @@
 }
 
 .files-grid-container.drag-hover {
-    background: rgba(34, 211, 238, 0.04);
+    background: color-mix(in srgb, var(--theme-primary) 4%, transparent);
     box-shadow: inset 0 0 0 2px var(--theme-primary);
 }
 
@@ -249,21 +249,21 @@
 }
 
 .file-item:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--panel-soft);
 }
 
 .file-icon {
     font-size: 2.2rem;
-    color: var(--theme-primary);
+    color: var(--theme-primary-ink);
     margin-bottom: 0.4rem;
 }
 
 .dir-item .file-icon {
-    color: var(--amber, #f59e0b);
+    color: var(--amber-ink);
 }
 
 .file-item-doc .file-icon {
-    color: var(--theme-accent, #22d3ee);
+    color: var(--theme-accent-ink);
 }
 
 .file-name {
@@ -287,7 +287,7 @@
     top: 4px;
     right: 4px;
     background: rgba(239, 68, 68, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--line);
     border-radius: 4px;
     color: white;
     font-size: 0.7rem;
@@ -369,11 +369,11 @@
 
 .editor-btn.save-btn {
     border-color: var(--theme-primary);
-    color: var(--theme-primary);
+    color: var(--theme-primary-ink);
 }
 
 .editor-btn.save-btn:hover {
-    background: rgba(34, 211, 238, 0.05);
+    background: color-mix(in srgb, var(--theme-primary) 5%, transparent);
 }
 
 .editor-textarea {

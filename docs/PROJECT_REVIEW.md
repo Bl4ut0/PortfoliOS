@@ -46,3 +46,9 @@ Recommended follow-ups: make the CLI distinguish Google-managed identity from si
 ## Mobile app parity and public switching (2026-10-09)
 
 Delivered explicit account controls on both Settings surfaces with save-to-Drive-before-public and offline public switching. Backup errors retain private identity; in-flight imports/scans are drained before switching. Mobile now includes Store, Lobe, Task Manager, Security Center, Identity, Dossier, and ROM Player (23 native apps total). Mobile layout/appearance writes now schedule private preference backup. See [MOBILE_APP_PARITY.md](MOBILE_APP_PARITY.md) for the adaptation map, limitations, and next ports. Validation includes the automated account/app suites and disposable Chromium smoke with an original NES diagnostic program.
+
+## Appearance and debug-log follow-up (2026-10-09)
+
+The screenshot reproduced a systemic token mismatch: Light-mode foregrounds were combined with fixed dark app/shell surfaces. Shared semantic surfaces, contrast-aware text accents/action labels, corrected app chrome and phone sign-in colors, and distinct phone light wallpapers address it. The rendered review covers Desktop's seven palettes, Quick, both Mobile palettes with five accents, utility/media apps, Office editors, auxiliary panels, and game loader chrome. Evidence and limitations are in [APPEARANCE_AUDIT.md](APPEARANCE_AUDIT.md).
+
+The supplied older debug output showed successful AI startup/fallback and failed Drive content updates after HTTP 500. The current updater now makes at most four attempts for transient failures. Future debug copies include dated release/asset metadata and the AI snapshot. This improves recovery and diagnosis; conflict/deletion safety, pagination, durable queues, and live cross-device restore validation are still outstanding.

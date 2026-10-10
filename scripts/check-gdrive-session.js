@@ -265,6 +265,59 @@ vm.runInNewContext(
     assert.strictEqual(brokerChannel.closed, true, "an abandoned popup must close its channel");
     windowObject.crossOriginIsolated = false;
 
+    // Retry only idempotent content updates, with bounded exponential backoff.
+    const originalFetch = sandbox.fetch;
+    const originalTimer = windowObject.setTimeout;
+    const originalWarn = console.warn;
+    const delays = [];
+    windowObject.setTimeout = (callback, delay) => { delays.push(delay); callback(); return 0; };
+    console.warn = () => {};
+    try {
+        let calls = 0;
+        const statuses = [500, 502, 200];
+        const bodies = [];
+        sandbox.fetch = async (url, request) => {
+            calls++;
+            assert.strictEqual(request.method, 'PATCH');
+            assert(url.endsWith('/existing-save?uploadType=media'));
+            bodies.push(request.body);
+            const status = statuses.shift();
+            return { ok: status === 200, status, text: async () => 'Internal Error', json: async () => ({ id: 'existing-save' }) };
+        };
+        assert.strictEqual((await sync.updateFile('existing-save', 'application/octet-stream', 'save-data')).id, 'existing-save');
+        assert.strictEqual(calls, 3, 'temporary 5xx failures must recover without another user action');
+        assert.strictEqual(bodies[0], bodies[1], 'every retry must send the same captured file contents');
+        assert.strictEqual(await bodies[2].text(), 'save-data');
+        assert(delays[0] >= 1000 && delays[0] < 2000);
+        assert(delays[1] >= 2000 && delays[1] < 3000);
+        for (const status of [400, 401, 403, 404, 500, 429, 503, 504]) {
+            calls = 0; delays.length = 0;
+            sandbox.fetch = async () => {
+                calls++;
+                return { ok: false, status, text: async () => 'Simulated error' };
+            };
+            await assert.rejects(sync.updateFile('existing-save', 'application/octet-stream', 'save-data'), new RegExp('Update failed: ' + status));
+            const retryable = [429, 500, 503, 504].includes(status);
+            assert.strictEqual(calls, retryable ? 4 : 1, 'authentication/permanent errors must not retry; temporary errors must stop after four attempts');
+            if (retryable) assert(delays[2] >= 4000 && delays[2] < 5000);
+        }
+        calls = 0;
+        sandbox.fetch = async () => {
+            if (++calls === 1) throw new TypeError('Failed to fetch');
+            return { ok: true, json: async () => ({ id: 'existing-save' }) };
+        };
+        await sync.updateFile('existing-save', 'text/plain', 'save-data');
+        assert.strictEqual(calls, 2, 'an interrupted content update can retry the same content');
+        calls = 0;
+        sandbox.fetch = async () => { calls++; const error = Error('Cancelled'); error.name = 'AbortError'; throw error; };
+        await assert.rejects(sync.updateFile('existing-save', 'text/plain', 'save-data'), /Cancelled/);
+        assert.strictEqual(calls, 1, 'cancellation must propagate without retrying');
+    } finally {
+        sandbox.fetch = originalFetch;
+        windowObject.setTimeout = originalTimer;
+        console.warn = originalWarn;
+    }
+
     // A first backup on a device must restore existing cloud preferences rather
     // than overwriting them with recently generated defaults.
     const currentId = windowObject.state.currentUserId;

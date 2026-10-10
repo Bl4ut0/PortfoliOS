@@ -87,10 +87,10 @@
 
         /* Glassmorphic Speech Bubble */
         .brain-helper-bubble {
-            background: rgba(15, 17, 26, 0.85);
+            background: var(--surface-overlay);
             backdrop-filter: blur(12px) saturate(180%);
             -webkit-backdrop-filter: blur(12px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--line);
             border-radius: 8px;
             width: min(320px, calc(100vw - 24px));
             box-sizing: border-box;
@@ -125,7 +125,7 @@
         .brain-helper-title {
             font-size: 0.85rem;
             font-weight: 600;
-            color: var(--theme-primary, #22d3ee);
+            color: var(--theme-primary-ink);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -146,8 +146,8 @@
             justify-content: center;
         }
         .brain-helper-close:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+            background: var(--panel-soft);
         }
 
         /* Bubble Chat Feed & Stream */
@@ -186,10 +186,10 @@
             height: 38px;
             min-height: 38px;
             max-height: 80px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
             border-radius: 8px;
-            color: #fff;
+            color: var(--text);
             padding: 8px 36px 8px 10px;
             font-size: 0.85rem;
             outline: none;
@@ -198,8 +198,8 @@
             transition: all 0.2s ease;
         }
         .brain-helper-input:focus {
-            border-color: var(--theme-primary, #22d3ee);
-            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--theme-primary-ink);
+            background: var(--panel-soft);
             box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.15);
         }
         .brain-helper-input::placeholder {
@@ -210,7 +210,7 @@
             right: 8px;
             background: none;
             border: none;
-            color: var(--theme-primary, #22d3ee);
+            color: var(--theme-primary-ink);
             cursor: pointer;
             padding: 6px;
             border-radius: 6px;
@@ -221,7 +221,7 @@
         }
         .brain-helper-submit:hover:not(:disabled) {
             background: rgba(34, 211, 238, 0.1);
-            color: #fff;
+            color: var(--text);
         }
         .brain-helper-submit:disabled {
             color: var(--text-soft, #4b5563);
@@ -231,10 +231,10 @@
             display: none;
         }
         .brain-helper-stop {
-            color: var(--rose, #f43f5e);
+            color: var(--rose-ink);
         }
         .brain-helper-stop:hover:not(:disabled) {
-            color: #fff;
+            color: var(--text);
             background: rgba(244, 63, 94, 0.14);
         }
 
@@ -334,16 +334,16 @@
 
     function getWelcomeMessage(isCloud) {
         if (isCloud) {
-            return `Hi there! I am your Cloud AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Running on a cloud-hosted model. You can switch models or manage connection settings in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI app</a>.</span>`;
+            return `Hi there! I am your Cloud AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Running on a cloud-hosted model. You can switch models or manage connection settings in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary-ink); text-decoration: underline;">AI app</a>.</span>`;
         }
-        return `Hi there! I am your Local AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">For lightweight chat, use SmolLM2 360M or Qwen 0.5B in <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI settings</a>.</span>`;
+        return `Hi there! I am your Local AI brain helper. Ask me any question about the portfolio or commands!<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">For lightweight chat, use SmolLM2 360M or Qwen 0.5B in <a href="#" data-action="open-local-ai" style="color: var(--theme-primary-ink); text-decoration: underline;">AI settings</a>.</span>`;
     }
 
     function getClearChatMessage(isCloud) {
         if (isCloud) {
-            return `Clear screen. What would you like to know?<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Running on a cloud-hosted model. You can switch models or manage connection settings in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI app</a>.</span>`;
+            return `Clear screen. What would you like to know?<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Running on a cloud-hosted model. You can switch models or manage connection settings in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary-ink); text-decoration: underline;">AI app</a>.</span>`;
         }
-        return `Clear screen. What would you like to know?<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Tip: You can select other local AI models in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">Local AI app</a>.</span>`;
+        return `Clear screen. What would you like to know?<br><br><span style="font-size: 0.76rem; opacity: 0.85; line-height: 1.4; display: block;">Tip: You can select other local AI models in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary-ink); text-decoration: underline;">Local AI app</a>.</span>`;
     }
 
     const initialIsCloud = window.LocalAI && window.LocalAI.getStatus ? window.LocalAI.getStatus().modelType?.startsWith("cloud-") : false;
@@ -376,7 +376,7 @@
                 </div>
                 <div class="brain-helper-hint">
                     <span>Press Enter to send</span>
-                    <a href="#" style="color: var(--theme-primary, #22d3ee); text-decoration: none;" id="brain-helper-clear-btn">Clear chat</a>
+                    <a href="#" style="color: var(--theme-primary-ink); text-decoration: none;" id="brain-helper-clear-btn">Clear chat</a>
                 </div>
             </form>
         </div>
@@ -658,7 +658,7 @@
                 }
             }
 
-            textOutput.innerHTML = `I'm a basic offline helper. I can answer questions about Alex's <strong>profile</strong>, <strong>projects</strong>, <strong>skills</strong>, <strong>contacts</strong>, or <strong>games</strong>.<br><br>For complex questions like "${escapeHtml(prompt)}", please enable a higher-tier AI model in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary, #22d3ee); text-decoration: underline;">AI app</a>.`;
+            textOutput.innerHTML = `I'm a basic offline helper. I can answer questions about Alex's <strong>profile</strong>, <strong>projects</strong>, <strong>skills</strong>, <strong>contacts</strong>, or <strong>games</strong>.<br><br>For complex questions like "${escapeHtml(prompt)}", please enable a higher-tier AI model in the <a href="#" data-action="open-local-ai" style="color: var(--theme-primary-ink); text-decoration: underline;">AI app</a>.`;
             return;
         }
 
@@ -698,7 +698,7 @@
             if (requestId === lobeRequestId) {
                 const isCloud = window.LocalAI?.getStatus?.().modelType?.startsWith("cloud-");
                 const message = error?.message || (isCloud ? "Cloud AI failed to generate response." : "Local AI failed to generate response.");
-                textOutput.innerHTML = `<span style="color: var(--rose, #f43f5e);">Error: ${escapeHtml(message)}</span>`;
+                textOutput.innerHTML = `<span style="color: var(--rose-ink);">Error: ${escapeHtml(message)}</span>`;
             }
         } finally {
             if (requestId === lobeRequestId) {

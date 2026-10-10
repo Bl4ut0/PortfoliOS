@@ -211,7 +211,7 @@
     width: 2.65rem;
     height: 2.65rem;
     flex: 0 0 auto;
-    color: var(--browser-result-accent-ink);
+    color: var(--mobile-app-accent-ink);
     background: color-mix(in srgb, var(--browser-result-accent) 12%, transparent);
     border-radius: 13px;
 }
@@ -242,7 +242,7 @@
 }
 
 .mobile-browser-result-main small {
-    color: var(--browser-result-accent-ink);
+    color: var(--mobile-app-accent-ink);
     font-size: 0.62rem;
 }
 
@@ -322,14 +322,14 @@
     place-items: center;
     width: 3.25rem;
     height: 3.25rem;
-    color: var(--browser-result-accent-ink);
+    color: var(--mobile-app-accent-ink);
     background: color-mix(in srgb, var(--browser-result-accent) 12%, transparent);
     border-radius: 16px;
     font-size: 1.2rem;
 }
 
 .mobile-browser-detail-heading small {
-    color: var(--browser-result-accent-ink);
+    color: var(--mobile-app-accent-ink);
     font-family: var(--mono);
     font-size: 0.62rem;
     text-transform: uppercase;

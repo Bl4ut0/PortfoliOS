@@ -977,7 +977,7 @@
 
                             <span class="office-tool-separator"></span>
                             <div style="font-size: 0.72rem; color: var(--office-text-muted);">
-                                Formulas: <code style="color: #60a5fa;">=SUM(A1:A5)</code>, <code style="color: #60a5fa;">=A1*B1</code>
+                                Formulas: <code style="color: var(--theme-primary-ink);">=SUM(A1:A5)</code>, <code style="color: var(--theme-primary-ink);">=A1*B1</code>
                             </div>
                         </div>
 

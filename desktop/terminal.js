@@ -169,8 +169,8 @@ function updatePrompt() {
         displayDir = "~" + currentDir.slice(userHome.length);
     }
 
-    const userColor = isRoot ? "var(--rose)" : "var(--theme-accent)";
-    const pathColor = "var(--blue)";
+    const userColor = isRoot ? "var(--rose-ink)" : "var(--theme-accent-ink)";
+    const pathColor = "var(--blue-ink)";
 
     let displayUser = user;
     if (user === "bl4ut0") {
@@ -1378,8 +1378,8 @@ window.handleCommand = async (rawValue) => {
     historyIndex = -1;
 
     // Format output command echo with standard prompt styling
-    const userColor = currentUser === "root" ? "color: var(--rose)" : "color: var(--theme-accent)";
-    const pathColor = "color: var(--blue)";
+    const userColor = currentUser === "root" ? "color: var(--rose-ink)" : "color: var(--theme-accent-ink)";
+    const pathColor = "color: var(--blue-ink)";
     const isRoot = currentUser === "root";
     const promptChar = isRoot ? "#" : "$";
 
@@ -1500,7 +1500,7 @@ window.typeTerminalLine = (text, className = "", speed = 7) => {
 };
 
 window.asciiMotd = `
-<pre class="cli-motd" style="color: var(--theme-primary); font-size: 0.65rem; line-height: 1.0; margin-bottom: 1rem; overflow-x: auto;">
+<pre class="cli-motd" style="color: var(--theme-primary-ink); font-size: 0.65rem; line-height: 1.0; margin-bottom: 1rem; overflow-x: auto;">
 ██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗ ███████╗
 ██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗██╔════╝
 ██████╔╝██║   ██║██████╔╝   ██║   █████╗  ██║   ██║██║     ██║██║   ██║███████╗
@@ -1509,8 +1509,8 @@ window.asciiMotd = `
 ╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝ ╚══════╝
 </pre>
 <div style="margin-bottom: 0.5rem">System: <strong style="color: var(--text)">PortfoliOS v1.0.0</strong> (x86_64-browser)</div>
-<div style="margin-bottom: 1rem">Access Level: <strong style="color: var(--theme-accent)">GUEST</strong></div>
-<div style="color: var(--text-soft)">Type <strong style="color: var(--theme-primary)">help</strong> for system commands, or run <strong style="color: var(--theme-primary)">ai on</strong> to enable local command guidance.</div>
+<div style="margin-bottom: 1rem">Access Level: <strong style="color: var(--theme-accent-ink)">GUEST</strong></div>
+<div style="color: var(--text-soft)">Type <strong style="color: var(--theme-primary-ink)">help</strong> for system commands, or run <strong style="color: var(--theme-primary-ink)">ai on</strong> to enable local command guidance.</div>
 <br/>
 `;
 

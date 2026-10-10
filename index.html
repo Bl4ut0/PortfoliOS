@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="portfolios-build" content="2026.10.09.4">
     <meta http-equiv="Content-Security-Policy" content="base-uri 'self'; object-src 'none'; form-action 'self' https://accounts.google.com">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
@@ -25,12 +26,13 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="mobile/viewport.js?v=1.1.13"></script>
-    <link rel="stylesheet" href="styles-v1.css?v=2026.10.09.2">
+    <link rel="stylesheet" href="styles-v1.css?v=2026.10.09.4">
     <script>
         // Global System Debug Logger
         window.SystemLogs = [];
+        window.SystemLogStartedAt = new Date().toISOString();
         window.addSystemLog = (type, message, error = null) => {
-            const timestamp = new Date().toLocaleTimeString();
+            const timestamp = new Date().toISOString();
             let logMsg = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
             if (error) {
                 if (error.stack) {
@@ -904,7 +906,7 @@
 
                                         <!-- MODEL SELECTOR -->
                                         <section class="settings-section">
-                                            <h3><i class="fa-solid fa-microchip" style="color: var(--theme-primary, #22d3ee); margin-right: 4px;"></i> Model</h3>
+                                            <h3><i class="fa-solid fa-microchip" style="color: var(--theme-primary-ink); margin-right: 4px;"></i> Model</h3>
                                             <div class="settings-control-row">
                                                 <select id="settings-local-ai-model-select" class="settings-select" style="width: 100%; color-scheme: dark;" aria-label="AI model selection"></select>
                                             </div>
@@ -947,7 +949,7 @@
 
                                         <!-- CLOUD PROVIDER KEYS -->
                                         <section class="settings-section" id="settings-cloud-ai-section">
-                                            <h3><i class="fa-solid fa-cloud" style="color: var(--theme-primary, #22d3ee); margin-right: 4px;"></i> API Keys</h3>
+                                            <h3><i class="fa-solid fa-cloud" style="color: var(--theme-primary-ink); margin-right: 4px;"></i> API Keys</h3>
                                             <p class="settings-info-text" style="margin-bottom: 0;">Gemini 2.5 Flash works out-of-the-box. To unlock other cloud models, configure your API keys below.</p>
                                             <div class="ai-key-config-row">
                                                 <!-- OpenAI Key Card -->
@@ -978,7 +980,7 @@
                                                 </div>
                                             </div>
                                             <p class="settings-info-text" style="margin: 0;">
-                                                <i class="fa-solid fa-shield-halved" style="color: var(--theme-primary, #22d3ee); margin-right: 3px;"></i>
+                                                <i class="fa-solid fa-shield-halved" style="color: var(--theme-primary-ink); margin-right: 3px;"></i>
                                                 All keys stay in your browser's <code>localStorage</code> and are never sent to our server.
                                             </p>
                                         </section>
@@ -990,16 +992,16 @@
                                             </button>
                                             <div class="ai-about-content" id="ai-about-content">
                                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.6rem;">
-                                                    <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255, 255, 255, 0.04); padding: 0.55rem 0.7rem; border-radius: 6px;">
-                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary, #22d3ee);"><i class="fa-solid fa-download"></i> Weights Download</strong>
+                                                    <div style="background: var(--panel-soft); border: 1px solid var(--line); padding: 0.55rem 0.7rem; border-radius: 6px;">
+                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary-ink);"><i class="fa-solid fa-download"></i> Weights Download</strong>
                                                         <span style="font-size: 0.7rem; color: var(--text-muted, #9ca3af); line-height: 1.3; display: block; margin-top: 2px;">First launch downloads model weights to browser cache (200MB – 1.6GB).</span>
                                                     </div>
-                                                    <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255, 255, 255, 0.04); padding: 0.55rem 0.7rem; border-radius: 6px;">
-                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary, #22d3ee);"><i class="fa-solid fa-microchip"></i> WebGPU Compute</strong>
+                                                    <div style="background: var(--panel-soft); border: 1px solid var(--line); padding: 0.55rem 0.7rem; border-radius: 6px;">
+                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary-ink);"><i class="fa-solid fa-microchip"></i> WebGPU Compute</strong>
                                                         <span style="font-size: 0.7rem; color: var(--text-muted, #9ca3af); line-height: 1.3; display: block; margin-top: 2px;">Runs in a background Web Worker and uses your GPU for inference.</span>
                                                     </div>
-                                                    <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255, 255, 255, 0.04); padding: 0.55rem 0.7rem; border-radius: 6px;">
-                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary, #22d3ee);"><i class="fa-solid fa-power-off"></i> Full Control</strong>
+                                                    <div style="background: var(--panel-soft); border: 1px solid var(--line); padding: 0.55rem 0.7rem; border-radius: 6px;">
+                                                        <strong style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--theme-primary-ink);"><i class="fa-solid fa-power-off"></i> Full Control</strong>
                                                         <span style="font-size: 0.7rem; color: var(--text-muted, #9ca3af); line-height: 1.3; display: block; margin-top: 2px;">Stop the AI worker from Task Manager, the tray, or this panel at any time.</span>
                                                     </div>
                                                 </div>
@@ -1079,7 +1081,7 @@
                                                 </div>
                                             </div>
                                             <p class="settings-info-text" style="margin-bottom: 0.5rem;">Below are console errors and system messages logged during this session. Use these details to troubleshoot Local AI and system start issues.</p>
-                                            <div id="settings-debug-log-container" style="flex: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 0.6rem; font-family: monospace; font-size: 0.75rem; color: #f8f8f2; overflow-y: auto; white-space: pre-wrap; word-break: break-all; user-select: text; scrollbar-width: thin;"></div>
+                                            <div id="settings-debug-log-container" style="flex: 1; background: var(--surface-inset); border: 1px solid var(--line); border-radius: 6px; padding: 0.6rem; font-family: monospace; font-size: 0.75rem; color: var(--text); overflow-y: auto; white-space: pre-wrap; word-break: break-all; user-select: text; scrollbar-width: thin;"></div>
                                         </section>
                                     </div>
                                 </main>
@@ -1126,7 +1128,7 @@
                             
                             <!-- Tray model selection dropdown -->
                             <div class="local-ai-tray-model-selector" style="margin-bottom: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
-                                <label for="local-ai-tray-model-select" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--theme-primary, #22d3ee); display: flex; align-items: center; gap: 4px;">
+                                <label for="local-ai-tray-model-select" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--theme-primary-ink); display: flex; align-items: center; gap: 4px;">
                                     <i class="fa-solid fa-gear"></i> Model:
                                 </label>
                                 <select id="local-ai-tray-model-select" class="local-ai-select" style="padding: 6px 8px; font-size: 0.8rem; width: 100%; color-scheme: dark;" aria-label="Local AI tray model selection"></select>
@@ -1387,12 +1389,12 @@
     <script src="core/security-service.js?v=1.0.0"></script>
     <script src="core/file-intents.js?v=1.1.13"></script>
     <script src="core/media-service.js?v=1.1.13"></script>
-    <script src="core/gdrive-sync.js?v=2026.10.09.2"></script>
-    <script src="core/app-loader.js?v=1.0.108"></script>
+    <script src="core/gdrive-sync.js?v=2026.10.09.4"></script>
+    <script src="core/app-loader.js?v=2026.10.09.4"></script>
     <script src="core/session-context.js?v=2026.10.09.1"></script>
     <script src="core/local-ai.js?v=2026.10.09.2"></script>
     <script src="core/simple-brain.js?v=2026.10.09.1"></script>
-    <script src="core/preferences.js?v=1.1.0"></script>
+    <script src="core/preferences.js?v=2026.10.09.4"></script>
     <script src="core/window-manager.js?v=1.1.0"></script>
     
     <!-- Shared Data -->
@@ -1411,21 +1413,21 @@
     <script src="desktop/context-menu.js?v=1.0.47"></script>
     <script src="desktop/dossier.js?v=1.0.47"></script>
     <script src="desktop/browser.js"></script>
-    <script src="desktop/terminal.js?v=2026.10.08.1"></script>
+    <script src="desktop/terminal.js?v=2026.10.09.4"></script>
     <script src="desktop/network-map.js?v=1.0.47"></script>
     <script src="desktop/store.js?v=1.0.50"></script>
-    <script src="desktop/settings.js?v=2026.10.09.2"></script>
+    <script src="desktop/settings.js?v=2026.10.09.4"></script>
     <script src="desktop/calendar.js"></script>
     <script src="desktop/toast.js"></script>
     <script src="desktop/canvas-bg.js"></script>
     <script src="desktop/matrix-rain.js"></script>
     <script src="desktop/boot.js"></script>
     <script src="desktop/wad-inspector.js"></script>
-    <script src="desktop/brain-helper.js?v=2026.10.09.1"></script>
+    <script src="desktop/brain-helper.js?v=2026.10.09.4"></script>
     <script src="desktop/shell.js?v=2026.10.09.1"></script>
     
     <!-- Mobile & Quick Shells -->
-    <script src="mobile/app-loader.js?v=2026.10.09.3"></script>
+    <script src="mobile/app-loader.js?v=2026.10.09.4"></script>
     <script src="mobile/home.js?v=2026.10.09.2"></script>
     <script src="mobile/shell.js?v=2026.10.09.2"></script>
     <script src="quick/shell.js?v=1.0.47"></script>
@@ -1433,7 +1435,7 @@
     <!-- Main Entry Point -->
     <script src="core/profile-switch.js?v=2026.10.09.2"></script>
     <script src="core/session-chooser.js?v=2026.10.09.2"></script>
-    <script src="main.js?v=2026.10.09.3"></script>
+    <script src="main.js?v=2026.10.09.4"></script>
 </body>
 
 </html>

@@ -107,7 +107,7 @@
     min-height: 2.35rem;
     color: var(--text-soft);
     text-align: left;
-    background: rgba(255, 255, 255, 0.045);
+    background: var(--panel-soft);
     border: 1px solid var(--line);
     border-radius: 8px;
     cursor: pointer;
@@ -116,8 +116,8 @@
 .quick-route-list button:hover,
 .quick-route-list button.active {
     color: var(--text);
-    border-color: rgba(34, 211, 238, 0.26);
-    background: rgba(34, 211, 238, 0.08);
+    border-color: color-mix(in srgb, var(--theme-primary) 26%, transparent);
+    background: color-mix(in srgb, var(--theme-primary) 8%, transparent);
 }
 
 .quick-tabs .quick-item {
@@ -126,8 +126,8 @@
 }
 
 .quick-tabs .quick-item.active {
-    background: rgba(34, 211, 238, 0.1);
-    border-color: rgba(34, 211, 238, 0.32);
+    background: color-mix(in srgb, var(--theme-primary) 10%, transparent);
+    border-color: color-mix(in srgb, var(--theme-primary) 32%, transparent);
 }
 
 .quick-detail {
@@ -179,7 +179,7 @@
     gap: 0.55rem;
     min-height: 2.55rem;
     padding: 0 0.75rem;
-    background: rgba(255, 255, 255, 0.045);
+    background: var(--panel-soft);
     border: 1px solid var(--line);
     border-radius: 8px;
 }
@@ -203,7 +203,7 @@
     min-height: 2rem;
     padding: 0.35rem 0.65rem;
     color: var(--text-soft);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--panel-soft);
     border: 1px solid var(--line);
     border-radius: 999px;
     cursor: pointer;
@@ -212,8 +212,8 @@
 .quick-filters button:hover,
 .quick-filters button.active {
     color: var(--text);
-    border-color: rgba(34, 211, 238, 0.3);
-    background: rgba(34, 211, 238, 0.09);
+    border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--theme-primary) 9%, transparent);
 }
 
 .quick-tabs .quick-item {
@@ -226,7 +226,7 @@
 }
 
 .quick-tabs .quick-item i {
-    color: var(--tile-color, var(--theme-primary));
+    color: var(--tile-color, var(--theme-primary-ink));
     font-size: 1rem;
 }
 
@@ -260,7 +260,7 @@
 .quick-node-grid button {
     min-width: 0;
     color: var(--text);
-    background: rgba(255, 255, 255, 0.045);
+    background: var(--panel-soft);
     border: 1px solid var(--line);
     border-radius: 8px;
 }
@@ -304,13 +304,13 @@
 }
 
 .quick-node-grid button i {
-    color: var(--tile-color, var(--theme-primary));
+    color: var(--tile-color, var(--theme-primary-ink));
 }
 
 .quick-route-cards button:hover,
 .quick-node-grid button:hover {
-    border-color: rgba(34, 211, 238, 0.28);
-    background: rgba(34, 211, 238, 0.08);
+    border-color: color-mix(in srgb, var(--theme-primary) 28.000000000000004%, transparent);
+    background: color-mix(in srgb, var(--theme-primary) 8%, transparent);
 }
 
 .quick-empty {

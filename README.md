@@ -170,3 +170,7 @@ Open **Settings → Accounts** on Desktop, or **Settings → Account & Drive bac
 ROM Player supports NES, SNES, Game Boy/Color, GBA, Genesis, Master System, and Game Gear with EmulatorJS touch controls. Its launcher loads when added; emulator cores download on Play. ROM imports remain on-device, outside Drive backup. Home pauses the emulator and Recents resumes it. Use emulator-native save controls before stopping/closing a game. Heavy desktop games are listed with their availability.
 
 See [mobile app parity](docs/MOBILE_APP_PARITY.md) for the adaptation map and remaining work. Run the optional isolated browser smoke with Playwright installed: `node scripts/check-mobile-apps-browser.js`. Set `PORTFOLIOS_PLAYWRIGHT` to a Playwright module path when using a bundled runtime. It creates its own loopback server and disposable Chromium contexts; its ROM fixture is an original diagnostic program and it uses no real Google account.
+
+## Appearance and diagnostic review (2026-10-09)
+
+See [docs/APPEARANCE_AUDIT.md](docs/APPEARANCE_AUDIT.md) for the seven-theme Desktop/Quick and native Mobile review, corrected surface/text pairs, screenshot evidence, and browser regression command. Debug exports now identify their build, loaded asset versions, page load/export dates, and current AI state. Existing Drive file updates retry temporary server/network failures with bounded exponential backoff; file creation, conflict recovery, and paginated discovery remain separate work.

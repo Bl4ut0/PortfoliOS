@@ -144,6 +144,35 @@ window.getScreensaverOption = (screensaverId = state.screensaver) => {
     return options.find((option) => option.id === screensaverId) || options[0];
 };
 
+// Keep text accents legible on both the base and raised theme surfaces.
+window.getReadableThemeColor = (color, background, foreground) => {
+    const rgb = hex => /^#[0-9a-f]{6}$/i.test(hex || '')
+        ? [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16)) : null;
+    const ink = rgb(color), base = rgb(background), text = rgb(foreground);
+    if (!ink || !base || !text) return foreground;
+    const luminance = channels => channels.map(value => {
+        const srgb = value / 255;
+        return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+    }).reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
+    const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05);
+    const raised = base.map((value, index) => value * 0.90 + text[index] * 0.10);
+    const target = luminance(base) > 0.5 ? 0 : 255;
+    for (let step = 0; step <= 20; step++) {
+        const candidate = ink.map(value => Math.round(value * (1 - step / 20) + target * step / 20));
+        if ([base, raised].every(surface => contrast(candidate, surface) >= 5.2)) {
+            return '#' + candidate.map(value => value.toString(16).padStart(2, '0')).join('');
+        }
+    }
+    return foreground;
+};
+window.getThemeButtonText = color => {
+    const channels = /^#[0-9a-f]{6}$/i.test(color || '')
+        ? [1, 3, 5].map(index => parseInt(color.slice(index, index + 2), 16) / 255) : [0, 0, 0];
+    const luminance = channels.map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)
+        .reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
+    return (1.05 / (luminance + 0.05)) > ((luminance + 0.05) / 0.05) ? '#ffffff' : '#000000';
+};
+
 window.applyThemeColors = () => {
     const primaryPicker = window.byId ? window.byId("theme-primary-picker") : document.getElementById("theme-primary-picker");
     const accentPicker = window.byId ? window.byId("theme-accent-picker") : document.getElementById("theme-accent-picker");
@@ -169,6 +198,20 @@ window.applyThemeColors = () => {
 
     const currentPrimary = state.themePrimary || tokens["--theme-primary"] || "#22d3ee";
     const currentAccent = state.themeAccent || tokens["--theme-accent"] || "#34d399";
+    const background = tokens['--bg'] || '#050608';
+    const foreground = tokens['--text'] || '#fafafa';
+    const readable = color => window.getReadableThemeColor(color, background, foreground);
+    document.documentElement.dataset.colorScheme = theme.colorScheme || 'dark';
+    document.documentElement.style.setProperty('--on-primary', window.getThemeButtonText(currentPrimary));
+    document.documentElement.style.setProperty('--on-accent', window.getThemeButtonText(currentAccent));
+    document.documentElement.style.setProperty('--theme-primary-ink', readable(currentPrimary));
+    document.documentElement.style.setProperty('--theme-accent-ink', readable(currentAccent));
+    ['amber', 'blue', 'violet', 'rose', 'teal'].forEach(name => {
+        document.documentElement.style.setProperty('--' + name + '-ink', readable(tokens['--' + name]));
+    });
+    ['text-soft', 'text-muted'].forEach(name => {
+        document.documentElement.style.setProperty('--' + name, readable(tokens['--' + name]));
+    });
     if (primaryPicker) primaryPicker.value = currentPrimary;
     if (accentPicker) accentPicker.value = currentAccent;
     if (window.renderThemeOptions) window.renderThemeOptions();

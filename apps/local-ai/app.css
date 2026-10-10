@@ -20,7 +20,7 @@
 .local-ai-model-selector {
     margin-bottom: 1.2rem;
     padding-bottom: 1.2rem;
-    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+    border-bottom: 1px solid var(--line, var(--line));
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -29,7 +29,7 @@
 .local-ai-select-label {
     font-size: 0.8rem;
     font-weight: 600;
-    color: var(--theme-primary, #22d3ee);
+    color: var(--theme-primary-ink);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     display: flex;
@@ -45,11 +45,11 @@
 }
 
 .local-ai-select {
-    color-scheme: dark; /* Crucial for rendering browser-native dropdown popover in dark theme */
-    background: rgba(15, 17, 26, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    color-scheme: inherit;
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
     border-radius: 8px;
-    color: #fff;
+    color: var(--text);
     padding: 10px 12px;
     font-size: 0.88rem;
     outline: none;
@@ -60,7 +60,7 @@
 }
 
 .local-ai-select:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, 0.25);
+    border-color: var(--line-strong);
 }
 
 .local-ai-select:focus {
@@ -74,8 +74,8 @@
 }
 
 .local-ai-select option {
-    background-color: #0f111a;
-    color: #f3f4f6;
+    background-color: var(--surface-inset);
+    color: var(--text);
 }
 
 .local-ai-hero {
@@ -103,28 +103,28 @@
     place-items: center;
     width: 4rem;
     height: 4rem;
-    border: 1px solid rgba(34, 211, 238, 0.28);
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 28.000000000000004%, transparent);
     border-radius: 8px;
-    background: rgba(34, 211, 238, 0.08);
-    color: var(--theme-primary);
+    background: color-mix(in srgb, var(--theme-primary) 8%, transparent);
+    color: var(--theme-primary-ink);
     font-size: 1.6rem;
     box-shadow: 0 0 24px rgba(34, 211, 238, 0.1);
 }
 
 .local-ai-orb.loading {
-    color: #f59e0b;
+    color: var(--amber-ink);
     border-color: rgba(245, 158, 11, 0.32);
     background: rgba(245, 158, 11, 0.08);
 }
 
 .local-ai-orb.ready {
-    color: var(--theme-accent);
-    border-color: rgba(52, 211, 153, 0.32);
-    background: rgba(52, 211, 153, 0.08);
+    color: var(--theme-accent-ink);
+    border-color: color-mix(in srgb, var(--theme-accent) 32%, transparent);
+    background: color-mix(in srgb, var(--theme-accent) 8%, transparent);
 }
 
 .local-ai-orb.error {
-    color: #fb7185;
+    color: var(--rose-ink);
     border-color: rgba(251, 113, 133, 0.32);
     background: rgba(251, 113, 133, 0.08);
 }
@@ -133,7 +133,7 @@
 .local-ai-guidance {
     border: 1px solid var(--line);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.035);
+    background: var(--panel-soft);
     padding: 1rem;
 }
 
@@ -167,7 +167,7 @@
     margin: 0.9rem 0;
     overflow: hidden;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--control-hover);
 }
 
 .local-ai-progress-track span {
@@ -191,7 +191,7 @@
 
 .local-ai-error {
     margin: 0.8rem 0 0;
-    color: #fecdd3;
+    color: var(--rose-ink);
     font-family: var(--mono);
     font-size: 0.76rem;
 }
@@ -242,14 +242,14 @@
 }
 
 .local-ai-primary {
-    color: #061014;
-    border-color: rgba(34, 211, 238, 0.55);
+    color: var(--on-primary);
+    border-color: color-mix(in srgb, var(--theme-primary) 55.00000000000001%, transparent);
     background: var(--theme-primary);
 }
 
 .local-ai-secondary {
     color: var(--text-soft);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--panel-soft);
 }
 
 .local-ai-primary:disabled,

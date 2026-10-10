@@ -834,14 +834,33 @@ window.GDriveSync = {
         }
 
         const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
-        const response = await fetch(url, {
+        const request = {
             method: "PATCH",
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": mimeType
             },
             body: contentBlob
-        });
+        };
+        // Replacing file contents is safe to retry. Creation requests are excluded
+        // because an uncertain POST can create duplicates.
+        const maxRetries = 3;
+        let response;
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            let retryReason;
+            try {
+                response = await fetch(url, request);
+                if (response.ok || ![429, 500, 502, 503, 504].includes(response.status) || attempt === maxRetries) break;
+                retryReason = 'HTTP ' + response.status;
+                await response.text().catch(() => {});
+            } catch (error) {
+                if (error.name !== 'TypeError' || attempt === maxRetries) throw error;
+                retryReason = 'a network error';
+            }
+            const delay = (2 ** attempt) * 1000 + Math.floor(Math.random() * 1000);
+            console.warn('PortfoliOS: Drive file update returned ' + retryReason + '; retry ' + (attempt + 1) + '/' + maxRetries + ' in ' + delay + 'ms.');
+            await new Promise(resolve => window.setTimeout(resolve, delay));
+        }
 
         if (!response.ok) {
             const errText = await response.text();

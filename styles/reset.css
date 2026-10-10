@@ -43,3 +43,6 @@ button {
     pointer-events: none;
     opacity: 0.72;
 }
+
+/* Native placeholders participate in the active shell palette. */
+input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }

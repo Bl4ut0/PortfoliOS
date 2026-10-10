@@ -23,6 +23,22 @@
     --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
     --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
 
+    /* Opaque surfaces prevent wallpaper colors from reducing text contrast. */
+    --surface-inset: var(--bg);
+    --surface: color-mix(in srgb, var(--bg) 97%, var(--text));
+    --surface-raised: color-mix(in srgb, var(--bg) 94%, var(--text));
+    --surface-overlay: color-mix(in srgb, var(--bg) 94%, var(--text));
+    --scrim: rgba(0, 0, 0, 0.55);
+    --control-hover: color-mix(in srgb, var(--text) 9%, transparent);
+    --on-primary: #061017;
+    --on-accent: #061017;
+    --theme-primary-ink: var(--theme-primary);
+    --theme-accent-ink: var(--theme-accent);
+    --amber-ink: var(--amber);
+    --blue-ink: var(--blue);
+    --violet-ink: var(--violet);
+    --rose-ink: var(--rose);
+    --teal-ink: var(--teal);
     --shadow: var(--glass-shadow);
     --mono: "JetBrains Mono", Consolas, monospace;
     --heading: "Space Grotesk", Inter, system-ui, sans-serif;
