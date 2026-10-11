@@ -9,6 +9,8 @@
     html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1c1f; }
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
   </style>
+  <script src="./session-storage.js"></script>
+  <script>if(new URLSearchParams(location.search).has("webgl"))Object.defineProperty(navigator,"gpu",{value:undefined});</script>
   <script src="./host-bridge.js"></script>
 </head>
 <body>
@@ -25,10 +27,11 @@
       }
       window.effectcraftModule = module;
       await init({ module_or_path: module });
+      window.effectcraft = { ...ec, execute: (command, params = {}) => ec.request("engine.execute", {command, params}) };
       await ec.start("effectcraft_canvas");
       dispatchEvent(new CustomEvent("EffectCraftStarted", { detail: { module } }));
     } catch (e) {
-      console.error("EffectCraft start error:", e);
+      console.error("EffectCraft start error:", e);parent.postMessage({type:"craft:failed"},location.origin);
     }
   </script>
 </body>

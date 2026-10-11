@@ -66,6 +66,13 @@ vm.runInNewContext(fs.readFileSync(path.join(root, "core", "security-service.js"
     assert.throws(() => security.assertAgentAccess("/home/bl4ut0/.auth/google-drive.json", "read"), /denied/, "agents must not access hidden auth records");
     assert.throws(() => security.assertAgentAccess("/.quarantine/sample", "read"), /denied/, "agents must not access quarantined files");
 
+    for (const source of ['vscode-output','cloud-download','device-import']) {
+        const saved=await security.importFile({path:'/documents/check-'+source+'.js',name:'check-'+source+'.js',data:'console.log("inert source");',type:'text/plain',source,options:{documentPolicy:'source-text'}});
+        assert.equal(saved.status,source==='vscode-output'?'accepted':'quarantined','Only the local Code OSS writer may use the inert-source policy');
+    }
+    const binarySource=await security.importFile({path:'/documents/binary.js',name:'binary.js',data:new Uint8Array([0,255]),source:'vscode-output',options:{documentPolicy:'source-text'}});
+    assert.equal(binarySource.status,'quarantined','Binary data cannot use source-text policy');
+
     for (const name of ["late.txt", "late.exe"]) {
         windowObject.state = { currentUserId: "private_A" };
         const blob = new Blob([name.endsWith(".exe") ? new Uint8Array([0x4d, 0x5a]) : "safe"]);

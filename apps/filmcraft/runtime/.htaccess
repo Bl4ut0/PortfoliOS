@@ -1,6 +1,5 @@
-# Public immutable editor assets only. User documents never reach this directory.
 <IfModule mod_headers.c>
-    Header always set Access-Control-Allow-Origin "*"
-    Header always set Cross-Origin-Resource-Policy "cross-origin"
     Header always unset X-Frame-Options
+    Header always set Cross-Origin-Resource-Policy "cross-origin"
+    Header always set Access-Control-Allow-Origin "*"
 </IfModule>

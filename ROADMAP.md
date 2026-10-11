@@ -58,3 +58,9 @@ Updated 2026-10-10. Priorities describe delivery order rather than promised date
 ## Release checks
 
 Run npm test. For storage changes, serve the repo and open scripts/check-profile-filesystem.html: its disposable IndexedDB audit must pass. Check Desktop and Mobile chooser entry, public access, saved account reconnect, another account, cancellation, offline continuation, reload, and profile switching during backup. Google consent requires an authorized origin and a human account; mocked OAuth tests do not replace that final check.
+
+## 2026-10-11 integration follow-up
+
+Implemented: isolated lazy Craft adapters, native contextual SystemFS dialogs, actual upstream icons, private-to-public autosave sequencing, LightCraft library checkpoints, Code OSS Documents filesystem provider, and full-viewport Desktop Auto on foldable/narrow screens. See [review evidence and limits](docs/ARTCRAFT_REVIEW.md).
+
+Next acceptance gates: layered PhotoCraft and multi-document VectorCraft/DesignCraft edit/save/reopen fixtures; LightCraft first useful interaction and larger libraries; FilmCraft/EffectCraft media-codec/render fixtures; Code OSS worker/extension compatibility and a separately reviewed source-file cloud restore policy; physical Fold and native Mobile touch adaptations. Evaluate Penpot service integration, Graphite and Blockbench after these gates. Blender browser support remains research rather than an installed app promise.

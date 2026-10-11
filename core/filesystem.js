@@ -586,7 +586,74 @@ window.SystemFS = {
         });
     },
 
+    canBrowsePath(path) {
+        if (!path || path === "/") return true;
+        const parts = path.split("/").filter(Boolean);
+        if (parts.some((p) => p.startsWith("."))) return false;
+        return !this.isSharedPath(path) || ["/documents", "/Pictures", "/Downloads", "/music", "/Saved Games"].some(root => path === root || path.startsWith(root + "/"));
+    },
+
+    async showFileDialog({mode='open', title=mode==='save'?'Save As':'Open File', folder='/documents', defaultName='untitled', types=[], acceptLabel=mode==='save'?'Save':'Open', signal}={}) {
+        if(typeof document==='undefined') return null;
+        const owner=window.state?.currentUserId;await this.ensureReady();this.assertProfile(owner);
+        if(signal?.aborted) return null;
+        const validName=name=>!!name && !name.startsWith('.') && !/[\\/:*?"<>|\u0000-\u001f]/.test(name);
+        return new Promise(resolve=>{
+            let alive=true, revision=0, currentFolder=this.canBrowsePath(folder)?this.normalizePath(folder):'/documents', selected=null, replacement=null;
+            const dialog=document.createElement('dialog');dialog.className='systemfs-dialog';dialog.setAttribute('aria-label',title);
+            const esc=window.escapeHtml;
+            dialog.innerHTML=`<header class="systemfs-dialog-header"><h2>${esc(title)}</h2><button type="button" data-action="cancel" aria-label="Close">×</button></header><nav class="systemfs-dialog-nav" aria-label="Folders"><button type="button" data-action="root">Workspace</button><button type="button" data-action="up">Up</button><output data-location></output></nav><div class="systemfs-dialog-list" data-list></div><div class="systemfs-new-folder-row"><input class="systemfs-input" data-new-folder aria-label="New folder name" placeholder="New folder name"><button type="button" data-action="create-folder">New folder</button></div><label class="systemfs-filename-row">File name <input class="systemfs-input" data-filename aria-label="File name" value="${esc(defaultName)}" ${mode==='open'?'readonly':''}></label><div data-device ${mode==='save'?'hidden':''}><label>Upload from computer <input type="file" data-upload ${types.length?'accept="'+esc(types.join(','))+'"':''}></label><p data-drop>Drop a file from your computer here</p></div><p data-warning role="status"></p><footer class="systemfs-dialog-footer"><button type="button" data-action="cancel">Cancel</button><button type="button" data-action="confirm">${esc(acceptLabel)}</button></footer>`;
+            document.body.append(dialog);
+            const find=selector=>dialog.querySelector(selector), warning=find('[data-warning]'), nameInput=find('[data-filename]'), confirm=find('[data-action=confirm]');
+            const current=()=>alive && owner===window.state?.currentUserId && !signal?.aborted;
+            const close=result=>{if(!alive)return;alive=false;revision++;signal?.removeEventListener('abort',cancel);window.EventBus?.off?.('user:changed',cancel);dialog.close();dialog.remove();resolve(result);};
+            const cancel=()=>close(null);
+            const assert=()=>{if(!current()){cancel();throw new Error('The workspace changed.');}};
+            const action=fn=>async()=>{try{assert();await fn();}catch(error){if(current())warning.textContent=error.message;}};
+            async function navigate(target){
+                assert();const path=SystemFS.normalizePath(target);if(!SystemFS.canBrowsePath(path))throw new Error('That location is restricted.');
+                const token=++revision;currentFolder=path;selected=null;replacement=null;confirm.textContent=acceptLabel;warning.textContent='';find('[data-location]').textContent=path;find('[data-action=up]').disabled=path==='/';find('[data-list]').textContent='Loading…';
+                const entries=await SystemFS.readDir(path);assert();if(token!==revision)return;
+                const list=find('[data-list]');list.replaceChildren();
+                entries.filter(e=>!e.name.startsWith('.') && SystemFS.canBrowsePath(e.path)).sort((a,b)=>Number(b.isDirectory)-Number(a.isDirectory)||a.name.localeCompare(b.name)).forEach(file=>{
+                    const button=document.createElement('button');button.type='button';button.className='systemfs-item-btn';button.textContent=(file.isDirectory?'📁 ':'')+file.name;button.dataset.path=file.path;
+                    const match=!types.length||types.some(t=>file.name.toLowerCase().endsWith(t.toLowerCase()));button.disabled=mode==='open'&&!file.isDirectory&&!match;
+                    button.addEventListener('click',action(async()=>{if(file.isDirectory){await navigate(file.path);return;}selected=file.path;nameInput.value=file.name;replacement=null;confirm.textContent=acceptLabel;list.querySelectorAll('[aria-pressed]').forEach(e=>e.removeAttribute('aria-pressed'));button.setAttribute('aria-pressed','true');}));
+                    if(!file.isDirectory&&mode==='open'&&match)button.addEventListener('dblclick',action(async()=>{selected=file.path;await accept();}));list.append(button);
+                });
+                if(!list.children.length)list.textContent='This folder is empty.';
+            }
+            async function accept(){
+                assert();if(mode==='open'){if(!selected)throw new Error('Select a file to open.');const record=await SystemFS.readFile(selected);assert();if(!record||record.isDirectory)throw new Error('That file is no longer available.');close({path:record.path,name:record.name,parent:record.parent,record});return;}
+                let name=nameInput.value.trim();if(!validName(name))throw new Error('Enter a filename without slashes or hidden prefixes.');if(types.length&&!types.some(t=>name.toLowerCase().endsWith(t.toLowerCase())))name+=types[0];
+                const path=SystemFS.normalizePath(currentFolder+'/'+name);if(!SystemFS.canBrowsePath(path))throw new Error('Choose a workspace location.');
+                const existing=await SystemFS.readFile(path);assert();if(existing?.isDirectory)throw new Error('A folder already uses this name.');if(existing&&replacement!==path){replacement=path;warning.textContent='This file exists. Choose Replace to overwrite it.';confirm.textContent='Replace';return;}
+                close({path,name,parent:currentFolder,folder:currentFolder});
+            }
+            function device(file){if(!current()||!file)return;if(types.length&&!types.some(t=>file.name.toLowerCase().endsWith(t.toLowerCase()))){warning.textContent='Choose a supported file type.';return;}close({file});}
+            dialog.addEventListener('click',event=>{const type=event.target.closest('[data-action]')?.dataset.action;if(type==='cancel')cancel();else if(type==='root')action(()=>navigate('/'))();else if(type==='up')action(()=>navigate(SystemFS.getParentPath(currentFolder)))();else if(type==='confirm')action(accept)();else if(type==='create-folder')action(async()=>{const name=find('[data-new-folder]').value.trim();if(!validName(name))throw new Error('Enter a folder name without slashes or hidden prefixes.');const path=SystemFS.normalizePath(currentFolder+'/'+name);if(!SystemFS.canBrowsePath(path))throw new Error('Choose a workspace location.');await SystemFS.ensureDirectory(path);assert();find('[data-new-folder]').value='';await navigate(path);})();});
+            nameInput.addEventListener('input',()=>{replacement=null;confirm.textContent=acceptLabel;warning.textContent='';});
+            dialog.addEventListener('cancel',event=>{event.preventDefault();cancel();});dialog.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target===nameInput){event.preventDefault();action(accept)();}});
+            find('[data-upload]').addEventListener('change',event=>device(event.target.files[0]));find('[data-drop]').addEventListener('dragover',event=>event.preventDefault());find('[data-drop]').addEventListener('drop',event=>{event.preventDefault();device(event.dataTransfer?.files[0]);});
+            signal?.addEventListener('abort',cancel,{once:true});window.EventBus?.on?.('user:changed',cancel);dialog.showModal();action(()=>navigate(currentFolder))();
+        });
+    },
+
+    showOpenDialog(options = {}) {
+        return this.showFileDialog({ ...options, mode: "open" });
+    },
+
+    showSaveDialog(options = {}) {
+        return this.showFileDialog({ ...options, mode: "save" });
+    },
+
     clearCache() {
         this.initPromise = this.db ? Promise.resolve(this.db) : null;
     }
+};
+
+window.SystemFSNav = {
+    showFileDialog: (...args) => window.SystemFS.showFileDialog(...args),
+    showOpenDialog: (...args) => window.SystemFS.showOpenDialog(...args),
+    showSaveDialog: (...args) => window.SystemFS.showSaveDialog(...args)
 };

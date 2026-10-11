@@ -213,13 +213,13 @@ window.applyCurrentUserProfile = () => {
     if (window.renderStore) window.renderStore();
 };
 
-window.prepareProfileSwitch = async ({ allowProfileSwitch = false } = {}) => {
+window.prepareProfileSwitch = async ({ allowProfileSwitch = false, autoSave = false } = {}) => {
     if (window.GDriveSync?.profileSwitchInProgress && !allowProfileSwitch) throw new Error("A profile switch is already in progress.");
     if (Object.keys(window.state?.installingApps || {}).length) throw new Error("Wait for app installation to finish before switching accounts.");
     if (window.GDriveSync?.syncInProgress) throw new Error("Wait for the current Drive backup to finish before switching accounts.");
     const apps = Array.from(window.state?.openApps || []);
     for (const appId of apps) {
-        const allowed = await window.runAppLifecycleHook?.(appId, "beforeClose", window.getDesktopWindowElement?.(appId), { rethrow: true, reason: "profile-switch" });
+        const allowed = await window.runAppLifecycleHook?.(appId, "beforeClose", window.getDesktopWindowElement?.(appId), { rethrow: true, reason: "profile-switch", autoSave });
         if (allowed === false) throw new Error("Save your work in " + (window.appRegistry?.[appId]?.title || appId) + " before switching profiles.");
     }
     const closed = await Promise.all(apps.map(appId => window.closeDesktopWindow?.(appId)));
@@ -314,6 +314,7 @@ const profilePreferenceWrites = new Map();
 window.savePreferencesToFilesystem = async ({ strict = false } = {}) => {
     const user = window.getCurrentUser ? window.getCurrentUser() : null;
     if (!user) { if (strict) throw new Error("The current profile is unavailable."); return; }
+    if (!window.isPrivateUser?.(user.id)) return;
 
     try {
         if (!window.SystemFS) { if (strict) throw new Error("Local storage is unavailable."); return; }
@@ -354,7 +355,7 @@ window.savePreferencesToFilesystem = async ({ strict = false } = {}) => {
 
 window.loadPreferencesFromFilesystem = async () => {
     const user = window.getCurrentUser ? window.getCurrentUser() : null;
-    if (!user) return;
+    if (!user || !window.isPrivateUser?.(user.id)) return;
 
     try {
         if (!window.SystemFS) return;

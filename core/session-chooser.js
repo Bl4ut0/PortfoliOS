@@ -122,17 +122,6 @@
                 window.closeSessionChooser();
                 return;
             }
-            if (button.hasAttribute("data-session-public") && window.isPrivateUser?.(window.state.currentUserId)) {
-                const actions = overlay.querySelector("[data-session-public-actions]");
-                if (actions) {
-                    actions.hidden = false;
-                    actions.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
-                    const saveBtn = overlay.querySelector("[data-session-public-save]");
-                    if (saveBtn) saveBtn.disabled = !window.GDriveSync?.getToken();
-                    (saveBtn && !saveBtn.disabled ? saveBtn : overlay.querySelector("[data-session-public-local]"))?.focus?.();
-                }
-                return;
-            }
             const id = button.dataset.sessionProfile;
             const error = overlay.querySelector("[data-session-error]");
             const offline = overlay.querySelector("[data-session-offline]");
@@ -144,9 +133,14 @@
             try {
                 await window.prepareSessionStorage?.();
                 if (button.hasAttribute("data-session-public")) {
-                    window.resetPublicLocalState?.();
-                    await window.SystemFS?.resetPublicWorkspace?.();
-                    await window.SystemFS?.ensureDefaultFiles?.();
+                    if (window.isPrivateUser?.(window.state.currentUserId)) {
+                        error.hidden = false; error.textContent = 'Saving your private workspace…';
+                        await window.switchToPublicProfile({ saveToDrive: !!window.GDriveSync?.getToken(), onProgress: message => { error.textContent = message; } });
+                    } else {
+                        window.resetPublicLocalState?.();
+                        await window.SystemFS?.resetPublicWorkspace?.();
+                        await window.SystemFS?.ensureDefaultFiles?.();
+                    }
                     await complete();
                 } else if (button.hasAttribute("data-session-public-save") || button.hasAttribute("data-session-public-local")) {
                     error.hidden = false; error.textContent = "Saving local changes…";

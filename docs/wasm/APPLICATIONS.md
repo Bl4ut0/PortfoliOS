@@ -1,6 +1,6 @@
 # PortfoliOS WASM application catalog
 
-Reviewed 2026-10-11. 30 entries; 213 documentation references. Generated from [catalog.json](catalog.json); edit the JSON and run node scripts/build-wasm-catalog.js.
+Reviewed 2026-10-11. 31 entries; 219 documentation references. Generated from [catalog.json](catalog.json); edit the JSON and run node scripts/build-wasm-catalog.js.
 
 [Library home](README.md) | [Documentation index](DOCUMENTATION.md) | [Integration guide](INTEGRATION.md) | [Expansion roadmap](ROADMAP.md)
 
@@ -10,8 +10,6 @@ Candidate means researched, not installed. Upstream browser support is separate 
 
 | Project | Category | Runtime classification | Status |
 | --- | --- | --- | --- |
-| [PhotoCraft](#photocraft) | Image editing | wasm-application | candidate |
-| [VectorCraft](#vectorcraft) | Graphics | wasm-application | candidate |
 | [Graphite](#graphite) | Graphics | wasm-application | candidate |
 | [FFmpeg.wasm](#ffmpeg-wasm) | Media utilities | wasm-engine | candidate |
 | [Tesseract.js OCR](#tesseract-js) | Documents | wasm-engine | candidate |
@@ -20,8 +18,6 @@ Candidate means researched, not installed. Upstream browser support is separate 
 
 | Project | Category | Runtime classification | Status |
 | --- | --- | --- | --- |
-| [LightCraft](#lightcraft) | Photography | wasm-application | candidate |
-| [DesignCraft](#designcraft) | Publishing | wasm-application | candidate |
 | [Wavacity](#wavacity) | Audio | wasm-application | candidate |
 | [Pyodide](#pyodide) | Development | wasm-engine | candidate |
 | [OpenSCAD Playground](#openscad) | CAD | wasm-application | candidate |
@@ -34,8 +30,6 @@ Candidate means researched, not installed. Upstream browser support is separate 
 
 | Project | Category | Runtime classification | Status |
 | --- | --- | --- | --- |
-| [FilmCraft](#filmcraft) | Video | wasm-application | candidate |
-| [EffectCraft](#effectcraft) | Motion graphics | wasm-application | candidate |
 | [Ruffle](#ruffle) | Games and preservation | wasm-engine | candidate |
 | [whisper.cpp](#whisper-cpp) | Audio and AI | wasm-engine | candidate |
 | [Godot Web exports](#godot-web) | Games and creation | wasm-engine | candidate |
@@ -44,7 +38,13 @@ Candidate means researched, not installed. Upstream browser support is separate 
 
 | Project | Category | Runtime classification | Status |
 | --- | --- | --- | --- |
+| [PhotoCraft](#photocraft) | Image editing | wasm-application | integrated |
 | [PdfCraft](#pdfcraft) | Documents | wasm-application | integrated |
+| [VectorCraft](#vectorcraft) | Graphics | wasm-application | integrated |
+| [LightCraft](#lightcraft) | Photography | wasm-application | integrated |
+| [DesignCraft](#designcraft) | Publishing | wasm-application | integrated |
+| [FilmCraft](#filmcraft) | Video | wasm-application | integrated |
+| [EffectCraft](#effectcraft) | Motion graphics | wasm-application | integrated |
 | [Doom](#doomsource) | Existing games | wasm-runtime | integrated |
 | [Duke Nukem 3D](#duke32) | Existing games | wasm-runtime | integrated |
 | [Diablo](#diablo) | Existing games | wasm-runtime | integrated |
@@ -55,6 +55,7 @@ Candidate means researched, not installed. Upstream browser support is separate 
 | [Office / LibreOffice-labeled shell](#office) | Related browser apps | placeholder | shell-only |
 | [Local AI / WebLLM](#local-ai) | Related browser apps | webgpu-runtime | integrated |
 | [Webamp](#webamp) | Related browser apps | javascript-webgl | integrated |
+| [Code OSS web](#code-oss) | Development | browser-app-with-wasm-kernel | integrated |
 
 ## Project notes
 
@@ -64,19 +65,20 @@ Candidate means researched, not installed. Upstream browser support is separate 
 
 Photoshop-style layers, brushes, image editing, and PSD workflows.
 
-- **Classification:** wasm-application; candidate; evaluate-first.
+- **Classification:** wasm-application; integrated; maintain.
 - **Runtime:** Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.
 - **Upstream readiness:** Early alpha; upstream explicitly says it is not yet a daily professional Photoshop replacement.
-- **PortfoliOS readiness:** Not installed or runtime-tested in PortfoliOS.
-- **Desktop:** Evaluate a lazy-loaded app or engine adapter.
+- **PortfoliOS readiness:** Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.
+- **Desktop:** Lazy native Desktop adapter; contextual SystemFS file bridge.
 - **Mobile:** Desktop/tablet evaluation first; phone tools and pen input need separate testing.
 - **Files and backup:** Image documents and editable project files; export PNG/JPEG/PSD only after round-trip checks.
 - **Lifecycle:** Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.
-- **Performance evidence:** Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.
-- **Next action:** Open a layered sample, edit, export, reopen, then test the profile file adapter.
+- **Performance evidence:** Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.
+- **Next action:** Complete app-specific editable document/media round-trip fixtures and physical-device checks.
 - **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
-- **Artifact evidence:** version unrecorded; SHA-256 unrecorded; measurement report unrecorded.
-- **Reviewed:** 2026-10-10 (upstream-documentation).
+- **Artifact evidence:** version 0.7.0; SHA-256 dfcbaac00f81f5d05ccffba36a14b320c1b1c7b23a4135fe54877f527e550eec; measurement report docs/ARTCRAFT_REVIEW.md.
+- **Local evidence:** [docs/ARTCRAFT_REVIEW.md](../../docs/ARTCRAFT_REVIEW.md), [apps/photocraft/release.json](../../apps/photocraft/release.json).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter and lifecycle review; see local evidence for exact scope.).
 
 **Documentation**
 
@@ -99,17 +101,17 @@ PDF reading and page organization, combining, splitting, and protection.
 - **Classification:** wasm-application; integrated; maintain.
 - **Runtime:** Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.
 - **Upstream readiness:** Official v0.6.0 web release with parent-window Open/Save/dirty bridge; individual tools still require acceptance tests.
-- **PortfoliOS readiness:** Desktop Store adapter with actual WASM import, persistent rotation, SystemFS save/reopen and dirty-work/profile guards.
-- **Desktop:** Lazy Desktop editor; official unmodified engine inside an opaque sandbox.
+- **PortfoliOS readiness:** Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.
+- **Desktop:** Lazy native Desktop adapter; contextual SystemFS file bridge.
 - **Mobile:** Desktop availability shown in Mobile Store; native phone editor not shipped.
 - **Files and backup:** Scanned PDF originals/outputs in profile-scoped SystemFS. Engine-local storage is blocked; save explicitly before close.
 - **Lifecycle:** beforeClose veto for dirty/failed work, pending-write flush, opaque frame/timer/listener teardown and profile ownership checks.
-- **Performance evidence:** 40,599,741-byte WASM and 162,788-byte glue; no engine requests at boot in Chrome smoke test. Broader device/memory profiling remains pending.
-- **Next action:** Expand merge/split/encryption test corpus, measure physical-device performance, then evaluate PhotoCraft and VectorCraft independently.
+- **Performance evidence:** Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.
+- **Next action:** Complete app-specific editable document/media round-trip fixtures and physical-device checks.
 - **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
-- **Artifact evidence:** version 0.6.0; SHA-256 a957a75e35390fa8747ae97464b7a9f178cce61edda22b3b98764462060d15a5; measurement report unrecorded.
-- **Local evidence:** [apps/pdfcraft/README.md](../../apps/pdfcraft/README.md), [apps/pdfcraft/release.json](../../apps/pdfcraft/release.json), [scripts/check-pdfcraft-browser.js](../../scripts/check-pdfcraft-browser.js).
-- **Reviewed:** 2026-10-11 (real-wasm-browser-tests).
+- **Artifact evidence:** version 0.6.0; SHA-256 a957a75e35390fa8747ae97464b7a9f178cce61edda22b3b98764462060d15a5; measurement report docs/ARTCRAFT_REVIEW.md.
+- **Local evidence:** [apps/pdfcraft/README.md](../../apps/pdfcraft/README.md), [apps/pdfcraft/release.json](../../apps/pdfcraft/release.json), [scripts/check-pdfcraft-browser.js](../../scripts/check-pdfcraft-browser.js), [docs/ARTCRAFT_REVIEW.md](../../docs/ARTCRAFT_REVIEW.md).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter and lifecycle review; see local evidence for exact scope.).
 
 **Documentation**
 
@@ -129,19 +131,20 @@ PDF reading and page organization, combining, splitting, and protection.
 
 Vector illustration, paths, SVG artwork, and Illustrator-style workflows.
 
-- **Classification:** wasm-application; candidate; evaluate-first.
+- **Classification:** wasm-application; integrated; maintain.
 - **Runtime:** Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.
 - **Upstream readiness:** Actively developing; upstream self-assessed feature parity is not PortfoliOS acceptance evidence.
-- **PortfoliOS readiness:** Not installed or runtime-tested in PortfoliOS.
-- **Desktop:** Evaluate a lazy-loaded app or engine adapter.
+- **PortfoliOS readiness:** Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.
+- **Desktop:** Lazy native Desktop adapter; contextual SystemFS file bridge.
 - **Mobile:** Desktop/tablet first; full phone editing is untested.
 - **Files and backup:** Native vector documents, SVG/PDF exports, linked images, and fonts need an explicit file adapter.
 - **Lifecycle:** Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.
-- **Performance evidence:** Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.
-- **Next action:** Compare a small SVG editing workflow against Graphite before choosing the first vector app.
+- **Performance evidence:** Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.
+- **Next action:** Complete app-specific editable document/media round-trip fixtures and physical-device checks.
 - **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
-- **Artifact evidence:** version unrecorded; SHA-256 unrecorded; measurement report unrecorded.
-- **Reviewed:** 2026-10-10 (upstream-documentation).
+- **Artifact evidence:** version 0.9.0; SHA-256 4ebe8829a22fa17975c96765dfe9812bd2834e3e721381b4b14abb802c4d7dc1; measurement report docs/ARTCRAFT_REVIEW.md.
+- **Local evidence:** [docs/ARTCRAFT_REVIEW.md](../../docs/ARTCRAFT_REVIEW.md), [apps/vectorcraft/release.json](../../apps/vectorcraft/release.json).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter and lifecycle review; see local evidence for exact scope.).
 
 **Documentation**
 
@@ -161,19 +164,20 @@ Vector illustration, paths, SVG artwork, and Illustrator-style workflows.
 
 Photo library and RAW development in a local Rust application.
 
-- **Classification:** wasm-application; candidate; evaluate-later.
+- **Classification:** wasm-application; integrated; maintain.
 - **Runtime:** Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.
 - **Upstream readiness:** In development; browser support is documented, camera-format fidelity still needs evaluation.
-- **PortfoliOS readiness:** Not installed or runtime-tested in PortfoliOS.
-- **Desktop:** Evaluate a lazy-loaded app or engine adapter.
+- **PortfoliOS readiness:** Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.
+- **Desktop:** Lazy native Desktop adapter; contextual SystemFS file bridge.
 - **Mobile:** Begin with small image adjustments; do not assume large photo catalogs fit phone memory.
 - **Files and backup:** RAW originals, adjustment sidecars, catalogs, and thumbnails have different backup needs.
 - **Lifecycle:** Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.
-- **Performance evidence:** Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.
-- **Next action:** Test representative camera files and decide which catalog data belongs in SystemFS.
+- **Performance evidence:** Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.
+- **Next action:** Complete app-specific editable document/media round-trip fixtures and physical-device checks.
 - **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
-- **Artifact evidence:** version unrecorded; SHA-256 unrecorded; measurement report unrecorded.
-- **Reviewed:** 2026-10-10 (upstream-documentation).
+- **Artifact evidence:** version 0.6.0; SHA-256 f20bfc75fbbfd204ed81e32d73e967212bff6cb30cbe8532b7b0e4fed581a2f6; measurement report docs/ARTCRAFT_REVIEW.md.
+- **Local evidence:** [docs/ARTCRAFT_REVIEW.md](../../docs/ARTCRAFT_REVIEW.md), [apps/lightcraft/release.json](../../apps/lightcraft/release.json).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter and lifecycle review; see local evidence for exact scope.).
 
 **Documentation**
 
@@ -193,19 +197,20 @@ Photo library and RAW development in a local Rust application.
 
 Page layout and publishing for brochures and other multi-page documents.
 
-- **Classification:** wasm-application; candidate; evaluate-later.
+- **Classification:** wasm-application; integrated; maintain.
 - **Runtime:** Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.
 - **Upstream readiness:** In development; evaluate layout interchange and font packaging before adoption.
-- **PortfoliOS readiness:** Not installed or runtime-tested in PortfoliOS.
-- **Desktop:** Evaluate a lazy-loaded app or engine adapter.
+- **PortfoliOS readiness:** Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.
+- **Desktop:** Lazy native Desktop adapter; contextual SystemFS file bridge.
 - **Mobile:** Desktop/tablet authoring first; phone preview/export may be more practical.
 - **Files and backup:** Editable layout projects, linked images, fonts, and PDF exports must travel together.
 - **Lifecycle:** Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.
-- **Performance evidence:** Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.
-- **Next action:** Build a two-page document and reopen it with linked assets after an account restore.
+- **Performance evidence:** Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.
+- **Next action:** Complete app-specific editable document/media round-trip fixtures and physical-device checks.
 - **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
-- **Artifact evidence:** version unrecorded; SHA-256 unrecorded; measurement report unrecorded.
-- **Reviewed:** 2026-10-10 (upstream-documentation).
+- **Artifact evidence:** version 0.6.0; SHA-256 b43ebefc5b7900c8223953d632951308a347935adc6fad3ff00e4a7a1d050d63; measurement report docs/ARTCRAFT_REVIEW.md.
+- **Local evidence:** [docs/ARTCRAFT_REVIEW.md](../../docs/ARTCRAFT_REVIEW.md), [apps/designcraft/release.json](../../apps/designcraft/release.json).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter and lifecycle review; see local evidence for exact scope.).
 
 **Documentation**
 
@@ -225,19 +230,20 @@ Page layout and publishing for brochures and other multi-page documents.
 
 Nonlinear video editing, color, sound, and Premiere-style workflows.
 
-- **Classification:** wasm-application; candidate; experimental.
+- **Classification:** wasm-application; integrated; maintain.
 - **Runtime:** Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.
 - **Upstream readiness:** In development; the repository and per-app download page list a web build even though the suite overview omits it.
-- **PortfoliOS readiness:** Not installed or runtime-tested in PortfoliOS.
-- **Desktop:** Evaluate a lazy-loaded app or engine adapter.
+- **PortfoliOS readiness:** Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.
+- **Desktop:** Lazy native Desktop adapter; contextual SystemFS file bridge.
 - **Mobile:** Desktop first; phone import, codec support, heat, and memory need separate measurements.
 - **Files and backup:** Project autosave and media use browser storage/OPFS upstream; bridge them explicitly to profile storage and backup selection.
 - **Lifecycle:** Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.
-- **Performance evidence:** Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.
-- **Next action:** Test a short local clip, save/reload the project, and measure media cache cleanup.
+- **Performance evidence:** Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.
+- **Next action:** Complete app-specific editable document/media round-trip fixtures and physical-device checks.
 - **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
-- **Artifact evidence:** version unrecorded; SHA-256 unrecorded; measurement report unrecorded.
-- **Reviewed:** 2026-10-10 (upstream-documentation).
+- **Artifact evidence:** version 0.6.0; SHA-256 9fd024d371075dc8bb0d868c0f162b60743d28db16d010e2f61b41927ea96629; measurement report docs/ARTCRAFT_REVIEW.md.
+- **Local evidence:** [docs/ARTCRAFT_REVIEW.md](../../docs/ARTCRAFT_REVIEW.md), [apps/filmcraft/release.json](../../apps/filmcraft/release.json).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter and lifecycle review; see local evidence for exact scope.).
 
 **Documentation**
 
@@ -257,19 +263,20 @@ Nonlinear video editing, color, sound, and Premiere-style workflows.
 
 Motion graphics, visual effects, and compositing.
 
-- **Classification:** wasm-application; candidate; experimental.
+- **Classification:** wasm-application; integrated; maintain.
 - **Runtime:** Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.
 - **Upstream readiness:** In development; do not equate a listed effect with verified behavior.
-- **PortfoliOS readiness:** Not installed or runtime-tested in PortfoliOS.
-- **Desktop:** Evaluate a lazy-loaded app or engine adapter.
+- **PortfoliOS readiness:** Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.
+- **Desktop:** Lazy native Desktop adapter; contextual SystemFS file bridge.
 - **Mobile:** Desktop first; phone preview might be feasible after measurement.
 - **Files and backup:** Composition files, linked assets, and rendered output require separate persistence decisions.
 - **Lifecycle:** Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.
-- **Performance evidence:** Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.
-- **Next action:** Test a short composition, import/export, and canceling a render without losing edits.
+- **Performance evidence:** Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.
+- **Next action:** Complete app-specific editable document/media round-trip fixtures and physical-device checks.
 - **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
-- **Artifact evidence:** version unrecorded; SHA-256 unrecorded; measurement report unrecorded.
-- **Reviewed:** 2026-10-10 (upstream-documentation).
+- **Artifact evidence:** version 0.8.0; SHA-256 59426cdd519ea1480215a58158ec0b36a31e6a1163ddd8715f3869caf509069d; measurement report docs/ARTCRAFT_REVIEW.md.
+- **Local evidence:** [docs/ARTCRAFT_REVIEW.md](../../docs/ARTCRAFT_REVIEW.md), [apps/effectcraft/release.json](../../apps/effectcraft/release.json).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter and lifecycle review; see local evidence for exact scope.).
 
 **Documentation**
 
@@ -969,3 +976,33 @@ Existing classic media player; retained as an adjacent browser app reference.
 - [Releases and downloadable artifacts](https://github.com/captbaritone/webamp/releases) (releases).
 - [Upstream issue tracker](https://github.com/captbaritone/webamp/issues) (issues).
 - [License and notices entry point](https://github.com/captbaritone/webamp#license) (license).
+
+<a id="code-oss"></a>
+
+### Code OSS web
+
+Real VS Code web workbench connected to the active profile Documents workspace.
+
+- **Classification:** browser-app-with-wasm-kernel; integrated; maintain.
+- **Runtime:** Code OSS browser JavaScript workbench via monaco-vscode-api, including a WASM diff component.
+- **Upstream readiness:** Browser workbench; native terminals and desktop-only extensions are outside the browser runtime.
+- **PortfoliOS readiness:** Explorer/edit/save/reopen and private A/B/public-switch autosave browser checks pass.
+- **Desktop:** Lazy installed Desktop app; isolated Documents-only provider.
+- **Mobile:** Desktop only; phone UX is not certified.
+- **Files and backup:** SystemFS Documents; 4 MiB per file; source-code cloud restore retains current quarantine policy.
+- **Lifecycle:** Save all open documents and wait for durable writes before closing or switching.
+- **Performance evidence:** 8.5 MB main bundle / 2.16 MB gzip on app launch; no boot download.
+- **Next action:** Broader worker/extension compatibility, folder rename and separately reviewed source-code cloud restore.
+- **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
+- **Artifact evidence:** version 37.3.11; SHA-256 unrecorded; measurement report docs/ARTCRAFT_REVIEW.md.
+- **Local evidence:** [apps/vscode/README.md](../../apps/vscode/README.md), [apps/vscode/release.json](../../apps/vscode/release.json), [scripts/check-vscode-browser.js](../../scripts/check-vscode-browser.js), [docs/ARTCRAFT_REVIEW.md](../../docs/ARTCRAFT_REVIEW.md).
+- **Reviewed:** 2026-10-11 (Actual Code OSS browser workbench edit/save/reopen and profile-switch check.).
+
+**Documentation**
+
+- [VS Code web](https://code.visualstudio.com/docs/remote/vscode-web) (overview).
+- [CodinGame integration](https://github.com/CodinGame/monaco-vscode-api) (source).
+- [Virtual workspaces](https://code.visualstudio.com/api/extension-guides/virtual-workspaces) (build-api).
+- [Integration releases](https://github.com/CodinGame/monaco-vscode-api/releases) (releases).
+- [Integration issues](https://github.com/CodinGame/monaco-vscode-api/issues) (issues).
+- [MIT license](https://github.com/CodinGame/monaco-vscode-api/blob/main/LICENSE) (license).

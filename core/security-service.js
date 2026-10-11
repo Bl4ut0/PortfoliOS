@@ -47,8 +47,8 @@
         if (bytesStartWith(bytes, [0x89, 0x50, 0x4e, 0x47])) return "image/png";
         if (bytesStartWith(bytes, [0xff, 0xd8, 0xff])) return "image/jpeg";
         const text = new TextDecoder().decode(bytes.slice(0, Math.min(bytes.length, 2048))).trimStart().toLowerCase();
-        if (text.startsWith("<!doctype html") || text.startsWith("<html")) return "text/html";
-        if (text.startsWith("<svg")) return "image/svg+xml";
+        if (/<!doctype\s+html|<html[\s>]/i.test(text)) return "text/html";
+        if (/<svg[\s>]/i.test(text)) return "image/svg+xml";
         return declaredType || (extensionOf(name) === ".txt" ? "text/plain" : "application/octet-stream");
     }
 
@@ -59,7 +59,17 @@
         return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
     }
 
-    async function inspect({ name, type, data, size, source = "local-import" }) {
+    async function passiveVectorDocument(blob) {
+        if (typeof DOMParser === 'undefined' || blob.size > 8 * 1024 * 1024) return false;
+        const text = (await blob.text()).replace(/^\s*<\?xml\s+[^?]*\?>/, '');
+        if (/<!DOCTYPE|<!ENTITY|<\?|@import|expression\s*\(|javascript\s*:|data\s*:|https?\s*:\/\/|url\s*\(\s*['"]?(?!#)/i.test(text.replace(/xmlns(?::[\w-]+)?\s*=\s*(['"])[^'"]*\1/g, ''))) return false;
+        const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+        const allowed = new Set('svg g defs path rect circle ellipse line polyline polygon text tspan textPath title desc metadata style linearGradient radialGradient stop clipPath mask pattern symbol use marker'.split(' '));
+        if (doc.querySelector('parsererror') || doc.documentElement.localName !== 'svg') return false;
+        return [...doc.querySelectorAll('*')].every(node => allowed.has(node.localName) && node.namespaceURI === 'http://www.w3.org/2000/svg' && [...node.attributes].every(attr => !/^on/i.test(attr.localName) && (!['href','src'].includes(attr.localName) || attr.value.startsWith('#'))));
+    }
+
+    async function inspect({ name, type, data, size, source = "local-import", documentPolicy }) {
         const blob = await toBlob(data, type);
         const fileSize = Number(size ?? blob.size ?? 0);
         const normalizedName = safeName(name);
@@ -80,15 +90,23 @@
             hash: null
         };
 
+        let sourceText = false;
+        if (documentPolicy === 'source-text' && source === 'vscode-output' && blob.size <= 4 * 1024 * 1024 && /\.(txt|md|json|js|mjs|cjs|ts|tsx|jsx|css|html?|xml|svg|ya?ml|py|rs|go|c|cpp|h|sh|toml|ini|csv)$/i.test(normalizedName)) {
+            try { const text = new TextDecoder('utf-8', {fatal:true}).decode(await blob.arrayBuffer()); sourceText = !text.includes('\u0000'); } catch {}
+            if (sourceText) { result.detectedType = 'text/plain'; result.reason = 'UTF-8 source document saved as inert text by Code OSS.'; }
+        }
         if (fileSize > MAX_SCAN_BYTES) {
             result.verdict = "quarantined";
             result.reason = "File exceeds the local scanner size limit (64 MiB).";
-        } else if (ACTIVE_EXTENSIONS.has(extension) || ACTIVE_MIME_TYPES.has(detectedType) || ACTIVE_MIME_TYPES.has(result.declaredType)) {
+        } else if (!sourceText && (ACTIVE_EXTENSIONS.has(extension) || ACTIVE_MIME_TYPES.has(detectedType) || ACTIVE_MIME_TYPES.has(result.declaredType))) {
             result.verdict = "blocked";
             result.reason = "Executable or active code is not accepted into the local workspace.";
-        } else if (RISKY_DOCUMENT_EXTENSIONS.has(extension) || ["text/html", "image/svg+xml"].includes(detectedType)) {
-            result.verdict = "quarantined";
-            result.reason = "Active document content requires review before it can enter the workspace.";
+        } else if (!sourceText && (RISKY_DOCUMENT_EXTENSIONS.has(extension) || ["text/html", "image/svg+xml"].includes(detectedType))) {
+            const passive = documentPolicy === 'passive-svg' && source.startsWith('vectorcraft-') && extension === '.svg' && detectedType === 'image/svg+xml' && await passiveVectorDocument(blob);
+            if (!passive) {
+                result.verdict = "quarantined";
+                result.reason = "Active document content requires review before it can enter the workspace.";
+            } else result.reason = 'Passive vector drawing accepted for the isolated VectorCraft editor.';
         } else if (detectedType === "application/zip" && fileSize > 32 * 1024 * 1024) {
             result.verdict = "quarantined";
             result.reason = "Large archive requires review to reduce archive-bomb risk.";
@@ -139,7 +157,7 @@
         const importingUser = window.state?.currentUserId;
         const safePath = window.SystemFS.normalizePath(path || `${parent || "/"}/${safeName(name)}`);
         const safeParent = window.SystemFS.normalizePath(parent || window.SystemFS.getParentPath(safePath));
-        const scanned = await inspect({ name: name || window.SystemFS.getName(safePath), type, data, size, source });
+        const scanned = await inspect({ name: name || window.SystemFS.getName(safePath), type, data, size, source, documentPolicy: options.documentPolicy });
         if (window.state?.currentUserId !== importingUser) throw new Error("Profile changed during file inspection. Retry in the intended workspace.");
         if (scanned.result.verdict !== "clean") {
             return quarantine({ path: safePath, name, parent: safeParent, data: scanned.blob, size, type, source, scan: scanned.result });

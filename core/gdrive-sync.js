@@ -50,7 +50,7 @@ window.GDriveSync = {
             requiresReconnect: true,
             sessionMode: "memory-only",
             reason: "Cloud Sync uses a memory-only access token. Sign in again to resume syncing.",
-            clientId: (window.Storage?.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId),
+            clientId: this.defaultClientId,
             profile: this.googleProfile || this.getSavedGoogleProfile(),
             scopeId: scope.id,
             updatedAt: Date.now()
@@ -80,7 +80,7 @@ window.GDriveSync = {
             provider: "google-drive",
             requiresReconnect: true,
             reason,
-            clientId: window.Storage?.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId,
+            clientId: this.defaultClientId,
             profile: this.googleProfile || this.getSavedGoogleProfile(),
             scopeId: scope.id,
             updatedAt: Date.now()
@@ -157,9 +157,6 @@ window.GDriveSync = {
             return { status: "invalid" };
         }
 
-        if (record?.clientId && window.Storage) {
-            window.Storage.local.set("bl4ut0_gdrive_client_id", record.clientId);
-        }
         this.emitAuthChanged("disconnected");
         return { status: "disconnected" };
     },
@@ -254,7 +251,7 @@ window.GDriveSync = {
             reconnect.disabled = true;
             reconnect.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
             try {
-                const clientId = window.Storage?.local.get("bl4ut0_gdrive_client_id") || this.defaultClientId;
+                const clientId = this.defaultClientId;
                 await this.loadGsiLibrary();
                 await this.login(clientId);
                 this.pendingReconnectReason = null;
@@ -355,7 +352,7 @@ window.GDriveSync = {
     },
 
     async fetchGoogleProfile() {
-        const token = this.token || this.getToken();
+        const token = this.getToken();
         if (!token) return null;
 
         const response = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
@@ -545,7 +542,6 @@ window.GDriveSync = {
         this.clearBrowserSession();
         this.token = response.access_token;
         this.tokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) * 1000);
-        if (window.Storage) window.Storage.local.set("bl4ut0_gdrive_client_id", clientId);
         if (window.state) {
             window.state.gdriveConnected = true;
         }
@@ -694,6 +690,15 @@ window.GDriveSync = {
         try {
             if (window.SystemFS) await window.SystemFS.deleteFile(authPath, { silent: true });
         } catch (error) {}
+        if (token) {
+            try {
+                fetch("https://oauth2.googleapis.com/revoke", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: "token=" + encodeURIComponent(token)
+                }).catch(() => {});
+            } catch (error) {}
+        }
         try {
             window.google?.accounts?.oauth2?.revoke?.(token, () => {});
         } catch (error) {}
@@ -703,24 +708,32 @@ window.GDriveSync = {
     },
     
     async fetchRemoteFiles() {
-        const token = this.token || this.getToken();
+        const token = this.getToken();
         if (!token) throw new Error("Not authenticated with Google Drive");
         const syncFolderId = await this.getOrCreateSyncFolder(token);
-        const params = new URLSearchParams({
-            q: `'${syncFolderId}' in parents and trashed=false`,
-            fields: "files(id,name,mimeType,modifiedTime,appProperties)",
-            pageSize: "1000"
-        });
-        const url = `https://www.googleapis.com/drive/v3/files?${params}`;
-        const response = await fetch(url, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Google Drive API error: ${response.status} - ${errText}`);
-        }
-        const result = await response.json();
-        return (result.files || []).filter(f => f.appProperties && f.appProperties.path).map(f => {
+        const files = [];
+        let pageToken = null;
+        do {
+            const params = new URLSearchParams({
+                q: `'${syncFolderId}' in parents and trashed=false`,
+                fields: "nextPageToken,files(id,name,mimeType,modifiedTime,appProperties)",
+                pageSize: "1000"
+            });
+            if (pageToken) params.set("pageToken", pageToken);
+            const url = `https://www.googleapis.com/drive/v3/files?${params}`;
+            const response = await fetch(url, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Google Drive API error: ${response.status} - ${errText}`);
+            }
+            const result = await response.json();
+            if (result.files) files.push(...result.files);
+            pageToken = result.nextPageToken || null;
+        } while (pageToken);
+
+        return files.filter(f => f.appProperties && f.appProperties.path).map(f => {
             let path = f.appProperties.path;
             path = window.SystemFS?.normalizePath
                 ? window.SystemFS.normalizePath(path)
@@ -731,7 +744,7 @@ window.GDriveSync = {
     },
     
     async downloadFile(fileId) {
-        const token = this.token || this.getToken();
+        const token = this.getToken();
         if (!token) throw new Error("Not authenticated");
         const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
         const response = await fetch(url, {
@@ -745,7 +758,7 @@ window.GDriveSync = {
     },
     
     async uploadFile(path, name, mimeType, data) {
-        const token = this.token || this.getToken();
+        const token = this.getToken();
         if (!token) throw new Error("Not authenticated");
  
         const syncFolderId = await this.getOrCreateSyncFolder(token);
@@ -796,7 +809,7 @@ window.GDriveSync = {
     },
     
     async createRemoteFolder(path, name) {
-        const token = this.token || this.getToken();
+        const token = this.getToken();
         if (!token) throw new Error("Not authenticated");
  
         const syncFolderId = await this.getOrCreateSyncFolder(token);
@@ -827,7 +840,7 @@ window.GDriveSync = {
     },
     
     async updateFile(fileId, mimeType, data) {
-        const token = this.token || this.getToken();
+        const token = this.getToken();
         if (!token) throw new Error("Not authenticated");
 
         let contentBlob = data;
@@ -872,7 +885,7 @@ window.GDriveSync = {
     },
     
     async deleteFile(fileId) {
-        const token = this.token || this.getToken();
+        const token = this.getToken();
         if (!token) throw new Error("Not authenticated");
 
         const url = `https://www.googleapis.com/drive/v3/files/${fileId}`;
@@ -888,6 +901,9 @@ window.GDriveSync = {
     },
     
     async sync(onProgress, { allowProfileSwitch = false } = {}) {
+        if (!window.isPrivateUser?.(window.state?.currentUserId)) {
+            throw new Error("Cloud Sync is reserved for private workspaces. The public portfolio profile does not sync to Google Drive.");
+        }
         if (this.profileSwitchInProgress && !allowProfileSwitch) throw new Error("A profile switch is in progress. Try backup again afterward.");
         if (this.authInProgress) throw new Error("Google sign-in is still completing.");
         if (this.syncInProgress) throw new Error("A Drive backup is already running.");

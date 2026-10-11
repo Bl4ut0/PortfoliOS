@@ -116,6 +116,7 @@ function evaluateAppWindow(appId, source) {
         Uint8Array
     };
     windowObject.window = windowObject;
+    vm.runInNewContext(read("apps/_shared/craft-editor.js"), sandbox, { filename: "apps/_shared/craft-editor.js" });
     vm.runInNewContext(source, sandbox, { filename: `apps/${appId}/app.js` });
     return windowObject;
 }

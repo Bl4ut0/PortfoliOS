@@ -13,6 +13,9 @@ with zipfile.ZipFile(io.BytesIO(archive)) as bundle:
     verified = {}
     prefix = f"filmcraft-web-{manifest['version']}/"
     for name, expected in manifest['files'].items():
+        member = pathlib.PurePosixPath(name)
+        if member.is_absolute() or '\\' in name or any(part in ('', '.', '..') for part in name.split('/')):
+            raise SystemExit('Unsafe runtime asset path: ' + name)
         data = bundle.read(prefix + name)
         if len(data) != expected['bytes'] or hashlib.sha256(data).hexdigest() != expected['sha256']:
             raise SystemExit('Filmcraft artifact mismatch: ' + name)

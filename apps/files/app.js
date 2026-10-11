@@ -285,7 +285,8 @@
         } else if (isOfficeFile(lowerName)) {
             window.openDesktopWindow("office", item);
         } else if (isTextFile(lowerName, item.type)) {
-            openTextEditor(item, windowEl);
+            if (item.path.startsWith('/documents/') && window.isAppInstalled?.('vscode')) window.openDesktopWindow('vscode', {path:item.path});
+            else openTextEditor(item, windowEl);
         } else if (isAudioFile(lowerName, item.type)) {
             playAudioInMusicMini(item);
         } else {

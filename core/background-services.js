@@ -6,6 +6,7 @@ async function triggerGDriveSync({ silent = false } = {}) {
     const disconnectBtn = document.getElementById("settings-gdrive-disconnect-btn");
 
     if (!window.GDriveSync) return;
+    if (!window.isPrivateUser?.(window.state?.currentUserId)) return;
 
     if (progressContainer) progressContainer.style.display = "flex";
     if (syncBtn) syncBtn.disabled = true;

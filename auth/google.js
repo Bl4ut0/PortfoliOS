@@ -1,10 +1,12 @@
 /** Runs outside the isolated game/AI shell; credentials remain in memory. */
 (function () {
+    const ALLOWED_CLIENT_ID = "271385155591-4g949illm5c7ke55rf9aupcko53iju53.apps.googleusercontent.com";
     const params = new URLSearchParams(location.hash.slice(1));
     const nonce = params.get("nonce");
+    const clientId = params.get("clientId");
     const button = document.getElementById("signin");
     const error = document.getElementById("error");
-    if (!nonce || !/^[a-zA-Z0-9-]{16,80}$/.test(nonce) || !params.get("clientId")) {
+    if (!nonce || !/^[a-zA-Z0-9-]{16,80}$/.test(nonce) || clientId !== ALLOWED_CLIENT_ID) {
         error.textContent = "Open sign-in from the PortfoliOS account chooser.";
         button.hidden = true;
         return;

@@ -79,13 +79,14 @@ window.defaultDesktopIconLayout = {
 };
 
 window.desktopApps = [
-    { id: "pdfcraft", title: "PdfCraft", icon: "fa-solid fa-file-pdf", category: "productivity", modular: true, meta: "PDF editor and organizer" },
-    { id: "photocraft", title: "PhotoCraft", icon: "fa-solid fa-image", category: "productivity", modular: true, meta: "Layered image and raster artwork editing" },
-    { id: "vectorcraft", title: "VectorCraft", icon: "fa-solid fa-bezier-curve", category: "productivity", modular: true, meta: "Vector illustration and SVG design" },
-    { id: "lightcraft", title: "LightCraft", icon: "fa-solid fa-camera-retro", category: "productivity", modular: true, meta: "Photo library and RAW development" },
-    { id: "designcraft", title: "DesignCraft", icon: "fa-solid fa-newspaper", category: "productivity", modular: true, meta: "Page layout and publishing studio" },
-    { id: "filmcraft", title: "FilmCraft", icon: "fa-solid fa-film", category: "media", modular: true, meta: "Nonlinear video timeline editor" },
-    { id: "effectcraft", title: "EffectCraft", icon: "fa-solid fa-wand-magic-sparkles", category: "media", modular: true, meta: "Motion graphics and visual effects" },
+    { id: "vscode", title: "Code OSS", icon: "apps/vscode/icon.png", category: "development", modular: true, meta: "SystemFS code workspace" },
+    { id: "pdfcraft", title: "PdfCraft", icon: "apps/pdfcraft/icon.svg", category: "productivity", modular: true, meta: "PDF editor and organizer" },
+    { id: "photocraft", title: "PhotoCraft", icon: "apps/photocraft/icon.svg", category: "productivity", modular: true, meta: "Layered image and raster artwork editing" },
+    { id: "vectorcraft", title: "VectorCraft", icon: "apps/vectorcraft/icon.svg", category: "productivity", modular: true, meta: "Vector illustration and SVG design" },
+    { id: "lightcraft", title: "LightCraft", icon: "apps/lightcraft/icon.svg", category: "productivity", modular: true, meta: "Photo library and RAW development" },
+    { id: "designcraft", title: "DesignCraft", icon: "apps/designcraft/icon.svg", category: "productivity", modular: true, meta: "Page layout and publishing studio" },
+    { id: "filmcraft", title: "FilmCraft", icon: "apps/filmcraft/icon.svg", category: "media", modular: true, meta: "Nonlinear video timeline editor" },
+    { id: "effectcraft", title: "EffectCraft", icon: "apps/effectcraft/icon.svg", category: "media", modular: true, meta: "Motion graphics and visual effects" },
     { id: "codex", title: "Codex CLI Preview", icon: "fa-solid fa-terminal", category: "development", modular: true, meta: "Private workspace readiness" },
     { id: "profile", title: "Identity", icon: "fa-solid fa-id-card", category: "productivity", pinned: true, modular: true, meta: "Identity profile" },
     { id: "dossier", title: "Dossier", icon: "fa-solid fa-folder-open", category: "productivity", pinned: true, modular: true, meta: "Project dossier" },
@@ -117,13 +118,14 @@ window.modularApps = window.desktopApps
     .map((app) => app.id);
 
 window.storeApps = [
-    { id: "pdfcraft", title: "PdfCraft", icon: "fa-solid fa-file-pdf", category: "Productivity", description: "Edit and organize PDFs locally with the official PdfCraft WASM editor. Opens and saves workspace PDFs. Desktop interface; runtime loads on first launch.", size: "41 MB runtime", publisher: "ArtCraft / PortfoliOS adapter" },
-    { id: "photocraft", title: "PhotoCraft", icon: "fa-solid fa-image", category: "Productivity", description: "Photoshop-style layers, brushes, image editing, and PSD workflows. Desktop interface; workspace storage.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
-    { id: "vectorcraft", title: "VectorCraft", icon: "fa-solid fa-bezier-curve", category: "Productivity", description: "Vector illustration, paths, SVG artwork, and Illustrator-style workflows. Saves workspace SVGs.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
-    { id: "lightcraft", title: "LightCraft", icon: "fa-solid fa-camera-retro", category: "Productivity", description: "Photo library and RAW development studio with non-destructive exposure, contrast, and color tuning.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
-    { id: "designcraft", title: "DesignCraft", icon: "fa-solid fa-newspaper", category: "Productivity", description: "Multi-page publication layout, typography, brochure composition, and print preparation.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
-    { id: "filmcraft", title: "FilmCraft", icon: "fa-solid fa-film", category: "Media", description: "Nonlinear video editing, audio tracks, timeline cuts, and Premiere-style media workflows.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
-    { id: "effectcraft", title: "EffectCraft", icon: "fa-solid fa-wand-magic-sparkles", category: "Media", description: "Motion graphics, keyframe animation, visual effects, and compositing studio.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
+    { id: "vscode", title: "Code OSS", icon: "apps/vscode/icon.png", category: "Development", description: "VS Code web workbench for your Documents workspace. Explorer, editing and local saves. Native terminals and desktop-only extensions need a separate runtime.", size: "10 MB runtime", publisher: "Code OSS / CodinGame / PortfoliOS" },
+    { id: "pdfcraft", title: "PdfCraft", icon: "apps/pdfcraft/icon.svg", category: "Productivity", description: "Edit and organize PDFs locally with the official PdfCraft WASM editor. Opens and saves workspace PDFs. Desktop interface; runtime loads on first launch.", size: "41 MB runtime", publisher: "ArtCraft / PortfoliOS adapter" },
+    { id: "photocraft", title: "PhotoCraft", icon: "apps/photocraft/icon.svg", category: "Productivity", description: "Photoshop-style layers, brushes, image editing, and PSD workflows. Desktop interface; workspace storage.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
+    { id: "vectorcraft", title: "VectorCraft", icon: "apps/vectorcraft/icon.svg", category: "Productivity", description: "Vector illustration, paths, SVG artwork, and Illustrator-style workflows. Saves workspace SVGs.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
+    { id: "lightcraft", title: "LightCraft", icon: "apps/lightcraft/icon.svg", category: "Productivity", description: "Photo library and RAW development studio with non-destructive exposure, contrast, and color tuning.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
+    { id: "designcraft", title: "DesignCraft", icon: "apps/designcraft/icon.svg", category: "Productivity", description: "Multi-page publication layout, typography, brochure composition, and print preparation.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
+    { id: "filmcraft", title: "FilmCraft", icon: "apps/filmcraft/icon.svg", category: "Media", description: "Nonlinear video editing, audio tracks, timeline cuts, and Premiere-style media workflows.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
+    { id: "effectcraft", title: "EffectCraft", icon: "apps/effectcraft/icon.svg", category: "Media", description: "Motion graphics, keyframe animation, visual effects, and compositing studio.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
     { id: "codex", title: "Codex CLI Preview", icon: "fa-solid fa-terminal", category: "Productivity", description: "Private workspace readiness and official CLI setup. Browser sign-in and coding are not available yet.", size: "Preview only", publisher: "PortfoliOS" },
     {
         id: "romplayer",

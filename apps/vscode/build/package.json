@@ -1,0 +1,17 @@
+{
+  "name": "portfolios-code-oss-workbench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@codingame/monaco-vscode-api": "37.3.11",
+    "@codingame/monaco-vscode-workbench-service-override": "37.3.11",
+    "@codingame/monaco-vscode-files-service-override": "37.3.11",
+    "@codingame/monaco-vscode-theme-service-override": "37.3.11",
+    "@codingame/monaco-vscode-configuration-service-override": "37.3.11",
+    "@codingame/monaco-vscode-theme-defaults-default-extension": "37.3.11",
+    "vite": "8.3.4"
+  }
+}

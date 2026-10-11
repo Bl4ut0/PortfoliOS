@@ -11,7 +11,7 @@
     let openRequest = null;
     const frame = root.querySelector('iframe');
     let alive = true, ready = false, dirty = false, pending = 0, failedSaves = new Map(), timer;
-    let writes = Promise.resolve();
+    let writes = Promise.resolve(), automaticSave = false, exportsReceived = 0;
     const paths = new Map();
     const current = () => alive && owner === window.state.currentUserId;
     const assert = () => { if (!current()) throw new Error('The PdfCraft workspace has changed.'); };
@@ -131,6 +131,9 @@
       assert();
       const name = safeName(message.name);
       let path = message.targetPath || (!message.saveAs && paths.get(name));
+      if (!path && automaticSave) {
+        const folder='/documents/PdfCraft'; await window.SystemFS.ensureDirectory(folder); assert(); path=folder+'/'+name; if(await window.SystemFS.readFile(path))path=folder+'/'+crypto.randomUUID().slice(0,8)+'-'+name;
+      }
       if (!path) {
         const previous = paths.get(name);
         const selection = await browse('save', name, previous ? window.SystemFS.getParentPath(previous) : '/documents');
@@ -147,7 +150,7 @@
 
     }
     function queueSave(message) {
-      pending++;
+      exportsReceived++; pending++;
       writes = writes.then(() => save(message)).catch(error => {
         if (current()) { failedSaves.set(safeName(message.name), message); say(error.name === 'AbortError' ? error.message : 'Save failed: ' + error.message + ' Use Retry save before closing.'); }
       }).finally(() => pending--);
@@ -197,7 +200,17 @@
     const unload = event => { if (dirty || pending || failedSaves.size) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', unload, { signal: abort.signal });
     sessions.set(root, {
-      async beforeClose() {
+      async beforeClose(context = {}) {
+        if (context.autoSave && dirty && !choice && !failedSaves.size) {
+          automaticSave = true;
+          const previous = exportsReceived;
+          try {
+            frame.contentWindow.postMessage({type:'pdfcraft:request-save'}, '*');
+            const until=Date.now()+12000;
+            while(current() && Date.now()<until && (exportsReceived===previous || dirty || pending)) await new Promise(resolve=>setTimeout(resolve,80));
+            await writes;
+          } finally { automaticSave = false; }
+        }
         if (choice) { say('Finish or cancel the file dialog before closing or switching profiles.'); return false; }
         await writes;
         if (dirty || failedSaves.size || pending) { say('Save changes in PdfCraft, or retry the failed save, before closing or switching profiles.'); return false; }
@@ -209,10 +222,10 @@
     frame.src = 'apps/pdfcraft/runtime/index.php/host.html?host=parent';
   }
   window.appRegistry.pdfcraft = {
-    title: 'PdfCraft', icon: 'fa-solid fa-file-pdf', windowClass: 'pdfcraft-window document-window',
+    title: 'PdfCraft', icon: 'apps/pdfcraft/icon.svg', windowClass: 'pdfcraft-window document-window',
     renderBody: () => `<main class="pdfcraft-host"><p role="status" class="pdfcraft-status" data-pdf-status>Loading PdfCraft...</p><div data-pdf-loading class="pdfcraft-loading">Loading PdfCraft...</div><button type="button" data-pdf-retry hidden>Retry failed save</button><iframe title="PdfCraft PDF editor" sandbox="allow-scripts allow-downloads" referrerpolicy="no-referrer"></iframe><dialog data-pdf-dialog aria-labelledby="pdf-dialog-title"><h2 id="pdf-dialog-title" data-pdf-heading>Open PDF</h2><nav class="pdf-file-nav" aria-label="Folder navigation"><button type="button" data-pdf-root>Workspace</button><button type="button" data-pdf-up>Up</button><output data-pdf-location>/documents</output></nav><div data-pdf-list aria-label="Files and folders"></div><div class="pdf-folder-create"><input data-pdf-new-name aria-label="New folder name" placeholder="New folder name"><button type="button" data-pdf-create>New folder</button></div><label>File name <input data-pdf-name aria-label="File name"></label><p role="status" data-pdf-warning></p><div data-pdf-upload><label>Upload from computer <input type="file" accept="application/pdf,.pdf" data-pdf-import></label></div><div data-pdf-drop>Drop a PDF from your computer here</div><footer><button type="button" data-pdf-cancel>Cancel</button><button type="button" data-pdf-confirm>Open</button></footer></dialog></main>`,
     onOpen: mount,
-    beforeClose: root => sessions.get(root)?.beforeClose(),
+    beforeClose: (root, context) => sessions.get(root)?.beforeClose(context),
     onClose: root => sessions.get(root)?.close()
   };
 })();

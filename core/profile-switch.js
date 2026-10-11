@@ -30,7 +30,7 @@
     }
     switching = (async () => {
       // Closing editors flushes their drafts while the private account is still active.
-      await window.prepareProfileSwitch({ allowProfileSwitch: true });
+      await window.prepareProfileSwitch({ allowProfileSwitch: true, autoSave: true });
       await window.savePreferencesToFilesystem?.({ strict: true });
       if (saveToDrive) {
         onProgress?.("Saving your private workspace to Google Drive…");
@@ -53,6 +53,10 @@
       await window.SystemFS?.ensureDefaultFiles?.();
       window.state.sessionChosen = true;
       window.closeSessionChooser?.();
+      if (window.state.workspaceStarted) {
+        if (document.body.dataset.view === 'mobile') window.MobileOS?.showHome?.();
+        else if (document.body.dataset.view === 'desktop') await window.openDesktopWindow?.('profile');
+      }
       return true;
     })().finally(() => {
       switching = null;
@@ -73,7 +77,7 @@
         ? '<button type="button" data-profile-public="save" ' +
           (connected ? "" : "disabled") +
           ">Save to Drive &amp; switch to public</button>" +
-          '<button type="button" data-profile-public="local">Switch to Bl4ut0 public profile</button>' +
+          '<button type="button" data-profile-public="local">Switch to PortfoliOS public profile</button>' +
           "<small>Your private files, apps, and settings stay on this device. " +
           (connected
             ? "Save to Drive first to back up your latest changes."

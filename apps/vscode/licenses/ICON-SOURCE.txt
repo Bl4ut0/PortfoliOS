@@ -1,0 +1,3 @@
+Code OSS icon, Microsoft VS Code source repository (MIT).
+https://github.com/microsoft/vscode/blob/1.105.1/resources/linux/code.png
+https://github.com/microsoft/vscode/blob/1.105.1/LICENSE.txt

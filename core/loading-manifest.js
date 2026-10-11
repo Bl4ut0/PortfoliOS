@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.10.11.5";
+    const release = "2026.10.11.6";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "data/systems.js", "data/apps.js",
@@ -27,12 +27,20 @@
             }
         },
         services: {
+            craft: ["apps/_shared/craft-editor.js"],
             ai: ["core/local-ai.js", "core/simple-brain.js"],
             media: ["core/file-intents.js", "core/media-service.js"],
             games: ["apps/_shared/iframe-game.js"],
             browser: ["data/bookmarks.js", "core/browser-workspace.js"]
         },
         desktopApps: {
+            photocraft: ["@craft"],
+            vectorcraft: ["@craft"],
+            designcraft: ["@craft"],
+            lightcraft: ["@craft"],
+            filmcraft: ["@craft"],
+            effectcraft: ["@craft"],
+
             codex: ["core/codex-preview.js"],
             cli: ["@ai", "desktop/terminal.js", "desktop/brain-helper.js"],
             "local-ai": ["@ai", "desktop/brain-helper.js"],

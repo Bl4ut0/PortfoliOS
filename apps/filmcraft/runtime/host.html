@@ -9,6 +9,7 @@
     html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1c1f; }
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
   </style>
+  <script src="./session-storage.js"></script>
   <script src="./host-bridge.js"></script>
 </head>
 <body>
@@ -20,7 +21,7 @@
       await start("filmcraft_canvas");
       dispatchEvent(new CustomEvent("FilmCraftStarted", { detail: { wasm } }));
     } catch (e) {
-      console.error("FilmCraft start error:", e);
+      console.error("FilmCraft start error:", e);parent.postMessage({type:"craft:failed"},location.origin);
     }
   </script>
 </body>

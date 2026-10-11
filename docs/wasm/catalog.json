@@ -16,18 +16,18 @@
       "name": "PhotoCraft",
       "category": "Image editing",
       "kind": "wasm-application",
-      "status": "candidate",
-      "priority": "evaluate-first",
+      "status": "integrated",
+      "priority": "maintain",
       "summary": "Photoshop-style layers, brushes, image editing, and PSD workflows.",
       "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
       "upstreamReadiness": "Early alpha; upstream explicitly says it is not yet a daily professional Photoshop replacement.",
-      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
-      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "portfoliosReadiness": "Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.",
+      "desktop": "Lazy native Desktop adapter; contextual SystemFS file bridge.",
       "mobile": "Desktop/tablet evaluation first; phone tools and pen input need separate testing.",
       "storage": "Image documents and editable project files; export PNG/JPEG/PSD only after round-trip checks.",
       "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
-      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
-      "nextAction": "Open a layered sample, edit, export, reopen, then test the profile file adapter.",
+      "performance": "Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.",
+      "nextAction": "Complete app-specific editable document/media round-trip fixtures and physical-device checks.",
       "documentation": [
         {
           "type": "overview",
@@ -75,13 +75,16 @@
           "url": "https://github.com/storytold/photocraft/blob/main/LICENSE-APACHE"
         }
       ],
-      "localEvidence": [],
-      "lastReviewed": "2026-10-10",
-      "evidence": "upstream-documentation",
+      "localEvidence": [
+        "docs/ARTCRAFT_REVIEW.md",
+        "apps/photocraft/release.json"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "2026-10-11 adapter and lifecycle review; see local evidence for exact scope.",
       "artifact": {
-        "version": null,
-        "sha256": null,
-        "measurementReport": null
+        "version": "0.7.0",
+        "sha256": "dfcbaac00f81f5d05ccffba36a14b320c1b1c7b23a4135fe54877f527e550eec",
+        "measurementReport": "docs/ARTCRAFT_REVIEW.md"
       },
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     },
@@ -95,13 +98,13 @@
       "summary": "PDF reading and page organization, combining, splitting, and protection.",
       "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
       "upstreamReadiness": "Official v0.6.0 web release with parent-window Open/Save/dirty bridge; individual tools still require acceptance tests.",
-      "portfoliosReadiness": "Desktop Store adapter with actual WASM import, persistent rotation, SystemFS save/reopen and dirty-work/profile guards.",
-      "desktop": "Lazy Desktop editor; official unmodified engine inside an opaque sandbox.",
+      "portfoliosReadiness": "Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.",
+      "desktop": "Lazy native Desktop adapter; contextual SystemFS file bridge.",
       "mobile": "Desktop availability shown in Mobile Store; native phone editor not shipped.",
       "storage": "Scanned PDF originals/outputs in profile-scoped SystemFS. Engine-local storage is blocked; save explicitly before close.",
       "lifecycle": "beforeClose veto for dirty/failed work, pending-write flush, opaque frame/timer/listener teardown and profile ownership checks.",
-      "performance": "40,599,741-byte WASM and 162,788-byte glue; no engine requests at boot in Chrome smoke test. Broader device/memory profiling remains pending.",
-      "nextAction": "Expand merge/split/encryption test corpus, measure physical-device performance, then evaluate PhotoCraft and VectorCraft independently.",
+      "performance": "Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.",
+      "nextAction": "Complete app-specific editable document/media round-trip fixtures and physical-device checks.",
       "documentation": [
         {
           "type": "overview",
@@ -152,14 +155,15 @@
       "localEvidence": [
         "apps/pdfcraft/README.md",
         "apps/pdfcraft/release.json",
-        "scripts/check-pdfcraft-browser.js"
+        "scripts/check-pdfcraft-browser.js",
+        "docs/ARTCRAFT_REVIEW.md"
       ],
       "lastReviewed": "2026-10-11",
-      "evidence": "real-wasm-browser-tests",
+      "evidence": "2026-10-11 adapter and lifecycle review; see local evidence for exact scope.",
       "artifact": {
         "version": "0.6.0",
         "sha256": "a957a75e35390fa8747ae97464b7a9f178cce61edda22b3b98764462060d15a5",
-        "measurementReport": null
+        "measurementReport": "docs/ARTCRAFT_REVIEW.md"
       },
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     },
@@ -168,18 +172,18 @@
       "name": "VectorCraft",
       "category": "Graphics",
       "kind": "wasm-application",
-      "status": "candidate",
-      "priority": "evaluate-first",
+      "status": "integrated",
+      "priority": "maintain",
       "summary": "Vector illustration, paths, SVG artwork, and Illustrator-style workflows.",
       "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
       "upstreamReadiness": "Actively developing; upstream self-assessed feature parity is not PortfoliOS acceptance evidence.",
-      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
-      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "portfoliosReadiness": "Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.",
+      "desktop": "Lazy native Desktop adapter; contextual SystemFS file bridge.",
       "mobile": "Desktop/tablet first; full phone editing is untested.",
       "storage": "Native vector documents, SVG/PDF exports, linked images, and fonts need an explicit file adapter.",
       "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
-      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
-      "nextAction": "Compare a small SVG editing workflow against Graphite before choosing the first vector app.",
+      "performance": "Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.",
+      "nextAction": "Complete app-specific editable document/media round-trip fixtures and physical-device checks.",
       "documentation": [
         {
           "type": "overview",
@@ -227,13 +231,16 @@
           "url": "https://github.com/storytold/vectorcraft/blob/main/LICENSE-APACHE"
         }
       ],
-      "localEvidence": [],
-      "lastReviewed": "2026-10-10",
-      "evidence": "upstream-documentation",
+      "localEvidence": [
+        "docs/ARTCRAFT_REVIEW.md",
+        "apps/vectorcraft/release.json"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "2026-10-11 adapter and lifecycle review; see local evidence for exact scope.",
       "artifact": {
-        "version": null,
-        "sha256": null,
-        "measurementReport": null
+        "version": "0.9.0",
+        "sha256": "4ebe8829a22fa17975c96765dfe9812bd2834e3e721381b4b14abb802c4d7dc1",
+        "measurementReport": "docs/ARTCRAFT_REVIEW.md"
       },
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     },
@@ -242,18 +249,18 @@
       "name": "LightCraft",
       "category": "Photography",
       "kind": "wasm-application",
-      "status": "candidate",
-      "priority": "evaluate-later",
+      "status": "integrated",
+      "priority": "maintain",
       "summary": "Photo library and RAW development in a local Rust application.",
       "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
       "upstreamReadiness": "In development; browser support is documented, camera-format fidelity still needs evaluation.",
-      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
-      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "portfoliosReadiness": "Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.",
+      "desktop": "Lazy native Desktop adapter; contextual SystemFS file bridge.",
       "mobile": "Begin with small image adjustments; do not assume large photo catalogs fit phone memory.",
       "storage": "RAW originals, adjustment sidecars, catalogs, and thumbnails have different backup needs.",
       "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
-      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
-      "nextAction": "Test representative camera files and decide which catalog data belongs in SystemFS.",
+      "performance": "Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.",
+      "nextAction": "Complete app-specific editable document/media round-trip fixtures and physical-device checks.",
       "documentation": [
         {
           "type": "overview",
@@ -301,13 +308,16 @@
           "url": "https://github.com/storytold/lightcraft/blob/main/LICENSE-APACHE"
         }
       ],
-      "localEvidence": [],
-      "lastReviewed": "2026-10-10",
-      "evidence": "upstream-documentation",
+      "localEvidence": [
+        "docs/ARTCRAFT_REVIEW.md",
+        "apps/lightcraft/release.json"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "2026-10-11 adapter and lifecycle review; see local evidence for exact scope.",
       "artifact": {
-        "version": null,
-        "sha256": null,
-        "measurementReport": null
+        "version": "0.6.0",
+        "sha256": "f20bfc75fbbfd204ed81e32d73e967212bff6cb30cbe8532b7b0e4fed581a2f6",
+        "measurementReport": "docs/ARTCRAFT_REVIEW.md"
       },
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     },
@@ -316,18 +326,18 @@
       "name": "DesignCraft",
       "category": "Publishing",
       "kind": "wasm-application",
-      "status": "candidate",
-      "priority": "evaluate-later",
+      "status": "integrated",
+      "priority": "maintain",
       "summary": "Page layout and publishing for brochures and other multi-page documents.",
       "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
       "upstreamReadiness": "In development; evaluate layout interchange and font packaging before adoption.",
-      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
-      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "portfoliosReadiness": "Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.",
+      "desktop": "Lazy native Desktop adapter; contextual SystemFS file bridge.",
       "mobile": "Desktop/tablet authoring first; phone preview/export may be more practical.",
       "storage": "Editable layout projects, linked images, fonts, and PDF exports must travel together.",
       "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
-      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
-      "nextAction": "Build a two-page document and reopen it with linked assets after an account restore.",
+      "performance": "Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.",
+      "nextAction": "Complete app-specific editable document/media round-trip fixtures and physical-device checks.",
       "documentation": [
         {
           "type": "overview",
@@ -375,13 +385,16 @@
           "url": "https://github.com/storytold/designcraft/blob/main/LICENSE-APACHE"
         }
       ],
-      "localEvidence": [],
-      "lastReviewed": "2026-10-10",
-      "evidence": "upstream-documentation",
+      "localEvidence": [
+        "docs/ARTCRAFT_REVIEW.md",
+        "apps/designcraft/release.json"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "2026-10-11 adapter and lifecycle review; see local evidence for exact scope.",
       "artifact": {
-        "version": null,
-        "sha256": null,
-        "measurementReport": null
+        "version": "0.6.0",
+        "sha256": "b43ebefc5b7900c8223953d632951308a347935adc6fad3ff00e4a7a1d050d63",
+        "measurementReport": "docs/ARTCRAFT_REVIEW.md"
       },
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     },
@@ -390,18 +403,18 @@
       "name": "FilmCraft",
       "category": "Video",
       "kind": "wasm-application",
-      "status": "candidate",
-      "priority": "experimental",
+      "status": "integrated",
+      "priority": "maintain",
       "summary": "Nonlinear video editing, color, sound, and Premiere-style workflows.",
       "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
       "upstreamReadiness": "In development; the repository and per-app download page list a web build even though the suite overview omits it.",
-      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
-      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "portfoliosReadiness": "Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.",
+      "desktop": "Lazy native Desktop adapter; contextual SystemFS file bridge.",
       "mobile": "Desktop first; phone import, codec support, heat, and memory need separate measurements.",
       "storage": "Project autosave and media use browser storage/OPFS upstream; bridge them explicitly to profile storage and backup selection.",
       "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
-      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
-      "nextAction": "Test a short local clip, save/reload the project, and measure media cache cleanup.",
+      "performance": "Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.",
+      "nextAction": "Complete app-specific editable document/media round-trip fixtures and physical-device checks.",
       "documentation": [
         {
           "type": "overview",
@@ -449,13 +462,16 @@
           "url": "https://github.com/storytold/filmcraft/blob/main/LICENSE-APACHE"
         }
       ],
-      "localEvidence": [],
-      "lastReviewed": "2026-10-10",
-      "evidence": "upstream-documentation",
+      "localEvidence": [
+        "docs/ARTCRAFT_REVIEW.md",
+        "apps/filmcraft/release.json"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "2026-10-11 adapter and lifecycle review; see local evidence for exact scope.",
       "artifact": {
-        "version": null,
-        "sha256": null,
-        "measurementReport": null
+        "version": "0.6.0",
+        "sha256": "9fd024d371075dc8bb0d868c0f162b60743d28db16d010e2f61b41927ea96629",
+        "measurementReport": "docs/ARTCRAFT_REVIEW.md"
       },
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     },
@@ -464,18 +480,18 @@
       "name": "EffectCraft",
       "category": "Motion graphics",
       "kind": "wasm-application",
-      "status": "candidate",
-      "priority": "experimental",
+      "status": "integrated",
+      "priority": "maintain",
       "summary": "Motion graphics, visual effects, and compositing.",
       "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
       "upstreamReadiness": "In development; do not equate a listed effect with verified behavior.",
-      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
-      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
+      "portfoliosReadiness": "Desktop adapter integrated. Evidence and per-app limits are recorded in docs/ARTCRAFT_REVIEW.md; not full upstream feature certification.",
+      "desktop": "Lazy native Desktop adapter; contextual SystemFS file bridge.",
       "mobile": "Desktop first; phone preview might be feasible after measurement.",
       "storage": "Composition files, linked assets, and rendered output require separate persistence decisions.",
       "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
-      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
-      "nextAction": "Test a short composition, import/export, and canceling a render without losing edits.",
+      "performance": "Engine stays out of startup. See dated initialization/first-render evidence in docs/ARTCRAFT_REVIEW.md.",
+      "nextAction": "Complete app-specific editable document/media round-trip fixtures and physical-device checks.",
       "documentation": [
         {
           "type": "overview",
@@ -523,13 +539,16 @@
           "url": "https://github.com/storytold/effectcraft/blob/main/LICENSE-APACHE"
         }
       ],
-      "localEvidence": [],
-      "lastReviewed": "2026-10-10",
-      "evidence": "upstream-documentation",
+      "localEvidence": [
+        "docs/ARTCRAFT_REVIEW.md",
+        "apps/effectcraft/release.json"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "2026-10-11 adapter and lifecycle review; see local evidence for exact scope.",
       "artifact": {
-        "version": null,
-        "sha256": null,
-        "measurementReport": null
+        "version": "0.8.0",
+        "sha256": "59426cdd519ea1480215a58158ec0b36a31e6a1163ddd8715f3869caf509069d",
+        "measurementReport": "docs/ARTCRAFT_REVIEW.md"
       },
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     },
@@ -1978,6 +1997,70 @@
         "measurementReport": null
       },
       "licenseNotes": "Review player/visualizer/skin dependencies separately; do not infer rights to music or skins."
+    },
+    {
+      "id": "code-oss",
+      "name": "Code OSS web",
+      "category": "Development",
+      "kind": "browser-app-with-wasm-kernel",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Real VS Code web workbench connected to the active profile Documents workspace.",
+      "runtime": "Code OSS browser JavaScript workbench via monaco-vscode-api, including a WASM diff component.",
+      "upstreamReadiness": "Browser workbench; native terminals and desktop-only extensions are outside the browser runtime.",
+      "portfoliosReadiness": "Explorer/edit/save/reopen and private A/B/public-switch autosave browser checks pass.",
+      "desktop": "Lazy installed Desktop app; isolated Documents-only provider.",
+      "mobile": "Desktop only; phone UX is not certified.",
+      "storage": "SystemFS Documents; 4 MiB per file; source-code cloud restore retains current quarantine policy.",
+      "lifecycle": "Save all open documents and wait for durable writes before closing or switching.",
+      "performance": "8.5 MB main bundle / 2.16 MB gzip on app launch; no boot download.",
+      "nextAction": "Broader worker/extension compatibility, folder rename and separately reviewed source-code cloud restore.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "VS Code web",
+          "url": "https://code.visualstudio.com/docs/remote/vscode-web"
+        },
+        {
+          "type": "source",
+          "label": "CodinGame integration",
+          "url": "https://github.com/CodinGame/monaco-vscode-api"
+        },
+        {
+          "type": "build-api",
+          "label": "Virtual workspaces",
+          "url": "https://code.visualstudio.com/api/extension-guides/virtual-workspaces"
+        },
+        {
+          "type": "releases",
+          "label": "Integration releases",
+          "url": "https://github.com/CodinGame/monaco-vscode-api/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Integration issues",
+          "url": "https://github.com/CodinGame/monaco-vscode-api/issues"
+        },
+        {
+          "type": "license",
+          "label": "MIT license",
+          "url": "https://github.com/CodinGame/monaco-vscode-api/blob/main/LICENSE"
+        }
+      ],
+      "localEvidence": [
+        "apps/vscode/README.md",
+        "apps/vscode/release.json",
+        "scripts/check-vscode-browser.js",
+        "docs/ARTCRAFT_REVIEW.md"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "Actual Code OSS browser workbench edit/save/reopen and profile-switch check.",
+      "artifact": {
+        "version": "37.3.11",
+        "sha256": null,
+        "measurementReport": "docs/ARTCRAFT_REVIEW.md"
+      },
+      "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     }
   ]
 }

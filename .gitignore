@@ -41,3 +41,7 @@ apps/romplayer/roms/
 
 # Verified upstream PdfCraft artifacts; restore with scripts/import-pdfcraft.py
 apps/pdfcraft/runtime/v0.6.0/
+
+# Reproducible Code OSS workbench build dependencies and output
+apps/vscode/build/node_modules/
+apps/vscode/runtime/dist/

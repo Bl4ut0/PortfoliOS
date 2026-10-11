@@ -3858,24 +3858,24 @@
 }
 
 /* --- DESKTOP VIEW OVERRIDES & CLICKABLE TOP DOCK --- */
-@media (min-width: 821px) {
-    body[data-view="desktop"] .workspace {
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: 0;
-    }
-
-    body[data-view="desktop"] .desktop-view {
-        height: 100vh;
-        width: 100%;
-    }
-
-    body[data-view="desktop"] .desktop-experience {
-        height: 100vh;
-        border: none;
-        border-radius: 0;
-    }
+/* Desktop Auto fills the browser on phones, unfolded devices and monitors.
+   A CSS width breakpoint must not turn the selected desktop into a short preview. */
+body[data-view="desktop"] .workspace {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+body[data-view="desktop"] .desktop-view { height: 100%; width: 100%; }
+body[data-view="desktop"]:not(.desktop-scaled) .desktop-experience {
+    height: 100%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
 }
 
 /* Ensure desktop-scaled mode always has full viewport height and width available to prevent parent layout collapse */
@@ -3887,7 +3887,7 @@ body.desktop-scaled[data-view="desktop"] .workspace {
 }
 
 body.desktop-scaled[data-view="desktop"] .desktop-view {
-    height: 100vh;
+    height: 100%;
     width: 100%;
 }
 
@@ -4256,17 +4256,22 @@ body.desktop-scaled[data-view="desktop"] .desktop-experience {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
     align-content: start;
+    grid-auto-rows: max-content;
     gap: 0.85rem;
     overflow-y: auto;
 }
 
 .store-app-card {
+    height: max-content;
+    container: store-card / inline-size;
     background: var(--panel-soft);
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 1rem;
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
     gap: 0.72rem;
     min-height: 12.5rem;
     transition: transform 0.2s ease, border-color 0.2s ease;
@@ -4344,15 +4349,16 @@ body.desktop-scaled[data-view="desktop"] .desktop-experience {
 }
 
 .store-app-card-footer {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
     gap: 0.7rem;
     border-top: 1px solid var(--panel-soft);
     padding-top: 0.8rem;
 }
 
 .store-app-card-meta {
+    flex: 1 1 9rem;
     font-family: var(--mono);
     font-size: 0.7rem;
     color: var(--text-muted);
@@ -5251,5 +5257,195 @@ body.desktop-scaled[data-view="desktop"] .desktop-experience {
 @media (max-width: 600px) {
     .ai-key-config-row {
         grid-template-columns: 1fr;
+    }
+}
+
+@container store-card (max-width: 17rem) {
+    .store-app-card-header { grid-template-columns: auto minmax(0, 1fr); }
+    .store-app-state { grid-column: 2; justify-self: start; }
+}
+
+/* SystemFS Shared File Navigation Dialog */
+dialog.systemfs-dialog {
+    width: min(640px, 90vw);
+    max-height: 85vh;
+    background: var(--surface, #1e1e24);
+    color: var(--text, #f4f4f5);
+    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.15));
+    border-radius: var(--radius, 12px);
+    padding: 1.25rem;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+    overflow: auto;
+    z-index: 10000;
+}
+dialog.systemfs-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+}
+.systemfs-dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+.systemfs-dialog-header h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+.systemfs-dialog-close {
+    background: transparent;
+    border: none;
+    color: var(--text-soft, #a1a1aa);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+}
+.systemfs-dialog-close:hover {
+    color: var(--text, #fff);
+}
+.systemfs-file-nav {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+.systemfs-nav-btn {
+    padding: 0.45rem 0.75rem;
+    background: var(--surface-raised, #272730);
+    color: var(--text, #f4f4f5);
+    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.15));
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.systemfs-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.systemfs-nav-location {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: var(--mono, monospace);
+    font-size: 0.85rem;
+    color: var(--theme-primary-ink, #22d3ee);
+    background: var(--surface-inset, #141418);
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--radius-sm, 6px);
+    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.1));
+}
+.systemfs-file-list {
+    display: grid;
+    gap: 0.4rem;
+    margin-block: 0.75rem;
+    max-height: 38vh;
+    overflow-y: auto;
+    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-sm, 6px);
+    padding: 0.5rem;
+    background: var(--surface-inset, #141418);
+}
+.systemfs-item-btn {
+    text-align: left;
+    overflow-wrap: anywhere;
+    padding: 0.5rem 0.65rem;
+    background: transparent;
+    color: var(--text, #f4f4f5);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.systemfs-item-btn:hover:not(:disabled) {
+    background: var(--surface-raised, rgba(255, 255, 255, 0.08));
+}
+.systemfs-item-btn[aria-pressed="true"] {
+    background: rgba(34, 211, 238, 0.15);
+    border-color: var(--theme-primary-ink, #22d3ee);
+    color: var(--theme-primary-ink, #22d3ee);
+}
+.systemfs-item-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+.systemfs-folder-create {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-block: 0.5rem;
+}
+.systemfs-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.65rem;
+    background: var(--surface-inset, #141418);
+    color: var(--text, #f4f4f5);
+    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.15));
+    border-radius: var(--radius-sm, 6px);
+    font-size: 0.88rem;
+}
+.systemfs-filename-row {
+    margin-block: 0.75rem;
+}
+.systemfs-filename-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+}
+.systemfs-dialog-warning {
+    color: #f87171;
+    font-size: 0.82rem;
+    min-height: 1.2rem;
+    margin: 0 0 0.5rem;
+}
+.systemfs-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+}
+.systemfs-btn {
+    padding: 0.5rem 1rem;
+    background: var(--surface-raised, #272730);
+    color: var(--text, #f4f4f5);
+    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.15));
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+    font-size: 0.88rem;
+}
+.systemfs-btn-primary {
+    background: var(--theme-primary-ink, #22d3ee);
+    color: #000;
+    border-color: transparent;
+    font-weight: 600;
+}
+.systemfs-btn-primary:hover {
+    filter: brightness(1.1);
+}
+
+/* Desktop remains a windowed workspace on narrow physical screens. */
+@media (max-width: 820px) {
+    body[data-view="desktop"]:not(.desktop-scaled) .desktop-wallpaper {
+        overflow: hidden;
+    }
+
+    body[data-view="desktop"]:not(.desktop-scaled) .desktop-wallpaper .desktop-window {
+        position: absolute;
+        inset: 8px 8px auto !important;
+        width: calc(100% - 16px) !important;
+        height: calc(100% - var(--taskbar-height) - 26px) !important;
+        min-width: 0;
+        min-height: 0;
+        max-height: calc(100% - var(--taskbar-height) - 26px);
+        margin: 0;
     }
 }

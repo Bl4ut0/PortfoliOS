@@ -322,6 +322,7 @@ vm.runInNewContext(
     // than overwriting them with recently generated defaults.
     const currentId = windowObject.state.currentUserId;
     const settingsPath = "/home/" + currentId + "/settings.json";
+    const realFetchRemoteFiles = sync.fetchRemoteFiles;
     sync.fetchRemoteFiles = async () => [{ id: "remote-settings", name: "settings.json", mimeType: "application/json", modifiedTime: new Date().toISOString(), appProperties: { path: settingsPath } }];
     windowObject.SystemFS.getAllFiles = async () => [{ path: settingsPath, name: "settings.json", data: "{}", lastModified: Date.now(), type: "application/json" }];
     sync.downloadFile = async () => new Blob(['{}'], { type: "application/json" });
@@ -331,7 +332,6 @@ vm.runInNewContext(
     await sync.sync();
     assert.strictEqual(importedPath, settingsPath);
     assert.strictEqual(sync.syncInProgress, false);
-
 
     const manifestKey = sync.getScopedStorageKey("sync_manifest");
     const successKey = sync.getScopedStorageKey("last_sync_time");
@@ -344,6 +344,7 @@ vm.runInNewContext(
     assert.strictEqual(storage.get(successKey), undefined, "a partial backup must not advance the success timestamp");
     assert.strictEqual(storage.get(manifestKey), undefined, "a partial backup must not advance the deletion manifest");
     assert.strictEqual(sync.syncInProgress, false, "a failed backup must release the profile-switch lock");
+    sync.fetchRemoteFiles = realFetchRemoteFiles;
 
     // Save-and-switch must finish private writes before backup and account change.
     vm.runInNewContext(fs.readFileSync(path.join(root, 'core', 'profile-switch.js'), 'utf8'), sandbox, { filename: 'core/profile-switch.js' });
@@ -448,7 +449,80 @@ vm.runInNewContext(
     windowObject.clearTimeout = nativeClear;
 
     windowObject.clearTimeout(sync.pendingSyncTimer);
-    console.log("Google Drive session audit passed: private account activation, multi-account switching, reloads, isolated popup channels, preference restore, and memory-only credentials checked.");
+
+    // Token expiry in getToken()
+    sync.token = "test-token";
+    sync.tokenExpiresAt = Date.now() - 1000;
+    assert.strictEqual(sync.getToken(), null, "expired token must return null from getToken()");
+    sync.tokenExpiresAt = Date.now() + 60000;
+    assert.strictEqual(sync.getToken(), "test-token", "valid token must be returned from getToken()");
+
+    // Token revocation on logout in cross-origin isolated mode
+    let revokedToken = null;
+    const savedFetch = sandbox.fetch;
+    sandbox.fetch = async (url, options = {}) => {
+        if (url === "https://oauth2.googleapis.com/revoke") {
+            const body = new URLSearchParams(options.body);
+            revokedToken = body.get("token");
+            return { ok: true, text: async () => "" };
+        }
+        return savedFetch(url, options);
+    };
+    await sync.logout();
+    assert.strictEqual(revokedToken, "test-token", "logout must revoke active token via Google OAuth endpoint");
+
+    // fetchRemoteFiles pagination
+    sync.token = "valid-token";
+    sync.tokenExpiresAt = Date.now() + 60000;
+    sync.getOrCreateSyncFolder = async () => "root-folder-123";
+    const fetchedPages = [];
+    sandbox.fetch = async (url) => {
+        const parsed = new URL(url);
+        const pageToken = parsed.searchParams.get("pageToken");
+        fetchedPages.push(pageToken);
+        if (!pageToken) {
+            return {
+                ok: true,
+                json: async () => ({
+                    nextPageToken: "page-2",
+                    files: [{ id: "f1", name: "doc1.txt", mimeType: "text/plain", appProperties: { path: "/documents/doc1.txt" } }]
+                })
+            };
+        } else {
+            return {
+                ok: true,
+                json: async () => ({
+                    nextPageToken: null,
+                    files: [{ id: "f2", name: "doc2.txt", mimeType: "text/plain", appProperties: { path: "/documents/doc2.txt" } }]
+                })
+            };
+        }
+    };
+    const remoteFiles = await sync.fetchRemoteFiles();
+    assert.deepStrictEqual(fetchedPages, [null, "page-2"], "fetchRemoteFiles must request all pages until nextPageToken is null");
+    assert.strictEqual(remoteFiles.length, 2, "fetchRemoteFiles must aggregate files from all pages");
+    assert.strictEqual(remoteFiles[0].appProperties.path, "/documents/doc1.txt");
+    assert.strictEqual(remoteFiles[1].appProperties.path, "/documents/doc2.txt");
+
+    sandbox.fetch = savedFetch;
+    await sync.logout();
+
+    // The public profile must never sync saved state to or from Drive
+    windowObject.state.currentUserId = "bl4ut0";
+    await assert.rejects(
+        sync.sync(),
+        /Cloud Sync is reserved for private workspaces/,
+        "sync() must reject when called under the public portfolio profile"
+    );
+
+    // Preferences must never write or restore for the public profile
+    records.clear();
+    await windowObject.savePreferencesToFilesystem();
+    assert.strictEqual(records.size, 0, "savePreferencesToFilesystem must never write records for public profile");
+    await windowObject.loadPreferencesFromFilesystem();
+    assert.strictEqual(records.size, 0, "loadPreferencesFromFilesystem must never read or restore for public profile");
+
+    console.log("Google Drive session audit passed: private account activation, multi-account switching, reloads, isolated popup channels, preference restore, token revocation, pagination, and memory-only credentials checked.");
 })().catch((error) => {
     console.error(error);
     process.exitCode = 1;

@@ -368,3 +368,14 @@ A release or tracker URL is a navigation reference; it does not guarantee a bina
 | releases | [Releases and downloadable artifacts](https://github.com/captbaritone/webamp/releases) |
 | issues | [Upstream issue tracker](https://github.com/captbaritone/webamp/issues) |
 | license | [License and notices entry point](https://github.com/captbaritone/webamp#license) |
+
+## Code OSS web
+
+| Documentation area | Reference |
+| --- | --- |
+| overview | [VS Code web](https://code.visualstudio.com/docs/remote/vscode-web) |
+| source | [CodinGame integration](https://github.com/CodinGame/monaco-vscode-api) |
+| build-api | [Virtual workspaces](https://code.visualstudio.com/api/extension-guides/virtual-workspaces) |
+| releases | [Integration releases](https://github.com/CodinGame/monaco-vscode-api/releases) |
+| issues | [Integration issues](https://github.com/CodinGame/monaco-vscode-api/issues) |
+| license | [MIT license](https://github.com/CodinGame/monaco-vscode-api/blob/main/LICENSE) |

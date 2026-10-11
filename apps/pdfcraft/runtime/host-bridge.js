@@ -17,6 +17,11 @@
     parent.postMessage({ type: 'pdfcraft:drop', name: file.name, bytes }, location.origin, [bytes]);
   }, true);
   addEventListener('message', event => {
+    if (event.source === parent && event.origin === location.origin && event.data?.type === 'pdfcraft:request-save') {
+      const target = document.querySelector('canvas') || document.body; target.focus();
+      for (const type of ['keydown','keyup']) target.dispatchEvent(new KeyboardEvent(type,{key:'s',code:'KeyS',ctrlKey:true,bubbles:true,cancelable:true}));
+      return;
+    }
     if (event.source !== parent || event.origin !== location.origin || event.data?.type !== 'pdfcraft:file-result' || event.data.id !== pending?.id) return;
     const input = pending.input; pending = null;
     const transfer = new DataTransfer();
