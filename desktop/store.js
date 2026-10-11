@@ -235,6 +235,7 @@ const GAME_INSTALL_CONFIGS = {
 };
 
 const installAppFiles = async (id) => {
+    const installingUser = state.currentUserId;
     if (!state.installingApps) state.installingApps = {};
     state.installingApps[id] = 0;
     window.renderStore();
@@ -244,11 +245,12 @@ const installAppFiles = async (id) => {
         "lightcraft", "designcraft", "filmcraft", "effectcraft"
     ];
     if (modularStoreApps.includes(id)) {
-        const installingUser = state.currentUserId;
         try {
             await window.ensureAppLoaded(id);
             if (state.currentUserId !== installingUser) throw new Error("The profile changed during installation.");
             window.setInstalledStoreAppIds([...window.getInstalledStoreAppIds(), id]);
+            await window.ensureInstalledDesktopShortcut?.(id);
+            if (state.currentUserId !== installingUser) throw new Error("The profile changed during installation.");
             if (window.EventBus) window.EventBus.emit("app:installed", id);
             if (window.renderDesktopIcons) window.renderDesktopIcons();
             if (window.renderStartMenu) window.renderStartMenu();
@@ -337,8 +339,9 @@ const installAppFiles = async (id) => {
         const progressEl = document.querySelector(`[data-progress-bar="${id}"]`);
         if (progressEl) progressEl.style.width = "100%";
         
-        setTimeout(() => {
-            delete state.installingApps[id];
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (state.currentUserId !== installingUser) throw new Error("The profile changed during installation.");
+        {
             const list = window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : [];
             if (!list.includes(id)) list.push(id);
             if (window.setInstalledStoreAppIds) {
@@ -349,6 +352,8 @@ const installAppFiles = async (id) => {
                 localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
             }
 
+            await window.ensureInstalledDesktopShortcut?.(id);
+            delete state.installingApps[id];
             if (window.EventBus) window.EventBus.emit("app:installed", id);
             if (window.renderDesktopIcons) window.renderDesktopIcons();
             if (window.renderStartMenu) window.renderStartMenu();
@@ -356,7 +361,7 @@ const installAppFiles = async (id) => {
             window.renderStore();
 
             if (window.showDesktopToast) window.showDesktopToast("Installation complete.");
-        }, 500);
+        }
 
     } catch (error) {
         console.error(`${id} installation failed:`, error);
@@ -367,11 +372,12 @@ const installAppFiles = async (id) => {
 };
 
 const runFakeInstall = (id) => {
+    const installingUser = state.currentUserId;
     state.installingApps[id] = 0;
     window.renderStore();
 
     let progress = 0;
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
         progress += 10;
         state.installingApps[id] = progress;
         
@@ -386,27 +392,30 @@ const runFakeInstall = (id) => {
 
         if (progress >= 100) {
             clearInterval(interval);
-            delete state.installingApps[id];
+            try {
+                if (state.currentUserId !== installingUser) throw new Error("The profile changed during installation.");
+                const list = window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : [];
+                if (!list.includes(id)) list.push(id);
+                if (window.setInstalledStoreAppIds) {
+                    window.setInstalledStoreAppIds(list);
+                } else if (window.Storage) {
+                    window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
+                } else {
+                    localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
+                }
 
-            const list = window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : [];
-            if (!list.includes(id)) list.push(id);
-            if (window.setInstalledStoreAppIds) {
-                window.setInstalledStoreAppIds(list);
-            } else if (window.Storage) {
-                window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
-            } else {
-                localStorage.setItem("bl4ut0_installed_apps", JSON.stringify(list));
-            }
-
-            if (window.EventBus) window.EventBus.emit("app:installed", id);
-            if (window.renderDesktopIcons) window.renderDesktopIcons();
-            if (window.renderStartMenu) window.renderStartMenu();
-            if (window.renderTaskbar) window.renderTaskbar();
-            window.renderStore();
+                await window.ensureInstalledDesktopShortcut?.(id);
+                if (window.EventBus) window.EventBus.emit("app:installed", id);
+                if (window.renderDesktopIcons) window.renderDesktopIcons();
+                if (window.renderStartMenu) window.renderStartMenu();
+                if (window.renderTaskbar) window.renderTaskbar();
+                window.renderStore();
             
-            const storeApps = window.storeApps || [];
-            const app = storeApps.find(a => a.id === id);
-            if (window.showDesktopToast) window.showDesktopToast(`${app ? app.title : id} installed successfully.`);
+                const storeApps = window.storeApps || [];
+                const app = storeApps.find(a => a.id === id);
+                if (window.showDesktopToast) window.showDesktopToast(`${app ? app.title : id} installed successfully.`);
+            } catch (error) { window.showDesktopToast?.("Installation could not finish: " + error.message); }
+            finally { delete state.installingApps[id]; window.renderStore(); }
         }
     }, 150);
 };
@@ -415,7 +424,7 @@ window.installApp = (id) => {
     if (!state.installingApps) state.installingApps = {};
     if (state.installingApps[id] !== undefined) return;
 
-    installAppFiles(id);
+    return installAppFiles(id);
 };
 
 window.uninstallApp = (id) => {

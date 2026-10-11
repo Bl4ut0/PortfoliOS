@@ -115,13 +115,13 @@ window.saveDesktopLayoutPositions = (positions, owner = state.currentUserId, res
     desktopLayoutWriteQueue=saving;
     return saving;
 };
-window.ensureDesktopShortcuts = (launchers, owner) => {
+window.ensureDesktopShortcuts = (launchers, owner, restoreMissing = false) => {
     const saving=desktopLayoutWriteQueue.catch(()=>{}).then(async()=>{
         SystemFS.assertProfile(owner);
         const layout=await window.readDesktopLayout(owner), seeded=new Set(layout.shortcutsSeeded || []);
         let changed=false;
         for (const item of launchers) {
-            if (seeded.has(item.id)) continue;
+            if (seeded.has(item.id) && !restoreMissing) continue;
             const name=item.id+'.portfolios-link.json',path='/Desktop/'+name;
             if (!/^[a-z0-9_-]+\.portfolios-link\.json$/i.test(name)) continue;
             const existing=await SystemFS.readFile(path);
@@ -185,7 +185,10 @@ window.renderDesktopIcons = async () => {
         maxCols = Math.max(1, Math.floor(containerRect.width / cellWidth));
     }
 
-    const defaults = window.desktopPinnedIds
+    // Installed Store apps must not depend on a hand-maintained pinned list.
+    const defaultIds = [...new Set([...(window.desktopPinnedIds || []),
+        ...(window.getInstalledStoreAppIds?.() || []).filter(id => (window.storeApps || []).some(app => app.id === id))])];
+    const defaults = defaultIds
         .filter(id => window.isAppInstalled(id) && id !== "settings" && id !== "local-ai")
         .map(window.getDesktopLauncher)
         .filter(Boolean);
@@ -525,9 +528,33 @@ window.createDesktopFolder = (requestedName) => {
     document.body.append(dialog);dialog.showModal();const input=dialog.querySelector('input');input.focus();input.select();
 };
 
+// Explicit installation restores a missing shortcut, while retaining a shortcut
+// the user has already moved into a Desktop folder. Ordinary refresh never does.
+window.ensureInstalledDesktopShortcut = async (id) => {
+    const owner = state.currentUserId;
+    if (!(window.storeApps || []).some(app => app.id === id) || !window.isAppInstalled(id)) return;
+    const launcher = window.getDesktopLauncher(id);
+    if (!launcher) return; // Native Mobile-only apps do not acquire Desktop launchers.
+    await desktopLayoutWriteQueue.catch(() => {});
+    SystemFS.assertProfile(owner);
+    const entries = await SystemFS.getAllFiles();
+    SystemFS.assertProfile(owner);
+    for (const entry of entries) {
+        if (!entry.path.startsWith('/Desktop/') || !entry.name?.endsWith('.portfolios-link.json')) continue;
+        const link = await window.resolveDesktopShortcut(entry);
+        SystemFS.assertProfile(owner);
+        if (link?.appId === launcher.launchApp && link.selectId === (launcher.selectId || '')) return;
+    }
+    await window.ensureDesktopShortcuts([launcher], owner, true);
+};
+
 // Hook into EventBus
 if (window.EventBus) {
-    window.EventBus.on("app:installed", () => window.renderDesktopIcons());
+    window.EventBus.on("app:installed", id => {
+        window.ensureInstalledDesktopShortcut(id)
+            .then(() => window.renderDesktopIcons())
+            .catch(error => window.showDesktopToast?.('Desktop shortcut could not be created: ' + error.message));
+    });
     window.EventBus.on("app:uninstalled", () => window.renderDesktopIcons());
     window.EventBus.on("desktop:refresh", () => window.renderDesktopIcons());
     window.EventBus.on("user:changed", () => {desktopDragActive=false;window.renderDesktopIcons();});
