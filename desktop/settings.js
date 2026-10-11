@@ -880,6 +880,7 @@ function initSettingsApp() {
     }
     root.dataset.settingsBound = "true";
 
+    window.AppIcons?.mount(document.getElementById("theme-options")?.parentElement);
     initSettingsTabs();
     initVolumeSettings();
     initResolutionSettings();

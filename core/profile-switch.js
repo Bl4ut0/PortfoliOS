@@ -29,6 +29,7 @@
       sync.pendingSyncTimer = null;
     }
     switching = (async () => {
+      await window.AppIcons?.flush();
       // Closing editors flushes their drafts while the private account is still active.
       await window.prepareProfileSwitch({ allowProfileSwitch: true, autoSave: true });
       await window.savePreferencesToFilesystem?.({ strict: true });

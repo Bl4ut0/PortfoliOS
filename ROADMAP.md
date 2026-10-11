@@ -66,3 +66,8 @@ Implemented: isolated lazy Craft adapters, native contextual SystemFS dialogs, a
 Next acceptance gates: layered PhotoCraft and multi-document VectorCraft/DesignCraft edit/save/reopen fixtures; LightCraft first useful interaction and larger libraries; FilmCraft/EffectCraft media-codec/render fixtures; Code OSS worker/extension compatibility and a separately reviewed source-file cloud restore policy; physical Fold and native Mobile touch adaptations. Evaluate Penpot service integration, Graphite and Blockbench after these gates. Blender browser support remains research rather than an installed app promise.
 
 - 2026-10-11: Desktop folders, actual app shortcut files and icon grid coordinates now live under profile-scoped `/Desktop`. Square snapping, folder moves, legacy-position migration, account-isolated reset and fresh-default Drive merge are covered by regression checks. Complete open-window session restoration remains future work.
+
+## Application artwork (2026-10-11)
+
+- Implemented: local upstream logos and colored app tiles; profile-scoped per-app raster overrides; portable icon-pack import/export in Desktop and Mobile Appearance. See [app icon documentation](docs/APP_ICONS.md).
+- Future: curated licensed pack catalog and conversion tooling for external theme formats. Native Linux/Android pack installation is not implemented.

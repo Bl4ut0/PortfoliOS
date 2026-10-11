@@ -305,7 +305,7 @@ window.renderDesktopIcons = async () => {
             : item.createFolder ? 'data-desktop-create-folder="true"' : `data-open-app="${escape(item.launchApp)}"`;
         return `<button class="desktop-icon ${isActive ? 'active' : ''}" ${item.selectId ? `data-select="${escape(item.selectId)}"` : ''}
             ${action} data-desktop-id="${escape(item.id)}" style="--tile-color:${item.color};left:${left};top:${top}" title="${item.createFolder?'Create a desktop folder':'Open '+escape(item.title)}">
-            ${window.getAppIconHtml(item.icon)}<span>${escape(item.title)}</span></button>`;
+            ${window.getAppIconHtml(item.icon, "", item.selectId || item.launchApp)}<span>${escape(item.title)}</span></button>`;
     }).join('');
 };
 

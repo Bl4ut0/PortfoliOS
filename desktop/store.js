@@ -124,7 +124,7 @@ window.renderStore = () => {
             <div class="store-app-card">
                 <div class="store-app-card-header">
                     <div class="store-app-card-icon">
-                        ${window.getAppIconHtml(app.icon)}
+                        ${window.getAppIconHtml(app.icon, "", app.id)}
                     </div>
                     <div class="store-app-card-info">
                         <h3>${title}</h3>

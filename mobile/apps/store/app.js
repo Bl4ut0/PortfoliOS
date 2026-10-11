@@ -27,9 +27,8 @@
         .map((app) => {
           const installed = window.isMobileAppInstalled(app);
           return (
-            '<article><div class="mobile-store-title"><i class="' +
-            esc(app.icon) +
-            '" aria-hidden="true"></i><div><h3>' +
+            '<article><div class="mobile-store-title">' +
+            window.getAppIconHtml(app.icon, "", app.id) + '<div><h3>' +
             esc(app.title) +
             "</h3><small>" +
             esc(app.category) +

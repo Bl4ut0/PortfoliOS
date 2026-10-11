@@ -39,7 +39,7 @@
     }
 
     function iconHtml(app) {
-        return window.getAppIconHtml?.(app?.icon) || `<i class="${escapeHtml(app?.icon || "fa-solid fa-mobile-screen")}"></i>`;
+        return window.getAppIconHtml?.(app?.icon, "", app?.id) || `<i class="${escapeHtml(app?.icon || "fa-solid fa-mobile-screen")}"></i>`;
     }
 
     function byId(id) {

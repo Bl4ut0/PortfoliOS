@@ -48,6 +48,11 @@ window.openDesktopWindow = async (name, params = null) => {
     }
 
     let windowEl = window.getDesktopWindowElement(name);
+    if (windowEl) {
+        const titleIcon = windowEl.querySelector('.window-bar > span > i, .window-bar > span > img');
+        const info = window.appById?.(name) || window.appRegistry?.[name];
+        if (titleIcon && info) titleIcon.outerHTML = window.getAppIconHtml(info.icon, 'window-title-icon', name);
+    }
     const wasOpen = state.openApps.has(name);
     const wasMinimized = state.minimizedApps.has(name);
     const wasActive = state.activeWindow === name && !wasMinimized;
@@ -81,14 +86,7 @@ window.openDesktopWindow = async (name, params = null) => {
         windowEl.dataset.window = name;
         windowEl.setAttribute("aria-label", `${app.title} window`);
 
-        let iconHtml = "";
-        if (/\.(?:png|jpe?g|gif|webp|svg)(?:[?#].*)?$/i.test(app.icon) || app.icon.includes("/")) {
-            const safeIcon = window.escapeHtml ? window.escapeHtml(app.icon) : app.icon;
-            iconHtml = `<img src="${safeIcon}" class="window-title-icon" alt="" />`;
-        } else {
-            const safeIconClass = window.escapeHtml ? window.escapeHtml(app.icon) : app.icon;
-            iconHtml = `<i class="${safeIconClass}"></i>`;
-        }
+        const iconHtml = window.getAppIconHtml(app.icon, "window-title-icon", name);
 
         windowEl.innerHTML = `
             <div class="window-bar">

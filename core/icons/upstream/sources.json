@@ -1,0 +1,14 @@
+[
+  {
+    "app": "openrct2",
+    "source": "https://github.com/OpenRCT2/OpenRCT2/blob/42184adf10878b088f9bc0f8a7e82b171c707684/resources/logo/icon_x128.png",
+    "sha256": "74e893094e421dfcc05b14f475f5c096bf188c162a621f04db7b76408ae1b182",
+    "notice": "Upstream application artwork; names and trademarks remain with their respective owners."
+  },
+  {
+    "app": "webamp",
+    "source": "https://github.com/captbaritone/webamp/blob/e6283c0eabe9b1313cd41df16d2875e897719696/packages/webamp-demo/images/manifest/icon-192x192.png",
+    "sha256": "52f8b5beee256b975a231c41a7170a674b3e2cbe70af187b4a54f9f54e62ea97",
+    "notice": "Upstream application artwork; names and trademarks remain with their respective owners."
+  }
+]

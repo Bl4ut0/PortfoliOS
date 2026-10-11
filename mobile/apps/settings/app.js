@@ -290,6 +290,7 @@
         activeController = new AbortController();
         const { signal } = activeController;
         window.bindProfileSwitchControls?.(root, { signal });
+        window.AppIcons?.mount(root.querySelector("[data-settings-theme]")?.closest("section"));
 
         root.addEventListener("click", async (event) => {
             if (event.target.closest("[data-settings-account]")) { window.openSessionChooser?.(); return; }

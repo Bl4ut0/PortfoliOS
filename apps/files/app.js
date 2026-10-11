@@ -217,7 +217,7 @@
                 if (item.isDirectory) {
                     iconHtml = '<i class="fa-solid fa-folder"></i>';
                 } else if (launcher) {
-                    iconHtml = window.getAppIconHtml(launcher.icon);
+                    iconHtml = window.getAppIconHtml(launcher.icon, "", item.desktopShortcut.selectId || item.desktopShortcut.appId);
                 } else if (item.type.startsWith("image/")) {
                     iconHtml = '<i class="fa-regular fa-file-image"></i>';
                 } else if (item.type.startsWith("audio/")) {

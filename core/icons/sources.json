@@ -1,0 +1,144 @@
+{
+  "source": "https://github.com/lucide-icons/lucide",
+  "package": "lucide-static",
+  "version": "1.55.0",
+  "integrity": "sha512-h18lunTFsIJWnY0FMRPjXeO9KcAtNi7fDqtqgWHOFbssfgUWsctn/pA7bpiyrd4g1DuBOJ24CsRnPfkYblwm/A==",
+  "icons": {
+    "codex": {
+      "glyph": "square-terminal",
+      "sha256": "d1c4dfd722fcf55c8b1e802c409be08349f7f3655a10ebcd742f31c7c67d3bf3"
+    },
+    "profile": {
+      "glyph": "contact-round",
+      "sha256": "d3e74681832e4cb201825d45be4c9cc9e7d8a7dbc82aa218137e67279390759b"
+    },
+    "dossier": {
+      "glyph": "briefcase-business",
+      "sha256": "88b09d6c22fe205c719a931505c2d21ab2c434192c177e3d498c53967dafc4e7"
+    },
+    "browser": {
+      "glyph": "compass",
+      "sha256": "245f188f0797473de7f07302a3441a54cfef1a53f3b729196f11f1d8e3f8e443"
+    },
+    "network": {
+      "glyph": "network",
+      "sha256": "96e22e85e9d80a0de408c987b651be6e5ed94749c23b21e0da0c64b9210146fa"
+    },
+    "linux": {
+      "glyph": "server",
+      "sha256": "f05702fe9ad28d8c6326c973673731386f5d0f4b75bc53e2f9291366078e1dde"
+    },
+    "cli": {
+      "glyph": "terminal",
+      "sha256": "5132ca69ae98a41292be598ef6cadd436f2e24cea703ff03e20be1a2b208766a"
+    },
+    "local-ai": {
+      "glyph": "brain-circuit",
+      "sha256": "16ce7dff559a2b6f9c964051c05bc6fa413f3270f11ce994ac36f57761ba4f54"
+    },
+    "store": {
+      "glyph": "store",
+      "sha256": "9ba437e9b7cd97799220d663fdc8f7cb463c7876cc99e814953b1fe51f018329"
+    },
+    "files": {
+      "glyph": "folder-open",
+      "sha256": "87cb21914e600ea214e758199adbd382b6808c521ffda282f9d68fb0de0ab00e"
+    },
+    "security-center": {
+      "glyph": "shield-check",
+      "sha256": "87de9d464170ad70df85fcc35efecef6c9fbce850d9ce1c7c9a0d75e4dc7b08f"
+    },
+    "office": {
+      "glyph": "file-pen-line",
+      "sha256": "d41a5b5dfdf5a1465d1a0d1353cd92db5200b2f512b4b2fd012ce8552a69c717"
+    },
+    "taskmgr": {
+      "glyph": "activity",
+      "sha256": "9cc7ea33e1c9f4f00b54c150807822a5ecceb178c5c7531ba31b3fbb84e94728"
+    },
+    "webamp": {
+      "glyph": "audio-lines",
+      "sha256": "2165fd55a6a5b11a51da60db959d7e18c1b7e5d8b341fa80ef0c3b96184c691f"
+    },
+    "musicmini": {
+      "glyph": "disc-3",
+      "sha256": "34bac424cc665eff80f3aefb589568fd05fc01f3107c8d2adc4978fb244eaa06"
+    },
+    "iptv": {
+      "glyph": "tv",
+      "sha256": "6da746beed18a56f4e7a4b372d002f24716677963f274e138cb7e563f25a36bb"
+    },
+    "settings": {
+      "glyph": "settings-2",
+      "sha256": "e82aa0cc49b700933a174207c61449341fc4868108ea107bdd855a32abb15463"
+    },
+    "romplayer": {
+      "glyph": "gamepad-2",
+      "sha256": "4dd45a5a6f38fd24984a6dd5acd41882263f6b2e6cc393e8641b3538a8af1f11"
+    },
+    "openrct2": {
+      "glyph": "ferris-wheel",
+      "sha256": "eaeb933d95ae8d53dd93147c87c6db5cb1e19f4ec9b22d2e02e5c03103e9e87e"
+    },
+    "ut99": {
+      "glyph": "crosshair",
+      "sha256": "6a43223f806c9f85247caa81e68a71ac8ca4b5092e783c0f2f328fd1f533cb85"
+    },
+    "documents": {
+      "glyph": "notebook-pen",
+      "sha256": "597f5235b9893dd7c11ac9873effe63bc922d4954edfd877008bf05cf5cd4479"
+    },
+    "music": {
+      "glyph": "headphones",
+      "sha256": "a223a624c317693e70a583c89de8c104156b953eca16697ac4c2e4c18660e35a"
+    },
+    "calculator": {
+      "glyph": "calculator",
+      "sha256": "50ca70006789cfb26f8a7f60bb16401e030ce6060e77c6dbd6f2a6515b949014"
+    },
+    "devhub": {
+      "glyph": "code-xml",
+      "sha256": "dc1ce6e4e8163e1abc2e4984d67189ddb8139a07f9ad86720b77e383a90bca46"
+    },
+    "status": {
+      "glyph": "chart-no-axes-combined",
+      "sha256": "9fcb36db9ba73b6817eff39700706ab4f0bd3135b22648805891a0523b62fddc"
+    },
+    "homelab": {
+      "glyph": "server-cog",
+      "sha256": "f8d9418dbe2eb8402722764d61cc0735db5cecc2446d6f4ec2c56de1c13a510c"
+    },
+    "automation": {
+      "glyph": "workflow",
+      "sha256": "8d02b9219d7351df06b60a9450a1f5925c891837db102420a84ad022a117ceae"
+    },
+    "addons": {
+      "glyph": "puzzle",
+      "sha256": "9c62a1009a965adb28c7b4a322f4192cbc02c533917545cc0086264725444179"
+    },
+    "guildcraft": {
+      "glyph": "blocks",
+      "sha256": "67f7d91a7879a481e835582a151a8b840d30dc64b91b367bf10125f2d131d7f0"
+    },
+    "survival-ai": {
+      "glyph": "bot",
+      "sha256": "3b0aff35e865520d64039f14631769efd9417f6c2449e700d6aab59a768b1182"
+    },
+    "wardenit": {
+      "glyph": "shield-user",
+      "sha256": "9e50540328e88bb6984878310e61e75b077c0e5be856b72711817c4bc63428e3"
+    },
+    "media": {
+      "glyph": "images",
+      "sha256": "39e053bba66f028fec9b5a89bb4a4d7870a10bc1878102ed6fab80dc09942a3a"
+    },
+    "flappybird": {
+      "glyph": "bird",
+      "sha256": "244d76131622efa1eb5d824a3d9fa2a3bb8e1cb285db9a501b6dedcce3b53af4"
+    },
+    "pki": {
+      "glyph": "key-round",
+      "sha256": "dfbccdc9cfc45f66a8cad827d7e2b928c364bca469dc75283897a6a2c4bebea3"
+    }
+  }
+}

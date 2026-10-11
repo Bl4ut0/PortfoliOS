@@ -68,7 +68,7 @@ window.renderSystemArticle = (item, mode = "quick") => {
     return `
         <div class="${mode}-detail-heading">
             <span class="project-icon-large" style="color:${item.color}">
-                ${window.getAppIconHtml(item.icon)}
+                ${window.getAppIconHtml(item.icon, "", item.id)}
             </span>
             <div>
                 <span class="status-pill" data-status="${item.status}">${item.status}</span>

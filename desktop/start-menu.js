@@ -266,7 +266,7 @@ window.renderStartMenu = () => {
     startPinned.innerHTML = pinnedApps
         .map((item) => `
             <button class="start-pin" ${renderLauncherAttrs(item)} title="Open ${escapeHtml(item.title)}">
-                ${window.getAppIconHtml(item.icon)}
+                ${window.getAppIconHtml(item.icon, "", item.selectId || item.launchApp || item.id)}
                 <span>${escapeHtml(item.title)}</span>
                 <small>${escapeHtml(item.meta)}</small>
             </button>
@@ -286,7 +286,7 @@ window.renderStartMenu = () => {
                 ${items.map((item) => `
                     <button class="start-app" ${renderLauncherAttrs(item)}
                         style="--tile-color:${safeColor(item.color)}" title="Open ${escapeHtml(item.title)}">
-                        ${window.getAppIconHtml(item.icon)}
+                        ${window.getAppIconHtml(item.icon, "", item.selectId || item.launchApp || item.id)}
                         <span>
                             <strong>${escapeHtml(item.title)}</strong>
                             <small>${escapeHtml(item.categoryLabel)} · ${escapeHtml(item.meta)}</small>

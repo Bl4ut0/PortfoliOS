@@ -19,12 +19,15 @@ window.appById = (id) => window.desktopApps ? window.desktopApps.find((item) => 
 window.bookmarkById = (id) => window.browserBookmarks ? window.browserBookmarks.find((item) => item.id === id) : null;
 window.quickRouteById = (id) => window.quickRoutes ? window.quickRoutes.find((item) => item.id === id) : null;
 
-window.getAppIconHtml = (iconClassOrUrl, extraClass = "") => {
-    if (!iconClassOrUrl) return "";
-    if (iconClassOrUrl.startsWith(".") || iconClassOrUrl.startsWith("/") || iconClassOrUrl.startsWith("http") || iconClassOrUrl.includes(".")) {
-        return `<img src="${iconClassOrUrl}" class="app-icon-img ${extraClass}" alt="Icon" />`;
+window.getAppIconHtml = (fallback, extraClass = "", appId = "") => {
+    const esc = value => String(value || "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const icon = window.AppIcons?.resolve(appId, fallback) || fallback;
+    if (!icon) return "";
+    const attrs = appId ? ` data-app-icon="${esc(appId)}" data-default-icon="${esc(fallback)}" data-icon-extra="${esc(extraClass)}"` : "";
+    if (/^(?:data:image\/png;base64,|blob:|https?:|[./])/.test(icon) || icon.includes('.')) {
+        return `<img src="${esc(icon)}" class="app-icon-img ${esc(extraClass)}" alt="" draggable="false"${attrs} />`;
     }
-    return `<i class="${iconClassOrUrl} ${extraClass}"></i>`;
+    return `<i class="${esc(icon)} ${esc(extraClass)}" aria-hidden="true"${attrs}></i>`;
 };
 
 window.formatBytes = (sizeBytes) => {

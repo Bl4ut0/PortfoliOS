@@ -13,7 +13,7 @@ window.renderNetworkMap = () => {
     const nodes = desktopApps.map((item) => `
         <button class="map-node" data-select="${item.id}" data-open-app="${item.launchApp || "dossier"}"
             style="left:${item.position[0]}%; top:${item.position[1]}%; --node-color:${item.color}">
-            ${window.getAppIconHtml(item.icon)}
+            ${window.getAppIconHtml(item.icon, "", item.id)}
             <span><strong>${item.title}</strong><small>${item.status}</small></span>
         </button>
     `).join("");

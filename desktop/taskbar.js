@@ -11,7 +11,7 @@ window.renderTaskbar = () => {
     taskbar.innerHTML = openApps.length ? openApps.map((app) => `
         <button type="button" class="taskbar-app ${state.activeWindow === app.id && !state.minimizedApps.has(app.id) ? "active" : ""} ${state.minimizedApps.has(app.id) ? "is-minimized" : ""}"
             data-taskbar-app="${app.id}" title="${state.minimizedApps.has(app.id) ? "Restore" : "Focus"} ${app.title}">
-            ${window.getAppIconHtml(app.icon, "taskbar-icon")}
+            ${window.getAppIconHtml(app.icon, "taskbar-icon", app.id)}
             <span class="taskbar-app-title">${app.title}</span>
         </button>
     `).join("") : "";

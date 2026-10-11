@@ -1,4 +1,17 @@
 /* Critical boot styles only. Selected experience styles load after selection. */
-@import url("styles/tokens.css?v=2026.10.11.7");
-@import url("styles/reset.css?v=2026.10.11.7");
-@import url("styles/boot.css?v=2026.10.11.7");
+@import url("styles/tokens.css?v=2026.10.11.8");
+@import url("styles/reset.css?v=2026.10.11.8");
+@import url("styles/boot.css?v=2026.10.11.8");
+
+/* Profile icon controls shared by the two native settings surfaces. */
+.app-icon-settings { margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--line, #475569); }
+.app-icon-settings p { color:var(--text-soft,inherit); font-size:.875rem; line-height:1.5; }
+.app-icon-settings label { display:grid; gap:.4rem; margin:.8rem 0; }
+.app-icon-settings select, .app-icon-settings input { width:100%; max-width:100%; min-width:0; color:inherit; background:var(--surface-inset,transparent); border:1px solid var(--line,#475569); border-radius:.5rem; padding:.6rem; }
+.app-icon-settings button { color:inherit; background:var(--surface-raised,transparent); border:1px solid var(--line,#475569); padding:.6rem .8rem; border-radius:.5rem; cursor:pointer; }
+.app-icon-actions { display:flex; flex-wrap:wrap; gap:.5rem; }
+.mobile-store-title > .app-icon-img { width:2.5rem; height:2.5rem; object-fit:contain; }
+
+/* Keep app artwork smooth and correctly sized in shared window chrome. */
+img.app-icon-img { image-rendering:auto; }
+img.app-icon-img.window-title-icon { width:14px; height:14px; }

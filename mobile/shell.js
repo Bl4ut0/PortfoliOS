@@ -253,7 +253,7 @@
     }
 
     function iconHtml(app) {
-        return window.getAppIconHtml?.(app.icon) || `<i class="${escapeHtml(app.icon)}"></i>`;
+        return window.getAppIconHtml?.(app.icon, "", app.id) || `<i class="${escapeHtml(app.icon)}"></i>`;
     }
 
     function setLayerVisibility(layer, visible) {

@@ -1,0 +1,3 @@
+# App icon artwork
+
+Project-colored tiles use locally bundled [Lucide](https://lucide.dev) glyphs under the included ISC license. `sources.json` pins the source package version, integrity and original SVG hashes. These tiles identify PortfoliOS tools and provide fallbacks, not upstream branding. Existing upstream ArtCraft, Code OSS and game logos retain their original notices. Additional pinned OpenRCT2 and Webamp artwork, licenses and source hashes are in [upstream](upstream/sources.json). The Webamp artwork retains its upstream Winamp identification; names and trademarks remain with their owners. Custom icon packs are documented in [APP_ICONS.md](../../docs/APP_ICONS.md).
