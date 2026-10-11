@@ -66,7 +66,19 @@ vm.runInNewContext(fs.readFileSync(path.join(root, "core", "security-service.js"
     assert.throws(() => security.assertAgentAccess("/home/bl4ut0/.auth/google-drive.json", "read"), /denied/, "agents must not access hidden auth records");
     assert.throws(() => security.assertAgentAccess("/.quarantine/sample", "read"), /denied/, "agents must not access quarantined files");
 
-    console.log("SecurityKernel audit passed: local hash scanning, executable blocking, active-document quarantine, token-free quarantine metadata, agent boundaries, and path normalization checked.");
+    for (const name of ["late.txt", "late.exe"]) {
+        windowObject.state = { currentUserId: "private_A" };
+        const blob = new Blob([name.endsWith(".exe") ? new Uint8Array([0x4d, 0x5a]) : "safe"]);
+        blob.arrayBuffer = async () => {
+            windowObject.state.currentUserId = "private_B";
+            return Blob.prototype.arrayBuffer.call(blob);
+        };
+        const before = records.size;
+        await assert.rejects(security.importFile({ path: "/documents/" + name, name, data: blob, type: "application/octet-stream" }), /Profile changed during file inspection/);
+        assert.equal(records.size, before, "Neither accepted nor quarantined output may cross an account change during scanning");
+    }
+
+    console.log("SecurityKernel audit passed: local hash scanning, executable blocking, active-document quarantine, token-free quarantine metadata, agent boundaries, path normalization, and profile changes during accepted/quarantined import checked.");
 })().catch((error) => {
     console.error(error);
     process.exitCode = 1;

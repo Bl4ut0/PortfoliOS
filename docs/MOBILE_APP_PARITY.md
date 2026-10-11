@@ -18,6 +18,7 @@ Updated 2026-10-10. Mobile has its own app registry, touch UI, retained tasks, a
 | Webamp | Music alternative | Classic Winamp skin/equalizer UI remains Desktop-only. |
 | Network Map | Home Lab / project apps | Native project information; interactive desktop topology remains Desktop-only. |
 | Linux lab view | Home Lab | Native project information; desktop lab surface remains Desktop-only. |
+| PdfCraft | Desktop availability shown in Store | Official WASM editor with Desktop SystemFS adapter. Phone users retain native Documents viewing; touch editing is not yet integrated. |
 | Codex CLI Preview | Native optional Preview | Real private local save/read check and official setup guidance. Browser coding, ChatGPT sign-in and guest engine access remain unavailable. |
 | Portfolio CLI | Lobe / Files / Task Manager alternatives | Conversational help, file workflows, and task controls; no full mobile shell yet. |
 | ROM Player | Native optional ROM Player | NES, SNES, GB/GBC, GBA, Genesis, Master System, Game Gear; ROM imports excluded from Drive backup. Touch controls use the existing EmulatorJS runtime. |

@@ -68,6 +68,7 @@ window.defaultDesktopIconLayout = {
 };
 
 window.desktopApps = [
+    { id: "pdfcraft", title: "PdfCraft", icon: "fa-solid fa-file-pdf", category: "productivity", modular: true, meta: "PDF editor and organizer" },
     { id: "codex", title: "Codex CLI Preview", icon: "fa-solid fa-terminal", category: "development", modular: true, meta: "Private workspace readiness" },
     { id: "profile", title: "Identity", icon: "fa-solid fa-id-card", category: "productivity", pinned: true, modular: true, meta: "Identity profile" },
     { id: "dossier", title: "Dossier", icon: "fa-solid fa-folder-open", category: "productivity", pinned: true, modular: true, meta: "Project dossier" },
@@ -99,6 +100,7 @@ window.modularApps = window.desktopApps
     .map((app) => app.id);
 
 window.storeApps = [
+    { id: "pdfcraft", title: "PdfCraft", icon: "fa-solid fa-file-pdf", category: "Productivity", description: "Edit and organize PDFs locally with the official PdfCraft WASM editor. Opens and saves workspace PDFs. Desktop interface; runtime loads on first launch.", size: "41 MB runtime", publisher: "ArtCraft / PortfoliOS adapter" },
     { id: "codex", title: "Codex CLI Preview", icon: "fa-solid fa-terminal", category: "Productivity", description: "Private workspace readiness and official CLI setup. Browser sign-in and coding are not available yet.", size: "Preview only", publisher: "PortfoliOS" },
     {
         id: "romplayer",

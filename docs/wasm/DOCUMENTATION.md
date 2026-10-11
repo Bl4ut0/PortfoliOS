@@ -1,6 +1,6 @@
 # Upstream documentation index
 
-Reviewed 2026-10-10. Generated from [catalog.json](catalog.json). Labels distinguish exact project references from contextual sources and pending provenance investigations.
+Reviewed 2026-10-11. Generated from [catalog.json](catalog.json). Labels distinguish exact project references from contextual sources and pending provenance investigations.
 
 [Application catalog](APPLICATIONS.md) | [Integration guide](INTEGRATION.md) | [Project worksheet](PROJECT_TEMPLATE.md)
 

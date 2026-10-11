@@ -1,0 +1,7 @@
+.desktop-window.pdfcraft-window{--app-window-width:min(1200px,96vw);--app-window-height:min(850px,90vh);--app-window-top:2rem;--app-window-left:2rem}
+.pdfcraft-host{display:flex;flex-direction:column;height:100%;min-height:0;background:var(--surface);color:var(--text)}
+.pdfcraft-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px}
+.pdfcraft-toolbar label{display:flex;gap:8px;align-items:center}.pdfcraft-toolbar select{max-width:340px}
+.pdfcraft-toolbar button,.pdfcraft-toolbar select,.pdfcraft-import{background:var(--surface-raised);color:var(--text);border:1px solid var(--line-strong);border-radius:6px;padding:8px}
+.pdfcraft-import{cursor:pointer}.pdfcraft-import input{max-width:190px}
+.pdfcraft-host p{padding:0 10px;margin:4px 0 10px;font-size:13px}.pdfcraft-host iframe{flex:1;width:100%;min-height:400px;border:0;background:#222}

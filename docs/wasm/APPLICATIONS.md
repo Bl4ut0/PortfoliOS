@@ -1,6 +1,6 @@
 # PortfoliOS WASM application catalog
 
-Reviewed 2026-10-10. 30 entries; 213 documentation references. Generated from [catalog.json](catalog.json); edit the JSON and run node scripts/build-wasm-catalog.js.
+Reviewed 2026-10-11. 30 entries; 213 documentation references. Generated from [catalog.json](catalog.json); edit the JSON and run node scripts/build-wasm-catalog.js.
 
 [Library home](README.md) | [Documentation index](DOCUMENTATION.md) | [Integration guide](INTEGRATION.md) | [Expansion roadmap](ROADMAP.md)
 
@@ -11,7 +11,6 @@ Candidate means researched, not installed. Upstream browser support is separate 
 | Project | Category | Runtime classification | Status |
 | --- | --- | --- | --- |
 | [PhotoCraft](#photocraft) | Image editing | wasm-application | candidate |
-| [PdfCraft](#pdfcraft) | Documents | wasm-application | candidate |
 | [VectorCraft](#vectorcraft) | Graphics | wasm-application | candidate |
 | [Graphite](#graphite) | Graphics | wasm-application | candidate |
 | [FFmpeg.wasm](#ffmpeg-wasm) | Media utilities | wasm-engine | candidate |
@@ -45,6 +44,7 @@ Candidate means researched, not installed. Upstream browser support is separate 
 
 | Project | Category | Runtime classification | Status |
 | --- | --- | --- | --- |
+| [PdfCraft](#pdfcraft) | Documents | wasm-application | integrated |
 | [Doom](#doomsource) | Existing games | wasm-runtime | integrated |
 | [Duke Nukem 3D](#duke32) | Existing games | wasm-runtime | integrated |
 | [Diablo](#diablo) | Existing games | wasm-runtime | integrated |
@@ -96,19 +96,20 @@ Photoshop-style layers, brushes, image editing, and PSD workflows.
 
 PDF reading and page organization, combining, splitting, and protection.
 
-- **Classification:** wasm-application; candidate; evaluate-first.
+- **Classification:** wasm-application; integrated; maintain.
 - **Runtime:** Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.
-- **Upstream readiness:** Early alpha according to the suite overview; validate each PDF workflow independently.
-- **PortfoliOS readiness:** Not installed or runtime-tested in PortfoliOS.
-- **Desktop:** Evaluate a lazy-loaded app or engine adapter.
-- **Mobile:** Prioritize a native phone page organizer; test touch selection and small-screen dialogs.
-- **Files and backup:** PDF originals, edited outputs, and draft recovery must be profile-scoped.
-- **Lifecycle:** Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.
-- **Performance evidence:** Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.
-- **Next action:** Validate rotate/reorder/merge/split round trips using disposable documents and add SystemFS Open/Save.
+- **Upstream readiness:** Official v0.6.0 web release with parent-window Open/Save/dirty bridge; individual tools still require acceptance tests.
+- **PortfoliOS readiness:** Desktop Store adapter with actual WASM import, persistent rotation, SystemFS save/reopen and dirty-work/profile guards.
+- **Desktop:** Lazy Desktop editor; official unmodified engine inside an opaque sandbox.
+- **Mobile:** Desktop availability shown in Mobile Store; native phone editor not shipped.
+- **Files and backup:** Scanned PDF originals/outputs in profile-scoped SystemFS. Engine-local storage is blocked; save explicitly before close.
+- **Lifecycle:** beforeClose veto for dirty/failed work, pending-write flush, opaque frame/timer/listener teardown and profile ownership checks.
+- **Performance evidence:** 40,599,741-byte WASM and 162,788-byte glue; no engine requests at boot in Chrome smoke test. Broader device/memory profiling remains pending.
+- **Next action:** Expand merge/split/encryption test corpus, measure physical-device performance, then evaluate PhotoCraft and VectorCraft independently.
 - **License review:** MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build.
-- **Artifact evidence:** version unrecorded; SHA-256 unrecorded; measurement report unrecorded.
-- **Reviewed:** 2026-10-10 (upstream-documentation).
+- **Artifact evidence:** version 0.6.0; SHA-256 a957a75e35390fa8747ae97464b7a9f178cce61edda22b3b98764462060d15a5; measurement report unrecorded.
+- **Local evidence:** [apps/pdfcraft/README.md](../../apps/pdfcraft/README.md), [apps/pdfcraft/release.json](../../apps/pdfcraft/release.json), [scripts/check-pdfcraft-browser.js](../../scripts/check-pdfcraft-browser.js).
+- **Reviewed:** 2026-10-11 (real-wasm-browser-tests).
 
 **Documentation**
 

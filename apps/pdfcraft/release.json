@@ -1,0 +1,62 @@
+{
+  "project": "PdfCraft",
+  "version": "0.6.0",
+  "source": "https://github.com/storytold/pdfcraft",
+  "commit": "53a5880386789fc3531e54f6e6ffdef9a8e41f1a",
+  "archive": "https://github.com/storytold/pdfcraft/releases/download/v0.6.0/pdfcraft-web-0.6.0.zip",
+  "sha256": "a957a75e35390fa8747ae97464b7a9f178cce61edda22b3b98764462060d15a5",
+  "files": {
+    "HOSTING.md": {
+      "sha256": "a15e4b5b50d7f5c59ee2490ebc5654880fe9c6e399ccdf6154dc1cafe317ef36",
+      "bytes": 4604
+    },
+    "index.html": {
+      "sha256": "0db7dfe356998004d5bbf490b06b527b67c4e107b45ac54b7aa7d0e954f1be96",
+      "bytes": 1210
+    },
+    "LICENSE-APACHE": {
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "bytes": 10174
+    },
+    "LICENSE-MIT": {
+      "sha256": "cd7032ea33b71427f188e34ffb4aee9d6868a57fd196037c5c8b2be03a2a0352",
+      "bytes": 1100
+    },
+    "NOTICE": {
+      "sha256": "8df0defad7f2a06fd60a9b3bf439272abfcb90b5ebd0adb177f4479edd313c9e",
+      "bytes": 3976
+    },
+    "OFL-biz-ud-mincho.txt": {
+      "sha256": "ef0ed524b3bd012f37015e986809eed6f67905456ebfc1ebd7fcc2765282ee01",
+      "bytes": 4408
+    },
+    "OFL-biz-ud-pgothic.txt": {
+      "sha256": "e753d7155d53c747d037a445e584c8ecfca6dd79846db610417e282a736b28bc",
+      "bytes": 4408
+    },
+    "OFL-noto-sans-arabic.txt": {
+      "sha256": "07fc70bfeb985cc1a87a8587d0a0c80bab11c86c9dc3fd95b6f0cb332f983e96",
+      "bytes": 4382
+    },
+    "OFL-noto-sans-cjk-sc.txt": {
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "bytes": 4301
+    },
+    "OFL-shippori-mincho.txt": {
+      "sha256": "41fba056279be5f45ff9a99e44b7b53897b42732f5806d8e666e0ab49ac6bd38",
+      "bytes": 4399
+    },
+    "pdfcraft-web-9fbc20856b2df0f8.js": {
+      "sha256": "a355a22a8ee5c4ea5447a8aeac1e876a23a1b2ee6e769b1edd09d6db5ae10631",
+      "bytes": 162788
+    },
+    "pdfcraft-web-9fbc20856b2df0f8_bg.wasm": {
+      "sha256": "9942c92ff76e9892ba8ce074977f5537d995863ada5c6bb5c45f210e876aaf4d",
+      "bytes": 40599741
+    },
+    "README.md": {
+      "sha256": "4c9c5ec7f8e71e716342aca72369e4d0c5ba97037d72ba71f87494608b1a749f",
+      "bytes": 32325
+    }
+  }
+}

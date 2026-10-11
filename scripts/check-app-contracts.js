@@ -15,7 +15,7 @@ const WINDOW_PRESETS = new Set([
     "media-window",
     "game-window"
 ]);
-const LIFECYCLE_HOOKS = ["onOpen", "onRestore", "onFocus", "onMinimize", "onMaximize", "onClose"];
+const LIFECYCLE_HOOKS = ["beforeClose", "onOpen", "onRestore", "onFocus", "onMinimize", "onMaximize", "onClose"];
 const failures = [];
 
 function fail(scope, message) {

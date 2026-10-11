@@ -217,7 +217,13 @@ window.prepareProfileSwitch = async ({ allowProfileSwitch = false } = {}) => {
     if (window.GDriveSync?.profileSwitchInProgress && !allowProfileSwitch) throw new Error("A profile switch is already in progress.");
     if (Object.keys(window.state?.installingApps || {}).length) throw new Error("Wait for app installation to finish before switching accounts.");
     if (window.GDriveSync?.syncInProgress) throw new Error("Wait for the current Drive backup to finish before switching accounts.");
-    await Promise.all(Array.from(window.state?.openApps || []).map(appId => window.closeDesktopWindow?.(appId)));
+    const apps = Array.from(window.state?.openApps || []);
+    for (const appId of apps) {
+        const allowed = await window.runAppLifecycleHook?.(appId, "beforeClose", window.getDesktopWindowElement?.(appId), { rethrow: true, reason: "profile-switch" });
+        if (allowed === false) throw new Error("Save your work in " + (window.appRegistry?.[appId]?.title || appId) + " before switching profiles.");
+    }
+    const closed = await Promise.all(apps.map(appId => window.closeDesktopWindow?.(appId)));
+    if (closed.includes(false)) throw new Error("Save your open work before switching profiles.");
     await window.MobileOS?.clearTasks?.();
 };
 

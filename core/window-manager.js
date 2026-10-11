@@ -204,7 +204,14 @@ window.minimizeDesktopWindow = (name) => {
     if (window.EventBus) window.EventBus.emit("app:minimized", name);
 };
 
-window.closeDesktopWindow = (name) => {
+window.closeDesktopWindow = (name, { guarded = false } = {}) => {
+    if (!guarded && typeof window.appRegistry?.[name]?.beforeClose === "function") {
+        return window.runAppLifecycleHook(name, "beforeClose", window.getDesktopWindowElement(name), { rethrow: true, reason: "close" })
+            .then(allowed => {
+                if (allowed === false) return false;
+                return window.closeDesktopWindow(name, { guarded: true });
+            }).catch(error => { window.showDesktopToast?.(error.message); return false; });
+    }
     if (window.appClosePromises[name]) return window.appClosePromises[name];
 
     const windowEl = window.getDesktopWindowElement(name);

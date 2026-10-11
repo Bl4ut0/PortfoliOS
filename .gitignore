@@ -38,3 +38,6 @@ apps/romplayer/roms/
 
 # Local development scratch files
 .tmp/
+
+# Verified upstream PdfCraft artifacts; restore with scripts/import-pdfcraft.py
+apps/pdfcraft/runtime/v0.6.0/

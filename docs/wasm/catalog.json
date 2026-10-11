@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "title": "PortfoliOS WASM application library",
-  "reviewedAt": "2026-10-10",
+  "reviewedAt": "2026-10-11",
   "scope": "Curated upstream candidates, existing WASM integrations, and explicitly classified related browser apps. Not an exhaustive global registry.",
   "policy": {
     "candidatesAreInstalled": false,
@@ -90,18 +90,18 @@
       "name": "PdfCraft",
       "category": "Documents",
       "kind": "wasm-application",
-      "status": "candidate",
-      "priority": "evaluate-first",
+      "status": "integrated",
+      "priority": "maintain",
       "summary": "PDF reading and page organization, combining, splitting, and protection.",
       "runtime": "Rust engine and egui UI compiled to WebAssembly; graphics requirements vary by build.",
-      "upstreamReadiness": "Early alpha according to the suite overview; validate each PDF workflow independently.",
-      "portfoliosReadiness": "Not installed or runtime-tested in PortfoliOS.",
-      "desktop": "Evaluate a lazy-loaded app or engine adapter.",
-      "mobile": "Prioritize a native phone page organizer; test touch selection and small-screen dialogs.",
-      "storage": "PDF originals, edited outputs, and draft recovery must be profile-scoped.",
-      "lifecycle": "Cancel pending work on close; flush writes before profile switch; pause or stop background work according to app purpose.",
-      "performance": "Unmeasured. Record compressed download, cold/warm launch, peak memory, first useful action, and cleanup on representative devices.",
-      "nextAction": "Validate rotate/reorder/merge/split round trips using disposable documents and add SystemFS Open/Save.",
+      "upstreamReadiness": "Official v0.6.0 web release with parent-window Open/Save/dirty bridge; individual tools still require acceptance tests.",
+      "portfoliosReadiness": "Desktop Store adapter with actual WASM import, persistent rotation, SystemFS save/reopen and dirty-work/profile guards.",
+      "desktop": "Lazy Desktop editor; official unmodified engine inside an opaque sandbox.",
+      "mobile": "Desktop availability shown in Mobile Store; native phone editor not shipped.",
+      "storage": "Scanned PDF originals/outputs in profile-scoped SystemFS. Engine-local storage is blocked; save explicitly before close.",
+      "lifecycle": "beforeClose veto for dirty/failed work, pending-write flush, opaque frame/timer/listener teardown and profile ownership checks.",
+      "performance": "40,599,741-byte WASM and 162,788-byte glue; no engine requests at boot in Chrome smoke test. Broader device/memory profiling remains pending.",
+      "nextAction": "Expand merge/split/encryption test corpus, measure physical-device performance, then evaluate PhotoCraft and VectorCraft independently.",
       "documentation": [
         {
           "type": "overview",
@@ -149,12 +149,16 @@
           "url": "https://github.com/storytold/pdfcraft/blob/main/LICENSE-APACHE"
         }
       ],
-      "localEvidence": [],
-      "lastReviewed": "2026-10-10",
-      "evidence": "upstream-documentation",
+      "localEvidence": [
+        "apps/pdfcraft/README.md",
+        "apps/pdfcraft/release.json",
+        "scripts/check-pdfcraft-browser.js"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "real-wasm-browser-tests",
       "artifact": {
-        "version": null,
-        "sha256": null,
+        "version": "0.6.0",
+        "sha256": "a957a75e35390fa8747ae97464b7a9f178cce61edda22b3b98764462060d15a5",
         "measurementReport": null
       },
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."

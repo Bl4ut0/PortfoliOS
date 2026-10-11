@@ -1,6 +1,10 @@
 # WASM expansion roadmap
 
-Updated 2026-10-10. Phases describe evaluation order, not release dates. [The main roadmap](../../ROADMAP.md) retains P0 session/sync reliability ahead of shipping new stateful applications.
+Updated 2026-10-11. Phases describe evaluation order, not release dates. [The main roadmap](../../ROADMAP.md) retains P0 session/sync reliability ahead of shipping new stateful applications.
+
+## Current delivery
+
+PdfCraft 0.6.0 is the first Desktop integration: [adapter, artifact provenance, workflow and limits](../../apps/pdfcraft/README.md). Real WASM rotation/save/reopen and profile/lifecycle tests establish the initial boundary. PhotoCraft and VectorCraft remain next evaluations; native phone editing and broader PDF-tool certification remain pending. Existing Office is now honestly labeled Office Preview.
 
 ## Phase 0: catalog and documentation
 

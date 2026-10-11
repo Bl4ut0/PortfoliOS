@@ -136,9 +136,11 @@
 
     async function importFile({ path, name, parent, data, size, type, source = "local-import", options = {} }) {
         if (!window.SystemFS) throw new Error("SystemFS is unavailable.");
+        const importingUser = window.state?.currentUserId;
         const safePath = window.SystemFS.normalizePath(path || `${parent || "/"}/${safeName(name)}`);
         const safeParent = window.SystemFS.normalizePath(parent || window.SystemFS.getParentPath(safePath));
         const scanned = await inspect({ name: name || window.SystemFS.getName(safePath), type, data, size, source });
+        if (window.state?.currentUserId !== importingUser) throw new Error("Profile changed during file inspection. Retry in the intended workspace.");
         if (scanned.result.verdict !== "clean") {
             return quarantine({ path: safePath, name, parent: safeParent, data: scanned.blob, size, type, source, scan: scanned.result });
         }

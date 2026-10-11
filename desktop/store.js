@@ -239,14 +239,14 @@ const installAppFiles = async (id) => {
     state.installingApps[id] = 0;
     window.renderStore();
 
-    if (id === "codex") {
+    if (id === "codex" || id === "pdfcraft") {
         const installingUser = state.currentUserId;
         try {
             await window.ensureAppLoaded(id);
             if (state.currentUserId !== installingUser) throw new Error("The profile changed during installation.");
             window.setInstalledStoreAppIds([...window.getInstalledStoreAppIds(), id]);
         } catch (error) {
-            window.showDesktopToast?.("Codex Preview could not be added: " + error.message);
+            window.showDesktopToast?.((id === "pdfcraft" ? "PdfCraft" : "Codex Preview") + " could not be added: " + error.message);
         } finally {
             delete state.installingApps[id];
             window.renderStore();

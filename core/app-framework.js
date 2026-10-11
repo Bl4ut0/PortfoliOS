@@ -5,7 +5,7 @@
  */
 (function() {
     const requiredFields = ["title", "icon", "windowClass", "renderBody"];
-    const lifecycleHooks = ["onOpen", "onRestore", "onFocus", "onMinimize", "onMaximize", "onClose"];
+    const lifecycleHooks = ["beforeClose", "onOpen", "onRestore", "onFocus", "onMinimize", "onMaximize", "onClose"];
     const windowPresets = ["app-window", "utility-window", "service-window", "document-window", "media-window", "game-window"];
     const appIdPattern = /^[a-z0-9][a-z0-9-]*$/;
     const classListPattern = /^[a-z0-9_-]+(?:\s+[a-z0-9_-]+)*$/i;
