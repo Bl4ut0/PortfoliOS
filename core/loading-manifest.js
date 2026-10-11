@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.10.10.5";
+    const release = "2026.10.10.6";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "data/systems.js", "data/apps.js",
@@ -33,6 +33,7 @@
             browser: ["data/bookmarks.js", "core/browser-workspace.js"]
         },
         desktopApps: {
+            codex: ["core/codex-preview.js"],
             cli: ["@ai", "desktop/terminal.js", "desktop/brain-helper.js"],
             "local-ai": ["@ai", "desktop/brain-helper.js"],
             settings: ["@ai", "desktop/settings.js", "desktop/brain-helper.js"],
@@ -44,6 +45,7 @@
             openrct2: ["@games"], ut99: ["@games"], romplayer: ["@games"]
         },
         mobileApps: {
+            codex: ["core/codex-preview.js"],
             browser: ["@browser"],
             "local-ai": ["@ai"], music: ["@media"], files: ["@media"], documents: ["@media"], media: ["@media"]
         }

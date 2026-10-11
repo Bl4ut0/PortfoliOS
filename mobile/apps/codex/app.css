@@ -1,0 +1,11 @@
+.mobile-native-app.mobile-codex-app { min-width: 0; min-height: 0; padding: 0; color: var(--mobile-fg); background: var(--mobile-surface); overflow: auto; }
+.mobile-codex-app .codex-preview { padding: 1rem; overflow-wrap: anywhere; }
+.mobile-codex-app .codex-preview section { margin-block: 1rem; padding: 1rem; border: 1px solid var(--mobile-outline-strong); border-radius: 1rem; background: var(--mobile-surface-raised); }
+.mobile-codex-app h2, .mobile-codex-app h3 { margin: 0 0 .5rem; }
+.mobile-codex-app p { line-height: 1.6; }
+.mobile-codex-app a, .mobile-codex-app .codex-preview-badge { color: var(--mobile-accent-ink); }
+.mobile-codex-app button { min-height: 44px; padding: .75rem; border: 1px solid var(--mobile-outline-strong); border-radius: .75rem; color: var(--mobile-fg); background: var(--mobile-surface); font: inherit; }
+.mobile-codex-app button:disabled { opacity: .6; }
+.mobile-codex-app button:focus-visible, .mobile-codex-app a:focus-visible { outline: 2px solid var(--mobile-accent-ink); outline-offset: 3px; }
+.mobile-codex-app pre { padding: .75rem; background: var(--mobile-surface); white-space: pre-wrap; overflow-wrap: anywhere; border-radius: .75rem; }
+.mobile-codex-app [hidden] { display: none; }

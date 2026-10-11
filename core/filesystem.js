@@ -362,8 +362,14 @@ window.SystemFS = {
         return path;
     },
 
+    assertProfile(userId) {
+        if (window.state?.currentUserId !== userId) throw new Error("Profile changed during the filesystem operation. Please retry in the intended workspace.");
+    },
+
     async readFile(path) {
+        const readingUser = window.state?.currentUserId;
         await this.ensureReady();
+        this.assertProfile(readingUser);
         const cleanPath = this.normalizePath(path);
 
         return new Promise((resolve, reject) => {
@@ -371,7 +377,10 @@ window.SystemFS = {
             const store = transaction.objectStore("files");
             const prefix = this.workspacePrefix();
             const request = store.get(this.storagePath(cleanPath, prefix));
-            request.onsuccess = () => resolve(this.visibleRecord(request.result, prefix));
+            request.onsuccess = () => {
+                try { this.assertProfile(readingUser); resolve(this.visibleRecord(request.result, prefix)); }
+                catch (error) { reject(error); }
+            };
             request.onerror = () => reject(request.error || new Error(`Failed to read ${cleanPath}`));
         });
     },
@@ -379,6 +388,7 @@ window.SystemFS = {
     async writeFile(path, name, parent, data, size, type, isDirectory = false, options = {}) {
         const writingUser = window.state?.currentUserId;
         await this.ensureReady();
+        this.assertProfile(writingUser);
 
         const cleanPath = this.normalizePath(path);
         if (cleanPath === "/") {
@@ -410,6 +420,7 @@ window.SystemFS = {
         const prefix = this.workspacePrefix();
         store.put({ ...record, path: this.storagePath(cleanPath, prefix), parent: this.storagePath(cleanParent, prefix) });
         await this.transactionDone(transaction);
+        this.assertProfile(writingUser);
 
         if (!options.silent && window.EventBus) {
             window.EventBus.emit("fs:changed", { action: "write", path: cleanPath, parent: cleanParent });
@@ -419,7 +430,9 @@ window.SystemFS = {
     },
 
     async deleteFile(path, options = {}) {
+        const deletingUser = window.state?.currentUserId;
         await this.ensureReady();
+        this.assertProfile(deletingUser);
 
         const cleanPath = this.normalizePath(path);
         if (cleanPath === "/") {
@@ -427,12 +440,14 @@ window.SystemFS = {
         }
 
         const record = await this.readFile(cleanPath);
+        this.assertProfile(deletingUser);
         const parent = record ? record.parent : this.getParentPath(cleanPath);
 
         const transaction = this.db.transaction(["files"], "readwrite");
         const store = transaction.objectStore("files");
         store.delete(this.storagePath(cleanPath));
         await this.transactionDone(transaction);
+        this.assertProfile(deletingUser);
 
         if (!options.silent && window.EventBus) {
             window.EventBus.emit("fs:changed", { action: "delete", path: cleanPath, parent });
@@ -440,7 +455,9 @@ window.SystemFS = {
     },
 
     async deleteFileRecursive(path, options = {}) {
+        const deletingUser = window.state?.currentUserId;
         await this.ensureReady();
+        this.assertProfile(deletingUser);
 
         const cleanPath = this.normalizePath(path);
         if (cleanPath === "/") {
@@ -448,6 +465,7 @@ window.SystemFS = {
         }
 
         const record = await this.readFile(cleanPath);
+        this.assertProfile(deletingUser);
         const parent = record ? record.parent : this.getParentPath(cleanPath);
         const storedPath = this.storagePath(cleanPath);
 
@@ -461,6 +479,7 @@ window.SystemFS = {
             transaction.onabort = () => reject(transaction.error || new Error(`Delete aborted for ${cleanPath}`));
 
             request.onsuccess = () => {
+                if (window.state?.currentUserId !== deletingUser) { transaction.abort(); return; }
                 const cursor = request.result;
                 if (!cursor) return;
 
@@ -474,13 +493,16 @@ window.SystemFS = {
             request.onerror = () => reject(request.error || new Error(`Failed to scan ${cleanPath}`));
         });
 
+        this.assertProfile(deletingUser);
         if (!options.silent && window.EventBus) {
             window.EventBus.emit("fs:changed", { action: "deleteRecursive", path: cleanPath, parent });
         }
     },
 
     async readDir(parentDir = "/") {
+        const readingUser = window.state?.currentUserId;
         await this.ensureReady();
+        this.assertProfile(readingUser);
 
         const cleanParent = this.normalizePath(parentDir);
         const prefix = this.workspacePrefix();
@@ -491,6 +513,7 @@ window.SystemFS = {
             const store = transaction.objectStore("files");
             const files = [];
             const finish = () => {
+                try { this.assertProfile(readingUser); } catch (error) { reject(error); return; }
                 files.sort((a, b) => {
                     if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
                     return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
@@ -502,6 +525,7 @@ window.SystemFS = {
                 const index = store.index("parent");
                 const request = index.openCursor(IDBKeyRange.only(storedParent));
                 request.onsuccess = () => {
+                try { this.assertProfile(readingUser); } catch (error) { reject(error); return; }
                     const cursor = request.result;
                     if (cursor) {
                         const visible = this.visibleRecord(cursor.value, prefix);
@@ -517,6 +541,7 @@ window.SystemFS = {
 
             const request = store.openCursor();
             request.onsuccess = () => {
+                try { this.assertProfile(readingUser); } catch (error) { reject(error); return; }
                 const cursor = request.result;
                 if (cursor) {
                     if (cursor.value.parent === storedParent || (cleanParent === "/" && cursor.value.parent === "/")) {
@@ -533,7 +558,9 @@ window.SystemFS = {
     },
 
     async getAllFiles() {
+        const readingUser = window.state?.currentUserId;
         await this.ensureReady();
+        this.assertProfile(readingUser);
         const prefix = this.workspacePrefix();
 
         return new Promise((resolve, reject) => {
@@ -543,6 +570,7 @@ window.SystemFS = {
             const request = store.openCursor();
 
             request.onsuccess = () => {
+                try { this.assertProfile(readingUser); } catch (error) { reject(error); return; }
                 const cursor = request.result;
                 if (cursor) {
                     const visible = this.visibleRecord(cursor.value, prefix);

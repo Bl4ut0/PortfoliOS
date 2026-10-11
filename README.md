@@ -72,6 +72,10 @@ node deploy.js --dry-run --only=core,auth,index.html
 
 Install deployment dependencies with npm ci in Orchestration. Deployment previews work without credentials. Real uploads run the OS contract/session/security checks first and publish assets before HTML entry points. An existing ignored OS .env remains a fallback when no orchestration .env exists; process environment variables take precedence. Neither credentials nor orchestration tooling belong in the web root.
 
+## Private experience verification and Codex Preview
+
+Release 2026.10.10.6 adds a native Codex CLI Preview to both Stores and strengthens profile-switch guards for filesystem reads, listings and deletes. The preview can test a local private save; browser coding and ChatGPT sign-in remain unavailable. See [the validation report](docs/PRIVATE_EXPERIENCE_VALIDATION.md) for reproducible checks, shared-storage limits and the native-versus-browser installation/update distinction.
+
 ## Google Drive Sync Configuration
 
 To allow visitors to connect their Google Drive and backup their filesystem:

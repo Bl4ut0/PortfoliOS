@@ -1,0 +1,16 @@
+.desktop-window.codex-window {
+  --app-window-width: min(43rem, calc(100% - 2rem));
+  --app-window-height: min(42rem, calc(100% - 6rem));
+  --app-window-left: clamp(1rem, 15vw, 12rem);
+  --app-window-top: 3rem;
+}
+.codex-preview { overflow: auto; min-height: 0; min-width: 0; padding: 1.25rem; color: var(--text); background: var(--surface); font-family: var(--body); overflow-wrap: anywhere; }
+.codex-preview section { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface-raised); }
+.codex-preview h2, .codex-preview h3 { margin: 0 0 .5rem; }
+.codex-preview p { line-height: 1.6; }
+.codex-preview-badge, .codex-preview a { color: var(--theme-primary-ink); }
+.codex-preview button { min-height: 2.75rem; padding: .6rem .9rem; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface-inset); color: var(--text); font: inherit; cursor: pointer; }
+.codex-preview button:disabled { cursor: default; opacity: .6; }
+.codex-preview button:focus-visible, .codex-preview a:focus-visible { outline: 2px solid var(--theme-primary-ink); outline-offset: 3px; }
+.codex-preview pre { padding: .75rem; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface-inset); border-radius: var(--radius-sm); }
+.codex-preview [hidden] { display: none; }

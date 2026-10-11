@@ -20,6 +20,12 @@
   check(!(await system.getAllFiles()).some(f=>f.path.includes('private_111')),'Second account backup omits first account home');
   await system.writeFile('/documents/account.txt','account.txt','/documents','second',6,'text/plain');
   check((await system.readDir('/documents')).find(f=>f.name==='account.txt').data==='second','Directory index reads the second account namespace');
+  for(const [label,operation] of [['read',()=>system.readFile('/documents/account.txt')],['directory listing',()=>system.readDir('/documents')],['backup enumeration',()=>system.getAllFiles()],['delete',()=>system.deleteFile('/documents/account.txt')],['recursive delete',()=>system.deleteFileRecursive('/documents')]]){
+   window.state.currentUserId='private_111';const pendingOperation=operation();window.state.currentUserId='private_222';let rejected=false;try{await pendingOperation;}catch(error){rejected=true;}check(rejected,'Pending '+label+' rejects on profile switch');check((await system.readFile('/documents/account.txt')).data==='second','Pending '+label+' cannot affect the next account');
+  }
+  for(const [label,method,operation] of [['read','get',()=>system.readFile('/documents/account.txt')],['directory listing','openCursor',()=>system.readDir('/')],['backup enumeration','openCursor',()=>system.getAllFiles()]]){
+   window.state.currentUserId='private_111';const original=IDBObjectStore.prototype[method];IDBObjectStore.prototype[method]=function(...args){const request=original.apply(this,args);window.state.currentUserId='private_222';return request;};let rejected=false;try{await operation();}catch(error){rejected=true;}finally{IDBObjectStore.prototype[method]=original;}check(rejected,'In-flight '+label+' suppresses old-account results');
+  }
   await system.deleteFileRecursive('/documents');check(await system.readFile('/documents/account.txt')===null,'Recursive delete stays within the selected namespace');
   window.state.currentUserId='private_111';check((await system.readFile('/documents/account.txt')).data==='first','Deleting second account files preserves first account');
   let blocked=false;try{await system.readFile('/home/private_222/settings.json');}catch(e){blocked=true;}check(blocked,'Direct access to another profile home is blocked');

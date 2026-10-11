@@ -67,6 +67,7 @@ window.defaultDesktopIconLayout = {
 };
 
 window.desktopApps = [
+    { id: "codex", title: "Codex CLI Preview", icon: "fa-solid fa-terminal", category: "development", modular: true, meta: "Private workspace readiness" },
     { id: "profile", title: "Identity", icon: "fa-solid fa-id-card", category: "productivity", pinned: true, modular: true, meta: "Identity profile" },
     { id: "dossier", title: "Dossier", icon: "fa-solid fa-folder-open", category: "productivity", pinned: true, modular: true, meta: "Project dossier" },
     { id: "browser", title: "Browser", icon: "fa-brands fa-chrome", category: "system", pinned: true, modular: true, meta: "Portfolio browser" },
@@ -97,6 +98,7 @@ window.modularApps = window.desktopApps
     .map((app) => app.id);
 
 window.storeApps = [
+    { id: "codex", title: "Codex CLI Preview", icon: "fa-solid fa-terminal", category: "Productivity", description: "Private workspace readiness and official CLI setup. Browser sign-in and coding are not available yet.", size: "Preview only", publisher: "PortfoliOS" },
     {
         id: "romplayer",
         title: "ROM Player",
