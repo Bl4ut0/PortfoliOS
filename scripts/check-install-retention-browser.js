@@ -41,7 +41,8 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   });
   await p.waitForFunction(()=>!!window.resumeBackup);
   await p.evaluate(()=>openDesktopWindow('store'));await p.locator('[data-install-store-app=codex]').click();
-  await p.waitForFunction(async()=>isStoreAppInstalled('codex') && !state.installingApps.codex && !!await SystemFS.readFile('/Desktop/codex.portfolios-link.json'));
+  await p.waitForFunction(()=>isStoreAppInstalled('codex') && state.installingApps.codex === undefined);
+  assert(await p.evaluate(()=>SystemFS.readFile('/Desktop/codex.portfolios-link.json')), 'Installation creates its Desktop shortcut');
   await p.evaluate(async()=>{resumeBackup();try{await pendingBackup;}catch(error){if(!error.message.includes('Backup incomplete'))throw error;}});
   assert.equal(await p.evaluate(()=>JSON.parse(Storage.local.get(GDriveSync.getScopedStorageKey('sync_manifest')) || '[]').includes('/Desktop/codex.portfolios-link.json')),false,'New shortcut was not falsely acknowledged as uploaded');
   await p.evaluate(()=>GDriveSync.sync());
@@ -65,7 +66,7 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   await q.waitForFunction(()=>!isStoreAppInstalled('codex'));
   await q.evaluate(()=>Storage.local.set(getInstalledStoreAppsKey(),JSON.stringify(['codex','vscode','photocraft'])));
   assert.equal(await q.evaluate(()=>isStoreAppInstalled('codex')),false,'Explicit uninstall defeats stale legacy installed list');
-  await p.evaluate(()=>installApp('codex'));await p.waitForFunction(()=>isStoreAppInstalled('codex') && !state.installingApps.codex);
+  await p.evaluate(()=>installApp('codex'));await p.waitForFunction(()=>isStoreAppInstalled('codex') && state.installingApps.codex === undefined);
   await p.reload();await enter();
   assert.equal(await p.evaluate(()=>isStoreAppInstalled('codex')),true,'Private install survives reload');
   assert(await p.evaluate(()=>SystemFS.readFile('/Desktop/codex.portfolios-link.json')));
