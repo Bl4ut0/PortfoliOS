@@ -1,7 +1,11 @@
 .desktop-window.pdfcraft-window{--app-window-width:min(1200px,96vw);--app-window-height:min(850px,90vh);--app-window-top:2rem;--app-window-left:2rem}
-.pdfcraft-host{display:flex;flex-direction:column;height:100%;min-height:0;background:var(--surface);color:var(--text)}
-.pdfcraft-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px}
-.pdfcraft-toolbar label{display:flex;gap:8px;align-items:center}.pdfcraft-toolbar select{max-width:340px}
-.pdfcraft-toolbar button,.pdfcraft-toolbar select,.pdfcraft-import{background:var(--surface-raised);color:var(--text);border:1px solid var(--line-strong);border-radius:6px;padding:8px}
-.pdfcraft-import{cursor:pointer}.pdfcraft-import input{max-width:190px}
-.pdfcraft-host p{padding:0 10px;margin:4px 0 10px;font-size:13px}.pdfcraft-host iframe{flex:1;width:100%;min-height:400px;border:0;background:#222}
+.pdfcraft-host{position:relative;display:flex;flex-direction:column;height:100%;min-height:0;background:var(--surface);color:var(--text)}
+.pdfcraft-host iframe{flex:1;width:100%;min-height:0;border:0;background:#19191c}
+.pdfcraft-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.pdfcraft-loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--surface);z-index:1}
+.pdfcraft-host [hidden]{display:none}
+.pdfcraft-host dialog{max-width:min(600px,90vw);max-height:80vh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--line-strong);border-radius:var(--radius);padding:20px}
+.pdfcraft-host dialog::backdrop{background:#0008}
+.pdfcraft-host dialog button,.pdfcraft-host [data-pdf-retry]{padding:10px;background:var(--surface-raised);color:var(--text);border:1px solid var(--line-strong);border-radius:var(--radius-sm);cursor:pointer}
+.pdfcraft-host [data-pdf-list]{display:grid;gap:8px;margin-block:12px;max-height:45vh;overflow:auto}.pdfcraft-host dialog label{display:block;margin-block:12px}
+.pdfcraft-host [data-pdf-retry]{position:absolute;top:8px;right:8px;z-index:2}

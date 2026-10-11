@@ -239,7 +239,9 @@
 
     function openFile(item, windowEl) {
         const lowerName = item.name.toLowerCase();
-        if (isOfficeFile(lowerName)) {
+        if (lowerName.endsWith(".pdf") && window.isAppInstalled?.("pdfcraft")) {
+            window.openDesktopWindow("pdfcraft", { path: item.path });
+        } else if (isOfficeFile(lowerName)) {
             window.openDesktopWindow("office", item);
         } else if (isTextFile(lowerName, item.type)) {
             openTextEditor(item, windowEl);

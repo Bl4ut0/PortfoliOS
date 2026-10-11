@@ -25,10 +25,13 @@ function fixture() {
   await page.locator('[data-enter-view=desktop]').click();await page.locator('[data-session-profile=private_pdfA]').click();
   await page.waitForFunction(()=>document.body.dataset.startupStage==='workspace');assert.equal(engineRequests.length,0,'Engine requested during boot');
   await page.evaluate(()=>window.openDesktopWindow('store'));await page.locator('[data-install-store-app=pdfcraft]').click();await page.waitForFunction(()=>window.isStoreAppInstalled('pdfcraft'));await page.evaluate(()=>window.openDesktopWindow('pdfcraft'));
-  await page.locator('[data-pdf-status]').filter({hasText:'Editor ready'}).waitFor({timeout:30000}).catch(async error=>{console.log(await page.locator('[data-pdf-status]').textContent(),await page.locator('iframe[title="PdfCraft PDF editor"]').getAttribute('src'));await page.screenshot({path:path.join(root,'.tmp/pdfcraft/failure.png')});throw error;});
+  await page.locator('[data-pdf-status]').filter({hasText:'Editor ready'}).waitFor({timeout:30000,state:'attached'}).catch(async error=>{console.log(await page.locator('[data-pdf-status]').textContent(),await page.locator('iframe[title="PdfCraft PDF editor"]').getAttribute('src'));await page.screenshot({path:path.join(root,'.tmp/pdfcraft/failure.png')});throw error;});
   const iframe=page.locator('iframe[title="PdfCraft PDF editor"]');assert.equal(await iframe.getAttribute('sandbox'),'allow-scripts allow-downloads');
+  assert.equal(await page.locator('[data-pdf-files]').count(),0);
+  await iframe.click({position:{x:100,y:20}});await page.locator('[data-pdf-dialog]').waitFor();
+  await page.locator('[data-pdf-cancel]').click();await iframe.click({position:{x:100,y:20}});await page.locator('[data-pdf-dialog]').waitFor();
   await page.locator('[data-pdf-import]').setInputFiles({name:'original.pdf',mimeType:'application/pdf',buffer:fixture()});
-  await page.locator('[data-pdf-status]').filter({hasText:'Opened original.pdf'}).waitFor();
+  await page.locator('[data-pdf-status]').filter({hasText:'Opened original.pdf'}).waitFor({state:'attached'});
   await page.waitForTimeout(1500);await page.screenshot({path:path.join(root,'.tmp/pdfcraft/before-save.png')});
   // The real egui canvas has no DOM buttons. Rotate control coordinates correspond
   // to this fixed 1200x850 app viewport and are checked by dirty state + exported PDF.
@@ -37,11 +40,11 @@ function fixture() {
   assert.equal(await page.evaluate(async()=>{try{await prepareProfileSwitch();return false;}catch{return true;}}),true,'Dirty editor must veto profile switch');
   await iframe.click({position:{x:500,y:300}});await page.evaluate(()=>{window.pdfTestWrite=SystemFS.writeFile;SystemFS.writeFile=async()=>{throw new Error('Disposable save failure');};});
   await page.keyboard.press('Control+s');
-  await page.locator('[data-pdf-status]').filter({hasText:'Save failed'}).waitFor();
+  await page.locator('[data-pdf-status]').filter({hasText:'Save failed'}).waitFor({state:'attached'});
   assert.equal(await page.evaluate(()=>closeDesktopWindow('pdfcraft')),false,'Failed export must veto close');
   await page.evaluate(()=>{SystemFS.writeFile=window.pdfTestWrite;delete window.pdfTestWrite;});
   await page.locator('[data-pdf-retry]').click();
-  await page.locator('[data-pdf-status]').filter({hasText:'Saved /documents/PdfCraft/original.pdf'}).waitFor({timeout:15000});
+  await page.locator('[data-pdf-status]').filter({hasText:'Saved /documents/PdfCraft/original.pdf'}).waitFor({timeout:15000,state:'attached'});
   assert(await page.evaluate(async()=>{const file=await SystemFS.readFile('/documents/PdfCraft/original.pdf');return file.size>100 && file.metadata.security.verdict==='clean' && /\/Rotate\s+90/.test(await new Blob([file.data]).text());}));
   // Untrusted top-window messages cannot spoof an engine save or dirty state.
   await page.evaluate(()=>window.postMessage({type:'pdfcraft:save',name:'spoof.pdf',bytes:new ArrayBuffer(20)},'*'));
@@ -51,9 +54,15 @@ function fixture() {
   await page.evaluate(()=>window.closeDesktopWindow('pdfcraft'));
   assert.equal(await page.locator('iframe[title="PdfCraft PDF editor"]').count(),0);
   await page.evaluate(async()=>{await window.ensureAppLoaded('pdfcraft');await window.openDesktopWindow('pdfcraft');});
-  await page.locator('[data-pdf-status]').filter({hasText:'Editor ready'}).waitFor({timeout:90000});
-  await page.locator('[data-pdf-files]').selectOption('/documents/PdfCraft/original.pdf');await page.locator('[data-pdf-open]').click();
-  await page.locator('[data-pdf-status]').filter({hasText:'Opened original.pdf'}).waitFor();
+  await page.locator('[data-pdf-status]').filter({hasText:'Editor ready'}).waitFor({timeout:90000,state:'attached'});
+  await page.locator('iframe[title="PdfCraft PDF editor"]').click({position:{x:100,y:20}});await page.locator('[data-pdf-path="/documents/PdfCraft/original.pdf"]').click();
+  await page.locator('[data-pdf-status]').filter({hasText:'Opened original.pdf'}).waitFor({state:'attached'});
+  await page.evaluate(()=>closeDesktopWindow('pdfcraft'));
+  await page.evaluate(()=>openDesktopWindow('files'));
+  await page.locator('.file-item[data-path="/documents"]').dblclick();
+  await page.locator('.file-item[data-path="/documents/PdfCraft"]').dblclick();
+  await page.locator('.file-item[data-path="/documents/PdfCraft/original.pdf"]').dblclick();
+  await page.locator('[data-pdf-status]').filter({hasText:'Opened original.pdf'}).waitFor({state:'attached',timeout:90000});
   await page.evaluate(async()=>{await prepareProfileSwitch();setCurrentUser('private_pdfB');await SystemFS.ensureDefaultFiles();});
   assert.equal(await page.evaluate(()=>SystemFS.readFile('/documents/PdfCraft/original.pdf')),null);
   await page.evaluate(async()=>{setCurrentUser('private_pdfA');await SystemFS.ensureDefaultFiles();});
@@ -63,6 +72,6 @@ function fixture() {
   await page.evaluate(async()=>{setInstalledStoreAppIds(['pdfcraft']);await SystemFS.writeFile('/documents/public-pdf-test.txt','public-pdf-test.txt','/documents','test',4,'text/plain');});
   await page.reload({waitUntil:'domcontentloaded'});await page.locator('[data-enter-view=desktop]').click();await page.locator('[data-session-public]').click();await page.waitForFunction(()=>document.body.dataset.startupStage==='workspace');
   assert.equal(await page.evaluate(()=>isStoreAppInstalled('pdfcraft')),false);assert.equal(await page.evaluate(()=>SystemFS.readFile('/documents/public-pdf-test.txt')),null);
-  assert.deepEqual(errors,[]);console.log('PdfCraft real WASM passed: lazy boot, opaque frame, import, editor Save, rotation, dirty close/switch vetoes, failed-save retry, scanned SystemFS output, spoof rejection, teardown/reopen, private A/B isolation and public reload reset.');
+  assert.deepEqual(errors,[]);console.log('PdfCraft real WASM passed: lazy boot, opaque frame, native Open/cancel/import, File Explorer launch, editor Save, rotation, dirty close/switch vetoes, failed-save retry, scanned SystemFS output, spoof rejection, teardown/reopen, private A/B isolation and public reload reset.');
  } finally {await browser?.close();php.kill();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
