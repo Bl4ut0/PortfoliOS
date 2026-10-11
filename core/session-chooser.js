@@ -123,8 +123,14 @@
                 return;
             }
             if (button.hasAttribute("data-session-public") && window.isPrivateUser?.(window.state.currentUserId)) {
-                overlay.querySelector("[data-session-public-actions]").hidden = false;
-                overlay.querySelector("[data-session-public-save]").disabled = !window.GDriveSync?.getToken();
+                const actions = overlay.querySelector("[data-session-public-actions]");
+                if (actions) {
+                    actions.hidden = false;
+                    actions.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
+                    const saveBtn = overlay.querySelector("[data-session-public-save]");
+                    if (saveBtn) saveBtn.disabled = !window.GDriveSync?.getToken();
+                    (saveBtn && !saveBtn.disabled ? saveBtn : overlay.querySelector("[data-session-public-local]"))?.focus?.();
+                }
                 return;
             }
             const id = button.dataset.sessionProfile;
@@ -138,6 +144,8 @@
             try {
                 await window.prepareSessionStorage?.();
                 if (button.hasAttribute("data-session-public")) {
+                    window.resetPublicLocalState?.();
+                    await window.SystemFS?.resetPublicWorkspace?.();
                     await window.SystemFS?.ensureDefaultFiles?.();
                     await complete();
                 } else if (button.hasAttribute("data-session-public-save") || button.hasAttribute("data-session-public-local")) {
@@ -163,7 +171,7 @@
                         }
                     }
                     await window.GDriveSync.loadGsiLibrary();
-                    const clientId = window.Storage?.local.get("bl4ut0_gdrive_client_id") || window.GDriveSync.defaultClientId;
+                    const clientId = window.GDriveSync.defaultClientId;
                     await window.GDriveSync.login(clientId, { selectAccount: !id, expectedSub: id ? profiles[id].sub : null });
                     await complete();
                     // Eligible backup starts after the workspace becomes usable.

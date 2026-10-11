@@ -1,0 +1,57 @@
+{
+  "project": "Designcraft",
+  "version": "0.6.0",
+  "source": "https://github.com/storytold/designcraft",
+  "archive": "https://github.com/storytold/designcraft/releases/download/v0.6.0/designcraft-web-0.6.0.zip",
+  "sha256": "b43ebefc5b7900c8223953d632951308a347935adc6fad3ff00e4a7a1d050d63",
+  "files": {
+    "OFL-biz-ud-pgothic.txt": {
+      "bytes": 4408,
+      "sha256": "e753d7155d53c747d037a445e584c8ecfca6dd79846db610417e282a736b28bc"
+    },
+    "designcraft-web-dd093050b4ea25f7.js": {
+      "bytes": 154954,
+      "sha256": "5af25d9878f19863ebcf8d47528295d7185aad45a22a17707da456dad29fa507"
+    },
+    ".htaccess": {
+      "bytes": 495,
+      "sha256": "c92d61b428bff284fce08dc57f0255261476397f2cba5836c833974eded5c725"
+    },
+    "designcraft-web-dd093050b4ea25f7_bg.wasm": {
+      "bytes": 43131476,
+      "sha256": "b0f5011fa13d25c85313c841f74f75a82534936fc6b9d889497f69f0459504d0"
+    },
+    "OFL-biz-ud-mincho.txt": {
+      "bytes": 4408,
+      "sha256": "ef0ed524b3bd012f37015e986809eed6f67905456ebfc1ebd7fcc2765282ee01"
+    },
+    "index.html": {
+      "bytes": 1482,
+      "sha256": "bb9c186ab44102d43c8abe51190299cdf82765af48f0f9337f7725146bff1e20"
+    },
+    "_headers": {
+      "bytes": 326,
+      "sha256": "e3e253de74fb99a761fc91d4dec4b81ad6a1022b29c98761b5ac1e8ba5aff05a"
+    },
+    "LICENSE-MIT": {
+      "bytes": 1103,
+      "sha256": "d543d31e3120c64b70abc77cfadcbdc2249c78de1c8efa2e3d62540bb79de816"
+    },
+    "OFL-shippori-mincho.txt": {
+      "bytes": 4399,
+      "sha256": "41fba056279be5f45ff9a99e44b7b53897b42732f5806d8e666e0ab49ac6bd38"
+    },
+    "LICENSE-APACHE": {
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    "README.md": {
+      "bytes": 19514,
+      "sha256": "19a0fcb9b890b397e9268c405b68a3051dbf1d874660c5a5865046baab4ac9b3"
+    },
+    "HOSTING.md": {
+      "bytes": 4271,
+      "sha256": "c75f7e0992dc2f3b50d03b2bdffdc25fda70c431de4847ca9476e3506d76ecb4"
+    }
+  }
+}

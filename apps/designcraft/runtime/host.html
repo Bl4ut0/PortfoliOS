@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>DesignCraft</title>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #262626; }
+    #designcraft_canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+  </style>
+  <script src="./host-bridge.js"></script>
+  <script type="module">
+    import init, * as bindings from './designcraft-web-dd093050b4ea25f7.js';
+    const wasm = await init({ module_or_path: './designcraft-web-dd093050b4ea25f7_bg.wasm' });
+    window.wasmBindings = bindings;
+    dispatchEvent(new CustomEvent("TrunkApplicationStarted", { detail: { wasm } }));
+  </script>
+</head>
+<body>
+  <canvas id="designcraft_canvas"></canvas>
+</body>
+</html>

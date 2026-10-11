@@ -1,0 +1,65 @@
+{
+  "project": "Filmcraft",
+  "version": "0.6.0",
+  "source": "https://github.com/storytold/filmcraft",
+  "archive": "https://github.com/storytold/filmcraft/releases/download/v0.6.0/filmcraft-web-0.6.0.zip",
+  "sha256": "9fd024d371075dc8bb0d868c0f162b60743d28db16d010e2f61b41927ea96629",
+  "files": {
+    "OFL-biz-ud-pgothic.txt": {
+      "bytes": 4408,
+      "sha256": "e753d7155d53c747d037a445e584c8ecfca6dd79846db610417e282a736b28bc"
+    },
+    "filmcraft_web.js": {
+      "bytes": 180860,
+      "sha256": "dc4cd6dab5ae0e7777a2b7a5e5f0b52f678234658e286d9300484bfe9c8a041f"
+    },
+    ".htaccess": {
+      "bytes": 495,
+      "sha256": "c92d61b428bff284fce08dc57f0255261476397f2cba5836c833974eded5c725"
+    },
+    "OFL-biz-ud-mincho.txt": {
+      "bytes": 4408,
+      "sha256": "ef0ed524b3bd012f37015e986809eed6f67905456ebfc1ebd7fcc2765282ee01"
+    },
+    "index.html": {
+      "bytes": 5077,
+      "sha256": "fcdd47d976b29c2ea73dc382c36ed9c11bfbcc652326f66ecec199fa113d862e"
+    },
+    "_headers": {
+      "bytes": 326,
+      "sha256": "e3e253de74fb99a761fc91d4dec4b81ad6a1022b29c98761b5ac1e8ba5aff05a"
+    },
+    "filmcraft_web_bg.wasm": {
+      "bytes": 43467362,
+      "sha256": "8f17c92624ce54c56fd14807bbb76e1fb38eefe05d58aa94c81ee0b2262bddc0"
+    },
+    "LICENSE-MIT": {
+      "bytes": 1101,
+      "sha256": "d2d8416f0883694c23b473e26372506e9e11f5f41b55a92b7388dab921d9a207"
+    },
+    "OFL-shippori-mincho.txt": {
+      "bytes": 4399,
+      "sha256": "41fba056279be5f45ff9a99e44b7b53897b42732f5806d8e666e0ab49ac6bd38"
+    },
+    "favicon.png": {
+      "bytes": 17152,
+      "sha256": "7ca8adb57a34d1f4bff8c7e976ac5fe73e69a89b4268d15b3b861c7e51c45a74"
+    },
+    "LICENSE-APACHE": {
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    "README.md": {
+      "bytes": 35669,
+      "sha256": "ab3f5c447d74b3197f10fb26531f7cd4974a88ba6315fa86acb84b8bbeac65da"
+    },
+    "audio-worklet.js": {
+      "bytes": 1820,
+      "sha256": "e3d3272a30eafe34505e5676eb3543d7248870835a5569f314f388c89b807524"
+    },
+    "HOSTING.md": {
+      "bytes": 4421,
+      "sha256": "577dfc477effb37b6eb56f15e9cd8d955e1fdefb58252009377eb4730205b486"
+    }
+  }
+}

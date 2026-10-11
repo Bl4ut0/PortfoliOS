@@ -9,3 +9,13 @@
 .pdfcraft-host dialog button,.pdfcraft-host [data-pdf-retry]{padding:10px;background:var(--surface-raised);color:var(--text);border:1px solid var(--line-strong);border-radius:var(--radius-sm);cursor:pointer}
 .pdfcraft-host [data-pdf-list]{display:grid;gap:8px;margin-block:12px;max-height:45vh;overflow:auto}.pdfcraft-host dialog label{display:block;margin-block:12px}
 .pdfcraft-host [data-pdf-retry]{position:absolute;top:8px;right:8px;z-index:2}
+
+.pdfcraft-host dialog{width:min(640px,85vw)}
+.pdf-file-nav,.pdf-folder-create{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pdf-file-nav output{min-width:0;overflow-wrap:anywhere;flex:1}
+.pdfcraft-host dialog input{max-width:100%;min-width:0;padding:8px;background:var(--surface-inset);color:var(--text);border:1px solid var(--line-strong);border-radius:var(--radius-sm)}
+.pdfcraft-host [data-pdf-list] button{text-align:left;overflow-wrap:anywhere}
+.pdfcraft-host [aria-pressed="true"]{outline:2px solid var(--theme-primary-ink)}
+.pdfcraft-host dialog footer{display:flex;justify-content:flex-end;gap:8px}
+.pdfcraft-host [data-pdf-drop]{padding:18px;border:2px dashed var(--line-strong);border-radius:var(--radius-sm);text-align:center;margin-block:12px}
+.pdfcraft-host dialog :focus-visible{outline:2px solid var(--theme-primary-ink);outline-offset:2px}

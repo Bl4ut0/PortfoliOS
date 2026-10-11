@@ -239,14 +239,25 @@ const installAppFiles = async (id) => {
     state.installingApps[id] = 0;
     window.renderStore();
 
-    if (id === "codex" || id === "pdfcraft") {
+    const modularStoreApps = [
+        "codex", "pdfcraft", "photocraft", "vectorcraft",
+        "lightcraft", "designcraft", "filmcraft", "effectcraft"
+    ];
+    if (modularStoreApps.includes(id)) {
         const installingUser = state.currentUserId;
         try {
             await window.ensureAppLoaded(id);
             if (state.currentUserId !== installingUser) throw new Error("The profile changed during installation.");
             window.setInstalledStoreAppIds([...window.getInstalledStoreAppIds(), id]);
+            if (window.EventBus) window.EventBus.emit("app:installed", id);
+            if (window.renderDesktopIcons) window.renderDesktopIcons();
+            if (window.renderStartMenu) window.renderStartMenu();
+            if (window.renderTaskbar) window.renderTaskbar();
+            const storeApp = (window.storeApps || []).find(a => a.id === id);
+            window.showDesktopToast?.(`${storeApp ? storeApp.title : id} installed successfully.`);
         } catch (error) {
-            window.showDesktopToast?.((id === "pdfcraft" ? "PdfCraft" : "Codex Preview") + " could not be added: " + error.message);
+            const storeApp = (window.storeApps || []).find(a => a.id === id);
+            window.showDesktopToast?.((storeApp ? storeApp.title : id) + " could not be added: " + error.message);
         } finally {
             delete state.installingApps[id];
             window.renderStore();
@@ -430,6 +441,12 @@ window.uninstallApp = (id) => {
     if (localCleanupDirs[id] && window.SystemFS) {
         window.SystemFS.deleteFileRecursive(localCleanupDirs[id], { silent: true })
             .catch(err => console.error(`Failed to clean up ${id} local files:`, err));
+    }
+
+    if (["codex", "pdfcraft", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft"].includes(id)) {
+        document.getElementById(`app-script-${id}`)?.remove();
+        document.getElementById(`app-style-${id}`)?.remove();
+        delete window.appRegistry[id];
     }
 
     if (state.openApps.has(id) && window.closeDesktopWindow) {

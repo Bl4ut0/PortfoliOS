@@ -48,6 +48,8 @@
         throw new Error(
           "The public profile could not be activated. Your private workspace is still active.",
         );
+      window.resetPublicLocalState?.();
+      await window.SystemFS?.resetPublicWorkspace?.();
       await window.SystemFS?.ensureDefaultFiles?.();
       window.state.sessionChosen = true;
       window.closeSessionChooser?.();

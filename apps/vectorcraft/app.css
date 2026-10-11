@@ -1,0 +1,6 @@
+.desktop-window.vectorcraft-window{--app-window-width:min(1280px,96vw);--app-window-height:min(880px,92vh);--app-window-top:2.2rem;--app-window-left:2.2rem}
+.vectorcraft-host{position:relative;display:flex;flex-direction:column;height:100%;min-height:0;background:var(--surface);color:var(--text)}
+.vectorcraft-host iframe{flex:1;width:100%;min-height:0;border:0;background:#262626}
+.vectorcraft-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.vectorcraft-loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--surface);z-index:1}
+.vectorcraft-host [hidden]{display:none}

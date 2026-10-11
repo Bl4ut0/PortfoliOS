@@ -1,0 +1,45 @@
+{
+  "project": "PhotoCraft",
+  "version": "0.7.0",
+  "source": "https://github.com/storytold/photocraft",
+  "archive": "https://github.com/storytold/photocraft/releases/download/v0.7.0/photocraft-web-0.7.0.zip",
+  "sha256": "dfcbaac00f81f5d05ccffba36a14b320c1b1c7b23a4135fe54877f527e550eec",
+  "files": {
+    ".htaccess": {
+      "bytes": 495,
+      "sha256": "c92d61b428bff284fce08dc57f0255261476397f2cba5836c833974eded5c725"
+    },
+    "photocraft-web-effbf20fc7ec283d_bg.wasm": {
+      "bytes": 24996331,
+      "sha256": "b3c75e56a6cf0ba1fa1efcce146fbb710daf75230a0bb9345ea1da15af0b167f"
+    },
+    "index.html": {
+      "bytes": 2320,
+      "sha256": "1d0c6eab598d29c4e5bcb50e6fe4f55197fe740ee37ca62492ceb58ba816396f"
+    },
+    "photocraft-web-effbf20fc7ec283d.js": {
+      "bytes": 171589,
+      "sha256": "ff2fcda299c51b7bff6a15192311ce10bf066e8847d1f0948671eef0b4709953"
+    },
+    "_headers": {
+      "bytes": 326,
+      "sha256": "e3e253de74fb99a761fc91d4dec4b81ad6a1022b29c98761b5ac1e8ba5aff05a"
+    },
+    "LICENSE-MIT": {
+      "bytes": 1102,
+      "sha256": "1a8f66d8a86b146f5336fa0d4b1186576c8aa98e60823080c85c7811cfd810af"
+    },
+    "LICENSE-APACHE": {
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    "README.md": {
+      "bytes": 31270,
+      "sha256": "b9abd4880210f42b396a3bb3e287f69bcbebf2067fa3014ad780652f8fca45d5"
+    },
+    "HOSTING.md": {
+      "bytes": 10976,
+      "sha256": "b2d87092cae0a7ff29539d55ba1c737802fca8c2464c3721864246c5b2918fa7"
+    }
+  }
+}

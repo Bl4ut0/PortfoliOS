@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>EffectCraft</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1c1f; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+  </style>
+  <script src="./host-bridge.js"></script>
+</head>
+<body>
+  <canvas id="effectcraft_canvas"></canvas>
+  <script type="module">
+    import init, * as ec from "./effectcraft_web.js";
+    try {
+      const wasmUrl = new URL("effectcraft_web_bg.wasm", location.href);
+      let module;
+      try {
+        module = await WebAssembly.compileStreaming(fetch(wasmUrl));
+      } catch {
+        module = await WebAssembly.compile(await (await fetch(wasmUrl)).arrayBuffer());
+      }
+      window.effectcraftModule = module;
+      await init({ module_or_path: module });
+      await ec.start("effectcraft_canvas");
+      dispatchEvent(new CustomEvent("EffectCraftStarted", { detail: { module } }));
+    } catch (e) {
+      console.error("EffectCraft start error:", e);
+    }
+  </script>
+</body>
+</html>

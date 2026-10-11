@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LightCraft</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #1c1c1c; }
+    canvas#lightcraft_canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+  </style>
+  <script src="./host-bridge.js"></script>
+</head>
+<body>
+  <canvas id="lightcraft_canvas"></canvas>
+  <script type="module">
+    import init, { start, command } from "./lightcraft_web.js";
+    (async () => {
+      const chineseFont = fetch("./lightcraft_zh_hans.otf")
+        .then(async response => response.ok ? new Uint8Array(await response.arrayBuffer()) : new Uint8Array())
+        .catch(() => new Uint8Array());
+      const [module, font] = await Promise.all([
+        WebAssembly.compileStreaming(fetch("./lightcraft_web_bg.wasm")),
+        chineseFont,
+      ]);
+      globalThis.lightcraftModule = module;
+      await init({ module_or_path: module });
+      globalThis.lightcraft = { command };
+      start(font);
+      dispatchEvent(new CustomEvent("LightCraftStarted", { detail: { module } }));
+    })().catch((e) => {
+      console.error(e);
+    });
+  </script>
+</body>
+</html>

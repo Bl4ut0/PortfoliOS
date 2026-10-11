@@ -1,0 +1,77 @@
+{
+  "project": "Effectcraft",
+  "version": "0.8.0",
+  "source": "https://github.com/storytold/effectcraft",
+  "archive": "https://github.com/storytold/effectcraft/releases/download/v0.8.0/effectcraft-web-0.8.0.zip",
+  "sha256": "59426cdd519ea1480215a58158ec0b36a31e6a1163ddd8715f3869caf509069d",
+  "files": {
+    "effectcraft_web.js": {
+      "bytes": 180218,
+      "sha256": "23a8ce26cd8e55cc402256f5c699790a1e786e05a8b7bd8d5d50f06dfc641941"
+    },
+    "favicon.svg": {
+      "bytes": 350998,
+      "sha256": "6c6cb887bc3b95e897e881ce62eab11cfad8d5f18c98782f3d90713a1c2fcaa5"
+    },
+    "icon-256.png": {
+      "bytes": 57151,
+      "sha256": "186a1d869a4602ec86cd03f6e5e288ebbd328e0c3d8a17c205329829392f9add"
+    },
+    "worker.js": {
+      "bytes": 2144,
+      "sha256": "6c59cfbcf420fb0e3f01e03cce34f0a582bafab80dc504456d43a18220a50e15"
+    },
+    ".htaccess": {
+      "bytes": 476,
+      "sha256": "8717e17541cd99b2bae7b63270a090f20917000e0988ac3be72f93ea2c42edf0"
+    },
+    "manifest.webmanifest": {
+      "bytes": 568,
+      "sha256": "e6555207647714c0a449770e39790d11c72b822fbc3e844ef1a440a54a7afee7"
+    },
+    "index.html": {
+      "bytes": 5411,
+      "sha256": "3ee2424e3018b78ead3d09fd660744dae2b6942fd0f7ef7fac7445d84b154ac1"
+    },
+    "effectcraft_web_bg.wasm": {
+      "bytes": 60021784,
+      "sha256": "099520cfc9c9000830ff25d234890d910f52a19fea19ed8148eb83f5f06ceef1"
+    },
+    "_headers": {
+      "bytes": 369,
+      "sha256": "9c0bdcf39f5bd050b696137742631487eb7236006f7fa3b5f62faf6d5168e391"
+    },
+    "sw.js": {
+      "bytes": 2003,
+      "sha256": "bfda482ed67643deffb0d3c422075caa1cf2a10c322dfb1f01d155c56582d931"
+    },
+    "icon-512.png": {
+      "bytes": 150412,
+      "sha256": "1d03baf4f9091d84cd8a48310d6b47fd92dfe31c0a648ea966dbbce28d8fd111"
+    },
+    "LICENSE-MIT": {
+      "bytes": 1103,
+      "sha256": "7b6db9a363688683feacdf9b528f059637f2e5d2edbacd8720fc9b26781c9abe"
+    },
+    "snippets/effectcraft-web-c54b28d6bb55bd4b/js/host.js": {
+      "bytes": 25974,
+      "sha256": "d5bb560348f03dfca088249d5b7b5fceb883725ba47a7810c9eb651e01246b0b"
+    },
+    "LICENSE-APACHE": {
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    "README.md": {
+      "bytes": 23455,
+      "sha256": "8574349c2c0b30d4b9c574c6d53f7362a5c03ef1b11e6a9255bcdf230d5c056a"
+    },
+    "audio-worklet.js": {
+      "bytes": 1298,
+      "sha256": "cf18c5c3e927c5160ff336a40b58faa19cc656c6465c97511bc22eaeb3605466"
+    },
+    "HOSTING.md": {
+      "bytes": 5134,
+      "sha256": "2c303ce46c2fb88464d6c2a5dd8c4f3c831d4614ac034a4e32adaf0bae35b81d"
+    }
+  }
+}

@@ -39,6 +39,35 @@
         return String(type).startsWith("audio/") || /\.(?:mp3|wav|ogg|oga|m4a|aac|flac|opus|weba)$/i.test(name);
     }
 
+    function isPdfFile(name = "") {
+        return /\.pdf$/i.test(name);
+    }
+
+    function isRasterImage(name = "", type = "") {
+        return (String(type).startsWith("image/") && !/\.svg$/i.test(name)) || /\.(?:png|jpe?g|webp|gif|bmp|ico|tiff?)$/i.test(name);
+    }
+
+    function isVectorImage(name = "", type = "") {
+        return type === "image/svg+xml" || /\.(?:svg|vectorcraft)$/i.test(name);
+    }
+
+    function isRawImage(name = "") {
+        return /\.(?:raw|dng|cr2|nef|arw|orf|rw2|pef|lightcraft)$/i.test(name);
+    }
+
+    function isDesignFile(name = "") {
+        return /\.(?:craft|designcraft)$/i.test(name);
+    }
+
+    function isVideoFile(name = "", type = "") {
+        return String(type).startsWith("video/") || /\.(?:mp4|webm|mkv|mov|avi|film|filmcraft)$/i.test(name);
+    }
+
+    function isEffectFile(name = "") {
+        return /\.(?:fx|effectcraft)$/i.test(name);
+    }
+
+
     function renderBreadcrumbs(windowEl) {
         const breadcrumbsContainer = windowEl.querySelector(".files-breadcrumbs");
         if (!breadcrumbsContainer) return;
@@ -239,8 +268,20 @@
 
     function openFile(item, windowEl) {
         const lowerName = item.name.toLowerCase();
-        if (lowerName.endsWith(".pdf") && window.isAppInstalled?.("pdfcraft")) {
+        if (isPdfFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("pdfcraft"))) {
             window.openDesktopWindow("pdfcraft", { path: item.path });
+        } else if (isVectorImage(lowerName, item.type) && (!window.isAppInstalled || window.isAppInstalled("vectorcraft"))) {
+            window.openDesktopWindow("vectorcraft", { path: item.path });
+        } else if (isRawImage(lowerName) && (!window.isAppInstalled || window.isAppInstalled("lightcraft"))) {
+            window.openDesktopWindow("lightcraft", { path: item.path });
+        } else if (isDesignFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("designcraft"))) {
+            window.openDesktopWindow("designcraft", { path: item.path });
+        } else if (isEffectFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("effectcraft"))) {
+            window.openDesktopWindow("effectcraft", { path: item.path });
+        } else if (isVideoFile(lowerName, item.type) && (!window.isAppInstalled || window.isAppInstalled("filmcraft"))) {
+            window.openDesktopWindow("filmcraft", { path: item.path });
+        } else if (isRasterImage(lowerName, item.type) && (!window.isAppInstalled || window.isAppInstalled("photocraft"))) {
+            window.openDesktopWindow("photocraft", { path: item.path });
         } else if (isOfficeFile(lowerName)) {
             window.openDesktopWindow("office", item);
         } else if (isTextFile(lowerName, item.type)) {
@@ -376,6 +417,55 @@
         }
 
         const openWith = [];
+        if (isPdfFile(name) && (!window.isAppInstalled || window.isAppInstalled("pdfcraft"))) {
+            openWith.push({
+                label: "PDFCraft",
+                icon: "fa-solid fa-file-pdf",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("pdfcraft", { path: item.path }))
+            });
+        }
+        if (isRasterImage(name, type) && (!window.isAppInstalled || window.isAppInstalled("photocraft"))) {
+            openWith.push({
+                label: "PhotoCraft",
+                icon: "fa-solid fa-camera-retro",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("photocraft", { path: item.path }))
+            });
+        }
+        if (isVectorImage(name, type) && (!window.isAppInstalled || window.isAppInstalled("vectorcraft"))) {
+            openWith.push({
+                label: "VectorCraft",
+                icon: "fa-solid fa-bezier-curve",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("vectorcraft", { path: item.path }))
+            });
+        }
+        if (isRawImage(name) && (!window.isAppInstalled || window.isAppInstalled("lightcraft"))) {
+            openWith.push({
+                label: "LightCraft",
+                icon: "fa-solid fa-sliders",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("lightcraft", { path: item.path }))
+            });
+        }
+        if (isDesignFile(name) && (!window.isAppInstalled || window.isAppInstalled("designcraft"))) {
+            openWith.push({
+                label: "DesignCraft",
+                icon: "fa-solid fa-layer-group",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("designcraft", { path: item.path }))
+            });
+        }
+        if (isVideoFile(name, type) && (!window.isAppInstalled || window.isAppInstalled("filmcraft"))) {
+            openWith.push({
+                label: "FilmCraft",
+                icon: "fa-solid fa-film",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("filmcraft", { path: item.path }))
+            });
+        }
+        if (isEffectFile(name) && (!window.isAppInstalled || window.isAppInstalled("effectcraft"))) {
+            openWith.push({
+                label: "EffectCraft",
+                icon: "fa-solid fa-wand-magic-sparkles",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("effectcraft", { path: item.path }))
+            });
+        }
         if (isOfficeFile(name) || isTextFile(name, type)) {
             openWith.push({
                 label: "PortfoliOS Office",

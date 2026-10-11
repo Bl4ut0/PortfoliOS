@@ -8,6 +8,14 @@
     pending = { input: this, id: crypto.randomUUID() };
     parent.postMessage({ type: 'pdfcraft:request-open', id: pending.id, multiple: this.multiple }, location.origin);
   };
+  addEventListener('dragover', event => { event.preventDefault(); }, true);
+  addEventListener('drop', async event => {
+    event.preventDefault(); event.stopImmediatePropagation();
+    const file = event.dataTransfer?.files[0];
+    if (!file || file.size > 64 * 1024 * 1024) return;
+    const bytes = await file.arrayBuffer();
+    parent.postMessage({ type: 'pdfcraft:drop', name: file.name, bytes }, location.origin, [bytes]);
+  }, true);
   addEventListener('message', event => {
     if (event.source !== parent || event.origin !== location.origin || event.data?.type !== 'pdfcraft:file-result' || event.data.id !== pending?.id) return;
     const input = pending.input; pending = null;

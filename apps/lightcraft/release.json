@@ -1,0 +1,129 @@
+{
+  "project": "Lightcraft",
+  "version": "0.6.0",
+  "source": "https://github.com/storytold/lightcraft",
+  "archive": "https://github.com/storytold/lightcraft/releases/download/v0.6.0/lightcraft-web-0.6.0.zip",
+  "sha256": "f20bfc75fbbfd204ed81e32d73e967212bff6cb30cbe8532b7b0e4fed581a2f6",
+  "files": {
+    "OFL-biz-ud-pgothic.txt": {
+      "bytes": 4408,
+      "sha256": "e753d7155d53c747d037a445e584c8ecfca6dd79846db610417e282a736b28bc"
+    },
+    "lightcraft_zh_hans.otf.gz": {
+      "bytes": 13588233,
+      "sha256": "6a6b0f1e8df097cb970b11b66940394b1eafc2dbfda77ce432849d6e5412f13f"
+    },
+    "worker.js.gz": {
+      "bytes": 393,
+      "sha256": "b577de3051aeabea0e44693aecb9ab3e9f8e5dd9c6ba76696b7df26ae61a556d"
+    },
+    "index.html.gz": {
+      "bytes": 1165,
+      "sha256": "5fbaad43b7ceac91e52b0b77a2771eb839e20dc4be20a76466c88aa4e6bdfc54"
+    },
+    "lightcraft_web.js.gz": {
+      "bytes": 14545,
+      "sha256": "2b0876aedc035c555373c2a49570cc3f4a6eb7d4ccfc2ba9f21f0c7e2fa7bb76"
+    },
+    "lightcraft_web.js": {
+      "bytes": 99069,
+      "sha256": "fd08a6ea2abddab66050b71808b3a2203eb87306038be595574bb1be41173484"
+    },
+    "lightcraft_web_bg.wasm": {
+      "bytes": 25810208,
+      "sha256": "e847d1b82ec0ebd0fe9f6e0130022635be6da4658389b4f79779bc601e4ecdc1"
+    },
+    "OFL-noto-sans-arabic.txt": {
+      "bytes": 4382,
+      "sha256": "07fc70bfeb985cc1a87a8587d0a0c80bab11c86c9dc3fd95b6f0cb332f983e96"
+    },
+    "worker.js": {
+      "bytes": 649,
+      "sha256": "c56f203f815546987d3cc60dd28c0c603a6d02ad8c050e348d0c4d32dfd006c6"
+    },
+    "lightcraft_zh_hans.otf": {
+      "bytes": 16437364,
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+    },
+    ".htaccess": {
+      "bytes": 559,
+      "sha256": "64bb49acd582a68ebf44e83e4e3741bd93960b9772fddb3f3f3b5eb913d635a1"
+    },
+    "NOTICE": {
+      "bytes": 3275,
+      "sha256": "059db090e164729bed5d28bf44be2a5b85c7d285a3a2afc889231efdf1f4a905"
+    },
+    ".cargo-lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "index.html.br": {
+      "bytes": 848,
+      "sha256": "810e361652759835f3543563f0937d1ed6b3c9274d895dcc4544d3b7b7403898"
+    },
+    ".cargo-artifact-lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "OFL-biz-ud-mincho.txt": {
+      "bytes": 4408,
+      "sha256": "ef0ed524b3bd012f37015e986809eed6f67905456ebfc1ebd7fcc2765282ee01"
+    },
+    ".cargo-build-lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "index.html": {
+      "bytes": 2329,
+      "sha256": "45e441514848f6ba8f2bed6696e67078599530b8b95d1f2a35f30eeaa2a4b4e4"
+    },
+    "_headers": {
+      "bytes": 373,
+      "sha256": "9068c3910efc9afb9709cce7f9bf91ff4527b9619210c05d0e0974d8d5e02aa9"
+    },
+    "OFL-noto-sans-cjk-sc.txt": {
+      "bytes": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2"
+    },
+    "lightcraft_web_bg.wasm.gz": {
+      "bytes": 9985209,
+      "sha256": "257a69682bcd15724300cfcb869f753a5c234158702a8cc8a66ae34d91a79542"
+    },
+    "LICENSE-MIT": {
+      "bytes": 1102,
+      "sha256": "1470a5d44a88a9d385d9530763ea411ca199670d07f561a61d54256323972b92"
+    },
+    "worker.js.br": {
+      "bytes": 309,
+      "sha256": "0f0bbf4387a4dc9bebe246c18b3329e2f73d86e4637412b4d1a8549f192211b6"
+    },
+    "lightcraft_web.js.br": {
+      "bytes": 12071,
+      "sha256": "9f890d732f3eb716feaed33c51bce7baf821fa8bd3815153b46964645d8b7913"
+    },
+    "OFL-shippori-mincho.txt": {
+      "bytes": 4399,
+      "sha256": "41fba056279be5f45ff9a99e44b7b53897b42732f5806d8e666e0ab49ac6bd38"
+    },
+    "LICENSE-APACHE": {
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    "README.md": {
+      "bytes": 38487,
+      "sha256": "ddf09b8c4b7f6d8ea6655b3f00351e835f9f328e6bafb3429e8ae1efddb54e99"
+    },
+    "lightcraft_web_bg.wasm.br": {
+      "bytes": 7087824,
+      "sha256": "5960ed3d56274654ce3da9f491a4dd6f1fa9938996b13d605989986899937b0e"
+    },
+    "lightcraft_zh_hans.otf.br": {
+      "bytes": 11144930,
+      "sha256": "7d1afbc6b8e866343d13e1e7ed725d07c006daa10be9f48807099e7aaf9c720a"
+    },
+    "HOSTING.md": {
+      "bytes": 5811,
+      "sha256": "c961166c0d9f61f249693e3b2b727508ea02afdc3aa346df796b6ddf0d142bae"
+    }
+  }
+}

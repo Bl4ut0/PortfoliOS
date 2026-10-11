@@ -188,9 +188,8 @@ function updateGDriveUI() {
     
     if (clientIdInput) {
         const defaultId = window.GDriveSync?.defaultClientId || "";
-        const storedId = localStorage.getItem("bl4ut0_gdrive_client_id") || defaultId;
-        if (!clientIdInput.value && storedId) {
-            clientIdInput.value = storedId;
+        if (!clientIdInput.value && defaultId) {
+            clientIdInput.value = defaultId;
         }
     }
 
@@ -290,6 +289,10 @@ function initGDriveSettings() {
 
     if (syncBtn) {
         syncBtn.addEventListener("click", () => {
+            if (!window.isPrivateUser?.(window.state?.currentUserId)) {
+                if (window.showDesktopToast) window.showDesktopToast("Cloud Sync is reserved for private workspaces.");
+                return;
+            }
             triggerGDriveSync();
         });
     }
