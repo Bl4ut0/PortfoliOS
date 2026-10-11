@@ -7,8 +7,8 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT || 'playwright');
  const php=spawn(process.env.PORTFOLIOS_PHP || 'php',['-S','127.0.0.1:'+port,'-t',root],{windowsHide:true,stdio:'ignore'});let browser;
  try{
   await new Promise(r=>setTimeout(r,800));browser=await chromium.launch({channel:'chrome',headless:true});
-  const p=await browser.newPage({viewport:{width:1500,height:1000},serviceWorkers:'block',reducedMotion:'reduce'}),errors=[],requests=[];
-  p.on('pageerror',e=>errors.push(e.message));p.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url());});p.on('request',r=>{if(r.url().includes('/runtime/'))requests.push(r.url());});
+  const p=await browser.newPage({viewport:{width:1500,height:1000},serviceWorkers:'block',reducedMotion:'reduce'}),errors=[],requests=[],httpFailures=new Map(),recovered=[];
+  p.on('pageerror',e=>errors.push(e.message));p.on('response',r=>{if(r.status()>=400)httpFailures.set(r.url(),r.status());else if(httpFailures.has(r.url())){recovered.push({url:r.url(),status:httpFailures.get(r.url())});httpFailures.delete(r.url());}});p.on('request',r=>{if(r.url().includes('/runtime/'))requests.push(r.url());});
   const target=process.env.PORTFOLIOS_TEST_URL || 'http://127.0.0.1:'+port+'/',base=new URL(target).origin;
   await p.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
   await p.goto(target);await p.locator('[data-enter-view=desktop]').click();await p.locator('[data-session-public]').click();await p.waitForFunction(()=>document.body.dataset.startupStage==='workspace');
@@ -27,7 +27,7 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT || 'playwright');
   await p.setViewportSize({width:768,height:850});await p.evaluate(()=>{state.desktopResolution='1280x720';applyDesktopResolution();});
   const fixed=await p.locator('#desktop-experience').evaluate(el=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height,left:r.left,top:r.top};});assert(Math.abs(fixed.width/fixed.height-1280/720)<0.01,'Fixed resolution retains aspect ratio');assert(fixed.width<=768&&fixed.height<=850,'Fixed resolution fits');
   await p.evaluate(()=>{state.desktopResolution='auto';applyDesktopResolution();});await p.evaluate(()=>openDesktopWindow('settings'));await p.screenshot({path:path.join(root,'.tmp/fold-desktop.png')});
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({checks:'Fold-sized Desktop Auto fill, rotation, fold/cover resize, browser-height resize and fixed-resolution compatibility',measurements},null,2));
+  assert.deepEqual(errors,[]);assert.deepEqual([...httpFailures],[],'All requested resources eventually succeed');console.log(JSON.stringify({recoveredPreloads:recovered,checks:'Fold-sized Desktop Auto fill, rotation, fold/cover resize, browser-height resize and fixed-resolution compatibility',measurements},null,2));
 
  }finally{await browser?.close();php.kill();}
 })().catch(e=>{console.error(e);process.exitCode=1});
