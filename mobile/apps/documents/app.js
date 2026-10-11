@@ -719,7 +719,7 @@
         serializeState,
         restoreState,
         onClose: async () => {
-            await flushAutosave();
+            if(await flushAutosave()===false)throw new Error('Document save failed. Your draft remains open.');
             documentGeneration++;
             libraryGeneration++;
             window.clearTimeout(autosaveTimer);

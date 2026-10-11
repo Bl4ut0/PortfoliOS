@@ -105,6 +105,7 @@
         clockTimer = window.setInterval(updateClock, 30000);
         let offlineProfileId = null;
         const complete = async () => {
+            await window.PrivateSessions?.enter();
             window.state.sessionChosen = true;
             window.GDriveSync.pendingReconnectReason = null;
             try { await window.startSelectedWorkspace?.(); }
@@ -174,7 +175,7 @@
                 error.textContent = reason?.message || "Your workspace could not be opened. Please try again.";
                 error.hidden = false;
                 offlineProfileId = id || null;
-                offline.hidden = !id;
+                offline.hidden = !id || profiles[id]?.source === 'google';
             } finally {
                 choosing = false;
                 buttons.forEach((node, index) => { node.disabled = disabled[index]; });

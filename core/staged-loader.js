@@ -70,7 +70,7 @@
         }
     }
     async function login(view) {
-        await Promise.all([scripts(manifest.shared), style("styles/session.css"),
+        await Promise.all([scripts(manifest.shared), style("styles/session.css"), style("styles/filesystem.css"),
             ...(view === "mobile" ? [style("styles/layout.css"), style("styles/mobile.css")] : [])]);
         await window.GDriveSync.restoreSession({ promptOnInvalid: false });
         if (view === "mobile" && !document.getElementById("mobile-device")) {

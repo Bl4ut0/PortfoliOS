@@ -44,6 +44,7 @@
         throw new Error(
           "Wait for Google sign-in or backup to finish before switching.",
         );
+      await window.PrivateSessions?.release({synced:saveToDrive,allowOffline:!saveToDrive});
       window.setCurrentUser("bl4ut0", { allowProfileSwitch: true });
       if (window.state.currentUserId !== "bl4ut0")
         throw new Error(
@@ -78,7 +79,7 @@
         ? '<button type="button" data-profile-public="save" ' +
           (connected ? "" : "disabled") +
           ">Save to Drive &amp; switch to public</button>" +
-          '<button type="button" data-profile-public="local">Switch to PortfoliOS public profile</button>' +
+          '<button type="button" data-profile-public="local">Switch to PortfoliOS public profile</button><button type="button" data-profile-recovery>Session recovery</button>' +
           "<small>Your private files, apps, and settings stay on this device. " +
           (connected
             ? "Save to Drive first to back up your latest changes."
@@ -92,6 +93,7 @@
     root.addEventListener(
       "click",
       async (event) => {
+        if(event.target.closest("[data-profile-recovery]")){await window.WorkspaceRecovery?.openReview();return;}
         if (event.target.closest("[data-profile-choose]")) {
           window.openSessionChooser?.();
           return;

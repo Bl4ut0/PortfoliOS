@@ -1,11 +1,11 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.10.11.14";
+    const release = "2026.10.11.15";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "core/app-icons.js", "data/systems.js", "data/apps.js",
         "data/config.js", "data/users.js", "core/preferences.js", "core/gdrive-sync.js",
-        "core/background-services.js", "core/session-context.js", "core/profile-switch.js", "core/session-chooser.js"
+        "core/private-sessions.js", "core/workspace-recovery.js", "core/background-services.js", "core/session-context.js", "core/profile-switch.js", "core/session-chooser.js"
     ];
     root.PortfolioLoadingManifest = {
         release, shared,

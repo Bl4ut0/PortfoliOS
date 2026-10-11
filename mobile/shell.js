@@ -1213,6 +1213,12 @@
         openApp: openMobileApp,
         closeTask,
         clearTasks,
+        async flushForHandoff() {
+            for(const task of tasks.values()) {
+                const saved=await queueTaskLifecycle(task,'onPause',{reason:'session-handoff',rethrow:true});
+                if(saved===false)throw new Error('Save '+task.app.title+' before handing off this workspace.');
+            }
+        },
         showHome: showMobileHome,
         showRecents: showMobileRecents,
         goBack,

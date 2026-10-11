@@ -1,6 +1,6 @@
 # PortfoliOS roadmap
 
-Updated 2026-10-10. Priorities describe delivery order rather than promised dates. A milestone is complete only after checks, commit, push, production deployment, and release verification.
+Updated 2026-10-11. Priorities describe delivery order rather than promised dates. A milestone is complete only after checks, commit, push, production deployment, and release verification.
 
 ## Delivered in the account-session release
 
@@ -40,11 +40,15 @@ Updated 2026-10-10. Priorities describe delivery order rather than promised date
 - Small atomic boot cache, on-use app caching, download retry and upgrade migration checks, and stage timings in Debug.
 - Lab asset, layout and browser regression results: [loading performance](docs/LOADING_PERFORMANCE.md). Architecture and extension rules: [staged loading](docs/STAGED_LOADING.md).
 
+## Single-session handoff and recovery framework
+
+Build `2026.10.11.15` implements one active Google workspace, saved handoff, explicit forced takeover, immutable recovery deltas, content-based reconciliation, per-key preference merging and file deletion intent/tombstones. Native recovery uses SystemFS Save As. Automated checks use isolated service fixtures; real Google-account validation, atomic folder moves, recovery pruning and durable resumable retries remain open. See [scope and verification](docs/SESSION_HANDOFF.md).
+
 ## Next milestones
 
 | Priority | Milestone | Acceptance criteria | Dependencies |
 | --- | --- | --- | --- |
-| P0 | Sync recovery and conflict handling | Interrupted sync can retry; paginated remote discovery covers large backups; edit/delete conflicts retain recoverable versions; simultaneous tabs cannot overwrite each other silently. | Account-scoped storage |
+| P0 | Sync recovery and conflict handling | Validate the delivered handoff/recovery framework with real Google accounts; add durable resumable retry queues, snapshot retention controls, folder deletion review and stable-identity atomic moves. | Account-scoped storage |
 | P0 | Account and backup controls | Extend delivered account/safe-switch controls with last successful backup, restore preview, storage use, and per-account disconnect/forget controls on both Desktop and Mobile. Forgetting a local account never deletes its Drive backup. | Shared chooser |
 | P1 | Restore across devices | Two browsers restore the same account's documents, preferences, app-install selections, and desktop/mobile layouts. Other accounts' homes and metadata never enter the backup. Validate restore before applying it. | Stable subject IDs and conflict handling |
 | P1 | Persistent authenticated sessions | If continuous authorization after reload is required, add a server-side Google code flow and protected session cookie, with expiry, CSRF protection, logout, and revocation. Keep refresh tokens on the server. Remembered local identity alone is not authentication. | Hosting/session design decision |

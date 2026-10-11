@@ -10,9 +10,13 @@ Storage events refresh the active profile in other tabs without switching their 
 
 Drive backup acquires an exclusive, non-waiting profile-specific `drive` Web Lock. Another tab receives a retryable busy error before reading or writing Drive. The existing per-tab busy flag remains in force. Browser lock ownership automatically ends on tab closure; failure clears the busy state and releases the lock. Browsers without Web Locks retain local preference saving but Drive backup is blocked with an explanatory error.
 
+## Cross-device Google workspaces
+
+Google workspaces now use [single-session handoff and recovery](SESSION_HANDOFF.md), with a server lease and fenced mutation gateway. The same-browser mechanisms above remain storage primitives and support local-only profiles; they no longer imply permission to open two live Google workspaces.
+
 ## Boundaries
 
-Web Locks coordinate tabs on the same origin and browser storage partition. They do not coordinate separate browsers, devices or origins. Preference revision comparison helps reject older restored choices, but depends on device clocks and does not provide distributed cloud locking or conditional Drive writes. Concurrent cross-device document and desktop-layout merges remain unverified. Private installation choices now have per-app records; see [installation retention](INSTALL_RETENTION.md). Shared preferences and backups do not grant administrator access.
+Web Locks coordinate tabs on the same origin and browser storage partition. They do not coordinate separate browsers, devices or origins. Preference revision comparison helps reject older restored choices, but depends on device clocks and does not provide distributed cloud locking or conditional Drive writes. The new framework preserves conflicting copies rather than merging document or desktop-layout internals. Real Google-account roundtrips remain unverified. Private installation choices now have per-app records; see [installation retention](INSTALL_RETENTION.md). Shared preferences and backups do not grant administrator access.
 
 The separately audited desktop grid reflow, concurrent desktop layout writes and fully atomic Drive move/deletion handling remain separate work. Installation retention now prevents newly created paths from being falsely acknowledged by an in-progress backup. Do not describe it as universal multi-device conflict resolution.
 

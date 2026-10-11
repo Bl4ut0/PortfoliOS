@@ -10,6 +10,8 @@ Drive backup records only paths handled in its initial transfer pass. New files 
 
 This favors preservation when deletion intent is ambiguous. Explicit distributed deletion tombstones, atomic moves and conditional cross-device updates remain separate work. Removing a desktop shortcut locally still leaves the app installed and ordinary refresh respects removal. This does not automatically restore all previously lost files, certify game downloads, or prove a real cross-device Drive roundtrip. Reinstall or Send to Desktop can restore an already-missing app shortcut.
 
+Google workspaces now use [the content-based session recovery framework](SESSION_HANDOFF.md), including explicit file deletion intent and tombstones. The preservation rules above describe the compatible local-profile/legacy sync path. Atomic folder moves and external Drive-writer conflicts remain outside the delivered scope.
+
 ## Regression evidence
 
 `node scripts/check-install-retention-browser.js` uses real SystemFS, actual Store installation and a simulated remote Drive. It holds backup during installation, checks atomic stale scanner write rejection, manifest acknowledgment and another backup, reproduces an old poisoned manifest, restores a newer legacy empty list, concurrently changes apps in two tabs, verifies uninstall tombstones, reinstalls, reloads and switches profiles. Running its poisoned-manifest case against the previous sync implementation deletes the installed shortcut; the corrected implementation retains and uploads it.

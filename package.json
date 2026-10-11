@@ -7,7 +7,7 @@
     "deploy": "node deploy.js",
     "deploy:full": "node deploy.js --full",
     "deploy:dry": "node deploy.js --dry-run",
-    "test": "node scripts/check-app-contracts.js && node scripts/check-gdrive-session.js && node scripts/check-security-kernel.js"
+    "test": "node scripts/check-app-contracts.js && node scripts/check-gdrive-session.js && node scripts/check-security-kernel.js && node scripts/check-workspace-merge.js"
   },
   "keywords": [],
   "author": "",

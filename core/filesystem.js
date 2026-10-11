@@ -427,11 +427,11 @@ window.SystemFS = {
         const storedPath=this.storagePath(cleanPath,prefix);
         const put=()=>store.put({...record,path:storedPath,parent:this.storagePath(cleanParent,prefix)});
         let conflict;
-        if(options.expectedRecord) {
+        if(options.expectedRecord || options.expectedAbsent) {
             const expected=options.expectedRecord, request=store.get(storedPath);
             request.onsuccess=()=>{
                 const current=request.result;
-                const matches=current && (expected.revision ? current.revision===expected.revision : current.lastModified===expected.lastModified && current.size===expected.size && current.type===expected.type && (typeof expected.data!=='string' || current.data===expected.data));
+                const matches=options.expectedAbsent ? !current : current && (expected.revision ? current.revision===expected.revision : current.lastModified===expected.lastModified && current.size===expected.size && current.type===expected.type && (typeof expected.data!=='string' || current.data===expected.data));
                 if(!matches) {conflict=new Error('The file changed during scanning. Retry backup to use the latest version.');transaction.abort();return;}
                 try {this.assertProfile(writingUser);put();}catch(error){conflict=error;transaction.abort();}
             };
@@ -445,6 +445,17 @@ window.SystemFS = {
         }
 
         return record;
+    },
+
+    recordSyncDeletions(store, entries) {
+        if(!entries.length || !window.PrivateSessions?.required())return;
+        const path=this.storagePath('/.sync-deletions.json'), request=store.get(path);
+        request.onsuccess=()=>{
+            let data=request.result?.data ? JSON.parse(request.result.data) : {};
+            for(const entry of entries) if(!entry.path.split('/').some(part=>part.startsWith('.')))data[entry.path]={revision:entry.revision,at:Date.now()};
+            const text=JSON.stringify(data);
+            store.put({path,parent:this.storagePath('/'),name:'.sync-deletions.json',data:text,size:text.length,type:'application/json',isDirectory:false,lastModified:Date.now(),revision:crypto.randomUUID(),metadata:{sync:false}});
+        };
     },
 
     async deleteFile(path, options = {}) {
@@ -463,8 +474,16 @@ window.SystemFS = {
 
         const transaction = this.db.transaction(["files"], "readwrite");
         const store = transaction.objectStore("files");
-        store.delete(this.storagePath(cleanPath));
-        await this.transactionDone(transaction);
+        const done=this.transactionDone(transaction), storedPath=this.storagePath(cleanPath);
+        let conflict;
+        const request=store.get(storedPath);
+        request.onsuccess=()=>{
+            const current=request.result;
+            if(options.expectedRecord && (!current || current.revision!==options.expectedRecord.revision)){conflict=new Error('The file changed before deletion. Retry sync.');transaction.abort();return;}
+            if(current && options.trackSyncDeletion!==false)this.recordSyncDeletions(store,[{path:cleanPath,revision:current.revision}]);
+            store.delete(storedPath);
+        };
+        try{await done;}catch(error){throw conflict || error;}
         this.assertProfile(deletingUser);
 
         if (!options.silent && window.EventBus) {
@@ -490,7 +509,7 @@ window.SystemFS = {
         await new Promise((resolve, reject) => {
             const transaction = this.db.transaction(["files"], "readwrite");
             const store = transaction.objectStore("files");
-            const request = store.openCursor();
+            const request = store.openCursor(), deleted=[];
 
             transaction.oncomplete = () => resolve();
             transaction.onerror = () => reject(transaction.error || new Error(`Failed to delete ${cleanPath}`));
@@ -499,10 +518,11 @@ window.SystemFS = {
             request.onsuccess = () => {
                 if (window.state?.currentUserId !== deletingUser) { transaction.abort(); return; }
                 const cursor = request.result;
-                if (!cursor) return;
+                if (!cursor) {if(options.trackSyncDeletion!==false)this.recordSyncDeletions(store,deleted);return;}
 
                 const item = cursor.value;
                 if (item.path === storedPath || item.path.startsWith(`${storedPath}/`)) {
+                    const visible=this.visibleRecord(item);if(visible)deleted.push({path:visible.path,revision:item.revision});
                     cursor.delete();
                 }
                 cursor.continue();
@@ -621,7 +641,7 @@ window.SystemFS = {
             const dialog=document.createElement('dialog');dialog.className='systemfs-dialog';dialog.setAttribute('aria-label',title);
             const esc=window.escapeHtml;
             dialog.innerHTML=`<header class="systemfs-dialog-header"><h2>${esc(title)}</h2><button type="button" data-action="cancel" aria-label="Close">×</button></header><nav class="systemfs-dialog-nav" aria-label="Folders"><button type="button" data-action="root">Workspace</button><button type="button" data-action="up">Up</button><output data-location></output></nav><div class="systemfs-dialog-list" data-list></div><div class="systemfs-new-folder-row"><input class="systemfs-input" data-new-folder aria-label="New folder name" placeholder="New folder name"><button type="button" data-action="create-folder">New folder</button></div><label class="systemfs-filename-row">File name <input class="systemfs-input" data-filename aria-label="File name" value="${esc(defaultName)}" ${mode==='open'?'readonly':''}></label><div data-device ${mode==='save'?'hidden':''}><label>Upload from computer <input type="file" data-upload ${types.length?'accept="'+esc(types.join(','))+'"':''}></label><p data-drop>Drop a file from your computer here</p></div><p data-warning role="status"></p><footer class="systemfs-dialog-footer"><button type="button" data-action="cancel">Cancel</button><button type="button" data-action="confirm">${esc(acceptLabel)}</button></footer>`;
-            document.body.append(dialog);
+            (document.body.dataset.view==='mobile' ? document.getElementById('mobile-device') || document.body : document.body).append(dialog);
             const find=selector=>dialog.querySelector(selector), warning=find('[data-warning]'), nameInput=find('[data-filename]'), confirm=find('[data-action=confirm]');
             const current=()=>alive && owner===window.state?.currentUserId && !signal?.aborted;
             const close=result=>{if(!alive)return;alive=false;revision++;signal?.removeEventListener('abort',cancel);window.EventBus?.off?.('user:changed',cancel);dialog.close();dialog.remove();resolve(result);};

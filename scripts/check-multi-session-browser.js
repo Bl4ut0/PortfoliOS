@@ -65,9 +65,9 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
    try{await GDriveSync.sync();}finally{SystemFS.getAllFiles=original;}
   });
   await p.evaluate(()=>{window.closeLock=WorkspaceSessions.withLock('drive',state.currentUserId,()=>new Promise(()=>{}));});
-  await p.waitForFunction(async()=> (await navigator.locks.query()).held.some(lock=>lock.name==='portfolios:drive:private_iconsA'));
+  await p.evaluate(async()=>{for(let i=0;i<100;i++){if((await navigator.locks.query()).held.some(lock=>lock.name==='portfolios:drive:private_iconsA'))return;await new Promise(r=>setTimeout(r,50));}throw new Error('Fixture backup lock was not acquired');});
   await p.close();
-  await q.waitForFunction(async()=> !(await navigator.locks.query()).held.some(lock=>lock.name==='portfolios:drive:private_iconsA'));
+  await q.evaluate(async()=>{for(let i=0;i<100;i++){if(!(await navigator.locks.query()).held.some(lock=>lock.name==='portfolios:drive:private_iconsA'))return;await new Promise(r=>setTimeout(r,50));}throw new Error('Closed tab did not release backup lock');});
   await q.evaluate(async()=>{await WorkspaceSessions.withLock('drive',state.currentUserId,()=>{}, {ifAvailable:true});});
   await q.reload();await q.locator('[data-enter-view=desktop]').click();await q.locator('[data-session-profile="private_iconsA"]').click();await q.waitForFunction(()=>document.body.dataset.startupStage==='workspace');
   assert.equal(await q.evaluate(()=>state.themeId),'glacier','Latest theme survives reload');

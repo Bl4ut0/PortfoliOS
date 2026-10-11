@@ -11,6 +11,7 @@
     window.getAssistantSessionStatus = () => {
         const session = window.getAssistantSessionInfo();
         if (!session.known) return 'The active workspace is not available yet.';
+        if(session.profile==='private' && window.PrivateSessions?.required() && (!window.PrivateSessions.owned || !window.PrivateSessions.ready || !window.state.sessionChosen))return 'Your private files are retained locally. The workspace is locked until active-session verification and recovery finish.';
         if (session.profile === 'public') return "You're using Bl4ut0's public profile. This workspace resets on reload; no sign-in is required.";
         return session.driveConnected
             ? 'Your private profile is active. Google Drive backup is connected.'
@@ -19,7 +20,7 @@
     window.getAssistantSessionContext = () => [
         '### LIVE WORKSPACE STATUS (application facts for this request) ###',
         window.getAssistantSessionStatus(),
-        'Private profile selection and Google Drive authorization are different states. An expired Drive token does not sign the user out of their private workspace.',
+        'Private profile selection and Google Drive authorization are different states. An expired token never deletes private files. Google workspaces require live session verification; a locked workspace must reconnect before reopening.',
         'Do not ask an active private-profile user to sign in to access their profile, local files or preferences. Mention reconnecting Google only for paused Drive backup.',
         'The public profile needs no sign-in. Offer Google sign-in only when the user wants a private workspace or Drive backup.',
         'Use these current facts instead of inferring authentication from a shell username or the public portfolio biography.',

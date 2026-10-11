@@ -353,6 +353,8 @@ window.readFilesystemRecordText = async (record) => {
 window.clearPrivateProfileData = async () => {
     const userId = window.state?.currentUserId;
     if (!window.isPrivateUser(userId)) return;
+    await window.PrivateSessions?.release({allowOffline:true});
+    localStorage.removeItem('portfolios:recovery-base:'+userId);
     const profiles = window.getPrivateProfiles();
     const otherIds = Object.keys(profiles).filter(id => id !== userId);
     [window.localStorage, window.sessionStorage].forEach(storage => {

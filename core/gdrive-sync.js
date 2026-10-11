@@ -451,7 +451,7 @@ window.GDriveSync = {
         };
         if (parentId) metadata.parents = [parentId];
 
-        const response = await fetch("https://www.googleapis.com/drive/v3/files", {
+        const response = await (window.PrivateSessions?.drive.bind(window.PrivateSessions) || fetch)("https://www.googleapis.com/drive/v3/files", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -538,6 +538,7 @@ window.GDriveSync = {
         this.authInProgress = true;
         try {
         if (!response?.access_token) throw new Error("Google did not return an access token.");
+        await window.PrivateSessions?.release({allowOffline:true});
         this.rememberLiveSession();
         this.clearBrowserSession();
         this.token = response.access_token;
@@ -649,7 +650,7 @@ window.GDriveSync = {
     scheduleAutomaticSync() {
         const userId = window.state?.currentUserId;
         if (!window.state?.sessionChosen || !window.state?.workspaceStarted) return;
-        if (this.profileSwitchInProgress || !window.isPrivateUser?.(userId) || !this.getToken()) return;
+        if (this.profileSwitchInProgress || !window.isPrivateUser?.(userId) || !this.getToken() || (window.PrivateSessions?.required() && !window.PrivateSessions.owned)) return;
         if (this.pendingSyncTimer !== null) window.clearTimeout(this.pendingSyncTimer);
         this.pendingSyncTimer = window.setTimeout(() => {
             this.pendingSyncTimer = null;
@@ -678,6 +679,7 @@ window.GDriveSync = {
     },
     
     async logout() {
+        if(window.PrivateSessions?.required() && window.PrivateSessions.owned){await window.PrivateSessions.flushLocal();await window.PrivateSessions.release({allowOffline:true});}
         delete this.accountSessions[window.state?.currentUserId];
         const authPath = this.getAuthRecordPath();
         const scopeId = this.getCurrentSyncScope().id;
@@ -705,6 +707,7 @@ window.GDriveSync = {
         this.clearScopedSyncState(scopeId);
         this.closeReconnectPrompt();
         this.emitAuthChanged("disconnected");
+        if(window.PrivateSessions?.required() && window.state?.sessionChosen)window.PrivateSessions.lock("Google was disconnected. Local files are retained; reconnect to reopen this private workspace.");
     },
     
     async fetchRemoteFiles() {
@@ -716,7 +719,7 @@ window.GDriveSync = {
         do {
             const params = new URLSearchParams({
                 q: `'${syncFolderId}' in parents and trashed=false`,
-                fields: "nextPageToken,files(id,name,mimeType,modifiedTime,appProperties)",
+                fields: "nextPageToken,files(id,name,mimeType,modifiedTime,version,appProperties)",
                 pageSize: "1000"
             });
             if (pageToken) params.set("pageToken", pageToken);
@@ -780,6 +783,8 @@ window.GDriveSync = {
             contentBlob = new Blob([contentBlob || ""], { type: mimeType });
         }
 
+        if(window.PrivateSessions?.required() && contentBlob.size>4*1024*1024)return window.PrivateSessions.upload(metadata,contentBlob);
+
         const metadataBlob = new Blob([
             delimiter +
             'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
@@ -791,8 +796,8 @@ window.GDriveSync = {
         const endBlob = new Blob([closeDelimiter], { type: "text/plain" });
         const bodyBlob = new Blob([metadataBlob, contentBlob, endBlob], { type: `multipart/related; boundary=${boundary}` });
 
-        const url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
-        const response = await fetch(url, {
+        const url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart" + (window.PrivateSessions?.required() ? "&fields=id,version" : "");
+        const response = await (window.PrivateSessions?.drive.bind(window.PrivateSessions) || fetch)(url, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -823,7 +828,7 @@ window.GDriveSync = {
         };
 
         const url = "https://www.googleapis.com/drive/v3/files";
-        const response = await fetch(url, {
+        const response = await (window.PrivateSessions?.drive.bind(window.PrivateSessions) || fetch)(url, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -848,7 +853,9 @@ window.GDriveSync = {
             contentBlob = new Blob([contentBlob || ""], { type: mimeType });
         }
 
-        const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+        if(window.PrivateSessions?.required() && contentBlob.size>4*1024*1024)return window.PrivateSessions.upload({},contentBlob,fileId);
+
+        const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media` + (window.PrivateSessions?.required() ? "&fields=id,version" : "");
         const request = {
             method: "PATCH",
             headers: {
@@ -864,7 +871,7 @@ window.GDriveSync = {
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             let retryReason;
             try {
-                response = await fetch(url, request);
+                response = await (window.PrivateSessions?.drive.bind(window.PrivateSessions) || fetch)(url, request);
                 if (response.ok || ![429, 500, 502, 503, 504].includes(response.status) || attempt === maxRetries) break;
                 retryReason = 'HTTP ' + response.status;
                 await response.text().catch(() => {});
@@ -889,7 +896,7 @@ window.GDriveSync = {
         if (!token) throw new Error("Not authenticated");
 
         const url = `https://www.googleapis.com/drive/v3/files/${fileId}`;
-        const response = await fetch(url, {
+        const response = await (window.PrivateSessions?.drive.bind(window.PrivateSessions) || fetch)(url, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${token}` }
         });
@@ -915,6 +922,8 @@ window.GDriveSync = {
         if (!window.SecurityKernel?.importFile || !window.SecurityKernel?.scanExisting) {
             throw new Error("Security Center is unavailable; Cloud Sync is blocked to protect your files.");
         }
+        await window.PrivateSessions?.assert();
+        if (window.PrivateSessions?.required()) return window.WorkspaceRecovery.sync(this, onProgress);
         const scope = this.getCurrentSyncScope();
         const remoteFiles = await this.fetchRemoteFiles();
         const localFiles = await window.SystemFS.getAllFiles();

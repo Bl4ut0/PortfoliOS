@@ -176,9 +176,13 @@ For filesystem changes, serve the repo and open scripts/check-profile-filesystem
 
 Public Bl4ut0 sessions are disposable: each page reload clears public SystemFS documents, saves, ROM imports, installed-app selections, preferences, and desktop/mobile layout. Built-in portfolio apps and default welcome files remain. Private account files and preferences persist. Downloaded app runtime binaries remain as shared device caches; resetting public installation selections does not remove a private account’s cached apps.
 
+### One active Google workspace
+
+Google accounts use a single active Desktop or Mobile session. A second device requests a save-and-sync handoff or explicitly forces takeover when the old device is unavailable. Entry waits for lease verification and recovery reconciliation. Conflicting copies are retained; **Session recovery** in account settings restores chosen copies through SystemFS Save As. Online verification is required; previously retained local data is never cleared by losing ownership. All devices must reload this release. See [behavior, host requirements and verification limits](docs/SESSION_HANDOFF.md).
+
 ### Switching back to the public profile
 
-Open **Settings → Accounts** on Desktop, or **Settings → Account & Drive backup** on Mobile. **Save to Drive & switch to public** closes apps to flush drafts, saves profile preferences, completes the current account's backup, then enters Bl4ut0's public workspace. A failed backup keeps the private account active. **Switch to Bl4ut0 public profile** works offline and keeps private changes on the device. Switching is blocked during app installation, Google sign-in, or an existing backup. Choosing public does not forget the private account or delete its Drive backup.
+Open **Settings → Accounts** on Desktop, or **Settings → Account & Drive backup** on Mobile. **Save to Drive & switch to public** closes apps to flush drafts, saves profile preferences, completes the current account's backup, then enters Bl4ut0's public workspace. A failed backup keeps the private account active. **Switch to Bl4ut0 public profile** keeps private changes on the device. Offline switching does not claim to release the server lease; an online waiting takeover requires a completed sync first. Switching is blocked during app installation, Google sign-in, or an existing backup. Choosing public does not forget the private account or delete its Drive backup.
 
 ### Mobile App Store and app parity
 

@@ -31,6 +31,7 @@
             return await hook(root, context);
         } catch (error) {
             console.error(`PortfoliOS Mobile: ${appId}.${hookName} failed.`, error);
+            if (context.rethrow) throw error;
             return undefined;
         }
     }
