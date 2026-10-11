@@ -10,7 +10,7 @@ window.standardInstalledAppIds = [
 ];
 
 window.desktopPinnedIds = [
-    "store", "files", "cli", "devhub", "office",
+    "store", "files", "cli", "browser", "devhub", "office",
     "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "ut99", "webamp", "musicmini", "iptv"
 ];
 
@@ -52,8 +52,9 @@ window.defaultDesktopIconLayout = {
     store: { col: 0, row: 0 },
     files: { col: 0, row: 1 },
     cli: { col: 0, row: 2 },
-    devhub: { col: 0, row: 3 },
-    office: { col: 0, row: 4 },
+    browser: { col: 0, row: 3 },
+    devhub: { col: 0, row: 4 },
+    office: { col: 0, row: 5 },
     romplayer: { col: 1, row: 0 },
     openrct2: { col: 1, row: 1 },
     doomsource: { col: 1, row: 2 },
@@ -78,7 +79,7 @@ window.desktopApps = [
     { id: "store", title: "Store", icon: "fa-solid fa-shop", category: "system", pinned: true, modular: true, meta: "Application catalog" },
     { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", category: "system", pinned: true, modular: true, meta: "File manager" },
     { id: "security-center", title: "Security Center", icon: "fa-solid fa-shield-halved", category: "system", pinned: true, modular: true, meta: "Local file protection" },
-    { id: "office", title: "LibreOffice WASM", icon: "fa-solid fa-file-signature", category: "productivity", pinned: true, modular: true, meta: "Document workspace" },
+    { id: "office", title: "Office Preview", icon: "fa-solid fa-file-signature", category: "productivity", pinned: true, modular: true, meta: "Local text and JSON sheets" },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", category: "system", pinned: false, modular: true, meta: "System monitor" },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", category: "media", pinned: false, modular: true, meta: "Classic media player" },
     { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", category: "media", pinned: true, modular: true, meta: "Local music player" },
@@ -149,8 +150,8 @@ window.storeApps = [
         title: "Quake",
         icon: "quake-icon.png",
         category: "Games",
-        description: "WebQuake native JavaScript/WebGL port of the original Quake 1.",
-        size: "18.2 MB",
+        description: "WebQuake engine. Choose pak0.pak from your own local Quake or shareware installation when launched.",
+        size: "Engine + your PAK",
         publisher: "id Software / WebQuake"
     },
     {
@@ -179,28 +180,6 @@ window.storeApps = [
         description: "Play authorized Xtream and M3U live TV sources with a local XMLTV guide cache.",
         size: "0.8 MB + guide cache",
         publisher: "PortfoliOS"
-    },
-    {
-        id: "tools",
-        title: "Tools Hub",
-        icon: "fa-solid fa-screwdriver-wrench",
-        category: "Services",
-        description: "Hosted utility launcher for browser-based tools and small web workflows.",
-        size: "Hosted",
-        publisher: "tools.bl4ut0.com",
-        bookmarkId: "tools",
-        installable: false
-    },
-    {
-        id: "pdf",
-        title: "PDF Tools",
-        icon: "fa-solid fa-file-pdf",
-        category: "Services",
-        description: "Hosted PDF utility surface for document conversion and related workflows.",
-        size: "Hosted",
-        publisher: "pdf.bl4ut0.com",
-        bookmarkId: "pdf",
-        installable: false
     },
     {
         id: "pki",

@@ -54,7 +54,7 @@ window.createIframeGameApp = (config) => {
             const iframe = windowEl.querySelector("iframe");
             if (typeof config.beforeLoad === "function" && iframe && (!iframe.src || iframe.src === "about:blank")) {
                 try {
-                    await config.beforeLoad(windowEl, { signal });
+                    if (await config.beforeLoad(windowEl, { signal }) === false) return;
                 } catch (error) {
                     if (signal.aborted) return;
                     console.warn(`PortfoliOS: ${id} beforeLoad hook failed`, error);

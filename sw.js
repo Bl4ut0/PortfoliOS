@@ -1,7 +1,7 @@
 /** Offline boot plus assets actually used by a workspace. App binaries stay in SystemFS. */
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const SHELL_RELEASE = "2026.10.10.6";
+const SHELL_RELEASE = "2026.10.10.7";
 const SHELL_CACHE = "portfolio-shell-" + SHELL_RELEASE;
 const versioned = path => path + "?v=" + SHELL_RELEASE;
 const BOOT_ASSETS = ["/", "/manifest.webmanifest", ...[
@@ -243,14 +243,34 @@ async function serveFromIndexedDB(relativePath, request) {
 
             let body = record.data;
             if (record.type && record.type.startsWith("text/html")) {
-                const text = typeof body === "string" ? body : new TextDecoder().decode(body);
+                const text = typeof body === "string" ? body : body instanceof Blob ? await body.text() : new TextDecoder().decode(body);
                 if (relativePath.includes("/ut99/")) {
                     body = prepareRuntimeHtml(text);
+                } else if (relativePath === "/apps/duke32/index.html") {
+                    // Upgrade previously installed HTML to the CDN's CORS policy.
+                    body = text.replace('<script src="https://js-dos.com/6.22/current/js-dos.js"></script>', '<script src="https://js-dos.com/6.22/current/js-dos.js" crossorigin="anonymous"></script>');
+                } else if (relativePath === "/apps/quake/index.html" && !text.includes('src="portfolio-data.js')) {
+                    body = text.replace('</body>', '<script src="portfolio-data.js?v=2026.10.10.7"></script></body>');
                 } else {
                     body = text;
                 }
             }
 
+            // Support byte-range consumers of installed runtime files.
+            const range = request.headers.get("Range");
+            const match = range && /^bytes=(\d*)-(\d*)$/.exec(range);
+            if (match && (match[1] || match[2])) {
+                const blob = body instanceof Blob ? body : new Blob([body]);
+                const size = blob.size;
+                const start = match[1] ? Number(match[1]) : Math.max(0, size - Number(match[2]));
+                const end = match[1] && match[2] ? Math.min(size - 1, Number(match[2])) : size - 1;
+                headers["Accept-Ranges"] = "bytes";
+                if (start >= size || start > end) return new Response(null, {status:416,headers:{...headers,"Content-Range":`bytes */${size}`}});
+                const slice = blob.slice(start, end + 1);
+                headers["Content-Range"] = `bytes ${start}-${end}/${size}`;
+                headers["Content-Length"] = String(slice.size);
+                return new Response(slice, {status:206,headers});
+            }
             return new Response(body, { headers });
         }
     } catch (err) {
@@ -294,15 +314,15 @@ self.addEventListener("fetch", (event) => {
         }
 
         // --- 3. Duke Nukem 3D Interceptor ---
-        if (url.pathname === "/duke32/index.html" || url.pathname === "/duke32/duke3d.zip") {
-            const relativePath = url.pathname.replace("/duke32/", "/apps/duke32/");
+        if (url.pathname === "/duke32/index.php" || url.pathname === "/duke32/index.html" || url.pathname === "/duke32/duke3d.zip") {
+            const relativePath = url.pathname.replace("/duke32/", "/apps/duke32/").replace(/index\.php$/, "index.html");
             event.respondWith(serveFromIndexedDB(relativePath, event.request));
             return;
         }
 
         // --- 4. Quake Interceptor ---
-        if (url.pathname === "/quake/index.html" || url.pathname === "/quake/id1/pak0.pak" || url.pathname.startsWith("/quake/WebQuake/")) {
-            const relativePath = url.pathname.replace("/quake/", "/apps/quake/");
+        if (url.pathname === "/quake/index.php" || url.pathname === "/quake/index.html" || url.pathname === "/quake/id1/pak0.pak" || url.pathname === "/quake/portfolio-data.js" || url.pathname.startsWith("/quake/WebQuake/")) {
+            const relativePath = url.pathname.replace("/quake/", "/apps/quake/").replace(/index\.php$/, "index.html");
             event.respondWith(serveFromIndexedDB(relativePath, event.request));
             return;
         }
@@ -310,7 +330,7 @@ self.addEventListener("fetch", (event) => {
         // --- 5. Diablo Interceptor ---
         if (url.pathname.startsWith("/diablo/")) {
             if (url.pathname.includes("/DIABDAT.MPQ")) return;
-            const relativePath = url.pathname.replace("/diablo/", "/apps/diablo/");
+            const relativePath = url.pathname.replace("/diablo/", "/apps/diablo/").replace(/(index|storage)\.php$/, "$1.html");
             event.respondWith(serveFromIndexedDB(relativePath, event.request));
             return;
         }

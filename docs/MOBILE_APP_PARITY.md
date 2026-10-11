@@ -7,7 +7,7 @@ Updated 2026-10-10. Mobile has its own app registry, touch UI, retained tasks, a
 | Store | Native Store | Built-in app launch and optional ROM Player/Codex Preview install/removal; desktop games show availability. |
 | Settings | Native Settings | Account chooser, public switch, Drive save-and-switch, phone appearance/navigation/storage. Some advanced Desktop options remain Desktop-only. |
 | Files | Native Files | Shared account-scoped SystemFS. |
-| LibreOffice WASM | Documents | Text/Markdown editing and PDF viewing; not the full LibreOffice UI. |
+| Office Preview | Documents | Text/Markdown editing and PDF viewing; not the full LibreOffice UI. |
 | Browser | Native Browser | Phone navigation and shared links. |
 | Local AI / Lobe | Native Lobe | Basic answers and shared model selection/enablement; mobile chat does not execute desktop tool actions. Cloud provider setup remains in Desktop Settings. |
 | Task Manager | Native Task Manager | Lists/resumes/closes phone tasks and reports browser storage; no invented per-process CPU figures. |

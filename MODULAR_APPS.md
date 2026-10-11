@@ -249,7 +249,7 @@ Game save lifecycle:
 Use `data/apps.js` categories consistently:
 
 - `Games`: installable browser/WASM games.
-- `Services`: hosted apps such as `tools.bl4ut0.com` and `pdf.bl4ut0.com`.
+- `Services`: explicitly configured hosted applications such as the PKI portal.
 - `Productivity`: editors, document tools, and future office apps.
 - `Media`: players, visualizers, and audio tools.
 

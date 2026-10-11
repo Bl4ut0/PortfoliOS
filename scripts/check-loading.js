@@ -44,7 +44,7 @@ const handlers = new Map();
 let active = 0, maxActive = 0, fetches = 0, failure = null;
 class SameOriginRequest extends Request { constructor(input, options) { super(typeof input === 'string' ? new URL(input, origin) : input, options); } }
 const sandbox = {
-    URL, Request:SameOriginRequest, Response, caches, console,
+    URL, Request:SameOriginRequest, Response, Blob, caches, console,
     self:{ location:{origin}, addEventListener:(name, callback) => handlers.set(name, callback), skipWaiting:async()=>{}, clients:{claim:async()=>{}} },
     fetch:async request => {
         fetches++; active++; maxActive = Math.max(active, maxActive);
@@ -79,5 +79,18 @@ module.exports = (async () => {
     assert.equal(fetches, 0, 'exact cached versions must not revalidate');
     sandbox.fetch = async () => { throw new Error('offline'); };
     await assert.rejects(sandbox.serveMobileShellAsset(new Request(origin + '/mobile/shell.js?v=unknown')), /offline/);
+    sandbox.openDB = async () => ({});
+    sandbox.getFileRecord = async () => ({type:'application/octet-stream',data:new Uint8Array([0,1,2,3,4,5,6,7,8,9]).buffer});
+    for (const [range, expected, contentRange] of [['bytes=2-5',[2,3,4,5],'bytes 2-5/10'],['bytes=8-',[8,9],'bytes 8-9/10'],['bytes=-3',[7,8,9],'bytes 7-9/10']]) {
+        const response = await sandbox.serveFromIndexedDB('/apps/quake/id1/pak0.pak',new Request(origin+'/quake/id1/pak0.pak',{headers:{Range:range}}));
+        assert.equal(response.status,206);assert.equal(response.headers.get('content-range'),contentRange);
+        assert.deepEqual(Array.from(new Uint8Array(await response.arrayBuffer())),expected);
+    }
+    assert.equal((await sandbox.serveFromIndexedDB('/apps/quake/id1/pak0.pak',new Request(origin+'/quake/id1/pak0.pak',{headers:{Range:'bytes=10-'}}))).status,416);
+    sandbox.getFileRecord = async () => ({type:'text/html',data:new Blob(['<script src="https://js-dos.com/6.22/current/js-dos.js"></script>'])});
+    const dukeHtml = await sandbox.serveFromIndexedDB('/apps/duke32/index.html',new Request(origin+'/duke32/index.php'));
+    assert.equal(dukeHtml.headers.get('cross-origin-embedder-policy'),'require-corp');
+    assert.match(await dukeHtml.text(),/crossorigin="anonymous"/,'Previously installed Duke HTML must also use CORS');
+    console.log('Installed runtime ranges passed: bounded, open-ended, suffix and unsatisfiable byte requests.');
     console.log('Loading contracts passed: separate entries, app dependencies, 11-asset bounded atomic boot cache, failure rollback, upgrade migration, and exact-version offline caching.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

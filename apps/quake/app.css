@@ -4,3 +4,7 @@
     --app-window-left: clamp(8rem, 14vw, 12rem);
     --app-window-top: 5.6rem;
 }
+
+.quake-data-setup { position:absolute; inset:2.5rem 0 0; z-index:5; display:grid; align-content:center; gap:1rem; padding:2rem; color:var(--text); background:var(--surface); }
+.quake-data-setup[hidden] { display:none; }
+.quake-data-setup input { max-width:100%; color:inherit; }

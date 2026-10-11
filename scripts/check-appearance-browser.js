@@ -63,7 +63,7 @@ async function contrastAudit(page, selector) {
   await page.locator('[data-enter-view="desktop"]').click({timeout:15000});
   await page.locator('[data-session-public]').click();
   await page.waitForFunction(()=>document.body.dataset.startupStage === "workspace");
-  await page.evaluate(()=>window.setInstalledStoreAppIds(['romplayer','iptv']));
+  await page.evaluate(()=>window.setInstalledStoreAppIds(['romplayer','iptv','codex']));
   const themes=await page.evaluate(()=>window.portfolioThemes.map(theme=>theme.id));
   await page.evaluate(()=>window.openDesktopWindow('settings'));
   for(const theme of themes) {
@@ -104,7 +104,7 @@ async function contrastAudit(page, selector) {
   const cleared=await page.evaluate(()=>window.getSystemDebugReport());
   assert.match(cleared,/\[PortfoliOS Debug\]/);assert(!cleared.includes('Appearance audit log'));
   await page.evaluate(()=>window.closeDesktopWindow('settings'));
-  for(const id of ['files','store','profile','dossier','network','linux','cli','local-ai','musicmini','office','taskmgr','security-center','browser','romplayer','iptv']) {
+  for(const id of ['codex','files','store','profile','dossier','network','linux','cli','local-ai','musicmini','office','taskmgr','security-center','browser','romplayer','iptv']) {
    console.log('Auditing Desktop ' + id);
    await page.evaluate(id=>window.openDesktopWindow(id),id);
    const selector='.desktop-window[data-window="'+id+'"]';
@@ -137,6 +137,10 @@ async function contrastAudit(page, selector) {
     document.querySelector('#desktop-experience').append(fixture);
    },id);
    for(const theme of themes) {await page.evaluate(theme=>window.setPortfolioTheme(theme),theme);await record(page,'Loader/'+id,theme,'#appearance-loader-fixture');}
+   if(id==='quake') {
+    await page.evaluate(()=>document.querySelector('[data-quake-setup]').hidden=false);
+    for(const theme of themes) {await page.evaluate(theme=>window.setPortfolioTheme(theme),theme);await record(page,'Quake data setup',theme,'#appearance-loader-fixture');}
+   }
    await page.evaluate(()=>document.querySelector('#appearance-loader-fixture').remove());
   }
   await page.evaluate(()=>window.setPortfolioTheme('light'));
@@ -178,13 +182,13 @@ async function contrastAudit(page, selector) {
    }
    assert.equal(wallpapers.size,4,'all four phone wallpapers must remain distinct in either theme');
   }
-  await mobile.evaluate(()=>window.setInstalledStoreAppIds(['romplayer']));
+  await mobile.evaluate(()=>window.setInstalledStoreAppIds(['romplayer','codex']));
   for(const theme of ['dark','light']) {
    await mobile.evaluate(theme=>window.MobileOS.setPreference('theme',theme),theme);
    for(const accent of ['cyan','blue','violet','green','amber']) {
     await mobile.evaluate(accent=>window.MobileOS.setPreference('accent',accent),accent);
     console.log('Auditing Mobile ' + theme + '/' + accent);
-    for(const id of ['settings','store','files','documents','local-ai','taskmgr','security-center','profile','dossier','browser','music','media','calculator','devhub','status','homelab','automation','addons','guildcraft','survival-ai','wardenit','romplayer','flappybird']) {
+    for(const id of ['codex','settings','store','files','documents','local-ai','taskmgr','security-center','profile','dossier','browser','music','media','calculator','devhub','status','homelab','automation','addons','guildcraft','survival-ai','wardenit','romplayer','flappybird']) {
      await mobile.evaluate(id=>window.MobileOS.openApp(id),id);
      await record(mobile,'Mobile/'+id,theme+'/'+accent,'#mobile-device .mobile-task:not([hidden])');
      await mobile.evaluate(id=>window.MobileOS.closeTask(id,'audit'),id);
@@ -195,7 +199,7 @@ async function contrastAudit(page, selector) {
   if(process.env.PORTFOLIOS_APPEARANCE_SCREENSHOTS) {await mobile.evaluate(()=>window.MobileOS.openApp('settings'));await mobile.screenshot({path:path.join(root,'docs','appearance-light-mobile.png')});}
   await phone.close();
  } finally {await browser.close();await new Promise(resolve=>server.close(resolve));}
- fs.writeFileSync(path.join(root,'docs','appearance-audit-results.json'),JSON.stringify({generatedAt:new Date().toISOString(),results},null,2)+'\n');
+ fs.writeFileSync(process.env.PORTFOLIOS_APPEARANCE_RESULTS || path.join(root,'docs','appearance-audit-results.json'),JSON.stringify({generatedAt:new Date().toISOString(),results},null,2)+'\n');
  const failures=results.filter(result=>result.failures.length);
  console.log(JSON.stringify({scenarios:results.length,checked:results.reduce((s,r)=>s+r.checked,0),failedScenarios:failures.length,examples:failures.slice(0,3)},null,2));
  if(failures.length)process.exitCode=1;

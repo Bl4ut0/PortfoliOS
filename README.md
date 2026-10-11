@@ -128,13 +128,15 @@ The document also enforces its baseline CSP and referrer policy with HTML metada
 - Quick is a direct searchable portfolio index for visitors who want the information without using the desktop, phone, or terminal surfaces.
 - CLI is the terminal interface for the same nodes and public routes with integrated AI commands.
 
+Release 2026.10.10.7 removes the retired hosted PDF/Tools links, adds Browser to the default desktop, improves Browser.js connection recovery, and gives Duke/Diablo/Quake explicit isolated PHP entry points. Office Preview now describes its local editor capabilities without simulated WASM downloads. See [the application audit](docs/APPLICATION_AUDIT_2026-10-10.md) for tested workflows and remaining engine/provider limits.
+
 ## Browser source and releases
 
 The OS owns the Browser app adapter and imports checksum-verified builds from [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS). Editable engine source stays in that repository. See [Browser providers](docs/BROWSER_PROVIDERS.md) for native proxy settings, build/import commands, isolation, and validation; the [fork integration guide](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/INTEGRATION.md) documents the shared host protocol.
 
 ## Store Direction
 
-The PortfoliOS Store is evolving into an app catalog with categories for games, hosted services, media, and productivity tools. Current service candidates include `https://tools.bl4ut0.com` and `https://pdf.bl4ut0.com`; both launch cleanly from the Store even when security headers prevent iframe embedding.
+The PortfoliOS Store is evolving into an app catalog with categories for games, hosted services, media, and productivity tools. The previous Tools Hub and hosted PDF Tools entries have been removed pending separate hosting. The native Mobile PDF viewer remains available for local documents.
 
 ## Mobile Behavior
 

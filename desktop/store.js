@@ -194,15 +194,15 @@ const GAME_INSTALL_CONFIGS = {
     duke32: {
         totalSize: 16100000,
         files: [
-            { path: "/apps/duke32/index.html", url: "/duke32/index.html?v=1.0.25", type: "text/html" },
+            { path: "/apps/duke32/index.html", url: "/duke32/index.php?v=1.0.25", type: "text/html" },
             { path: "/apps/duke32/duke3d.zip", url: "/duke32/duke3d.zip", type: "application/zip" }
         ]
     },
     quake: {
-        totalSize: 18800000,
+        totalSize: 900000,
         files: [
-            { path: "/apps/quake/index.html", url: "/quake/index.html?v=1.0.22", type: "text/html" },
-            { path: "/apps/quake/id1/pak0.pak", url: "/quake/id1/pak0.pak", type: "application/octet-stream" },
+            { path: "/apps/quake/index.html", url: "/quake/index.php?v=2026.10.10.7", type: "text/html" },
+            { path: "/apps/quake/portfolio-data.js", url: "/quake/portfolio-data.js?v=2026.10.10.7", type: "text/javascript" },
             ...["CDAudio.js", "Chase.js", "CL.js", "Cmd.js", "COM.js", "Console.js", "CRC.js", "Cvar.js", "Def.js", "Draw.js", "ED.js", "GL.js", "Host.js", "IN.js", "Key.js", "M.js", "Mod.js", "MSG.js", "NET.js", "NET_Loop.js", "NET_WEBS.js", "PF.js", "PR.js", "Protocol.js", "Q.js", "R.js", "S.js", "Sbar.js", "SCR.js", "SV.js", "Sys.js", "SZ.js", "V.js", "Vec.js", "VID.js", "W.js"].map(name => ({
                 path: `/apps/quake/WebQuake/${name}`,
                 url: `/quake/WebQuake/${name}`,
@@ -213,11 +213,11 @@ const GAME_INSTALL_CONFIGS = {
     diablo: {
         totalSize: 26600000,
         files: [
-            { path: "/apps/diablo/index.html", url: "/diablo/index.html?v=1.0.24", type: "text/html" },
+            { path: "/apps/diablo/index.html", url: "/diablo/index.php?v=1.0.24", type: "text/html" },
             { path: "/apps/diablo/spawn.mpq", url: "/diablo/spawn.mpq", type: "application/octet-stream" },
             { path: "/apps/diablo/8acc76fdb6ee253c485e.worker.js", url: "/diablo/8acc76fdb6ee253c485e.worker.js", type: "text/javascript" },
             { path: "/apps/diablo/d2271be9a67638d3642f.worker.js", url: "/diablo/d2271be9a67638d3642f.worker.js", type: "text/javascript" },
-            { path: "/apps/diablo/storage.html", url: "/diablo/storage.html", type: "text/html" },
+            { path: "/apps/diablo/storage.html", url: "/diablo/storage.php", type: "text/html" },
             { path: "/apps/diablo/portfolio-diablo-autostart.js", url: "/diablo/portfolio-diablo-autostart.js", type: "text/javascript" },
             { path: "/apps/diablo/static/js/0.aaa06a1e.chunk.js", url: "/diablo/static/js/0.aaa06a1e.chunk.js", type: "text/javascript" },
             { path: "/apps/diablo/static/js/main.0a18bc0c.chunk.js", url: "/diablo/static/js/main.0a18bc0c.chunk.js", type: "text/javascript" }

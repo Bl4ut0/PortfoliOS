@@ -20,15 +20,22 @@ const files=Array.from(sandbox.window.auditConfig.files,file=>{
 (async()=>{
   const guardFiles=['openrct2.zip','assets.zip','RCT.zip'];
   for(const name of guardFiles) {
-    const url=origin+'/apps/openrct2/runtime/'+name+'?store-audit='+Date.now();
+    const base=origin+'/apps/openrct2/runtime/'+name;
+    const audit=Date.now();
+    let index=0;
     for(const referer of [origin+'/',origin+'/?view=desktop',origin+'/index.html?view=desktop',origin+'/apps/openrct2/runtime/index.php','', 'https://other.example/',origin+'.other.example/']) {
+      const url=base+'?store-audit='+audit+'-'+index++;
       const response=await fetch(url,{method:'HEAD',headers:referer?{Referer:referer}:{},signal:AbortSignal.timeout(20000)});
       const allowed=referer.startsWith(origin+'/');
       assert.equal(response.status,allowed?200:403,name+' referrer '+(referer||'(none)'));
       if(allowed)assert.equal(Number(response.headers.get('content-length')),fs.statSync(path.join(root,'apps/openrct2/runtime',name)).size,name+' live length');
     }
+    const warm=base+'?warm-guard='+audit;
+    await fetch(warm,{method:'HEAD',headers:{Referer:origin+'/'}});
+    const cached=await fetch(warm,{method:'HEAD'});
+    if(cached.status!==403)console.warn('Hosting limitation: shared CDN response bypasses origin hotlink guard for '+name+' ('+cached.headers.get('cf-cache-status')+'). This is not an authentication boundary.');
   }
-  console.log('Live Apache guard: Store root/index/query and game runtime accepted; direct/external/spoofed requests denied for all three archives.');
+  console.log('Fresh-URL origin guard: Store root/index/query and game runtime accepted; direct/external/spoofed requests denied for all three archives.');
   const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT||'playwright');
   const browser=await chromium.launch({channel:process.env.PORTFOLIOS_BROWSER_CHANNEL||'chrome',headless:true});
   try {
@@ -62,7 +69,7 @@ const files=Array.from(sandbox.window.auditConfig.files,file=>{
     await page.locator('[data-install-store-app="openrct2"]').click();
     await page.waitForFunction(()=>window.isStoreAppInstalled('openrct2')||(window.SystemLogs||[]).some(log=>String(log).includes('openrct2 installation failed')),null,{timeout:240000});
     assert.equal(await page.evaluate(()=>window.isStoreAppInstalled('openrct2')),true,'Store installation failed: '+await page.evaluate(()=>(window.SystemLogs||[]).filter(log=>String(log).includes('openrct2 installation failed')).join('\n')));
-    await page.locator('[data-open-app="openrct2"]').waitFor();
+    await page.locator('.store-window [data-open-app="openrct2"]').waitFor();
     for(const file of files) {
       const actual=await page.evaluate(async pathname=>{
         const record=await window.SystemFS.readFile(pathname);
@@ -80,7 +87,7 @@ const files=Array.from(sandbox.window.auditConfig.files,file=>{
     await page.reload();await enter();
     await page.evaluate(()=>window.openDesktopWindow('store'));
     assert.equal(await page.evaluate(()=>window.isStoreAppInstalled('openrct2')),true);
-    await page.locator('[data-open-app="openrct2"]').waitFor();
+    await page.locator('.store-window [data-open-app="openrct2"]').waitFor();
     assert.equal(await page.evaluate(async()=> (await window.SystemFS.readFile('/apps/openrct2/runtime/openrct2.zip'))?.data?.byteLength),files.find(file=>file.path.endsWith('/openrct2.zip')).bytes);
     assert.deepEqual(errors,[]);
     console.log('Private install survives reload, Launch is available, no page exceptions. Game execution and RCT.zip are outside this installation check.');

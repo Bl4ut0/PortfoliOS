@@ -1,13 +1,13 @@
 /**
- * PortfoliOS: LibreOffice WASM (Office Suite)
- * Simulated WebAssembly booted document processor & spreadsheet suite.
+ * PortfoliOS: Office Preview
+ * First-party local text and JSON spreadsheet editor.
  */
 (function() {
     const APP_ID = "office";
     
     // Memory database state for Calc sheets and Writer text
     let officeState = {
-        isWasmBooted: false,
+        isReady: false,
         activeView: "dashboard", // "dashboard" | "writer" | "calc"
         currentFile: null,       // { path, name, parent, data, type }
         recentDocs: [],
@@ -132,88 +132,11 @@
     const COLUMNS = Array.from({ length: 16 }, (_, i) => numberToCol(i + 1));
     const ROWS = Array.from({ length: 60 }, (_, i) => i + 1);
 
-    // Simulated WebAssembly Log Sequence
-    const BOOT_LOGS = [
-        "Downloading WebAssembly binary distribution package (5.8 MiB)...",
-        "Compiling LLVM bytecode to WebAssembly module (libreoffice_core.wasm)...",
-        "Setting up sandboxed WebAssembly execution environment...",
-        "Instantiating Emscripten runtime, allocating 128MB linear memory...",
-        "Mounting virtual filesystem (IndexedDB SystemFS) onto /sys/local...",
-        "Preloading shared libraries: libuno.so, libvcl.so, libedit.so...",
-        "Linking Qt5 client side GUI drawing context...",
-        "Bootstrapping LibreOffice WASM Framework... SUCCESS!",
-        "Staging office environment... Welcome!"
-    ];
-    const officeBootTimers = new Set();
-    let officeBootRun = 0;
-
-    function cancelOfficeBoot() {
-        officeBootRun++;
-        officeBootTimers.forEach((timer) => clearTimeout(timer));
-        officeBootTimers.clear();
-    }
-
-    function scheduleOfficeBoot(runId, callback, delay) {
-        const timer = setTimeout(() => {
-            officeBootTimers.delete(timer);
-            if (runId === officeBootRun) callback();
-        }, delay);
-        officeBootTimers.add(timer);
-    }
-
-    // Trigger WASM simulated boot loader
-    function bootOfficeWasm(windowEl, onComplete) {
-        cancelOfficeBoot();
-        const runId = officeBootRun;
-        if (window.isOfficeWasmBooted) {
-            // Already booted in this session, skip long boot
-            const splash = windowEl.querySelector(".office-splash");
-            if (splash) splash.remove();
-            officeState.isWasmBooted = true;
-            onComplete?.();
-            return;
-        }
-
-        const splash = windowEl.querySelector(".office-splash");
-        const progressBar = windowEl.querySelector(".office-splash-progress-bar");
-        const logContainer = windowEl.querySelector(".office-splash-log");
-        if (!splash || !progressBar || !logContainer) return;
-
-        let currentStep = 0;
-        const totalSteps = BOOT_LOGS.length;
-
-        function step() {
-            if (currentStep >= totalSteps) {
-                progressBar.style.width = "100%";
-                scheduleOfficeBoot(runId, () => {
-                    splash.classList.add("fade-out");
-                    scheduleOfficeBoot(runId, () => {
-                        splash.remove();
-                        window.isOfficeWasmBooted = true; // Set session global
-                        officeState.isWasmBooted = true;
-                        onComplete?.();
-                    }, 500);
-                }, 400);
-                return;
-            }
-
-            const percent = Math.min(100, Math.round((currentStep / totalSteps) * 100));
-            progressBar.style.width = `${percent}%`;
-
-            const logLine = document.createElement("div");
-            logLine.textContent = BOOT_LOGS[currentStep];
-            logContainer.appendChild(logLine);
-            
-            // Auto scroll log to bottom
-            logContainer.scrollTop = logContainer.scrollHeight;
-
-            currentStep++;
-            // Slightly random delay to feel like a real network/compilation phase
-            const delay = 100 + Math.random() * 200;
-            scheduleOfficeBoot(runId, step, delay);
-        }
-
-        scheduleOfficeBoot(runId, step, 100);
+    // This first-party editor has no WASM engine to download or compile.
+    function initializeOffice(windowEl, onComplete) {
+        windowEl.querySelector(".office-splash")?.remove();
+        officeState.isReady = true;
+        onComplete?.();
     }
 
     // Spreadsheet formula evaluation engine
@@ -334,7 +257,7 @@
             iconHtml = `<i class="fa-solid fa-file-excel" style="color: #10b981;"></i>`;
         }
 
-        titleEl.innerHTML = `${iconHtml} ${fileName} - LibreOffice WASM ${mode}`;
+        titleEl.innerHTML = `${iconHtml} ${fileName} - Office Preview ${mode}`;
     }
 
     // Renders the dashboard's recent documents list
@@ -855,16 +778,16 @@
 
     // Register modular app hooks
     window.appRegistry[APP_ID] = {
-        title: "LibreOffice WASM",
+        title: "Office Preview",
         icon: "fa-solid fa-file-signature",
         windowClass: "office-window document-window",
         renderBody: () => `
             <div class="office-shell">
-                <!-- WASM BOOT SPLASH SCREEN -->
+                <!-- Removed synchronously when the local editor opens -->
                 <div class="office-splash">
                     <div class="office-splash-logo">
                         <i class="fa-solid fa-file-signature"></i>
-                        <h1>LibreOffice <span>WebAssembly</span></h1>
+                        <h1>Office <span>Preview</span></h1>
                     </div>
                     <div class="office-splash-card">
                         <div class="office-splash-progress-wrapper">
@@ -879,7 +802,7 @@
                     <div class="office-menubar">
                         <div class="office-menu-logo btn-menubar-dashboard">
                             <i class="fa-solid fa-file-signature"></i>
-                            <span>LibreOffice WASM</span>
+                            <span>Office Preview</span>
                         </div>
                         <div class="office-menubar-item btn-menubar-save"><i class="fa-regular fa-floppy-disk"></i> Save</div>
                         <div class="office-menubar-item btn-menubar-dashboard"><i class="fa-solid fa-house"></i> Close to Dashboard</div>
@@ -994,10 +917,10 @@
                             <div>
                                 <h3>Create New File</h3>
                                 <button type="button" class="dashboard-nav-btn btn-new-doc-action">
-                                    <i class="fa-solid fa-file-word" style="color: #3b82f6;"></i> Text Document (.odt)
+                                    <i class="fa-solid fa-file-word" style="color: #3b82f6;"></i> Text Document (.txt)
                                 </button>
                                 <button type="button" class="dashboard-nav-btn btn-new-calc-action">
-                                    <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> Spreadsheet (.ods)
+                                    <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> Spreadsheet (JSON)
                                 </button>
                             </div>
                             
@@ -1015,8 +938,8 @@
                         
                         <main class="office-dashboard-main">
                             <div class="office-dashboard-title">
-                                <h2>OpenOffice.org / LibreOffice WebAssembly</h2>
-                                <p>Edit office productivity documents client-side inside a sandboxed Emscripten container.</p>
+                                <h2>Office Preview</h2>
+                                <p>Local text and JSON spreadsheet editing. Full LibreOffice and standard office-file compatibility are planned.</p>
                             </div>
 
                             <div class="office-templates-section">
@@ -1133,9 +1056,9 @@
                     <span class="office-storage-status-badge"><i class="fa-solid fa-hard-drive"></i> Saved locally in IndexedDB</span>
                     <div class="office-statusbar-right">
                         <span class="office-doc-stats-badge">Words: 0 | Chars: 0</span>
-                        <span>Thread Count: 4</span>
-                        <span class="office-wasm-badge">WASM 32-bit</span>
-                        <span>Mem: 128MB</span>
+                        <span>Local workspace</span>
+                        <span class="office-wasm-badge">Preview editor</span>
+
                     </div>
                 </footer>
             </div>
@@ -1144,8 +1067,8 @@
             // Load recent documents
             loadRecentDocs();
 
-            // Run Simulated WASM compile bootloader
-            bootOfficeWasm(windowEl, () => {
+            // Initialize the local editor without a simulated download.
+            initializeOffice(windowEl, () => {
                 // If loaded with a file item passed in parameters, open it
                 if (windowEl.launchParams) {
                     loadOfficeFile(windowEl, windowEl.launchParams);
@@ -1160,7 +1083,7 @@
 
             // Attach Custom event listener for external double-click file launches
             windowEl.addEventListener("launch-params", (e) => {
-                if (officeState.isWasmBooted && e.detail) {
+                if (officeState.isReady && e.detail) {
                     loadOfficeFile(windowEl, e.detail);
                     windowEl.launchParams = null;
                 }
@@ -1317,7 +1240,6 @@
             });
         },
         onClose: (windowEl) => {
-            cancelOfficeBoot();
             closeSaveDialog(windowEl);
             // reset state
             officeState.activeCell = null;

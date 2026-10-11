@@ -35,7 +35,7 @@
             };
 
             iframe.hidden = true;
-            iframe.src = "diablo/storage.html";
+            iframe.src = "diablo/storage.php";
             iframe.addEventListener("load", () => {
                 try {
                     iframe.contentWindow.postMessage({ method: "transfer" }, window.location.origin);
@@ -183,7 +183,7 @@
         title: "diablo.exe",
         icon: "fa-solid fa-skull",
         windowClass: "diablo-window game-window",
-        iframeSrc: "diablo/index.html?v=1.0.24",
+        iframeSrc: "diablo/index.php?v=1.0.24",
         saveDelay: 800,
         controlsHtml: `
             <li class="control-key-item"><kbd>Mouse</kbd><span>move, interact, attack</span></li>

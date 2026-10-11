@@ -143,7 +143,7 @@
             if (!('credentialless' in document.createElement('iframe'))) {
                 showChooser(); message('In-window relay browsing currently requires Chrome or Edge with credentialless iframe support.'); update(); return;
             }
-            if (relayOwners.has(provider.id) && relayOwners.get(provider.id) !== owner) {
+            if (relayOwners.has(provider.partition || provider.id) && relayOwners.get(provider.partition || provider.id) !== owner) {
                 showChooser(); find('[data-web-fresh]').hidden = false;
                 message('Reload PortfoliOS before using this provider with a different profile. This keeps the previous browsing session separate. Reloading may require reconnecting Drive.'); update(); return;
             }

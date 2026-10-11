@@ -94,7 +94,7 @@
         title: "duke3d.exe",
         icon: "fa-solid fa-radiation",
         windowClass: "duke32-window game-window",
-        iframeSrc: "duke32/index.html?v=1.0.25",
+        iframeSrc: "duke32/index.php?v=1.0.25",
         saveDelay: 600,
         controlsHtml: `
             <li><kbd>Click</kbd><span>focus game input</span></li>

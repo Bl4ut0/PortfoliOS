@@ -382,7 +382,7 @@ const root = path.resolve(__dirname, "..");
     );
     const failedPage = await failedContext.newPage(),
       failureErrors = [];
-    failedPage.on("pageerror", (e) => failureErrors.push(e.message));
+    failedPage.on("pageerror", (e) => failureErrors.push(e.stack || e.message));
     await failedPage.goto(origin);
     await failedPage.locator("[data-enter-view=desktop]").click();
     await failedPage.locator("[data-session-public]").click();
@@ -426,6 +426,37 @@ const root = path.resolve(__dirname, "..");
       [],
       "Unavailable relay raised an unhandled navigation error",
     );
+    // A valid relay configuration must not leave blocked isolation startup pending forever.
+    await failedContext.route("https://sensible-ship-8305.puter.work/**", route => route.fulfill({
+      body: "wss://relay.fixture/wisp/", headers: { "Access-Control-Allow-Origin": "*" }
+    }));
+    await failedContext.routeWebSocket("wss://relay.fixture/**", () => {});
+    let isolationRequests = 0;
+    await failedContext.route("https://*.puter.zone/**", route => {
+      isolationRequests++;
+      return route.abort();
+    });
+    await failedPage.evaluate(() => window.closeDesktopWindow("browser"));
+    // Return explicitly from hosted to the maintained browser.
+    await failedPage.evaluate(() => window.openDesktopWindow("browser"));
+    await failedPage.evaluate(() => window.BrowserWorkspace.openSettings());
+    await failedPage.locator("[data-web-provider=browserjs]").click();
+    await failedPage.locator("[data-web-embedded-start]").click();
+    await ff.locator('.inactiveurl').click();
+    isolationRequests = 0;
+    await ff.getByLabel("Search or enter address", { exact: true }).fill("https://retry.fixture.test/");
+    await ff.getByLabel("Search or enter address", { exact: true }).press("Enter");
+    await failedPage.waitForFunction(() => document.querySelector(".web-browser-relay-frame")?.contentWindow?.document.querySelector('iframe[src*="puter.zone"]'));
+    await ff.getByTitle("New tab", {exact:true}).click();
+    await ff.getByRole("combobox", {name:"Search or enter address",exact:true}).fill("https://retry.fixture.test/second");
+    await ff.getByRole("combobox", {name:"Search or enter address",exact:true}).press("Enter");
+    await ff.getByRole("heading", { name: "Proxy connection", exact: true }).waitFor({timeout:30000});
+    await ff.getByRole("status").filter({ hasText: "Website isolation did not start" }).waitFor();
+    assert.equal(isolationRequests, 1, "A failed controller must start only one isolation frame");
+    await ff.getByRole("button", { name: "Retry website", exact: true }).click();
+    await failedPage.waitForFunction(() => false, null, {timeout:500}).catch(() => {});
+    assert.equal(isolationRequests, 2, "Retry must discard failed isolation startup");
+    assert.deepEqual(failureErrors, [], "Recovery caused an unhandled exception");
     await failedContext.close();
 
     console.log(
