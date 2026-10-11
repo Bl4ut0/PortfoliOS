@@ -416,14 +416,28 @@ window.SystemFS = {
             size: this.getSize(data, size),
             type: this.getType(data, type, isDirectory),
             lastModified: options.lastModified || Date.now(),
+            revision: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
             metadata: options.metadata || {}
         };
 
         const transaction = this.db.transaction(["files"], "readwrite");
         const store = transaction.objectStore("files");
         const prefix = this.workspacePrefix();
-        store.put({ ...record, path: this.storagePath(cleanPath, prefix), parent: this.storagePath(cleanParent, prefix) });
-        await this.transactionDone(transaction);
+        const done = this.transactionDone(transaction);
+        const storedPath=this.storagePath(cleanPath,prefix);
+        const put=()=>store.put({...record,path:storedPath,parent:this.storagePath(cleanParent,prefix)});
+        let conflict;
+        if(options.expectedRecord) {
+            const expected=options.expectedRecord, request=store.get(storedPath);
+            request.onsuccess=()=>{
+                const current=request.result;
+                const matches=current && (expected.revision ? current.revision===expected.revision : current.lastModified===expected.lastModified && current.size===expected.size && current.type===expected.type && (typeof expected.data!=='string' || current.data===expected.data));
+                if(!matches) {conflict=new Error('The file changed during scanning. Retry backup to use the latest version.');transaction.abort();return;}
+                try {this.assertProfile(writingUser);put();}catch(error){conflict=error;transaction.abort();}
+            };
+            request.onerror=()=>transaction.abort();
+        } else put();
+        try {await done;}catch(error){throw conflict || error;}
         this.assertProfile(writingUser);
 
         if (!options.silent && window.EventBus) {

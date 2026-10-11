@@ -237,44 +237,50 @@ window.getInstalledStoreAppsKey = function(userId = window.state?.currentUserId 
         : `bl4ut0_installed_apps_${safeUserId}`;
 };
 
+const storeInstallPrefix = (owner = window.state?.currentUserId) => `bl4ut0_${owner}_app_install_`;
+const validStoreId = id => typeof id==='string' && /^[a-z0-9_-]{1,80}$/i.test(id);
 window.getInstalledStoreAppIds = function() {
-    const key = window.getInstalledStoreAppsKey();
-    const saved = window.Storage
-        ? window.Storage.local.get(key)
-        : localStorage.getItem(key);
-
-    if (!saved) return [];
-
-    try {
-        const list = JSON.parse(saved);
-        return Array.isArray(list) ? [...new Set(list.filter(Boolean))] : [];
-    } catch (e) {
-        return [];
+    const owner=window.state?.currentUserId || 'bl4ut0', key=window.getInstalledStoreAppsKey(owner);
+    let legacy=[];
+    try {const value=JSON.parse(window.Storage?.local.get(key) || localStorage.getItem(key) || '[]');if(Array.isArray(value))legacy=value.filter(validStoreId);}catch{}
+    if(!window.isPrivateUser?.(owner))return [...new Set(legacy)];
+    const prefix=storeInstallPrefix(owner), result=new Set(legacy);
+    // Migrate existing installations additively; an explicit per-app uninstall
+    // always overrides a legacy list restored by an older client.
+    for(const id of legacy) {
+        if(localStorage.getItem(prefix+id)===null) window.Storage.local.set(prefix+id,'true');
     }
+    for(let i=0;i<localStorage.length;i++) {
+        const stored=localStorage.key(i);
+        if(!stored?.startsWith(prefix))continue;
+        const id=stored.slice(prefix.length);if(!validStoreId(id))continue;
+        const value=localStorage.getItem(stored);
+        if(value==='true')result.add(id);else if(value==='false')result.delete(id);
+    }
+    return [...result];
 };
-
-window.setInstalledStoreAppIds = function(ids) {
-    const key = window.getInstalledStoreAppsKey();
-    const list = [...new Set((ids || []).filter(Boolean))];
-    const serialized = JSON.stringify(list);
-    if (window.Storage) {
-        window.Storage.local.set(key, serialized);
-    } else {
-        localStorage.setItem(key, serialized);
-    }
-    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
+window.setStoreAppInstalled = function(id, installed) {
+    if(!validStoreId(id))throw new Error('Invalid application identifier.');
+    const owner=window.state?.currentUserId || 'bl4ut0';
+    const current=new Set(window.getInstalledStoreAppIds());
+    if(window.isPrivateUser?.(owner) && !window.Storage.local.set(storeInstallPrefix(owner)+id,String(Boolean(installed))))throw new Error('The app installation could not be saved.');
+    if(installed)current.add(id);else current.delete(id);
+    const list=window.isPrivateUser?.(owner)?window.getInstalledStoreAppIds():[...current];
+    if(!window.Storage.local.set(window.getInstalledStoreAppsKey(owner),JSON.stringify(list)))throw new Error('The app library could not be saved.');
+    window.savePreferencesToFilesystem?.();
     return list;
 };
-
-window.resetInstalledStoreApps = function() {
-    const key = window.getInstalledStoreAppsKey();
-    if (window.Storage) {
-        window.Storage.local.remove(key);
-    } else {
-        localStorage.removeItem(key);
+window.setInstalledStoreAppIds = function(ids) {
+    const next=new Set((ids || []).filter(validStoreId));
+    const current=window.getInstalledStoreAppIds();
+    for(const id of new Set([...current,...next])) {
+        if(current.includes(id)!==next.has(id))window.setStoreAppInstalled(id,next.has(id));
     }
-    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
+    window.Storage.local.set(window.getInstalledStoreAppsKey(),JSON.stringify(window.getInstalledStoreAppIds()));
+    window.savePreferencesToFilesystem?.();
+    return window.getInstalledStoreAppIds();
 };
+window.resetInstalledStoreApps = function() {return window.setInstalledStoreAppIds([]);};
 
 window.isStoreAppInstalled = function(id) {
     return window.getInstalledStoreAppIds().includes(id);

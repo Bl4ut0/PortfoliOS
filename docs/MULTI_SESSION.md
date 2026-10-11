@@ -12,9 +12,9 @@ Drive backup acquires an exclusive, non-waiting profile-specific `drive` Web Loc
 
 ## Boundaries
 
-Web Locks coordinate tabs on the same origin and browser storage partition. They do not coordinate separate browsers, devices or origins. Preference revision comparison helps reject older restored choices, but depends on device clocks and does not provide distributed cloud locking or conditional Drive writes. Concurrent cross-device document, desktop-layout and installation-list merges remain unverified. Shared preferences and backups do not grant administrator access.
+Web Locks coordinate tabs on the same origin and browser storage partition. They do not coordinate separate browsers, devices or origins. Preference revision comparison helps reject older restored choices, but depends on device clocks and does not provide distributed cloud locking or conditional Drive writes. Concurrent cross-device document and desktop-layout merges remain unverified. Private installation choices now have per-app records; see [installation retention](INSTALL_RETENTION.md). Shared preferences and backups do not grant administrator access.
 
-This change does not fix the separately audited desktop grid reflow, concurrent desktop layout writes or Drive move/deletion-manifest races. Do not describe it as universal multi-device conflict resolution.
+The separately audited desktop grid reflow, concurrent desktop layout writes and fully atomic Drive move/deletion handling remain separate work. Installation retention now prevents newly created paths from being falsely acknowledged by an in-progress backup. Do not describe it as universal multi-device conflict resolution.
 
 ## Verification
 

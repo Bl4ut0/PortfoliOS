@@ -960,7 +960,7 @@ window.GDriveSync = {
         // Freshly generated Desktop defaults must not replace a saved cloud desktop.
         const desktopLayoutPath = '/Desktop/desktop-layout.json';
         const restoreDesktop = isFirstSync && remoteMap.has(desktopLayoutPath) && localMap.get(desktopLayoutPath)?.metadata?.kind === 'desktop-layout-default';
-        const failedPaths = [];
+        const failedPaths = [], acknowledgedPaths = new Set();
         for (const path of sortedPaths) {
             let local = isFirstSync && path === `/home/${scope.userId}/settings.json` && remoteMap.has(path) ? null : localMap.get(path);
             const remote = remoteMap.get(path);
@@ -977,13 +977,21 @@ window.GDriveSync = {
                     local = null;
                 }
                 if (local && !remote) {
-                    if (isFirstSync || !manifest.has(path)) {
+                    let shortcut = path.startsWith('/Desktop/') ? await window.resolveDesktopShortcut?.(local) : null;
+                    // Native Mobile backups share these files without loading Desktop.
+                    if(!shortcut && path.startsWith('/Desktop/') && path.endsWith('.portfolios-link.json') && local.size<=4096) {
+                        try {const value=JSON.parse(await window.readFilesystemRecordText(local));if(value.type==='portfolios-app-shortcut' && window.appById?.(value.appId))shortcut=value;}catch{}
+                    }
+                    const retainedWorkspaceFile = path === '/Desktop/desktop-layout.json' || path === `/home/${scope.userId}/settings.json` || shortcut && window.isAppInstalled?.(shortcut.appId);
+                    // Absence alone is not a safe deletion signal for a folder
+                    // containing newly installed files, or an active app shortcut.
+                    if (isFirstSync || !manifest.has(path) || local.isDirectory || retainedWorkspaceFile) {
                         if (local.isDirectory) {
                             await this.createRemoteFolder(path, local.name);
                         } else {
                             const checked = await window.SecurityKernel.scanExisting(local, "cloud-upload");
                             if (checked.status !== "accepted") {
-                                console.warn(`PortfoliOS: Cloud upload quarantined ${path}.`);
+                                throw new Error(`Cloud upload blocked for ${path}.`);
                             } else {
                                 await this.uploadFile(path, checked.record.name, checked.record.type, checked.record.data);
                             }
@@ -1016,9 +1024,8 @@ window.GDriveSync = {
 
                         if (localTime > remoteTime + 2000) {
                             const checked = await window.SecurityKernel.scanExisting(local, "cloud-upload");
-                            if (checked.status === "accepted") {
-                                await this.updateFile(remote.id, checked.record.type, checked.record.data);
-                            }
+                            if (checked.status !== "accepted") throw new Error(`Cloud upload blocked for ${path}.`);
+                            await this.updateFile(remote.id, checked.record.type, checked.record.data);
                         } else if (remoteTime > localTime + 2000) {
                             const fileBlob = await this.downloadFile(remote.id);
                             await window.SecurityKernel.importFile({
@@ -1028,6 +1035,7 @@ window.GDriveSync = {
                         }
                     }
                 }
+                acknowledgedPaths.add(path);
             } catch (err) {
                 failedPaths.push(path);
                 console.error(`Failed to sync ${path}:`, err);
@@ -1039,7 +1047,10 @@ window.GDriveSync = {
 
         if (failedPaths.length) throw new Error(`Backup incomplete: ${failedPaths.length} file(s) failed. Retry to finish syncing.`);
         const finalLocalFiles = await window.SystemFS.getAllFiles();
-        const finalPaths = finalLocalFiles.map(f => f.path).filter(isPathSyncable);
+        // Files created after the initial snapshot were never transferred.
+        // Do not acknowledge them: a later backup would mistake their absence
+        // in Drive for a remote deletion and remove the local installation.
+        const finalPaths = finalLocalFiles.map(f => f.path).filter(path => acknowledgedPaths.has(path) && isPathSyncable(path));
         
         if (window.Storage) {
             window.Storage.local.set(manifestKey, JSON.stringify(finalPaths));

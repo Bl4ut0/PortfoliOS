@@ -129,13 +129,14 @@ window.ensureDesktopShortcuts = (launchers, owner, restoreMissing = false) => {
             if (!existing) {
                 const shortcut={appId:item.launchApp,selectId:item.selectId || ''};
                 const data=JSON.stringify({type:'portfolios-app-shortcut',...shortcut});
-                await SystemFS.writeFile(path,name,'/Desktop',data,new Blob([data]).size,'application/json',false,{silent:true,metadata:{desktopShortcut:shortcut,kind:'desktop-default-shortcut'}});
+                await SystemFS.writeFile(path,name,'/Desktop',data,new Blob([data]).size,'application/json',false,{silent:true,metadata:{desktopShortcut:shortcut,kind:restoreMissing?'desktop-user-shortcut':'desktop-default-shortcut'}});
                 SystemFS.assertProfile(owner);
             }
             seeded.add(item.id);changed=true;
         }
         if (changed) {
             layout.shortcutsSeeded=[...seeded];
+            if(restoreMissing)layout.customized=true;
             const data=JSON.stringify(layout);
             await SystemFS.writeFile(desktopLayoutPath,'desktop-layout.json','/Desktop',data,new Blob([data]).size,'application/json',false,{metadata:{kind:layout.customized?'desktop-layout':'desktop-layout-default'}});
             SystemFS.assertProfile(owner);
@@ -581,7 +582,16 @@ window.ensureInstalledDesktopShortcut = async (id) => {
         if (!entry.path.startsWith('/Desktop/') || !entry.name?.endsWith('.portfolios-link.json')) continue;
         const link = await window.resolveDesktopShortcut(entry);
         SystemFS.assertProfile(owner);
-        if (link?.appId === launcher.launchApp && link.selectId === (launcher.selectId || '')) return;
+        if (link?.appId === launcher.launchApp && link.selectId === (launcher.selectId || '')) {
+            if(entry.metadata?.kind==='desktop-default-shortcut') {
+                await SystemFS.writeFile(entry.path,entry.name,entry.parent,entry.data,entry.size,entry.type,false,{silent:true,metadata:{...entry.metadata,kind:'desktop-user-shortcut'}});
+                SystemFS.assertProfile(owner);
+            }
+            const layout=await window.readDesktopLayout(owner);
+            SystemFS.assertProfile(owner);
+            if(!layout.customized)await window.saveDesktopLayoutPositions({},owner);
+            return;
+        }
     }
     await window.ensureDesktopShortcuts([launcher], owner, true);
 };

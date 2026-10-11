@@ -151,15 +151,12 @@
               await window.ensureMobileAppLoaded(id);
               if (signal?.aborted || window.state.currentUserId !== userId)
                 return;
-              window.setInstalledStoreAppIds([
-                ...window.getInstalledStoreAppIds(),
-                id,
-              ]);
+              window.setStoreAppInstalled(id, true);
+              await window.savePreferencesToFilesystem?.({strict:true});
               window.EventBus?.emit("app:installed", id);
             } else {
-              window.setInstalledStoreAppIds(
-                window.getInstalledStoreAppIds().filter((item) => item !== id),
-              );
+              window.setStoreAppInstalled(id, false);
+              await window.savePreferencesToFilesystem?.({strict:true});
               window.EventBus?.emit("app:uninstalled", id);
             }
             root.querySelector("[data-store-status]").textContent =

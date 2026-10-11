@@ -65,3 +65,5 @@ Escape, arrows, Home/End, submenu arrows and Shift+F10/Context Menu key support 
 Regression: `node scripts/check-context-menu-browser.js` covers modular, catalog-only and downloaded installation paths (download bytes use disposable fixtures), failed downloads, removal/reload, contextual shortcut creation, duplicate avoidance, keyboard dismissal and profile isolation. `node scripts/check-store-desktop-shortcuts-browser.js` verifies all Desktop-capable Store catalog entries acquire shortcut files. These checks do not certify game engines or real production downloads.
 
 Desktop folder creation is available through the background right-click menu; it is not a synthetic desktop icon. Actual SystemFS folders remain ordinary desktop items.
+
+Private app libraries now persist per-app installation/uninstall records and await durable settings before reporting successful installation. Drive synchronization acknowledges only paths processed in that backup and retains active app shortcuts when remote absence is ambiguous. See [installation retention](../docs/INSTALL_RETENTION.md) for regression evidence and deletion/conflict boundaries.

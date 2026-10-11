@@ -248,7 +248,8 @@ const installAppFiles = async (id) => {
         try {
             await window.ensureAppLoaded(id);
             if (state.currentUserId !== installingUser) throw new Error("The profile changed during installation.");
-            window.setInstalledStoreAppIds([...window.getInstalledStoreAppIds(), id]);
+            window.setStoreAppInstalled(id, true);
+            await window.savePreferencesToFilesystem?.({strict:true});
             await window.ensureInstalledDesktopShortcut?.(id);
             if (state.currentUserId !== installingUser) throw new Error("The profile changed during installation.");
             if (window.EventBus) window.EventBus.emit("app:installed", id);
@@ -345,7 +346,8 @@ const installAppFiles = async (id) => {
             const list = window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : [];
             if (!list.includes(id)) list.push(id);
             if (window.setInstalledStoreAppIds) {
-                window.setInstalledStoreAppIds(list);
+                window.setStoreAppInstalled(id, true);
+                await window.savePreferencesToFilesystem?.({strict:true});
             } else if (window.Storage) {
                 window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
             } else {
@@ -397,7 +399,8 @@ const runFakeInstall = (id) => {
                 const list = window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : [];
                 if (!list.includes(id)) list.push(id);
                 if (window.setInstalledStoreAppIds) {
-                    window.setInstalledStoreAppIds(list);
+                    window.setStoreAppInstalled(id, true);
+                    await window.savePreferencesToFilesystem?.({strict:true});
                 } else if (window.Storage) {
                     window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
                 } else {
@@ -429,8 +432,8 @@ window.installApp = (id) => {
 
 window.uninstallApp = (id) => {
     const list = (window.getInstalledStoreAppIds ? window.getInstalledStoreAppIds() : []).filter((item) => item !== id);
-    if (window.setInstalledStoreAppIds) {
-        window.setInstalledStoreAppIds(list);
+    if (window.setStoreAppInstalled) {
+        window.setStoreAppInstalled(id, false);
     } else if (window.Storage) {
         window.Storage.local.set("bl4ut0_installed_apps", JSON.stringify(list));
     } else {

@@ -196,7 +196,7 @@
         const updated = await window.SystemFS.writeFile(
             record.path, record.name, record.parent, scanned.blob, scanned.blob.size,
             scanned.result.detectedType, false,
-            { silent: true, lastModified: record.lastModified, metadata: { ...(record.metadata || {}), security: scanned.result } }
+            { silent: true, lastModified: record.lastModified, expectedRecord:record, metadata: { ...(record.metadata || {}), security: scanned.result } }
         );
         return { status: "accepted", record: updated, scan: scanned.result };
     }
