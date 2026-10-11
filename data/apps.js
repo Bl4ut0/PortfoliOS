@@ -6,7 +6,7 @@
 window.standardInstalledAppIds = [
     "devhub", "profile", "dossier", "browser", "network", "linux", "cli",
     "settings", "store", "files", "security-center", "addons", "guildcraft", "homelab",
-    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office"
+    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office", "portfolio-studio"
 ];
 
 window.desktopPinnedIds = [
@@ -110,7 +110,8 @@ window.desktopApps = [
     { id: "duke32", title: "Duke Nukem 3D", icon: "duke3d-icon.png", category: "games", pinned: false, modular: true, meta: "Browser game" },
     { id: "diablo", title: "Diablo", icon: "diablo-icon.png", category: "games", pinned: false, modular: true, meta: "Browser game" },
     { id: "quake", title: "Quake", icon: "quake-icon.png", category: "games", pinned: false, modular: true, meta: "Browser game" },
-    { id: "ut99", title: "UT99", icon: "fa-solid fa-crosshairs", category: "games", pinned: false, modular: true, meta: "Browser game" }
+    { id: "ut99", title: "UT99", icon: "fa-solid fa-crosshairs", category: "games", pinned: false, modular: true, meta: "Browser game" },
+    { id: "portfolio-studio", title: "Portfolio Studio", icon: "fa-solid fa-sliders", category: "system", pinned: false, modular: true, meta: "Portfolio admin studio" }
 ];
 
 window.modularApps = window.desktopApps

@@ -1,9 +1,9 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.10.11.7";
+    const release = "2026.10.11.8";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
-        "core/filesystem.js", "core/security-service.js", "data/systems.js", "data/apps.js",
+        "core/filesystem.js", "core/security-service.js", "core/app-icons.js", "data/systems.js", "data/apps.js",
         "data/config.js", "data/users.js", "core/preferences.js", "core/gdrive-sync.js",
         "core/background-services.js", "core/session-context.js", "core/profile-switch.js", "core/session-chooser.js"
     ];
@@ -48,6 +48,7 @@
             dossier: ["desktop/dossier.js"], network: ["desktop/network-map.js"],
             linux: ["desktop/linux.js"], browser: ["@browser", "desktop/browser.js"], store: ["desktop/store.js"],
             files: ["@media"], musicmini: ["@media"],
+            "portfolio-studio": [],
             doomsource: ["@games", "desktop/wad-inspector.js"],
             duke32: ["@games"], diablo: ["@games"], quake: ["@games"],
             openrct2: ["@games"], ut99: ["@games"], romplayer: ["@games"]

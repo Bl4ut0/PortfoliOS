@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "updatedAt": 1773345000000,
+  "profile": {
+    "displayName": "Guest Access",
+    "handle": "Bl4ut0 Owner Account",
+    "role": "Guest",
+    "accountType": "Public portfolio session",
+    "status": "Guest session",
+    "bio": "Systems builder, addon porter, automation tinkerer, homelab operator, and community toolmaker.",
+    "avatar": "identity-portrait.jpg",
+    "accent": "#22d3ee",
+    "links": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/Bl4ut0",
+        "icon": "fa-brands fa-github"
+      },
+      {
+        "label": "Dev Hub",
+        "url": "https://bl4ut0.dev",
+        "icon": "fa-solid fa-globe"
+      },
+      {
+        "label": "Discord",
+        "url": "https://discord.gg/fEwanmFR9m",
+        "icon": "fa-brands fa-discord"
+      }
+    ]
+  },
+  "boot": {
+    "eyebrow": "Personal Network Console",
+    "title": "PortfoliOS",
+    "summary": "Development projects, infrastructure, community links, and professional systems work in one interactive hub."
+  },
+  "appearance": {
+    "defaultTheme": "dark",
+    "defaultWallpaper": "aurora",
+    "defaultScreensaver": "starfield"
+  },
+  "guestHiddenAppIds": [
+    "portfolio-studio"
+  ]
+}

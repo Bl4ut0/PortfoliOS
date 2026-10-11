@@ -28,7 +28,10 @@ window.userAccounts = [
         avatar: "identity-portrait.jpg",
         accent: "#22d3ee",
         status: "Guest session",
-        privateProfile: false
+        privateProfile: false,
+        hiddenIds: [
+            "portfolio-studio"
+        ]
     },
     {
         id: "private",
@@ -142,6 +145,38 @@ window.isVisibleForCurrentUser = (id) => {
     return !window.getCurrentUserHiddenIds().has(id);
 };
 
+window.applyPortfolioConfigOverrides = (config) => {
+    if (!config || typeof config !== "object") return;
+    const publicUser = window.userAccounts?.find(u => u.id === "bl4ut0");
+    if (publicUser && config.profile) {
+        if (config.profile.displayName) publicUser.displayName = config.profile.displayName;
+        if (config.profile.handle) publicUser.handle = config.profile.handle;
+        if (config.profile.role) publicUser.role = config.profile.role;
+        if (config.profile.status) publicUser.status = config.profile.status;
+        if (config.profile.bio) publicUser.bio = config.profile.bio;
+        if (config.profile.avatar) publicUser.avatar = config.profile.avatar;
+    }
+    if (config.guestHiddenAppIds && Array.isArray(config.guestHiddenAppIds)) {
+        publicUser.hiddenIds = [...new Set([...(publicUser.hiddenIds || []), ...config.guestHiddenAppIds])];
+    }
+    if (config.boot) {
+        const eyebrow = document.querySelector(".eyebrow");
+        const title = document.getElementById("boot-title");
+        const summary = document.getElementById("boot-summary");
+        if (eyebrow && config.boot.eyebrow) eyebrow.textContent = config.boot.eyebrow;
+        if (title && config.boot.title) title.textContent = config.boot.title;
+        if (summary && config.boot.summary) summary.textContent = config.boot.summary;
+    }
+};
+
+// Asynchronously load server-configured overrides on boot
+if (typeof fetch === "function") {
+    fetch("data/portfolio-config.json", { cache: "no-store" })
+        .then(res => res.ok ? res.json() : null)
+        .then(cfg => { if (cfg) window.applyPortfolioConfigOverrides(cfg); })
+        .catch(() => {});
+}
+
 window.getCurrentDesktopIconLayout = () => {
     const user = window.getCurrentUser ? window.getCurrentUser() : null;
     return user?.desktopIconLayout || window.defaultDesktopIconLayout || {};
@@ -218,6 +253,7 @@ window.prepareProfileSwitch = async ({ allowProfileSwitch = false, autoSave = fa
     if (Object.keys(window.state?.installingApps || {}).length) throw new Error("Wait for app installation to finish before switching accounts.");
     if (window.GDriveSync?.syncInProgress) throw new Error("Wait for the current Drive backup to finish before switching accounts.");
     await window.flushDesktopLayout?.();
+    await window.AppIcons?.flush();
     const apps = Array.from(window.state?.openApps || []);
     for (const appId of apps) {
         const allowed = await window.runAppLifecycleHook?.(appId, "beforeClose", window.getDesktopWindowElement?.(appId), { rethrow: true, reason: "profile-switch", autoSave });

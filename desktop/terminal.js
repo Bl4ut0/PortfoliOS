@@ -1230,6 +1230,46 @@ async function executeCommand(command, args, raw) {
         return `Opening ${href}`;
     }
 
+    if (command === "admin") {
+        promptUser("Enter admin passphrase: ", true, async (passphrase) => {
+            if (!passphrase) {
+                window.addTerminalLine("admin: authentication aborted");
+                return;
+            }
+            window.addTerminalLine("Authenticating with PortfoliOS secure core...", "muted");
+            try {
+                const res = await fetch("core/admin.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "auth", password: passphrase })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    window.addTerminalLine(`admin: Authentication failed (${data.error || "Invalid passphrase"}).`, "muted");
+                    return;
+                }
+
+                window.AdminSession = {
+                    token: data.token,
+                    expiresAt: data.expiresAt,
+                    isAuthenticated: () => Boolean(window.AdminSession?.token && Date.now() < window.AdminSession?.expiresAt)
+                };
+
+                window.addTerminalLine("[OK] Admin session established. Launching Portfolio Studio...", "success");
+                if (data.isDefaultPassword) {
+                    window.addTerminalLine("[Notice] Default administrator passphrase is in use. Update it in the Passphrase tab.", "muted");
+                }
+
+                await window.ensureAppLoaded?.("portfolio-studio");
+                if (window.switchView) window.switchView("desktop");
+                if (window.openDesktopWindow) window.openDesktopWindow("portfolio-studio");
+            } catch (err) {
+                window.addTerminalLine(`admin: Gateway error: ${err.message}`, "muted");
+            }
+        });
+        return;
+    }
+
     // su
     if (command === "su") {
         await runSu(args[0]);
