@@ -23,5 +23,9 @@ Fallback runtime behavior:
 Access notes:
 - `index.php` sends the SharedArrayBuffer isolation headers before serving `index.html`. The desktop app embeds this PHP entrypoint in a same-origin iframe so the game runs inside a PortfoliOS window.
 - `index.html` loads `/volume-hook.js` before the OpenRCT2 runtime so the desktop volume slider can control WebAudio output inside the iframe.
-- `.htaccess` disables directory listing, attempts the same isolation headers for static hosts that support them, and blocks direct requests for the large runtime zip files unless they are referred by the runtime page.
+- `.htaccess` disables directory listing, attempts the same isolation headers for static hosts that support them, and blocks direct requests for the large runtime zip files unless they are referred by the main PortfoliOS page (root or index.html, including query strings) or this runtime page. The Store downloads the engine and assets before the game iframe exists. Requests with no referrer, an external host, or an unrelated page remain blocked.
 - This is a practical barrier, not a hard protection boundary. Browser-fetched files can still be copied by a determined user because the web app has to receive the bytes to run the game.
+
+Validation:
+- npm test includes the download-rule regression using the actual Store file URLs.
+- With Playwright available, node scripts/check-openrct2-store-browser.js --origin=https://os.bl4ut0.dev checks actual Apache responses and installs the real engine/assets through the Store in a disposable profile. It verifies persisted bytes and reload state, without starting the game or downloading RCT.zip.

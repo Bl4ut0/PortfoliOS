@@ -1301,6 +1301,7 @@ run()
         if (!process.exitCode) {
             require("./check-mobile-viewport.js");
             require("./check-mobile-home.js");
+            require("./check-openrct2-downloads.js");
             await require("./check-loading.js");
         }
     })

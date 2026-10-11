@@ -19,6 +19,7 @@ DirectoryIndex index.php index.html
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteCond %{REQUEST_URI} ^/apps/openrct2/runtime/(openrct2\.zip|openrct2\.js|openrct2\.wasm|assets\.zip|RCT\.zip)$ [NC]
-    RewriteCond %{HTTP_REFERER} !^https?://os\.bl4ut0\.dev/apps/openrct2/runtime/ [NC]
+    # The OS Store downloads these before the game iframe exists.
+    RewriteCond %{HTTP_REFERER} !^https?://os\.bl4ut0\.dev/(?:$|[?#]|index\.html(?:$|[?#])|apps/openrct2/runtime/) [NC]
     RewriteRule ^ - [F,L]
 </IfModule>
