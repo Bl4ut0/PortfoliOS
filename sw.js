@@ -1,7 +1,7 @@
 /** Offline boot plus assets actually used by a workspace. App binaries stay in SystemFS. */
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const SHELL_RELEASE = "2026.10.11.4";
+const SHELL_RELEASE = "2026.10.11.5";
 const SHELL_CACHE = "portfolio-shell-" + SHELL_RELEASE;
 const versioned = path => path + "?v=" + SHELL_RELEASE;
 const BOOT_ASSETS = ["/", "/manifest.webmanifest", ...[
@@ -250,7 +250,7 @@ async function serveFromIndexedDB(relativePath, request) {
                     // Upgrade previously installed HTML to the CDN's CORS policy.
                     body = text.replace('<script src="https://js-dos.com/6.22/current/js-dos.js"></script>', '<script src="https://js-dos.com/6.22/current/js-dos.js" crossorigin="anonymous"></script>');
                 } else if (relativePath === "/apps/quake/index.html" && !text.includes('src="portfolio-data.js')) {
-                    body = text.replace('</body>', '<script src="portfolio-data.js?v=2026.10.11.4"></script></body>');
+                    body = text.replace('</body>', '<script src="portfolio-data.js?v=2026.10.11.5"></script></body>');
                 } else {
                     body = text;
                 }

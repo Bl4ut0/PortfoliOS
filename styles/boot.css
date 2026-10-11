@@ -247,3 +247,9 @@
 body[data-startup-stage=boot] > .os-shell:not(#session-phone), body[data-startup-stage=mounting] > .os-shell:not(#session-phone) { visibility:hidden; }
 @media(max-width:600px) { .boot-screen { place-items:safe center; } .boot-panel { padding:1.5rem; } .mobile-boot-note { display:block; font-size:.75rem; } }
 @media(prefers-reduced-motion:reduce) { .boot-actions, .mobile-boot-note { transition:none; transform:none; } }
+
+/* The PortfoliOS mark is the same white chevron/cyan cursor used at boot. */
+.portfolios-mark { display:inline-flex; align-items:center; justify-content:center; gap:0; flex-shrink:0; font:800 1.15rem/1 var(--mono,monospace); letter-spacing:0; }
+.portfolios-mark .prompt-chevron { color:#f8fafc; }
+.portfolios-mark .prompt-cursor { color:#22d3ee; }
+.brand-icon.portfolios-mark { background:#090a0f; }

@@ -51,6 +51,14 @@ const server = http.createServer((req, res) => {
             await p.locator('#session-chooser').waitFor();
             assert.equal(await p.locator('[data-view-panel], [data-window]').count(), 0, 'workspace DOM must wait for profile selection');
             assert.equal(await p.evaluate(() => !!window.mountDesktop || !!window.MobileOS), false, 'shell code must not execute during login');
+            assert.match(await p.locator('[data-session-public] strong').innerText(), /PortfoliOS public profile/);
+            assert.equal(await p.locator('[data-session-avatar=public]').evaluate(img => getComputedStyle(img).objectFit), 'contain');
+            if (view === 'desktop') {
+                assert.equal(await p.locator('.session-lock-header .portfolios-mark').textContent(), '>_');
+                assert.equal(await p.locator('.session-lock-header .prompt-cursor').evaluate(el => getComputedStyle(el).color), 'rgb(34, 211, 238)');
+            }
+            fs.mkdirSync(path.join(root, '.tmp', 'login-brand'), { recursive:true });
+            await p.screenshot({path:path.join(root, '.tmp', 'login-brand', view + '.png')});
             await p.locator('[data-session-public]').click();
         }
         await ready(p);

@@ -87,3 +87,16 @@ body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
 .session-google-mark { font:bold 32px system-ui,sans-serif; color:inherit; }
 #mobile-device .session-lock-header .session-symbol { width:13px; height:13px; margin:0 0 0 9px; }
 #mobile-device .session-account > .session-action-symbol { color:var(--mobile-accent-ink); }
+
+/* Desktop sign-in uses OS surfaces and typography; Mobile retains its own palette. */
+.session-chooser[data-experience=desktop] { background:radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--theme-primary) 9%,transparent),transparent 55%),var(--bg); color:var(--text); font-family:var(--body); }
+.session-chooser[data-experience=desktop] .session-lock-header,.session-chooser[data-experience=desktop] .session-lock-footer,.session-chooser[data-experience=desktop] [data-session-date],.session-chooser[data-experience=desktop] p,.session-chooser[data-experience=desktop] .session-account small { color:var(--text-soft); }
+.session-chooser[data-experience=desktop] .session-account { background:var(--surface-raised); color:var(--text); border-color:var(--line-strong); border-radius:var(--radius-lg); }
+.session-chooser[data-experience=desktop] .session-account:hover { background:var(--control-hover); border-color:var(--theme-primary-ink); }
+.session-chooser[data-experience=desktop] .session-chooser-eyebrow,.session-chooser[data-experience=desktop] .session-action-symbol { color:var(--theme-primary-ink); }
+.session-chooser[data-experience=desktop] .session-lock-footer button,.session-chooser[data-experience=desktop] .session-chooser-offline,.session-chooser[data-experience=desktop] .session-public-action { background:var(--surface-raised); color:var(--text); border-color:var(--line-strong); }
+.session-chooser[data-experience=desktop] .session-chooser-error { color:var(--rose-ink); }
+.session-lock-header > span:first-child { display:inline-flex; align-items:center; gap:8px; }
+.session-lock-header .portfolios-mark { width:32px; height:32px; border:1px solid var(--line-strong); border-radius:8px; background:#090a0f; }
+.session-account-icon:has([data-session-avatar=public]) { background:#fff; }
+.session-account-icon img[data-session-avatar=public] { object-fit:contain; padding:7px; box-sizing:border-box; }

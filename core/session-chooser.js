@@ -39,7 +39,7 @@
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "session-chooser-title");
         overlay.innerHTML = `
-            <header class="session-lock-header"><span>${symbol("shield")} PortfoliOS</span><span>${overlay.dataset.experience === "mobile" ? "Mobile" : "Desktop"}</span></header>
+            <header class="session-lock-header"><span><span class="portfolios-mark" aria-hidden="true"><span class="prompt-chevron">&gt;</span><span class="prompt-cursor">_</span></span> PortfoliOS</span><span>${overlay.dataset.experience === "mobile" ? "Mobile" : "Desktop"}</span></header>
             <div class="session-chooser-panel">
                 <div class="session-lock-clock" aria-hidden="true"><span data-session-time></span><span data-session-date></span></div>
                 <span class="session-chooser-eyebrow">Welcome back</span>
@@ -48,7 +48,7 @@
                 <div class="session-chooser-accounts">
                     <button type="button" class="session-account" data-session-public>
                         <span class="session-account-icon"><img data-session-avatar="public" alt=""></span>
-                        <span><strong>Bl4ut0 public profile</strong><small>Fresh public workspace · Enter</small></span>
+                        <span><strong>PortfoliOS public profile</strong><small>Bl4ut0’s portfolio · Fresh workspace</small></span>
                         <span class="session-action-symbol" aria-hidden="true">→</span>
                     </button>
                     ${Object.entries(profiles).filter(([id]) => window.isPrivateUser?.(id)).map(([id, profile]) => `
