@@ -247,7 +247,6 @@ window.renderDesktopIcons = async () => {
         });
     } catch(error) {if(owner!==state.currentUserId)return;console.warn('Desktop entries could not be loaded.',error);}
     if (revision !== desktopRenderRevision || owner !== state.currentUserId) return;
-    apps.push({id:'new-folder',title:'New folder',icon:'fa-solid fa-folder-plus',color:'#fbbf24',createFolder:true});
 
     const occupied = new Set();
     const resolvedPositions = [];
@@ -305,9 +304,9 @@ window.renderDesktopIcons = async () => {
     desktopIcons.innerHTML = resolvedPositions.map(({ item, left, top }) => {
         const isActive = item.selectId && item.selectId === state.activeId;
         const action = item.launchApp ? `data-open-app="${escape(item.launchApp)}" ${item.path?`data-desktop-path="${escape(item.path)}"`:''}` : item.path ? `data-desktop-path="${escape(item.path)}" ${item.isDirectory?'data-desktop-folder="true"':''}`
-            : item.createFolder ? 'data-desktop-create-folder="true"' : `data-open-app="${escape(item.launchApp)}"`;
+            : `data-open-app="${escape(item.launchApp)}"`;
         return `<button class="desktop-icon ${isActive ? 'active' : ''}" ${item.selectId ? `data-select="${escape(item.selectId)}"` : ''}
-            ${action} data-desktop-id="${escape(item.id)}" style="--tile-color:${item.color};left:${left};top:${top}" title="${item.createFolder?'Create a desktop folder':'Open '+escape(item.title)}">
+            ${action} data-desktop-id="${escape(item.id)}" style="--tile-color:${item.color};left:${left};top:${top}" title="${'Open '+escape(item.title)}">
             ${window.getAppIconHtml(item.icon, "", item.selectId || item.launchApp)}<span>${escape(item.title)}</span></button>`;
     }).join('');
 };
@@ -320,13 +319,12 @@ window.initDesktopIconDragging = () => {
         const icon = event.target.closest('.desktop-icon');
         if (!icon || icon.dataset.openApp) return;
         if (icon.dataset.preventClick === 'true') { delete icon.dataset.preventClick; return; }
-        if (icon.hasAttribute('data-desktop-create-folder')) window.createDesktopFolder();
-        else if (icon.dataset.desktopPath) window.openDesktopFile(icon.dataset.desktopPath).catch(error=>window.showDesktopToast?.(error.message));
+        if (icon.dataset.desktopPath) window.openDesktopFile(icon.dataset.desktopPath).catch(error=>window.showDesktopToast?.(error.message));
     });
 
     container.addEventListener("pointerdown", (event) => {
         const icon = event.target.closest(".desktop-icon");
-        if (!icon || icon.hasAttribute("data-desktop-create-folder") || event.button !== 0 || event.target.closest("a, button:not(.desktop-icon)")) return;
+        if (!icon || event.button !== 0 || event.target.closest("a, button:not(.desktop-icon)")) return;
         event.preventDefault();
 
         desktopDragActive = true;

@@ -63,3 +63,5 @@ File Explorer preserves its Open/Open with actions and adds Send to Desktop for 
 Escape, arrows, Home/End, submenu arrows and Shift+F10/Context Menu key support keyboard use. Profile changes and resize dismiss the menu; action errors surface as a toast. The shared Desktop menu is not loaded into the native Mobile shell.
 
 Regression: `node scripts/check-context-menu-browser.js` covers modular, catalog-only and downloaded installation paths (download bytes use disposable fixtures), failed downloads, removal/reload, contextual shortcut creation, duplicate avoidance, keyboard dismissal and profile isolation. `node scripts/check-store-desktop-shortcuts-browser.js` verifies all Desktop-capable Store catalog entries acquire shortcut files. These checks do not certify game engines or real production downloads.
+
+Desktop folder creation is available through the background right-click menu; it is not a synthetic desktop icon. Actual SystemFS folders remain ordinary desktop items.

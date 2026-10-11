@@ -89,7 +89,6 @@ window.getContextMenuItems = (event) => {
             {label:'Manage in File Explorer',icon:'fa-solid fa-folder',action:()=>window.openDesktopFile('/Desktop')}
         ];
     }
-    if (desktopIcon?.hasAttribute('data-desktop-create-folder')) return [{label:'New folder',icon:'fa-solid fa-folder-plus',action:()=>window.createDesktopFolder()}];
     if (desktopIcon) {
         const appName = desktopIcon.dataset.openApp;
         const selectId = desktopIcon.dataset.select;

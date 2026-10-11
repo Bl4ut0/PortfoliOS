@@ -24,7 +24,9 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT || 'playwright');
   }
   await p.goto(target);await enter();await p.waitForFunction(async()=>!!(await readDesktopLayout()).positions.store);assert.deepEqual(await p.evaluate(async()=>(await readDesktopLayout()).positions.store),{col:2,row:1},'Legacy positions migrate into SystemFS');assert.equal(await p.evaluate(()=>localStorage.getItem('desktop_pos_private_foldersA_store')),null,'Legacy position removed after durable migration');
   assert(await p.evaluate(()=>SystemFS.readFile('/Desktop/cli.portfolios-link.json')),'Default app icons are actual Desktop shortcut files');
-  await p.locator('[data-desktop-create-folder]').click();
+  assert.equal(await p.locator('[data-desktop-create-folder]').count(),0,'Folder creation is not a desktop tile');
+  async function newFolderFromMenu(){await p.locator('#desktop-icons').dispatchEvent('contextmenu',{bubbles:true,clientX:500,clientY:200});await p.locator('#desktop-context-menu').getByRole('menuitem',{name:'New folder',exact:true}).click();}
+  await newFolderFromMenu();
   const dialog=p.locator('[data-desktop-folder-dialog]');await dialog.locator('input').fill('../Invalid');await dialog.locator('[type=submit]').click();await p.waitForFunction(()=>document.querySelector('[data-folder-error]')?.textContent.includes('without slashes'));await dialog.locator('input').fill('Projects');await dialog.locator('[type=submit]').click();await dialog.waitFor({state:'detached'});
   const folder=p.locator('[data-desktop-path="/Desktop/Projects"]');await folder.waitFor();
   assert(await p.evaluate(()=>SystemFS.readFile('/Desktop/Projects')),'Folder is a real SystemFS directory');
@@ -54,7 +56,7 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT || 'playwright');
   assert.deepEqual(await folder.evaluate(el=>({left:el.style.left,top:el.style.top})),savedPosition,'Folder drag position survives reload');assert(await p.evaluate(()=>SystemFS.readFile('/Desktop/desktop-layout.json')),'Layout lives in SystemFS');assert.equal(await p.locator('[data-desktop-path="/Desktop/desktop-layout.json"]').count(),0,'Reserved layout file is not a desktop icon');
   await p.evaluate(async()=>{await prepareProfileSwitch();setCurrentUser('private_foldersB');await SystemFS.ensureDefaultFiles();await renderDesktopIcons();});
   assert.equal(await p.evaluate(()=>SystemFS.readFile('/Desktop/Projects')),null,'Other private account has its own desktop');
-  await p.evaluate(()=>saveDesktopLayoutPositions({cli:{col:1,row:0}}));await p.locator('[data-desktop-create-folder]').click();await dialog.waitFor();
+  await p.evaluate(()=>saveDesktopLayoutPositions({cli:{col:1,row:0}}));await newFolderFromMenu();await dialog.waitFor();
   await p.evaluate(async()=>{await prepareProfileSwitch();setCurrentUser('private_foldersA');await SystemFS.ensureDefaultFiles();await renderDesktopIcons();});await dialog.waitFor({state:'detached'});await p.evaluate(()=>clearDesktopIconPositions());assert.deepEqual(await p.evaluate(async()=>(await readDesktopLayout()).positions),{},'Reset clears only the active layout');
   const race=await p.evaluate(async()=>{const pending=createDesktopFolder('Race');setCurrentUser('private_foldersB');try{await pending;return false;}catch{return true;}});assert(race,'Profile change aborts pending folder creation');assert.deepEqual(await p.evaluate(async()=>(await readDesktopLayout()).positions.cli),{col:1,row:0},'Other profile layout survives reset');assert.equal(await p.evaluate(()=>SystemFS.readFile('/Desktop/Race')),null);
   await p.evaluate(()=>switchToPublicProfile({saveToDrive:false}));await p.evaluate(async()=>{for(const id of [...state.openApps])await closeDesktopWindow(id);await createDesktopFolder('Temporary');});
