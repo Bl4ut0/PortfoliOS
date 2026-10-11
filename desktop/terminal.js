@@ -1231,6 +1231,7 @@ async function executeCommand(command, args, raw) {
     }
 
     if (command === "admin") {
+        const adminOwner = window.state?.currentUserId;
         promptUser("Enter admin passphrase: ", true, async (passphrase) => {
             if (!passphrase) {
                 window.addTerminalLine("admin: authentication aborted");
@@ -1249,11 +1250,7 @@ async function executeCommand(command, args, raw) {
                     return;
                 }
 
-                window.AdminSession = {
-                    token: data.token,
-                    expiresAt: data.expiresAt,
-                    isAuthenticated: () => Boolean(window.AdminSession?.token && Date.now() < window.AdminSession?.expiresAt)
-                };
+                if (!window.establishAdminSession?.(data, adminOwner)) return;
 
                 window.addTerminalLine("[OK] Admin session established. Launching Portfolio Studio...", "success");
                 if (data.isDefaultPassword) {
@@ -1261,6 +1258,7 @@ async function executeCommand(command, args, raw) {
                 }
 
                 await window.ensureAppLoaded?.("portfolio-studio");
+                if (!window.AdminSession?.isAuthenticated()) return;
                 if (window.switchView) window.switchView("desktop");
                 if (window.openDesktopWindow) window.openDesktopWindow("portfolio-studio");
             } catch (err) {

@@ -5,3 +5,9 @@
     --app-window-top: 5rem;
     --app-window-min-height: 24rem;
 }
+
+/* Keep the command row visible at every supported window size. */
+.cli-window .terminal-window { flex: 1; width: 100%; min-height: 0; height: 100%; grid-template-rows: minmax(0, 1fr) auto; }
+.cli-window .terminal-output { min-height: 0; max-height: none; }
+.cli-window .terminal-input-row { grid-template-columns: minmax(0, auto) minmax(5rem, 1fr) 2rem; }
+.cli-window #terminal-prompt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }

@@ -56,8 +56,8 @@ const windowObject = {
     localStorage: { getItem: localApi.get, setItem: localApi.set, removeItem: localApi.remove, get length() { return storage.size; }, key: i => Array.from(storage.keys())[i] || null },
     sessionStorage: { length: 0, key: () => null, removeItem: () => {} },
     EventBus: {
-        on: (name, callback) => listeners.set(name, callback),
-        emit: (name, data) => listeners.get(name)?.(data)
+        on: (name, callback) => listeners.set(name, [...(listeners.get(name) || []), callback]),
+        emit: (name, data) => (listeners.get(name) || []).forEach(callback => callback(data))
     },
     readFilesystemRecordText: async (record) => String(record.data || ""),
     getSavedPrivateProfile: () => null,

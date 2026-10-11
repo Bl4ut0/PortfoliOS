@@ -140,8 +140,34 @@ window.getCurrentUserHiddenIds = () => {
     return new Set(user?.hiddenIds || []);
 };
 
+// Admin privileges are memory-only, expire, and belong to the active profile.
+(() => {
+    let timer;
+    const refresh = () => window.EventBus?.emit("desktop:refresh");
+    const clear = () => {
+        clearTimeout(timer);
+        window.AdminSession = null;
+        window.closeDesktopWindow?.("portfolio-studio");
+        refresh();
+    };
+    window.clearAdminSession = clear;
+    window.establishAdminSession = (session, owner) => {
+        if (owner !== window.state?.currentUserId || typeof session.token !== "string" || !session.token || !Number.isFinite(session.expiresAt) || session.expiresAt <= Date.now()) return false;
+        clearTimeout(timer);
+        window.AdminSession = {
+            token: session.token, expiresAt: session.expiresAt,
+            isAuthenticated: () => owner === window.state?.currentUserId && Date.now() < session.expiresAt
+        };
+        timer = setTimeout(clear, Math.min(session.expiresAt - Date.now(), 2147483647));
+        refresh();
+        return true;
+    };
+    window.EventBus?.on("user:changed", clear);
+})();
+
 window.isVisibleForCurrentUser = (id) => {
     if (!id) return false;
+    if (id === "portfolio-studio") return Boolean(window.AdminSession?.isAuthenticated());
     return !window.getCurrentUserHiddenIds().has(id);
 };
 

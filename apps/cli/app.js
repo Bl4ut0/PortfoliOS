@@ -1,6 +1,13 @@
 (function() {
     const refresh = (windowEl) => {
         window.initializeCliWindow?.();
+        if (windowEl && !windowEl.dataset.cliFocusBound) {
+            windowEl.dataset.cliFocusBound = "true";
+            windowEl.querySelector(".terminal-window")?.addEventListener("click", event => {
+                if (event.target.closest("input, button, a") || window.getSelection()?.toString()) return;
+                windowEl.querySelector("#terminal-input")?.focus({ preventScroll: true });
+            });
+        }
         const output = windowEl?.querySelector("#terminal-output");
         if (output && !output.childNodes.length) window.startCliIntro?.();
     };

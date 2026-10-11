@@ -47,3 +47,9 @@ Icon positions are saved as grid coordinates in `/Desktop/desktop-layout.json`. 
 On a first Drive sync, generated desktop defaults defer to an existing saved cloud desktop; moved/deleted cloud shortcuts are not recreated from those local defaults. Deliberate local desktop edits and user files retain normal merge behaviour. This is covered by the mocked Drive merge regression; the browser checks use disposable local accounts, not Google credentials.
 
 Installed Desktop Store apps are included in default shortcut seeding without a separate pin-list edit. An explicit installation restores a missing shortcut immediately, but retains existing shortcuts moved into `/Desktop` subfolders. Ordinary reload/refresh does not recreate intentionally deleted or moved shortcuts. Uninstalled app shortcuts remain stored but hidden until the app is installed again. Native Mobile-only apps do not create nonfunctional Desktop launchers.
+
+### CLI and Portfolio Studio access
+
+The CLI keeps its command row inside the window and focuses it when empty terminal space is clicked, including after reopening. Portfolio Studio is hidden and cannot be launched until the CLI `admin` command succeeds. The memory-only admin session expires and is cleared on a profile change; Google private-profile sign-in does not grant administrator access. Server-side authorization remains required for administrative writes.
+
+Regression: `node scripts/check-cli-admin-browser.js` uses disposable profiles and a simulated admin response; it does not validate production credentials.
