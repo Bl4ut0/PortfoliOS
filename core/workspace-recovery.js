@@ -190,6 +190,12 @@
                 if(path==='/home/'+owner+'/settings.json' && local && remote && localHash!==remoteHash){
                     remoteBlob ||= await sync.downloadFile(remote.id);
                     const l=JSON.parse(await blobOf(local).text()),r=JSON.parse(await remoteBlob.text());
+                    // A pending preference save can lag behind the filesystem snapshot.
+                    // Do not import over choices already changed in the live profile.
+                    const keys=new Set([...Object.keys(l),...Object.keys(window.WorkspaceSessions?.revisions(owner) || {})]);
+                    for(const key of keys){
+                        if(window.WorkspaceSessions?.ownsPreference(key,owner) && (localStorage.getItem(key)!==(l[key] ?? null) || WorkspaceSessions.revision(key)>(Number(l.__portfoliosPreferenceRevisions?.[key]) || 0)))throw new Error('Preferences changed while preparing backup. Retry to save the latest choices.');
+                    }
                     const merged=mergeSettings(baseline[path]?.settings || {},l,r);
                     if(merged.conflicts.length){await this.preserve(local,snapshot,owner);report.conflicts.push({path,preferences:merged.conflicts});}
                     const blob=new Blob([JSON.stringify(merged.settings,null,2)],{type:'application/json'});
@@ -198,6 +204,14 @@
                     const uploaded=await sync.updateFile(remote.id,'application/json',blob);
                     for(const [key,value] of Object.entries(merged.settings)){
                         if(!window.WorkspaceSessions?.ownsPreference(key,owner) || (value!==null && typeof value!=='string'))continue;
+                        if(window.state.currentUserId!==owner)throw new Error('Account changed during preference merge.');
+                        const currentRevision=WorkspaceSessions.revision(key),snapshotRevision=Number(l.__portfoliosPreferenceRevisions?.[key]) || 0;
+                        if(localStorage.getItem(key)!==(l[key] ?? null) || currentRevision>snapshotRevision){
+                            // The user edited while upload was in flight. Keep that choice
+                            // and ensure a subsequent filesystem restore cannot revert it.
+                            WorkspaceSessions.adoptRevision(key,Math.max(currentRevision,merged.settings.__portfoliosPreferenceRevisions[key])+1);
+                            continue;
+                        }
                         if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);
                         WorkspaceSessions.adoptRevision(key,merged.settings.__portfoliosPreferenceRevisions[key]);
                     }

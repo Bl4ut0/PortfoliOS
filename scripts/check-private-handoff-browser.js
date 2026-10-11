@@ -101,6 +101,18 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   await a.p.evaluate(async()=>{const data='large recovery fixture '.repeat(220000);await SystemFS.writeFile('/documents/large.txt','large.txt','/documents',data,data.length,'text/plain');clearTimeout(GDriveSync.pendingSyncTimer);await GDriveSync.sync();});
   const large=[...remote.values()].find(file=>file.appProperties?.path==='/documents/large.txt');assert(large.data.length>4*1024*1024,'Large file uses resumable gateway chunks');
   await a.p.evaluate(async()=>{await SystemFS.deleteFile('/documents/large.txt');clearTimeout(GDriveSync.pendingSyncTimer);await GDriveSync.sync();});
+  await a.p.evaluate(async()=>{
+   setPortfolioTheme('light');await savePreferencesToFilesystem({strict:true});
+   let release;const held=WorkspaceSessions.withLock('preferences',state.currentUserId,()=>new Promise(resolve=>{release=resolve;}));
+   while(!release)await new Promise(resolve=>setTimeout(resolve,1));
+   const original=GDriveSync.updateFile;let injected=false;
+   GDriveSync.updateFile=async function(id,type,data){
+    if(!injected && type==='application/json' && (await data.text()).includes(getPreferencesKey('ThemeId'))){injected=true;setPortfolioTheme('oled');setTimeout(release,100);}
+    return original.call(this,id,type,data);
+   };
+   try{await GDriveSync.sync();}finally{GDriveSync.updateFile=original;release();await held;}
+   if(!injected || state.themeId!=='oled' || Storage.local.get(getPreferencesKey('ThemeId'))!=='oled' || JSON.parse(await readFilesystemRecordText(await SystemFS.readFile('/home/'+state.currentUserId+'/settings.json')))[getPreferencesKey('ThemeId')]!=='oled')throw new Error('A theme changed during cloud merge was overwritten');
+  });
   await write(a.p,'first confirmed version');await a.p.evaluate(()=>GDriveSync.sync());
   await a.p.evaluate(async()=>{const tx=SystemFS.db.transaction(['files'],'readwrite');tx.objectStore('files').delete(SystemFS.storagePath('/documents/handoff.txt'));await SystemFS.transactionDone(tx);await GDriveSync.sync();});
   assert.equal(await read(a.p),'first confirmed version','Missing local data without an explicit deletion is restored, never propagated');

@@ -1,6 +1,6 @@
 # Private session handoff and recovery
 
-Build 2026.10.11.15 adds one active Google workspace per account across Desktop and Mobile. This replaces concurrent Google workspace editing with a controlled handoff; local-only fixture profiles and the disposable public profile do not use this service.
+Build 2026.10.11.16 adds one active Google workspace per account across Desktop and Mobile. This replaces concurrent Google workspace editing with a controlled handoff; local-only fixture profiles and the disposable public profile do not use this service.
 
 ## Entry and handoff
 
@@ -25,7 +25,7 @@ The canonical hidden Drive checkpoint `/.portfolios-sync-state.json` records con
 - Equal content needs no file transfer.
 - One-sided edits transfer automatically.
 - Divergent documents preserve the local version in a recovery snapshot and `/Recovered Sessions/<snapshot>/...`; the current cloud version becomes the normal workspace file. No text or binary document merge is invented.
-- Preferences merge independently by key against their baseline. Independent app install choices survive. Same-key conflicts keep the current cloud value and retain the old settings file for review; explicit null resets remain values.
+- Preferences merge independently by key against their baseline. Independent app install choices survive. Same-key conflicts keep the current cloud value and retain the old settings file for review. New live edits arriving during reconciliation are retained locally for the next pass, with guards against stale snapshot import and queued-save overwrite; explicit null resets remain values.
 - SystemFS records deletion intent in the same IndexedDB transaction as deletion. Only an intent matching the locally confirmed file revision can delete an unchanged remote file. Missing local storage without that proof restores the cloud copy instead of deleting it.
 - Edit-versus-delete conflicts preserve the edited version. A cloud tombstone removes an unchanged stale copy; changed stale content is preserved separately. Deliberate recreation after a confirmed tombstone can upload normally.
 - Expected-record and expected-absence checks protect imports/deletes from local writes that occur during scanning or downloading.
