@@ -908,7 +908,10 @@ window.GDriveSync = {
         if (this.authInProgress) throw new Error("Google sign-in is still completing.");
         if (this.syncInProgress) throw new Error("A Drive backup is already running.");
         this.syncInProgress = true;
+        const syncOwner=window.state.currentUserId;
+        const coordinate=window.WorkspaceSessions ? operation=>window.WorkspaceSessions.withLock('drive',syncOwner,operation,{ifAvailable:true}) : operation=>operation();
         try {
+        return await coordinate(async () => {
         if (!window.SecurityKernel?.importFile || !window.SecurityKernel?.scanExisting) {
             throw new Error("Security Center is unavailable; Cloud Sync is blocked to protect your files.");
         }
@@ -1048,6 +1051,7 @@ window.GDriveSync = {
         if (window.EventBus) {
             window.EventBus.emit("fs:changed", { action: "sync", paths: finalPaths });
         }
+        });
         } finally { this.syncInProgress = false; }
     }
 };

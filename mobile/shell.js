@@ -70,7 +70,7 @@
 
     function savePreferences() {
         try {
-            localStorage.setItem(preferenceKey(currentMobileUserId), JSON.stringify(prefs));
+            window.Storage.local.set(preferenceKey(currentMobileUserId), JSON.stringify(prefs));
             window.savePreferencesToFilesystem?.();
         } catch (error) {
             console.warn("PortfoliOS Mobile: settings could not be saved.", error);
@@ -880,6 +880,13 @@
         }
         updateClock();
     }
+
+    window.EventBus?.on('preferences:external', ({userId}={}) => {
+        if(userId!==currentMobileUserId)return;
+        prefs=loadPreferences(userId);
+        applyPreferences();
+        renderMobileApps();
+    });
 
     async function handleUserChange(user = {}) {
         const nextUserId = user.id || window.state?.currentUserId || "bl4ut0";

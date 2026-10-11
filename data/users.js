@@ -359,6 +359,7 @@ window.clearPrivateProfileData = async () => {
         try {
             const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index));
             keys.forEach(key => {
+                if (key?.startsWith('portfolios:preference-revision:') && window.WorkspaceSessions?.ownsPreference(key.slice('portfolios:preference-revision:'.length),userId)) {storage.removeItem(key);return;}
                 if (!key || otherIds.some(id => key.startsWith("bl4ut0_" + id + "_") || key.startsWith("desktop_pos_" + id + "_"))) return;
                 if (key.startsWith("bl4ut0_" + userId + "_") && key !== "bl4ut0_private_profiles" || key === "bl4ut0_installed_apps_" + userId || key.startsWith("desktop_pos_" + userId + "_")) storage.removeItem(key);
             });
@@ -375,78 +376,71 @@ window.clearPrivateProfileData = async () => {
 
 const profilePreferenceWrites = new Map();
 window.savePreferencesToFilesystem = async ({ strict = false } = {}) => {
-    const user = window.getCurrentUser ? window.getCurrentUser() : null;
-    if (!user) { if (strict) throw new Error("The current profile is unavailable."); return; }
-    if (!window.isPrivateUser?.(user.id)) return;
-
+    const userId = window.getCurrentUser?.()?.id;
+    if (!window.isPrivateUser?.(userId)) return;
     try {
-        if (!window.SystemFS) { if (strict) throw new Error("Local storage is unavailable."); return; }
-        const userId = user.id;
-        const prefix = `bl4ut0_${userId}_`;
-        const installedAppsKey = window.getInstalledStoreAppsKey
-            ? window.getInstalledStoreAppsKey(userId)
-            : (userId === "bl4ut0" ? "bl4ut0_installed_apps" : `bl4ut0_installed_apps_${userId}`);
-        const settings = {};
-
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (key.startsWith(prefix) || key.startsWith("desktop_pos_" + userId + "_") || key === installedAppsKey || (userId === "private" && key === "bl4ut0_private_user_profile"))) {
-                settings[key] = localStorage.getItem(key);
-            }
-        }
-
-        const jsonStr = JSON.stringify(settings, null, 2);
-        const path = `/home/${userId}/settings.json`;
-        const name = "settings.json";
-        const parent = `/home/${userId}`;
-        
-        // Serialize snapshots so a slower earlier write cannot overwrite newer settings.
+        if (!window.SystemFS) throw new Error('Local storage is unavailable.');
         const previous = profilePreferenceWrites.get(userId) || Promise.resolve();
-        const operation = previous.catch(() => {}).then(async () => {
-            const existing = await window.SystemFS.readFile(path);
-            if (existing && await window.readFilesystemRecordText(existing) === jsonStr) return;
-            await window.SystemFS.writeFile(path, name, parent, jsonStr, jsonStr.length, "application/json", false, { silent: true });
-            window.EventBus?.emit("preferences:saved", { userId });
+        const operation = previous.catch(()=>{}).then(()=> {
+            const save = async () => {
+                if(userId !== window.state.currentUserId) throw new Error('The profile changed before preferences were saved.');
+                // Read at commit time, not before waiting behind another tab/write.
+                const path='/home/'+userId+'/settings.json';
+                const existing=await window.SystemFS.readFile(path);
+                const existingText=existing?await window.readFilesystemRecordText(existing):null;
+                if(userId !== window.state.currentUserId) throw new Error('The profile changed before preferences were saved.');
+                const settings = Object.create(null), prefix='bl4ut0_'+userId+'_';
+                const installedKey=window.getInstalledStoreAppsKey?.(userId) || 'bl4ut0_installed_apps_'+userId;
+                for(let i=0;i<localStorage.length;i++) {
+                    const key=localStorage.key(i);
+                    if(key && (window.WorkspaceSessions ? window.WorkspaceSessions.ownsPreference(key,userId) : (key.startsWith(prefix) || key.startsWith('desktop_pos_'+userId+'_') || key===installedKey) && key!=='bl4ut0_private_profiles')) settings[key]=localStorage.getItem(key);
+                }
+                const revisions=window.WorkspaceSessions?.revisions(userId) || {};
+                for(const key of Object.keys(revisions)) settings[key]=localStorage.getItem(key); // null records a deliberate reset.
+                settings.__portfoliosPreferenceRevisions=revisions;
+                const json=JSON.stringify(settings,null,2);
+                if(userId !== window.state.currentUserId) throw new Error('The profile changed before preferences were saved.');
+                if(existingText===json)return;
+                if(userId !== window.state.currentUserId) throw new Error('The profile changed before preferences were saved.');
+                await window.SystemFS.writeFile(path,'settings.json','/home/'+userId,json,new Blob([json]).size,'application/json',false,{silent:true});
+                window.EventBus?.emit('preferences:saved',{userId});
+            };
+            return window.WorkspaceSessions ? window.WorkspaceSessions.withLock('preferences',userId,save) : save();
         });
-        profilePreferenceWrites.set(userId, operation);
-        try { await operation; } finally { if (profilePreferenceWrites.get(userId) === operation) profilePreferenceWrites.delete(userId); }
-    } catch (e) {
-        console.error("Failed to save preferences to filesystem", e);
-        if (strict) throw e;
-    }
+        profilePreferenceWrites.set(userId,operation);
+        try {await operation;} finally {if(profilePreferenceWrites.get(userId)===operation)profilePreferenceWrites.delete(userId);}
+    } catch(error) {console.error('Failed to save preferences to filesystem',error);if(strict)throw error;}
 };
 
 window.loadPreferencesFromFilesystem = async () => {
-    const user = window.getCurrentUser ? window.getCurrentUser() : null;
-    if (!user || !window.isPrivateUser?.(user.id)) return;
-
-    try {
-        if (!window.SystemFS) return;
-        const record = await window.SystemFS.readFile(`/home/${user.id}/settings.json`);
-        if (record && record.data) {
-            const settingsText = await window.readFilesystemRecordText(record);
-            const settings = JSON.parse(settingsText);
-            let changed = false;
-            const prefix = "bl4ut0_" + user.id + "_";
-            const installedKey = window.getInstalledStoreAppsKey?.(user.id) || (user.id === "bl4ut0" ? "bl4ut0_installed_apps" : "bl4ut0_installed_apps_" + user.id);
-            Object.entries(settings).forEach(([key, val]) => {
-                if ((key.startsWith(prefix) || key.startsWith("desktop_pos_" + user.id + "_") || key === installedKey) && val !== null && val !== undefined) {
-                    if (localStorage.getItem(key) !== String(val)) {
-                        localStorage.setItem(key, String(val));
-                        changed = true;
-                    }
-                }
-            });
-
-            if (changed) {
-                window.syncPrivateAccountFromSavedProfile?.();
-                console.log(`PortfoliOS: Restored ${user.id} profile preferences from virtual filesystem.`);
-                if (window.applyCurrentUserProfile) {
-                    window.applyCurrentUserProfile();
-                }
+    const userId=window.getCurrentUser?.()?.id;
+    if(!window.isPrivateUser?.(userId) || !window.SystemFS)return;
+    const restore=async()=>{
+        const record=await window.SystemFS.readFile('/home/'+userId+'/settings.json');
+        if(!record?.data)return;
+        const settings=JSON.parse(await window.readFilesystemRecordText(record));
+        if(userId!==window.state.currentUserId)return;
+        const revisions=settings.__portfoliosPreferenceRevisions || {};
+        const prefix='bl4ut0_'+userId+'_', installedKey=window.getInstalledStoreAppsKey?.(userId) || 'bl4ut0_installed_apps_'+userId;
+        let changed=false;
+        for(const [key,value] of Object.entries(settings)) {
+            if(window.WorkspaceSessions ? !window.WorkspaceSessions.ownsPreference(key,userId) : !(key.startsWith(prefix) || key.startsWith('desktop_pos_'+userId+'_') || key===installedKey) || key==='bl4ut0_private_profiles')continue;
+            const localRevision=window.WorkspaceSessions?.revision(key) || 0;
+            const remoteRevision=Number.isFinite(revisions[key]) && revisions[key]>0?revisions[key]:0;
+            if(localRevision>0 && localRevision>=remoteRevision)continue;
+            if(value!==null && typeof value!=='string')continue;
+            if(localStorage.getItem(key)!==value) {
+                if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);
+                changed=true;
             }
+            window.WorkspaceSessions?.adoptRevision(key,remoteRevision);
         }
-    } catch (e) {
-        console.error("Failed to load preferences from filesystem", e);
-    }
+        if(changed) {
+            window.syncPrivateAccountFromSavedProfile?.();
+            window.applyCurrentUserProfile?.();
+            window.EventBus?.emit('preferences:external',{userId});
+        }
+    };
+    try {await (window.WorkspaceSessions ? window.WorkspaceSessions.withLock('preferences',userId,restore) : restore());}
+    catch(error){console.error('Failed to load preferences from filesystem',error);}
 };
