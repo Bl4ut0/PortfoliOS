@@ -528,6 +528,46 @@ window.createDesktopFolder = (requestedName) => {
     document.body.append(dialog);dialog.showModal();const input=dialog.querySelector('input');input.focus();input.select();
 };
 
+// Explicit user actions target the root Desktop, even if another copy is in a folder.
+window.createDesktopAppShortcut = async (appId, selectId = '') => {
+    const owner = state.currentUserId;
+    if (!window.isAppInstalled?.(appId) || (selectId && !window.systemById?.(selectId))) throw new Error('This application is not available.');
+    const launcher = window.getDesktopLauncher(selectId || appId);
+    if (!launcher || launcher.launchApp !== appId) throw new Error('Invalid application shortcut.');
+    await window.ensureDesktopShortcuts([launcher], owner, true);
+    SystemFS.assertProfile(owner);
+    await window.renderDesktopIcons();
+    window.showDesktopToast?.('Shortcut added to Desktop');
+};
+
+window.removeDesktopShortcut = (rawPath) => {
+    const owner = state.currentUserId, path = SystemFS.normalizePath(rawPath);
+    const operation = desktopLayoutWriteQueue.catch(() => {}).then(async () => {
+        SystemFS.assertProfile(owner);
+        if (SystemFS.getParentPath(path) !== '/Desktop') throw new Error('Choose a Desktop shortcut.');
+        const record = await SystemFS.readFile(path), link = await window.resolveDesktopShortcut(record);
+        SystemFS.assertProfile(owner);
+        if (!link) throw new Error('This item is not an application shortcut.');
+        const layout = await window.readDesktopLayout(owner);
+        const id = record.name.slice(0, -'.portfolios-link.json'.length);
+        layout.shortcutsSeeded = [...new Set([...(layout.shortcutsSeeded || []), id])];
+        delete layout.positions[id]; delete layout.positions[path];
+        layout.customized = true;
+        const data = JSON.stringify(layout);
+        await SystemFS.writeFile(desktopLayoutPath, 'desktop-layout.json', '/Desktop', data, new Blob([data]).size, 'application/json', false, {silent:true, metadata:{kind:'desktop-layout'}});
+        SystemFS.assertProfile(owner);
+        await SystemFS.deleteFile(path);
+        SystemFS.assertProfile(owner);
+    });
+    desktopLayoutWriteOwner = owner;
+    desktopLayoutWriteQueue = operation;
+    return operation.then(async () => {
+        SystemFS.assertProfile(owner);
+        await window.renderDesktopIcons();
+        window.showDesktopToast?.('Shortcut removed; app remains installed');
+    });
+};
+
 // Explicit installation restores a missing shortcut, while retaining a shortcut
 // the user has already moved into a Desktop folder. Ordinary refresh never does.
 window.ensureInstalledDesktopShortcut = async (id) => {

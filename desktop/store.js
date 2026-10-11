@@ -121,7 +121,7 @@ window.renderStore = () => {
         }
 
         return `
-            <div class="store-app-card">
+            <div class="store-app-card" data-store-context="${appId}">
                 <div class="store-app-card-header">
                     <div class="store-app-card-icon">
                         ${window.getAppIconHtml(app.icon, "", app.id)}

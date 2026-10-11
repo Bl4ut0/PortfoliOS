@@ -3,9 +3,9 @@
  * Custom right-click context menu offering actions based on the target (desktop icon, window bar, link, input).
  */
 
-window.closeContextMenu = () => {
+window.closeContextMenu = (restoreFocus = false) => {
     const menu = window.byId ? window.byId("desktop-context-menu") : document.getElementById("desktop-context-menu");
-    if (menu) menu.hidden = true;
+    if (menu) { menu.hidden = true; if (restoreFocus && menu._returnFocus?.isConnected) menu._returnFocus.focus({preventScroll:true}); menu._contextItems = null; }
 };
 
 window.closeVolumePanel = () => {
@@ -46,6 +46,21 @@ window.getContextMenuItems = (event) => {
     const link = event.target.closest("a[href]");
     const input = event.target.closest("input, textarea");
     const selection = window.getSelection()?.toString().trim();
+    // Preserve native editing/selection controls, including password fields.
+    if (event.target.closest('input, textarea, [contenteditable="true"]')) return null;
+    const storeCard = event.target.closest('[data-store-context]');
+    const launcher = event.target.closest('#start-menu [data-open-app]');
+    if (storeCard || launcher) {
+        const id = storeCard?.dataset.storeContext || launcher.dataset.openApp;
+        const selectId = launcher?.dataset.select || '';
+        const installed = Boolean(window.isAppInstalled?.(id));
+        const storeApp = (window.storeApps || []).find(app => app.id === id);
+        if (!installed) return storeApp?.installable !== false && storeApp ? [{label:'Install',icon:'fa-solid fa-download',disabled:state.installingApps?.[id] !== undefined,action:()=>window.installApp(id)}] : [];
+        return [
+            {label:'Open',icon:'fa-solid fa-up-right-from-square',action:()=>{if(selectId)window.renderDossier?.(selectId);return window.openDesktopWindow(id);}},
+            {label:'Send to Desktop (create shortcut)',icon:'fa-solid fa-desktop',action:()=>window.createDesktopAppShortcut(id,selectId)}
+        ];
+    }
 
     if (desktopWindow && appContextTarget) {
         const app = window.appRegistry?.[desktopWindow.dataset.window];
@@ -84,6 +99,7 @@ window.getContextMenuItems = (event) => {
                 if (selectId && window.renderDossier) window.renderDossier(selectId);
                 if (window.openDesktopWindow) window.openDesktopWindow(appName);
             } },
+            ...(desktopIcon.dataset.desktopPath ? [{label:'Remove shortcut',icon:'fa-solid fa-trash-can',action:()=>window.removeDesktopShortcut(desktopIcon.dataset.desktopPath)}] : []),
             { label: `Copy "${label}"`, icon: "fa-regular fa-copy", action: () => window.copyText(label) },
             { type: "separator" },
             { label: "Settings", icon: "fa-solid fa-sliders", action: window.openDesktopSettings }
@@ -94,6 +110,7 @@ window.getContextMenuItems = (event) => {
         const name = taskbarApp.dataset.taskbarApp;
         return [
             { label: state.minimizedApps.has(name) ? "Restore" : "Focus", icon: "fa-solid fa-window-restore", action: () => window.openDesktopWindow(name) },
+            { label: "Send to Desktop (create shortcut)", icon: "fa-solid fa-desktop", action: () => window.createDesktopAppShortcut(name) },
             { label: "Minimize", icon: "fa-solid fa-minus", action: () => window.minimizeDesktopWindow(name) },
             { label: "Close", icon: "fa-solid fa-xmark", action: () => window.closeDesktopWindow(name) }
         ];
@@ -175,10 +192,12 @@ window.pasteIntoInput = async (target) => {
 window.showContextMenu = (event) => {
     const desktop = window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience");
     const menu = window.byId ? window.byId("desktop-context-menu") : document.getElementById("desktop-context-menu");
-    if (!desktop || !menu || !event.target.closest("#desktop-experience")) return;
-    event.preventDefault();
-
+    if (!desktop || !menu || desktop.classList.contains('is-hidden') || !event.target.closest("#desktop-experience")) return;
     const items = window.getContextMenuItems(event);
+    if (!items?.length) { window.closeContextMenu(); return; }
+    event.preventDefault();
+    menu._returnFocus = event.target.closest('button, a, [tabindex]') || document.activeElement;
+    menu._contextOwner = state.currentUserId;
     const escapeHtml = window.escapeHtml || ((value) => String(value));
     const renderItems = (entries, parentPath = "") => entries.map((item, index) => {
         if (item.type === "separator") return '<div class="context-separator" role="separator"></div>';
@@ -209,6 +228,7 @@ window.showContextMenu = (event) => {
     menu.style.left = `${Math.max(8, x)}px`;
     menu.style.top = `${Math.max(8, y)}px`;
     menu._contextItems = items;
+    menu.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
 };
 
 // Event Delegation for context menu item click
@@ -224,13 +244,41 @@ document.addEventListener("click", (event) => {
         contextItem = entries?.[index] || null;
         entries = contextItem?.children;
     });
-    if (contextItem && typeof contextItem.action === "function") {
-        contextItem.action();
+    const owner = menu._contextOwner;
+    window.closeContextMenu(true);
+    if (owner === state.currentUserId && !contextItem?.disabled && typeof contextItem?.action === "function") {
+        Promise.resolve().then(() => { if (owner === state.currentUserId) return contextItem.action(); })
+            .catch(error => {if(owner === state.currentUserId) window.showDesktopToast?.(error.message || 'Action failed');});
     }
-    menu.hidden = true;
 });
 
 // Trigger context menu on right click
 document.addEventListener("contextmenu", (event) => {
     window.showContextMenu(event);
 });
+
+// One delegated menu for the Desktop shell; app-specific providers take precedence.
+document.addEventListener('keydown', event => {
+    const menu = document.getElementById('desktop-context-menu');
+    if (!menu || menu.hidden) {
+        if ((event.key === 'F10' && event.shiftKey) || event.key === 'ContextMenu') {
+            const target = document.activeElement;
+            if (!target?.closest('#desktop-experience')) return;
+            const rect = target.getBoundingClientRect();
+            window.showContextMenu({target,clientX:rect.left+16,clientY:rect.top+16,preventDefault:()=>event.preventDefault()});
+        }
+        return;
+    }
+    if (event.key === 'Escape' || event.key === 'Tab') {window.closeContextMenu(true);if(event.key==='Escape')event.preventDefault();return;}
+    const active = document.activeElement, group = active?.closest('[role="menu"]') || menu;
+    const buttons = [...group.querySelectorAll(':scope > button:not(:disabled), :scope > .context-menu-entry > button:not(:disabled)')];
+    let next;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') next = buttons[(buttons.indexOf(active) + (event.key==='ArrowDown'?1:-1) + buttons.length) % buttons.length];
+    if (event.key === 'Home') next = buttons[0];
+    if (event.key === 'End') next = buttons.at(-1);
+    if (event.key === 'ArrowRight') next = active?.parentElement.querySelector('.context-submenu button:not(:disabled)');
+    if (event.key === 'ArrowLeft' && group !== menu) next = group.parentElement.querySelector(':scope > button');
+    if (next) {event.preventDefault();next.focus({preventScroll:true});}
+});
+window.addEventListener('resize', () => window.closeContextMenu());
+window.EventBus?.on('user:changed', () => window.closeContextMenu());

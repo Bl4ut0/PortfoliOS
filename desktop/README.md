@@ -53,3 +53,13 @@ Installed Desktop Store apps are included in default shortcut seeding without a 
 The CLI keeps its command row inside the window and focuses it when empty terminal space is clicked, including after reopening. Portfolio Studio is hidden and cannot be launched until the CLI `admin` command succeeds. The memory-only admin session expires and is cleared on a profile change; Google private-profile sign-in does not grant administrator access. Server-side authorization remains required for administrative writes.
 
 Regression: `node scripts/check-cli-admin-browser.js` uses disposable profiles and a simulated admin response; it does not validate production credentials.
+
+### Shared contextual actions and removable shortcuts
+
+The Desktop shell uses one delegated right-click menu. Desktop background actions, shortcut removal, Start menu and Store app launchers, taskbar controls, window controls, links and File Explorer providers resolve by target. Installed app entries offer **Send to Desktop (create shortcut)**. This explicitly creates a root `/Desktop` shortcut, retains any copy in a folder and avoids duplicate root files. Uninstalled Store cards offer Install instead. Desktop app shortcuts offer **Remove shortcut**, which removes the SystemFS file and records customization without uninstalling the application or recreating the shortcut on refresh/reload. A subsequent explicit install may restore a missing shortcut.
+
+File Explorer preserves its Open/Open with actions and adds Send to Desktop for valid app shortcut files. Empty folder space offers folder/file creation, upload and refresh in that folder. Native text editing menus remain available on inputs and editable fields. Embedded engines/remote iframe content retain their own menus; host events do not cross iframe boundaries.
+
+Escape, arrows, Home/End, submenu arrows and Shift+F10/Context Menu key support keyboard use. Profile changes and resize dismiss the menu; action errors surface as a toast. The shared Desktop menu is not loaded into the native Mobile shell.
+
+Regression: `node scripts/check-context-menu-browser.js` covers modular, catalog-only and downloaded installation paths (download bytes use disposable fixtures), failed downloads, removal/reload, contextual shortcut creation, duplicate avoidance, keyboard dismissal and profile isolation. `node scripts/check-store-desktop-shortcuts-browser.js` verifies all Desktop-capable Store catalog entries acquire shortcut files. These checks do not certify game engines or real production downloads.

@@ -3289,6 +3289,7 @@
 
 .desktop-context-menu {
     min-width: 13rem;
+    max-width: calc(100% - 1rem);
     padding: 0.35rem;
     border-radius: 9px;
 }
@@ -3348,6 +3349,7 @@
     display: block;
 }
 
+.desktop-context-menu button:focus-visible,
 .desktop-context-menu button:hover {
     color: var(--text);
     background: color-mix(in srgb, var(--theme-primary) 10%, transparent);

@@ -309,8 +309,10 @@
     }
 
     async function readFileForAction(path, action) {
+        const owner = state.currentUserId;
         try {
             const item = await window.SystemFS.readFile(path);
+            window.SystemFS.assertProfile(owner);
             if (!item) {
                 window.showDesktopToast?.("That file is no longer available.");
                 return;
@@ -409,7 +411,14 @@
     }
 
     function getFileContextMenuItems(target, windowEl) {
+        if (target.dataset.appContext === 'folder-background') return [
+            {label:'New folder',icon:'fa-solid fa-folder-plus',action:()=>windowEl.querySelector('.btn-new-folder')?.click()},
+            {label:'New text file',icon:'fa-solid fa-file-circle-plus',action:()=>windowEl.querySelector('.btn-new-file')?.click()},
+            {label:'Upload from computer',icon:'fa-solid fa-file-arrow-up',action:()=>windowEl.querySelector('.btn-upload')?.click()},
+            {label:'Refresh folder',icon:'fa-solid fa-rotate-right',action:()=>renderFilesGrid(windowEl)}
+        ];
         const path = target.dataset.path;
+        const owner = state.currentUserId;
         const name = target.dataset.fileName || window.SystemFS.getName(path);
         const type = target.dataset.fileType || "";
         const isDirectory = target.dataset.isDirectory === "true";
@@ -517,6 +526,15 @@
                 action: () => readFileForAction(path, (item) => openFile(item, windowEl))
             }
         ];
+        if (name.endsWith('.portfolios-link.json')) items.push({
+            label:'Send to Desktop (create shortcut)',icon:'fa-solid fa-desktop',
+            action:()=>readFileForAction(path,async item=>{
+                const link=await window.resolveDesktopShortcut(item);
+                window.SystemFS.assertProfile(owner);
+                if (!link) throw new Error('Invalid application shortcut.');
+                return window.createDesktopAppShortcut(link.appId,link.selectId);
+            })
+        });
         if (openWith.length) {
             items.push({ label: "Open with", icon: "fa-solid fa-table-list", children: openWith });
         }
@@ -609,7 +627,7 @@
                             </button>
                         </div>
                     </aside>
-                    <div class="files-grid-container">
+                    <div class="files-grid-container" data-app-context="folder-background">
                         <div class="files-grid"></div>
                     </div>
                 </div>

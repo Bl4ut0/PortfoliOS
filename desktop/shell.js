@@ -64,10 +64,6 @@ window.mountDesktop = async () => {
         }
     }
 
-    const desktopExp = window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience");
-    if (desktopExp && window.showContextMenu) {
-        desktopExp.addEventListener("contextmenu", window.showContextMenu);
-    }
 
     // Focus triggers & popup dismissals
     document.addEventListener("pointerdown", (event) => {
