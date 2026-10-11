@@ -148,7 +148,10 @@
         updateSidebarActiveState(windowEl);
 
         try {
+            const owner = state.currentUserId;
             let items = await window.SystemFS.readDir(currentPath);
+            await Promise.all(items.map(async item => {item.desktopShortcut = await window.resolveDesktopShortcut?.(item);}));
+            if (owner !== state.currentUserId) return;
             if (generation !== renderGeneration || !windowEl.isConnected) return;
             
             // Build the new grid items off-screen using a fragment
@@ -207,11 +210,14 @@
                 el.dataset.fileName = item.name;
                 el.dataset.fileType = item.type || "";
                 el.dataset.isDirectory = String(!!item.isDirectory);
-                const safeName = escapeHtml(item.name);
+                const launcher = item.desktopShortcut && window.getDesktopLauncher(item.desktopShortcut.selectId || item.desktopShortcut.appId);
+                const safeName = escapeHtml(launcher?.title || item.name);
 
                 let iconHtml = '<i class="fa-regular fa-file"></i>';
                 if (item.isDirectory) {
                     iconHtml = '<i class="fa-solid fa-folder"></i>';
+                } else if (launcher) {
+                    iconHtml = window.getAppIconHtml(launcher.icon);
                 } else if (item.type.startsWith("image/")) {
                     iconHtml = '<i class="fa-regular fa-file-image"></i>';
                 } else if (item.type.startsWith("audio/")) {
@@ -266,7 +272,15 @@
         await window.SystemFS.deleteFileRecursive(path);
     }
 
-    function openFile(item, windowEl) {
+    async function openFile(item, windowEl) {
+        const owner = state.currentUserId;
+        const shortcut = await window.resolveDesktopShortcut?.(item);
+        SystemFS.assertProfile(owner);
+        if (shortcut && window.appById?.(shortcut.appId)) {
+            if (!window.isAppInstalled?.(shortcut.appId)) { window.showDesktopToast?.('Install this app from the Store first.'); return; }
+            if (shortcut.selectId && window.systemById?.(shortcut.selectId)) window.renderDossier?.(shortcut.selectId);
+            return window.openDesktopWindow(shortcut.appId);
+        }
         const lowerName = item.name.toLowerCase();
         if (isPdfFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("pdfcraft"))) {
             window.openDesktopWindow("pdfcraft", { path: item.path });
@@ -580,6 +594,7 @@
                 <div class="files-main">
                     <aside class="files-sidebar">
                         <button class="sidebar-shortcut" data-path="/"><i class="fa-solid fa-computer"></i> Root (/)</button>
+                        <button class="sidebar-shortcut" data-path="/Desktop"><i class="fa-solid fa-desktop"></i> Desktop</button>
                         <button class="sidebar-shortcut" data-path="/documents"><i class="fa-solid fa-file-lines"></i> Documents</button>
                         <button class="sidebar-shortcut" data-path="/music"><i class="fa-solid fa-music"></i> Music</button>
                         <button class="sidebar-shortcut" data-path="/ROMs"><i class="fa-solid fa-gamepad"></i> ROMs</button>
@@ -600,6 +615,18 @@
                 </div>
             </div>
         `,
+        openPath: async (path, windowEl) => {
+            const owner = state.currentUserId;
+            const item = await SystemFS.readFile(path);
+            SystemFS.assertProfile(owner);
+            if (!item) throw new Error('That file or folder is no longer available.');
+            if (!item.isDirectory) return openFile(item, windowEl);
+            currentPath = item.path;
+            searchQuery = '';
+            const search = windowEl.querySelector('.files-search-input');
+            if (search) search.value = '';
+            return renderFilesGrid(windowEl);
+        },
         getContextMenuItems: (target, event, windowEl) => getFileContextMenuItems(target, windowEl),
         onOpen: (windowEl) => {
             if (!currentPath) currentPath = "/";

@@ -217,6 +217,7 @@ window.prepareProfileSwitch = async ({ allowProfileSwitch = false, autoSave = fa
     if (window.GDriveSync?.profileSwitchInProgress && !allowProfileSwitch) throw new Error("A profile switch is already in progress.");
     if (Object.keys(window.state?.installingApps || {}).length) throw new Error("Wait for app installation to finish before switching accounts.");
     if (window.GDriveSync?.syncInProgress) throw new Error("Wait for the current Drive backup to finish before switching accounts.");
+    await window.flushDesktopLayout?.();
     const apps = Array.from(window.state?.openApps || []);
     for (const appId of apps) {
         const allowed = await window.runAppLifecycleHook?.(appId, "beforeClose", window.getDesktopWindowElement?.(appId), { rethrow: true, reason: "profile-switch", autoSave });

@@ -954,14 +954,25 @@ window.GDriveSync = {
             return parts.join("/") || "/";
         };
 
+        // Freshly generated Desktop defaults must not replace a saved cloud desktop.
+        const desktopLayoutPath = '/Desktop/desktop-layout.json';
+        const restoreDesktop = isFirstSync && remoteMap.has(desktopLayoutPath) && localMap.get(desktopLayoutPath)?.metadata?.kind === 'desktop-layout-default';
         const failedPaths = [];
         for (const path of sortedPaths) {
-            const local = isFirstSync && path === `/home/${scope.userId}/settings.json` && remoteMap.has(path) ? null : localMap.get(path);
+            let local = isFirstSync && path === `/home/${scope.userId}/settings.json` && remoteMap.has(path) ? null : localMap.get(path);
             const remote = remoteMap.get(path);
 
             if (onProgress) onProgress(processed, total, path);
 
             try {
+                if (restoreDesktop && (path === desktopLayoutPath || (path.startsWith('/Desktop/') && local?.metadata?.kind === 'desktop-default-shortcut'))) {
+                    if (!remote && local?.metadata?.kind === 'desktop-default-shortcut') {
+                        await window.SystemFS.deleteFile(path);
+                        processed++;
+                        continue;
+                    }
+                    local = null;
+                }
                 if (local && !remote) {
                     if (isFirstSync || !manifest.has(path)) {
                         if (local.isDirectory) {

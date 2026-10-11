@@ -3548,7 +3548,7 @@
     }
 
     body:not(.desktop-scaled) .desktop-session-card,
-    body:not(.desktop-scaled) .desktop-icons,
+    body:not(.desktop-scaled):not([data-view="desktop"]) .desktop-icons,
     body:not(.desktop-scaled) .desktop-window,
     body:not(.desktop-scaled) .desktop-window.dossier-window,
     body:not(.desktop-scaled) .desktop-window.network-window,
@@ -3572,7 +3572,7 @@
         margin-bottom: 0.7rem;
     }
 
-    body:not(.desktop-scaled) .desktop-icons {
+    body:not(.desktop-scaled):not([data-view="desktop"]) .desktop-icons {
         position: relative;
         order: 2;
         display: grid;
@@ -3584,7 +3584,7 @@
         margin-bottom: 0.7rem;
     }
 
-    body:not(.desktop-scaled) .desktop-icon {
+    body:not(.desktop-scaled):not([data-view="desktop"]) .desktop-icon {
         position: static !important;
         left: auto !important;
         top: auto !important;
@@ -3592,7 +3592,7 @@
         min-height: 4.9rem;
     }
 
-    body:not(.desktop-scaled) .desktop-icon span {
+    body:not(.desktop-scaled):not([data-view="desktop"]) .desktop-icon span {
         max-width: 100%;
         font-size: 0.7rem;
     }
@@ -5449,3 +5449,21 @@ dialog.systemfs-dialog::backdrop {
         margin: 0;
     }
 }
+
+.desktop-folder-form {
+    width: min(26rem, calc(100vw - 2rem));
+    padding: 1.4rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
+    color: var(--text);
+    box-shadow: var(--shadow);
+}
+.desktop-folder-form label { display: grid; gap: .5rem; }
+.desktop-folder-form input { min-width: 0; width: 100%; padding: .65rem; background: var(--surface-inset); color: var(--text); border: 1px solid var(--line-strong); border-radius: .5rem; }
+.desktop-folder-form > div { display: flex; gap: .65rem; justify-content: flex-end; }
+.desktop-folder-form button { padding: .6rem .9rem; color: var(--text); background: var(--control-hover); border: 1px solid var(--line-strong); border-radius: .5rem; }
+.desktop-folder-form [data-folder-error] { min-height: 1.3em; color: var(--text-soft); }
+
+dialog[data-desktop-folder-dialog] { width: min(28rem, 90vw); padding: 0; }
+.desktop-folder-form { width: 100%; border: 0; box-shadow: none; }

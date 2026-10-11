@@ -335,6 +335,37 @@ vm.runInNewContext(
 
     const manifestKey = sync.getScopedStorageKey("sync_manifest");
     const successKey = sync.getScopedStorageKey("last_sync_time");
+    // A new device restores saved Desktop files before uploading generated defaults.
+    const savedGetAll = windowObject.SystemFS.getAllFiles, savedImporter = windowObject.SecurityKernel.importFile;
+    const savedRemote = sync.fetchRemoteFiles, savedDownload = sync.downloadFile, savedUpload = sync.uploadFile, savedUpdate = sync.updateFile;
+    const desktopPath = '/Desktop/desktop-layout.json', browserPath = '/Desktop/browser.portfolios-link.json', cliPath = '/Desktop/cli.portfolios-link.json';
+    const desktopFiles = new Map([
+        [desktopPath,{path:desktopPath,name:'desktop-layout.json',type:'application/json',data:'{}',lastModified:Date.now(),metadata:{kind:'desktop-layout-default'}}],
+        [browserPath,{path:browserPath,name:'browser.portfolios-link.json',type:'application/json',data:'{}',lastModified:Date.now(),metadata:{kind:'desktop-default-shortcut'}}],
+        [cliPath,{path:cliPath,name:'cli.portfolios-link.json',type:'application/json',data:'{}',lastModified:Date.now(),metadata:{kind:'desktop-default-shortcut'}}],
+        ['/Desktop/notes.txt',{path:'/Desktop/notes.txt',name:'notes.txt',type:'text/plain',data:'keep my notes',lastModified:Date.now(),metadata:{}}]
+    ]);
+    const desktopImports=[],desktopUploads=[];
+    windowObject.SystemFS.getAllFiles = async()=>[...desktopFiles.values()];
+    const savedDelete = windowObject.SystemFS.deleteFile;
+    windowObject.SystemFS.deleteFile = async path=>desktopFiles.delete(path);
+    windowObject.SecurityKernel.importFile = async input=>{desktopImports.push(input.path);desktopFiles.set(input.path,input);return {status:'accepted'};};
+    sync.fetchRemoteFiles = async()=>[desktopPath,browserPath].map((path,i)=>({id:'desktop-remote-'+i,name:path.split('/').pop(),mimeType:'application/json',modifiedTime:new Date(Date.now()-86400000).toISOString(),appProperties:{path}}));
+    sync.downloadFile = async()=>new Blob(['{}'],{type:'application/json'});
+    sync.uploadFile = async path=>desktopUploads.push(path);
+    sync.updateFile = async()=>{throw Error('Generated desktop must not overwrite saved cloud desktop');};
+    storage.delete(manifestKey);storage.delete(successKey);await sync.sync();
+    assert.deepStrictEqual(desktopImports.sort(),[browserPath,desktopPath].sort(),'saved cloud Desktop files restore despite fresh local timestamps');
+    assert.deepStrictEqual(desktopUploads,['/Desktop/notes.txt'],'user files survive while generated shortcuts are not uploaded');
+    assert.strictEqual(desktopFiles.has(cliPath),false,'a default moved/deleted in the saved desktop is not resurrected');
+    desktopFiles.clear();desktopFiles.set(desktopPath,{path:desktopPath,name:'desktop-layout.json',type:'application/json',data:'{}',lastModified:Date.now(),metadata:{kind:'desktop-layout'}});
+    sync.fetchRemoteFiles = async()=>[{id:'desktop-user-edit',name:'desktop-layout.json',mimeType:'application/json',modifiedTime:new Date(Date.now()-86400000).toISOString(),appProperties:{path:desktopPath}}];
+    let userLayoutUpdates=0;sync.updateFile=async()=>{userLayoutUpdates++;};
+    storage.delete(manifestKey);storage.delete(successKey);await sync.sync();
+    assert.strictEqual(userLayoutUpdates,1,'a deliberate local layout edit is not treated as generated defaults');
+    windowObject.SystemFS.getAllFiles=savedGetAll;windowObject.SystemFS.deleteFile=savedDelete;windowObject.SecurityKernel.importFile=savedImporter;
+    sync.fetchRemoteFiles=savedRemote;sync.downloadFile=savedDownload;sync.uploadFile=savedUpload;sync.updateFile=savedUpdate;
+
     storage.delete(manifestKey);
     storage.delete(successKey);
     sync.downloadFile = async () => { throw new Error("Simulated interrupted download"); };

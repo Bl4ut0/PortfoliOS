@@ -825,10 +825,11 @@ function initSystemResetSettings() {
     const fullResetBtn = document.getElementById("settings-full-reset-btn");
 
     if (resetVarsBtn) {
-        resetVarsBtn.addEventListener("click", () => {
+        resetVarsBtn.addEventListener("click", async () => {
             if (confirm("Are you sure you want to reset saved desktop variables?\nThis will reset icon positions and uninstall Store-downloaded apps. The page will reload.")) {
                 if (window.clearDesktopIconPositions) {
-                    window.clearDesktopIconPositions();
+                    try { await window.clearDesktopIconPositions(); }
+                    catch(error) { window.showDesktopToast?.(error.message); return; }
                 }
 
                 if (window.resetInstalledStoreApps) {

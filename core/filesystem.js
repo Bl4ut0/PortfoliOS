@@ -291,6 +291,10 @@ window.SystemFS = {
             await this.writeFile("/documents", "documents", "/", null, 0, "directory", true, { silent: true });
         }
 
+        if (!await this.readFile('/Desktop')) {
+            await this.writeFile('/Desktop', 'Desktop', '/', null, 0, 'directory', true, {silent:true});
+        }
+
         if (!await this.readFile("/music")) {
             await this.writeFile("/music", "music", "/", null, 0, "directory", true, { silent: true });
         }

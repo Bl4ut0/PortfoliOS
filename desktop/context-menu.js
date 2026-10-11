@@ -67,6 +67,14 @@ window.getContextMenuItems = (event) => {
         ];
     }
 
+    if (desktopIcon?.dataset.desktopPath && !desktopIcon.dataset.openApp) {
+        const path = desktopIcon.dataset.desktopPath;
+        return [
+            {label:'Open',icon:'fa-solid fa-folder-open',action:()=>window.openDesktopFile(path)},
+            {label:'Manage in File Explorer',icon:'fa-solid fa-folder',action:()=>window.openDesktopFile('/Desktop')}
+        ];
+    }
+    if (desktopIcon?.hasAttribute('data-desktop-create-folder')) return [{label:'New folder',icon:'fa-solid fa-folder-plus',action:()=>window.createDesktopFolder()}];
     if (desktopIcon) {
         const appName = desktopIcon.dataset.openApp;
         const selectId = desktopIcon.dataset.select;
@@ -112,6 +120,9 @@ window.getContextMenuItems = (event) => {
     }
 
     return [
+        {label:'New folder',icon:'fa-solid fa-folder-plus',action:()=>window.createDesktopFolder()},
+        {label:'Open Desktop folder',icon:'fa-solid fa-folder-open',action:()=>window.openDesktopFile('/Desktop')},
+        {type:'separator'},
         { label: "Task Manager", icon: "fa-solid fa-microchip", action: () => {
             if (window.openDesktopWindow) window.openDesktopWindow("taskmgr");
         } },
@@ -122,8 +133,8 @@ window.getContextMenuItems = (event) => {
             if (window.renderTaskbar) window.renderTaskbar(); 
             if (window.showDesktopToast) window.showDesktopToast("Desktop refreshed"); 
         } },
-        { label: "Reset icon positions", icon: "fa-solid fa-grip", action: () => {
-            if (window.clearDesktopIconPositions) window.clearDesktopIconPositions();
+        { label: "Reset icon positions", icon: "fa-solid fa-grip", action: async () => {
+            if (window.clearDesktopIconPositions) {try {await window.clearDesktopIconPositions();} catch(error) {window.showDesktopToast?.(error.message);return;}}
             if (window.renderDesktopIcons) window.renderDesktopIcons();
             if (window.showDesktopToast) window.showDesktopToast("Icon positions reset");
         } },
