@@ -1,3 +1,8 @@
+# Preserve bearer headers for the authenticated PHP session coordinator.
+<IfModule mod_setenvif.c>
+    SetEnvIfNoCase Authorization "(.+)" HTTP_AUTHORIZATION=$1
+</IfModule>
+
 DirectoryIndex index.php index.html
 
 <IfModule mod_headers.c>
