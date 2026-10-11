@@ -1,10 +1,10 @@
 # Mobile application parity
 
-Updated 2026-10-09. Mobile has its own app registry, touch UI, retained tasks, and navigation. It shares account identity, virtual files, app selections, media, and backup services with Desktop. Store is present on the default Home and in All apps, including private profiles.
+Updated 2026-10-10. Mobile has its own app registry, touch UI, retained tasks, and navigation. It shares account identity, virtual files, app selections, media, and backup services with Desktop. Store is present on the default Home and in All apps, including private profiles.
 
 | Desktop app | Mobile experience | Current limits |
 | --- | --- | --- |
-| Store | Native Store | Built-in app launch and optional ROM Player install/removal; desktop games show availability. |
+| Store | Native Store | Built-in app launch and optional ROM Player/Codex Preview install/removal; desktop games show availability. |
 | Settings | Native Settings | Account chooser, public switch, Drive save-and-switch, phone appearance/navigation/storage. Some advanced Desktop options remain Desktop-only. |
 | Files | Native Files | Shared account-scoped SystemFS. |
 | LibreOffice WASM | Documents | Text/Markdown editing and PDF viewing; not the full LibreOffice UI. |
@@ -18,6 +18,7 @@ Updated 2026-10-09. Mobile has its own app registry, touch UI, retained tasks, a
 | Webamp | Music alternative | Classic Winamp skin/equalizer UI remains Desktop-only. |
 | Network Map | Home Lab / project apps | Native project information; interactive desktop topology remains Desktop-only. |
 | Linux lab view | Home Lab | Native project information; desktop lab surface remains Desktop-only. |
+| Codex CLI Preview | Native optional Preview | Real private local save/read check and official setup guidance. Browser coding, ChatGPT sign-in and guest engine access remain unavailable. |
 | Portfolio CLI | Lobe / Files / Task Manager alternatives | Conversational help, file workflows, and task controls; no full mobile shell yet. |
 | ROM Player | Native optional ROM Player | NES, SNES, GB/GBC, GBA, Genesis, Master System, Game Gear; ROM imports excluded from Drive backup. Touch controls use the existing EmulatorJS runtime. |
 | Doom, Duke Nukem 3D, Diablo, Quake, UT99, OpenRCT2 | Desktop availability shown in Store | Need touch/controller UI, sizing, lifecycle, and real-device resource checks before being advertised as mobile-playable. |

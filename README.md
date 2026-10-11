@@ -180,7 +180,7 @@ Open **Settings → Accounts** on Desktop, or **Settings → Account & Drive bac
 
 ### Mobile App Store and app parity
 
-**Store** is available on the default Mobile Home and in All apps. Search or filter the catalog, open built-in apps, and add/remove ROM Player. The mobile catalog now has 23 native apps, including Lobe, Task Manager, Security Center, Identity, and Dossier. Mobile appearance and Home layout changes are included in automatic private-profile backup. Installation selections are shared between Desktop and Mobile for compatible apps.
+**Store** is available on the default Mobile Home and in All apps. Search or filter the catalog, open built-in apps, and add/remove ROM Player or Codex CLI Preview. The mobile catalog now has 24 native apps, including Lobe, Task Manager, Security Center, Identity, and Dossier. Mobile appearance and Home layout changes are included in automatic private-profile backup. Installation selections are shared between Desktop and Mobile for compatible apps.
 
 ROM Player supports NES, SNES, Game Boy/Color, GBA, Genesis, Master System, and Game Gear with EmulatorJS touch controls. Its launcher loads when added; emulator cores download on Play. ROM imports remain on-device, outside Drive backup. Home pauses the emulator and Recents resumes it. Use emulator-native save controls before stopping/closing a game. Heavy desktop games are listed with their availability.
 

@@ -58,14 +58,18 @@ const server = http.createServer((req,res) => {
       await panel.locator('[data-codex-check]').click();
       await page.waitForFunction(()=>document.querySelector('[data-codex-result]')?.textContent.startsWith('Local save and read verified'));
       const savedPath=await page.evaluate(async()=> (await window.SystemFS.readDir('/documents')).find(file=>file.name.startsWith('codex-workspace-check-')).path);
-      await page.evaluate(async()=>{window.setPortfolioTheme('light');await window.savePreferencesToFilesystem({strict:true});});
+      await page.evaluate(async view=>{window.setPortfolioTheme('light');if(view==='mobile'){window.MobileOS.setPreference('theme','light');window.MobileOS.setPreference('accent','violet');}await window.savePreferencesToFilesystem({strict:true});},view);
       await page.reload();await enter();
       assert.equal(await page.evaluate(()=>window.state.themeId),'light');
+      if(view==='mobile') {
+        assert.equal(await page.evaluate(()=>window.MobileOS.getPreferences().theme),'light');
+        assert.equal(await page.evaluate(()=>window.MobileOS.getPreferences().accent),'violet');
+      }
       assert.equal(await page.evaluate(()=>window.isStoreAppInstalled('codex')),true);
       assert(await page.evaluate(savedPath=>window.SystemFS.readFile(savedPath),savedPath));
       await open('codex');
-      for (const theme of ['dark','light','oled']) {
-        await page.evaluate(theme=>window.setPortfolioTheme(theme),theme);
+      for (const theme of view==='mobile'?['dark','light']:['dark','light','oled']) {
+        await page.evaluate(({theme,view})=>view==='mobile'?window.MobileOS.setPreference('theme',theme):window.setPortfolioTheme(theme),{theme,view});
         assert.equal(await panel.evaluate(el=>el.scrollWidth<=el.clientWidth+1),true,'Preview must fit the selected experience');
       }
       await page.evaluate(async()=>{await window.prepareProfileSwitch();window.setCurrentUser('private_auditB');await window.SystemFS.ensureDefaultFiles();});
