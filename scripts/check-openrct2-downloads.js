@@ -6,6 +6,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const config = fs.readFileSync(path.join(root, 'apps/openrct2/runtime/.htaccess'), 'utf8');
+assert(config.includes('Header always set CDN-Cache-Control "no-store"'));
+assert(config.includes('Header always set Cloudflare-CDN-Cache-Control "no-store"'));
 const conditions = [...config.matchAll(/^\s*RewriteCond %\{(REQUEST_URI|HTTP_REFERER)\} (\S+) \[NC\]\s*$/gm)];
 assert.equal(conditions.length, 2, 'Download guard must retain both its asset and referrer conditions');
 const rules = conditions.map(([,variable,pattern]) => ({variable,negated:pattern.startsWith('!'),expression:new RegExp(pattern.replace(/^!/,''),'i')}));

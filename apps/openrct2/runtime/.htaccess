@@ -14,6 +14,9 @@ DirectoryIndex index.php index.html
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Robots-Tag "noindex, nofollow, nosnippet, noarchive"
     Header always set Cache-Control "private, max-age=86400"
+    # Every request must reach the referrer guard; a shared cache cannot decide it.
+    Header always set CDN-Cache-Control "no-store"
+    Header always set Cloudflare-CDN-Cache-Control "no-store"
 </IfModule>
 
 <IfModule mod_rewrite.c>

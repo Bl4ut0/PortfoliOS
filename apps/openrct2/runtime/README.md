@@ -29,3 +29,5 @@ Access notes:
 Validation:
 - npm test includes the download-rule regression using the actual Store file URLs.
 - With Playwright available, node scripts/check-openrct2-store-browser.js --origin=https://os.bl4ut0.dev checks actual Apache responses and installs the real engine/assets through the Store in a disposable profile. It verifies persisted bytes and reload state, without starting the game or downloading RCT.zip.
+
+Shared caches must not retain the guarded runtime responses. `CDN-Cache-Control` and `Cloudflare-CDN-Cache-Control` use `no-store`, while the browser can retain its private cache. Without this, a CDN hit can skip the origin referrer rule. Existing edge entries require expiration or a targeted purge; live checks use a fresh query and test allowed requests followed by denied requests against the same URL. The referrer rule remains a hotlink barrier, not authentication. See [Cloudflare CDN cache controls](https://developers.cloudflare.com/cache/concepts/cdn-cache-control/).
