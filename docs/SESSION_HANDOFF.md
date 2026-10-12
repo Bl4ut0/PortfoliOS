@@ -61,3 +61,11 @@ Duplicate cloud path records fail safely for manual review rather than choosing 
 Browser checks accept `PORTFOLIOS_PLAYWRIGHT`; the PHP gateway check accepts `PORTFOLIOS_PHP` and requires its cURL extension. `PORTFOLIOS_TEST_URL` runs the browser scenario against deployed frontend assets while retaining isolated service fixtures. These checks do not certify a real signed-in Google roundtrip or every application's internal save engine.
 
 API references: [Google userinfo](https://developers.google.com/identity/openid-connect/openid-connect#obtainuserinfo), [Drive file versions](https://developers.google.com/workspace/drive/api/reference/rest/v3/files), [Drive multipart and resumable uploads](https://developers.google.com/workspace/drive/api/guides/manage-uploads).
+
+## Refresh identity (2026-10-12)
+
+Session IDs persist per tab in sessionStorage. Saved identities wait up to 1.2 seconds for the previous document's Web Lock to clear before being classified as a live duplicate. Concurrent tabs still receive distinct IDs.
+
+The server lets the current identity resume an expired lease, advances its epoch to fence old writes, and preserves any waiting handoff. Different identities retain the confirmed-save takeover requirement. Refresh does not clear session or backup state.
+
+Validated: repeated refreshes, delayed lock release, duplicated sessionStorage, expired same-owner resumption, waiting handoff retention, full Desktop/Mobile handoff and actual PHP gateway regressions. Real-account production reload behavior still needs user verification.

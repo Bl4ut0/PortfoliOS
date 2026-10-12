@@ -9,13 +9,20 @@
             this.tabIdentity=(async()=>{
                 const saved=sessionStorage.getItem('portfolios:session-id');
                 if(/^[a-f0-9-]{36}$/.test(saved || ''))this.id=saved;
+                const acquire=()=>new Promise((resolve,reject)=>{
+                    this.tabLock=navigator.locks.request('portfolios:session-tab:'+this.id,{ifAvailable:true},lock=>{
+                        resolve(!!lock);
+                        return lock ? new Promise(done=>{this.releaseTabLock=done;}) : undefined;
+                    }).catch(reject);
+                });
                 for(let attempt=0;attempt<2;attempt++) {
-                    const acquired=await new Promise((resolve,reject)=>{
-                        this.tabLock=navigator.locks.request('portfolios:session-tab:'+this.id,{ifAvailable:true},lock=>{
-                            resolve(!!lock);
-                            return lock ? new Promise(done=>{this.releaseTabLock=done;}) : undefined;
-                        }).catch(reject);
-                    });
+                    let acquired=await acquire();
+                    // A refreshing document can briefly retain its Web Lock. Give that
+                    // same saved identity time to settle before treating it as a clone.
+                    for(let wait=0;!acquired && saved===this.id && wait<24;wait++){
+                        await new Promise(resolve=>setTimeout(resolve,50));
+                        acquired=await acquire();
+                    }
                     if(acquired){sessionStorage.setItem('portfolios:session-id',this.id);return;}
                     this.id=crypto.randomUUID();
                 }

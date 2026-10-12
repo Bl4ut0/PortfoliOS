@@ -6,7 +6,13 @@ function portfolios_lease_step(array $s, string $action, string $id, int $epoch,
     $active = $s['active'];
     $mine = $active && $active['id'] === $id && $active['epoch'] === $epoch && $active['expires'] > $now;
     if ($action === 'claim' || $action === 'force') {
-        if ($active && $active['id'] === $id && $active['expires'] > $now && $action !== 'force') {
+        if ($active && $active['id'] === $id && $action !== 'force') {
+            // Resuming the same tab is not a takeover. Fence its old requests if
+            // the lease expired, and preserve any legitimate waiting handoff.
+            if ($active['expires'] <= $now) {
+                $s['generation']++;
+                $s['active']['epoch'] = $s['generation'];
+            }
             $s['active']['expires'] = $now + 180;
         } elseif (!$active || $action === 'force') {
             $s['generation']++;
