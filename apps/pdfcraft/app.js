@@ -6,8 +6,6 @@
     const owner = window.state.currentUserId;
     const abort = new AbortController();
     const status = root.querySelector('[data-pdf-status]');
-    const dialog = root.querySelector('[data-pdf-dialog]');
-    const list = root.querySelector('[data-pdf-list]');
     let openRequest = null;
     const frame = root.querySelector('iframe');
     let alive = true, ready = false, dirty = false, pending = 0, failedSaves = new Map(), timer;
@@ -22,73 +20,13 @@
       root.querySelector('[data-pdf-retry]').hidden = !failed;
       if (message !== 'Editor ready') window.showDesktopToast?.(message);
     };
-    let choice = null, listing = 0;
-    const canBrowse = path => path === '/' || (!path.split('/').some(part => part.startsWith('.')) && !window.SystemFS.isSharedPath(path));
-    async function navigate(path) {
-      assert(); const active = choice, revision = ++listing;
-      if (!active || !canBrowse(path)) throw new Error('Choose a folder in your current workspace.');
-      const rows = await window.SystemFS.readDir(path); assert();
-      if (choice !== active || revision !== listing) return;
-      active.folder = path; active.selected = null; active.confirm = null;
-      root.querySelector('[data-pdf-location]').textContent = path;
-      root.querySelector('[data-pdf-up]').disabled = path === '/';
-      root.querySelector('[data-pdf-confirm]').textContent = active.mode === 'save' ? 'Save' : 'Open';
-      root.querySelector('[data-pdf-warning]').textContent = '';
-      list.replaceChildren();
-      rows.filter(row => canBrowse(row.path)).forEach(row => {
-        const button = document.createElement('button'); button.type = 'button'; button.textContent = (row.isDirectory ? 'Folder: ' : '') + row.name;
-        if (row.isDirectory) {
-          button.dataset.pdfDir = row.path;
-          button.addEventListener('click', act(() => navigate(row.path)), { signal: abort.signal });
-        } else {
-          button.dataset.pdfPath = row.path;
-          button.disabled = !/\.pdf$/i.test(row.name);
-          button.addEventListener('click', () => {
-            active.selected = row.path; active.confirm = null;
-            root.querySelector('[data-pdf-name]').value = row.name;
-            list.querySelectorAll('[aria-pressed]').forEach(item => item.setAttribute('aria-pressed', 'false'));
-            button.setAttribute('aria-pressed', 'true');
-          }, { signal: abort.signal });
-          button.addEventListener('dblclick', act(() => acceptChoice()), { signal: abort.signal });
-        }
-        list.append(button);
-      });
-      if (!list.children.length) list.textContent = 'This folder is empty.';
-    }
-    function endChoice(result) {
-      const active = choice; choice = null; listing++; dialog.close(); active?.resolve(result);
-    }
-    async function acceptChoice() {
-      assert(); const active = choice; if (!active) return;
-      if (active.mode === 'open') {
-        if (!active.selected) throw new Error('Select a PDF, upload from your computer, or drop a file here.');
-        endChoice({ path: active.selected }); return;
-      }
-      const typed = root.querySelector('[data-pdf-name]').value.trim();
-      if (!typed) throw new Error('Enter a filename.');
-      const path = window.SystemFS.normalizePath(active.folder + '/' + safeName(typed));
-      if (!canBrowse(path)) throw new Error('Choose a private workspace location.');
-      const existing = await window.SystemFS.readFile(path); assert(); if (choice !== active) return;
-      if (existing?.isDirectory) throw new Error('A folder already has that name.');
-      if (existing && active.confirm !== path) {
-        active.confirm = path;
-        root.querySelector('[data-pdf-warning]').textContent = 'This file already exists. Choose Replace file to overwrite it, or enter another name.';
-        root.querySelector('[data-pdf-confirm]').textContent = 'Replace file'; return;
-      }
-      endChoice({ path });
-    }
-    function browse(mode, name = 'document.pdf', folder = '/documents') {
-      assert(); if (choice) return Promise.reject(new Error('Finish the current file dialog first.'));
-      root.querySelector('[data-pdf-heading]').textContent = mode === 'save' ? 'Save PDF As' : 'Open PDF';
-      root.querySelector('[data-pdf-name]').value = name;
-      root.querySelector('[data-pdf-name]').readOnly = mode !== 'save';
-      root.querySelector('[data-pdf-upload]').hidden = mode === 'save';
-      root.querySelector('[data-pdf-drop]').hidden = mode === 'save';
-      root.querySelector('[data-pdf-new-name]').value = '';
-      return new Promise(resolve => {
-        choice = { mode, folder, resolve, selected: null, confirm: null };
-        dialog.showModal(); navigate(canBrowse(folder) ? folder : '/documents').catch(error => say(error.message));
-      });
+    let choice = null;
+    async function browse(mode, name = 'document.pdf', folder = '/documents') {
+      assert(); if (choice) throw new Error('Finish the current file dialog first.');
+      choice = {mode};
+      try {
+        return await window.SystemFS.showFileDialog({mode,title:mode==='save'?'Save PDF As':'Open PDF',folder,defaultName:name,types:['.pdf'],signal:abort.signal});
+      } finally { choice = null; }
     }
     async function importDevice(file) {
       assert(); if (!ready) throw new Error('Wait for the editor to finish loading.');
@@ -138,7 +76,7 @@
         const previous = paths.get(name);
         const selection = await browse('save', name, previous ? window.SystemFS.getParentPath(previous) : '/documents');
         assert();
-        if (!selection) { const error = new Error('Save cancelled. Your output is retained; use Retry to choose a location.'); error.name = 'AbortError'; throw error; }
+        if (!selection) { failedSaves.delete(name); say('Save cancelled.'); return; }
         path = selection.path; message.targetPath = path;
       }
       assert();
@@ -170,32 +108,7 @@
       else if (message.type === 'pdfcraft:failed') { clearTimeout(timer); say('Editor failed to start. Close and reopen to retry.'); }
     }, { signal: abort.signal });
     const act = callback => async () => { try { await callback(); } catch (error) { say(error.message); } };
-    root.querySelector('[data-pdf-cancel]').addEventListener('click', () => endChoice(null), { signal: abort.signal });
-    dialog.addEventListener('cancel', event => { event.preventDefault(); endChoice(null); }, { signal: abort.signal });
-    root.querySelector('[data-pdf-confirm]').addEventListener('click', act(acceptChoice), { signal: abort.signal });
-    root.querySelector('[data-pdf-up]').addEventListener('click', act(() => navigate(window.SystemFS.getParentPath(choice.folder))), { signal: abort.signal });
-    root.querySelector('[data-pdf-root]').addEventListener('click', act(() => navigate('/')), { signal: abort.signal });
-    root.querySelector('[data-pdf-name]').addEventListener('input', () => {
-      if (choice) { choice.confirm = null; root.querySelector('[data-pdf-confirm]').textContent = choice.mode === 'save' ? 'Save' : 'Open'; root.querySelector('[data-pdf-warning]').textContent = ''; }
-    }, { signal: abort.signal });
-    root.querySelector('[data-pdf-create]').addEventListener('click', act(async () => {
-      const name = root.querySelector('[data-pdf-new-name]').value.trim();
-      if (!name || /[\\/:*?"<>|\u0000-\u001f]/.test(name) || name.startsWith('.')) throw new Error('Enter a folder name without slashes or hidden-file prefixes.');
-      const active = choice; if (!active) return;
-      const path = window.SystemFS.normalizePath(active.folder + '/' + name);
-      assert(); await window.SystemFS.ensureDirectory(path); assert(); if (choice === active) await navigate(path);
-    }), { signal: abort.signal });
     root.addEventListener('launch-params', act(async () => { if (ready && root.launchParams?.path) await open(await window.SystemFS.readFile(root.launchParams.path)); }), { signal: abort.signal });
-    root.querySelector('[data-pdf-import]').addEventListener('change', () => {
-      const input = root.querySelector('[data-pdf-import]'), file = input.files[0]; input.value = '';
-      if (file && choice?.mode === 'open') endChoice({ file });
-    }, { signal: abort.signal });
-    const drop = root.querySelector('[data-pdf-drop]');
-    drop.addEventListener('dragover', event => { event.preventDefault(); }, { signal: abort.signal });
-    drop.addEventListener('drop', event => {
-      event.preventDefault(); const file = event.dataTransfer?.files[0];
-      if (file && choice?.mode === 'open') endChoice({ file });
-    }, { signal: abort.signal });
     root.querySelector('[data-pdf-retry]').addEventListener('click', () => { if (current()) for (const message of failedSaves.values()) queueSave(message); }, { signal: abort.signal });
     const unload = event => { if (dirty || pending || failedSaves.size) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', unload, { signal: abort.signal });
@@ -216,14 +129,14 @@
         if (dirty || failedSaves.size || pending) { say('Save changes in PdfCraft, or retry the failed save, before closing or switching profiles.'); return false; }
         return true;
       },
-      close() { alive = false; clearTimeout(timer); abort.abort(); endChoice(null); frame.remove(); sessions.delete(root); }
+      close() { alive = false; clearTimeout(timer); abort.abort(); frame.remove(); sessions.delete(root); }
     });
     timer = setTimeout(() => { if (!ready) { frame.removeAttribute('src'); say('Editor startup timed out. Close and reopen to retry.'); } }, 90000);
     frame.src = 'apps/pdfcraft/runtime/index.php/host.html?host=parent';
   }
   window.appRegistry.pdfcraft = {
     title: 'PdfCraft', icon: 'apps/pdfcraft/icon.svg', windowClass: 'pdfcraft-window document-window',
-    renderBody: () => `<main class="pdfcraft-host"><p role="status" class="pdfcraft-status" data-pdf-status>Loading PdfCraft...</p><div data-pdf-loading class="pdfcraft-loading">Loading PdfCraft...</div><button type="button" data-pdf-retry hidden>Retry failed save</button><iframe title="PdfCraft PDF editor" sandbox="allow-scripts allow-downloads" referrerpolicy="no-referrer"></iframe><dialog data-pdf-dialog aria-labelledby="pdf-dialog-title"><h2 id="pdf-dialog-title" data-pdf-heading>Open PDF</h2><nav class="pdf-file-nav" aria-label="Folder navigation"><button type="button" data-pdf-root>Workspace</button><button type="button" data-pdf-up>Up</button><output data-pdf-location>/documents</output></nav><div data-pdf-list aria-label="Files and folders"></div><div class="pdf-folder-create"><input data-pdf-new-name aria-label="New folder name" placeholder="New folder name"><button type="button" data-pdf-create>New folder</button></div><label>File name <input data-pdf-name aria-label="File name"></label><p role="status" data-pdf-warning></p><div data-pdf-upload><label>Upload from computer <input type="file" accept="application/pdf,.pdf" data-pdf-import></label></div><div data-pdf-drop>Drop a PDF from your computer here</div><footer><button type="button" data-pdf-cancel>Cancel</button><button type="button" data-pdf-confirm>Open</button></footer></dialog></main>`,
+    renderBody: () => `<main class="pdfcraft-host"><p role="status" class="pdfcraft-status" data-pdf-status>Loading PdfCraft...</p><div data-pdf-loading class="pdfcraft-loading">Loading PdfCraft...</div><button type="button" data-pdf-retry hidden>Retry failed save</button><iframe title="PdfCraft PDF editor" sandbox="allow-scripts allow-downloads" referrerpolicy="no-referrer"></iframe></main>`,
     onOpen: mount,
     beforeClose: (root, context) => sessions.get(root)?.beforeClose(context),
     onClose: root => sessions.get(root)?.close()

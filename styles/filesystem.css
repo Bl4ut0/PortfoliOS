@@ -179,3 +179,45 @@ dialog.systemfs-dialog::backdrop {
 
 #mobile-device dialog.systemfs-dialog {width:min(420px,90vw);font:inherit;}
 #mobile-device #session-transfer-overlay .session-public-action {background:var(--mobile-surface-high);color:var(--mobile-fg);border-color:var(--mobile-outline-strong);}
+/* Explorer-style Open / Save browser; scoped to the shared picker. */
+dialog.systemfs-browser {width:min(820px,94vw);padding:0;overflow:hidden;max-height:92dvh;}
+.systemfs-browser .systemfs-dialog-header {padding:.85rem 1rem;margin:0;background:var(--surface-raised);border-bottom:1px solid var(--line);}
+.systemfs-browser .systemfs-dialog-nav {margin:0;padding:.65rem;flex-wrap:nowrap;border-bottom:1px solid var(--line);}
+.systemfs-breadcrumbs {display:flex;align-items:center;flex:1;min-width:0;overflow:auto;background:var(--surface-inset);border:1px solid var(--line);border-radius:6px;}
+.systemfs-browser .systemfs-breadcrumbs button {border:0;background:transparent;border-radius:0;white-space:nowrap;padding:.55rem .65rem;}
+.systemfs-breadcrumbs button+button::before {content:'›';margin-right:.7rem;color:var(--text-muted);}
+.systemfs-browser .systemfs-search {flex:0 1 180px;width:140px;}
+.systemfs-browser-body {display:grid;grid-template-columns:150px minmax(0,1fr);min-height:240px;height:32dvh;}
+.systemfs-places {padding:.5rem;background:var(--surface-raised);border-right:1px solid var(--line);overflow:auto;}
+.systemfs-browser .systemfs-places button {display:flex;gap:.65rem;width:100%;text-align:left;border:0;background:transparent;border-radius:5px;margin-bottom:.15rem;}
+.systemfs-browser button[aria-current=location],.systemfs-browser .systemfs-item-btn[aria-pressed=true] {background:var(--control-hover,rgba(34,211,238,.15));color:var(--theme-primary-ink);}
+.systemfs-browser-content {min-width:0;display:flex;flex-direction:column;background:var(--surface-inset);}
+.systemfs-list-head {display:grid;grid-template-columns:1fr 110px;padding:.6rem 1rem .6rem 3rem;border-bottom:1px solid var(--line);color:var(--text-soft);font-size:.8rem;}
+.systemfs-browser .systemfs-dialog-list {display:block;flex:1;min-height:0;max-height:none;margin:0;padding:.3rem;overflow:auto;}
+.systemfs-browser .systemfs-item-btn {display:grid;grid-template-columns:24px minmax(0,1fr) 110px;gap:.5rem;width:100%;background:transparent;border:1px solid transparent;border-radius:4px;padding:.55rem .65rem;align-items:center;}
+.systemfs-browser .systemfs-item-btn:hover:not(:disabled) {background:var(--control-hover);}
+.systemfs-row-icon {color:var(--theme-primary-ink);font-size:1.3rem;}
+.systemfs-row-name {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.systemfs-row-type {color:var(--text-muted);font-size:.78rem;}
+.systemfs-item-count {font-size:.75rem;color:var(--text-muted);border-top:1px solid var(--line);margin:0;padding:.35rem .8rem;}
+.systemfs-browser .systemfs-new-folder-row,.systemfs-browser .systemfs-filename-row {margin:.6rem 1rem;flex-wrap:nowrap;}
+.systemfs-browser [data-device] {margin:.5rem 1rem;font-size:.85rem;}
+.systemfs-device-upload {display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+.systemfs-device-upload input {min-width:0;max-width:100%;}
+.systemfs-dropzone {border:1px dashed var(--line-strong);border-radius:6px;text-align:center;padding:.65rem;margin:.5rem 0; color:var(--text-soft);}
+.systemfs-browser [data-warning] {margin:.4rem 1rem;font-size:.85rem;}
+.systemfs-browser .systemfs-dialog-footer {margin:0;padding:.75rem 1rem;border-top:1px solid var(--line);background:var(--surface-raised);align-items:center;}
+.systemfs-file-filter {margin-right:auto;font-size:.8rem;color:var(--text-muted);}
+.systemfs-browser button.systemfs-btn-primary {background:var(--theme-primary-ink);color:var(--on-primary,#000);}
+.systemfs-browser :focus-visible {outline:2px solid var(--theme-primary-ink);outline-offset:-2px;}
+@media(max-width:540px) {
+ .systemfs-browser-body {grid-template-columns:110px minmax(0,1fr);height:30dvh;min-height:180px;}
+ .systemfs-browser .systemfs-dialog-nav {flex-wrap:wrap;}
+ .systemfs-browser .systemfs-search {flex:1 0 100%;width:100%;}
+ .systemfs-places {padding:.25rem;font-size:.8rem;}
+ .systemfs-browser .systemfs-places button {padding:.6rem .35rem;gap:.3rem;}
+ .systemfs-list-head {display:none;}
+ .systemfs-browser .systemfs-item-btn {grid-template-columns:20px minmax(0,1fr);}
+ .systemfs-row-type {display:none;}
+}
+dialog.systemfs-browser, .systemfs-browser button, .systemfs-browser input {font-family:inherit;}

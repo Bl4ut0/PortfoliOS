@@ -14,7 +14,14 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT || 'playwright');
    const app=appRegistry.designcraft,root=document.getElementById('root');root.innerHTML=app.renderBody();app.onOpen(root);
    window.dispatchEvent(new MessageEvent('message',{source:root.querySelector('iframe').contentWindow,origin:'null',data:{type:'craft:save',id:'cancelled',name:'untitled.design',bytes:new ArrayBuffer(4)}}));
   });
-  await page.getByText('Save cancelled. Output retained; choose Retry save.',{exact:true}).waitFor();
+  await page.getByText('Save cancelled.',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>appRegistry.designcraft.beforeClose(document.getElementById('root'),{reason:'close'})),true,'Cancelled save must not block closing');
+  await page.evaluate(()=>{
+   SystemFS.showSaveDialog=async()=>({path:'/documents/test.design'});SystemFS.getName=()=> 'test.design';SystemFS.getParentPath=()=>'/documents';
+   window.SecurityKernel={importFile:async()=>{throw new Error('Disk write failed');}};
+   window.dispatchEvent(new MessageEvent('message',{source:document.querySelector('iframe').contentWindow,origin:'null',data:{type:'craft:save',id:'failed',name:'test.design',bytes:new ArrayBuffer(4)}}));
+  });
+  await page.getByText('Disk write failed',{exact:true}).waitFor();
   assert.equal(await page.evaluate(()=>appRegistry.designcraft.beforeClose(document.getElementById('root'),{autoSave:true,reason:'session-lost'})),false);
   assert.equal(await page.locator('[data-discard]').count(),0,'Automatic handoff cannot discard');
   async function close(){await page.evaluate(()=>{window.closeResult=undefined;window.closing=appRegistry.designcraft.beforeClose(document.getElementById('root'),{reason:'close'}).then(r=>window.closeResult=r);});}
@@ -22,7 +29,7 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT || 'playwright');
   assert.equal(await page.evaluate(()=>window.closing),false);
   await close();await page.locator('.craft-close-confirm [data-retry]').click();
   assert.equal(await page.evaluate(()=>window.closing),false);
-  await page.getByText('Save cancelled. Output retained; choose Retry save.',{exact:true}).waitFor();
+  await page.getByText('Disk write failed',{exact:true}).waitFor();
   await close();await page.getByRole('button',{name:'Discard and close',exact:true}).click();
   assert.equal(await page.evaluate(()=>window.closing),true);
   await page.evaluate(()=>appRegistry.designcraft.onClose(document.getElementById('root')));

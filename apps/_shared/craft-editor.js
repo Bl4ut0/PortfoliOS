@@ -43,7 +43,7 @@
       async function save(message) {
         assert(); const name=safe(message.name); let path=message.targetPath || paths.get(name);
         if (!path && (flushing || message.autosave)) { const folder='/documents/'+config.title; await SystemFS.ensureDirectory(folder); assert(); path=folder+'/'+name; if(await SystemFS.readFile(path)) path=folder+'/'+crypto.randomUUID().slice(0,8)+'-'+name; }
-        if (!path) { const choice=await SystemFS.showSaveDialog({title:'Save '+config.title+' file',defaultName:name,signal:abort.signal}); assert(); if (!choice) throw new Error('Save cancelled. Output retained; choose Retry save.'); path=choice.path; }
+        if (!path) { const choice=await SystemFS.showSaveDialog({title:'Save '+config.title+' file',defaultName:name,signal:abort.signal}); assert(); if (!choice) { failures.delete(message.id); say('Save cancelled.'); return; } path=choice.path; }
         message.targetPath=path; assert();
         const result=await SecurityKernel.importFile({path,name:SystemFS.getName(path),parent:SystemFS.getParentPath(path),data:message.bytes,size:message.bytes.byteLength,type:message.mime || 'application/octet-stream',source:config.id+'-output',options:{documentPolicy:config.id==='vectorcraft'?'passive-svg':undefined}}); assert();
         if(result.status!=='accepted') throw new Error('Output quarantined. Review it in Security Center.');

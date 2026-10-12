@@ -1,0 +1,30 @@
+'use strict';
+const assert=require('node:assert/strict'),path=require('node:path');
+const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT||'playwright');
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true});try{
+ const p=await browser.newPage({viewport:{width:1100,height:850}});
+ await p.setContent('<style>:root{--surface:#11151c;--surface-raised:#1b2330;--surface-inset:#0c1016;--text:#edf2f7;--text-soft:#bbc5d2;--text-muted:#9aa7b8;--line:#344050;--line-strong:#45556a;--theme-primary-ink:#22d3ee;--control-hover:#263d48;--on-primary:#071015}body{background:#090e16;font:14px system-ui}</style>');
+ await p.addStyleTag({path:path.resolve(__dirname,'../styles/filesystem.css')});
+ await p.evaluate(()=>{window.state={currentUserId:'private_test'};window.escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));});
+ await p.addScriptTag({path:path.resolve(__dirname,'../core/filesystem.js')});
+ await p.evaluate(()=>{
+  const records=[{path:'/documents',name:'documents',isDirectory:true},{path:'/documents/Projects',name:'Projects',isDirectory:true},{path:'/documents/notes.txt',name:'notes.txt',isDirectory:false},{path:'/documents/Projects/draft.txt',name:'draft.txt',isDirectory:false}];
+  SystemFS.ensureReady=async()=>{};SystemFS.readDir=async path=>records.filter(r=>SystemFS.getParentPath(r.path)===path);SystemFS.readFile=async path=>records.find(r=>r.path===path);
+  SystemFS.ensureDirectory=async path=>records.push({path,name:SystemFS.getName(path),isDirectory:true});
+  window.result=undefined;SystemFS.showSaveDialog({defaultName:'new.txt'}).then(r=>window.result=r);
+ });
+ await p.locator('[data-path="/documents/Projects"]').click();
+ await p.locator('[data-location] [data-folder="/documents"]').click();
+ await p.getByRole('searchbox').fill('notes');assert.equal(await p.locator('.systemfs-item-btn').count(),1);
+ await p.getByRole('searchbox').fill('');
+ await p.screenshot({path:'.tmp/systemfs-dialog-desktop.png'});
+ await p.getByRole('button',{name:'Save',exact:true}).click();await p.waitForFunction(()=>window.result!==undefined);assert.equal(await p.evaluate(()=>result.path),'/documents/new.txt');
+ await p.evaluate(()=>{window.result=undefined;SystemFS.showOpenDialog({types:['.txt']}).then(r=>window.result=r);});
+ await p.locator('[data-path="/documents/notes.txt"]').dblclick();await p.waitForFunction(()=>window.result!==undefined);assert.equal(await p.evaluate(()=>result.path),'/documents/notes.txt');
+ await p.setViewportSize({width:390,height:844});
+ await p.evaluate(()=>{window.result=undefined;SystemFS.showSaveDialog().then(r=>window.result=r);});
+ await p.screenshot({path:'.tmp/systemfs-dialog-mobile.png'});
+ assert(await p.locator('dialog').evaluate(el=>el.getBoundingClientRect().width<=innerWidth));
+ await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>result),null);
+ console.log('PASS: places/breadcrumb navigation, filtering, save path, open selection, mobile fit and Escape cancellation.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

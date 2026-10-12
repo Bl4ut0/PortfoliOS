@@ -35,9 +35,9 @@ function fixture() {
   await page.locator('[data-pdf-status]').filter({hasText:'Editor ready'}).waitFor({timeout:30000,state:'attached'}).catch(async error=>{console.log(await page.locator('[data-pdf-status]').textContent(),await page.locator('iframe[title="PdfCraft PDF editor"]').getAttribute('src'));await page.screenshot({path:path.join(root,'.tmp/pdfcraft/failure.png')});throw error;});
   const iframe=page.locator('iframe[title="PdfCraft PDF editor"]');assert.equal(await iframe.getAttribute('sandbox'),'allow-scripts allow-downloads');
   assert.equal(await page.locator('[data-pdf-files]').count(),0);
-  await iframe.click({position:{x:100,y:20}});await page.locator('[data-pdf-dialog]').waitFor();
-  await page.locator('[data-pdf-cancel]').click();await iframe.click({position:{x:100,y:20}});await page.locator('[data-pdf-dialog]').waitFor();
-  await page.locator('[data-pdf-import]').setInputFiles({name:'original.pdf',mimeType:'application/pdf',buffer:fixture()});
+  await iframe.click({position:{x:100,y:20}});await page.locator('dialog.systemfs-browser').waitFor();
+  await page.locator('dialog [data-action=cancel]:last-child').click();await iframe.click({position:{x:100,y:20}});await page.locator('dialog.systemfs-browser').waitFor();
+  await page.locator('dialog [data-upload]').setInputFiles({name:'original.pdf',mimeType:'application/pdf',buffer:fixture()});
   await page.locator('[data-pdf-status]').filter({hasText:'Opened original.pdf'}).waitFor({state:'attached'});
   await page.waitForTimeout(1500);await page.screenshot({path:path.join(root,'.tmp/pdfcraft/before-save.png')});
   // The real egui canvas has no DOM buttons. Rotate control coordinates correspond
@@ -55,15 +55,15 @@ function fixture() {
   assert(await page.evaluate(async()=>{const file=await SystemFS.readFile('/documents/PdfCraft/original.pdf');return file.size>100 && file.metadata.security.verdict==='clean' && /\/Rotate\s+90/.test(await new Blob([file.data]).text());}));
   await iframe.click({position:{x:500,y:300}});await page.keyboard.press('Control+Shift+s');
   await page.waitForTimeout(800);await page.screenshot({path:path.join(root,'.tmp/pdfcraft/save-as.png')});
-  await page.locator('[data-pdf-heading]').filter({hasText:'Save PDF As'}).waitFor();
+  await page.locator('dialog h2').filter({hasText:'Save PDF As'}).waitFor();
   assert.equal(await page.evaluate(()=>closeDesktopWindow('pdfcraft')),false,'Open Save As dialog must veto close without hanging');
-  await page.locator('[data-pdf-cancel]').click();
+  await page.locator('dialog [data-action=cancel]:last-child').click();
   await page.locator('[data-pdf-status]').filter({hasText:'Save cancelled'}).waitFor({state:'attached'});
-  await page.locator('[data-pdf-retry]').click();await page.locator('[data-pdf-heading]').filter({hasText:'Save PDF As'}).waitFor();
-  await page.locator('[data-pdf-up]').click();await page.locator('[data-pdf-root]').click();await page.locator('[data-pdf-dir="/documents"]').click();
-  await page.locator('[data-pdf-new-name]').fill('Exports');await page.locator('[data-pdf-create]').click();
-  await page.locator('[data-pdf-location]').filter({hasText:'/documents/Exports'}).waitFor();
-  await page.locator('[data-pdf-name]').fill('edited.pdf');await page.locator('[data-pdf-confirm]').click();
+  assert(await page.locator('[data-pdf-retry]').isHidden(),'Cancelling is not a failed save');await iframe.click({position:{x:500,y:300}});await page.keyboard.press('Control+Shift+s');await page.locator('dialog h2').filter({hasText:'Save PDF As'}).waitFor();
+  await page.locator('dialog [data-action=up]').click();await page.locator('dialog .systemfs-places [data-folder="/"]').click();await page.locator('dialog .systemfs-places [data-folder="/documents"]').click();
+  await page.locator('dialog [data-new-folder]').fill('Exports');await page.locator('dialog [data-action=create-folder]').click();
+  await page.locator('dialog [data-location]').filter({hasText:'Exports'}).waitFor();
+  await page.locator('dialog [data-filename]').fill('edited.pdf');await page.locator('dialog [data-action=confirm]').click();
   await page.locator('[data-pdf-status]').filter({hasText:'Saved /documents/Exports/edited.pdf'}).waitFor({state:'attached'});
   assert(await page.evaluate(()=>SystemFS.readFile('/documents/Exports/edited.pdf')));
   // Untrusted top-window messages cannot spoof an engine save or dirty state.
@@ -75,7 +75,7 @@ function fixture() {
   assert.equal(await page.locator('iframe[title="PdfCraft PDF editor"]').count(),0);
   await page.evaluate(async()=>{await window.ensureAppLoaded('pdfcraft');await window.openDesktopWindow('pdfcraft');});
   await page.locator('[data-pdf-status]').filter({hasText:'Editor ready'}).waitFor({timeout:90000,state:'attached'});
-  await page.locator('iframe[title="PdfCraft PDF editor"]').click({position:{x:100,y:20}});await page.locator('[data-pdf-dir="/documents/PdfCraft"]').click();await page.locator('[data-pdf-path="/documents/PdfCraft/original.pdf"]').dblclick();
+  await page.locator('iframe[title="PdfCraft PDF editor"]').click({position:{x:100,y:20}});await page.locator('dialog [data-path="/documents/PdfCraft"]').click();await page.locator('dialog [data-path="/documents/PdfCraft/original.pdf"]').dblclick();
   await page.locator('[data-pdf-status]').filter({hasText:'Opened original.pdf'}).waitFor({state:'attached'});
   await page.evaluate(()=>closeDesktopWindow('pdfcraft'));
   await page.evaluate(()=>openDesktopWindow('files'));
