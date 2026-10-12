@@ -15,7 +15,8 @@
    return raw?response:response.json();
   }
   cloud(path,options={}){return this.fetch(CLOUD+path,{...options,token:this.token});}
-  async createPin(){return this.cloud('/api/v2/pins?strong=false',{method:'POST'});}
+  async createPin(){return this.cloud('/api/v2/pins?strong=true',{method:'POST'});}
+  signInUrl(pin){if(!pin?.code)throw new Error('Plex did not provide a sign-in request.');const params=new URLSearchParams({clientID:this.id,code:pin.code,'context[device][product]':'PortfoliOS Plex Player'});return 'https://app.plex.tv/auth#?'+params.toString();}
   async checkPin(id){if(!/^\d+$/.test(String(id)))throw new Error('Invalid Plex linking request.');const value=await this.cloud('/api/v2/pins/'+id);return value.authToken||'';}
   async discover(){const data=await this.cloud('/api/v2/resources?includeHttps=1&includeRelay=1');return (Array.isArray(data)?data:[]).filter(s=>String(s.provides||'').split(',').includes('server')&&s.accessToken);}
   async connect(index){this.assert();const server=this.servers[index];if(!server)throw new Error('Select a Plex server.');let error;

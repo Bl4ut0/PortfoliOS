@@ -57,3 +57,9 @@ Existing IPTV has HLS/video lifecycle code worth reviewing for neutral reuse; do
 5. Advanced features: stream selection, subtitles, music playlists, local codec experiments, casting, downloads, managed Plex Home users and Live TV only after separate validation.
 
 Acceptance requires account isolation, revoked-link recovery, direct MP4, container remux, audio/video transcode, unsupported subtitle handling, resume/seek, network loss, X during loading/playback, no boot media fetches, and real Android/desktop playback measurements. Plex-hosted ad-supported/DRM catalogs are outside the initial personal-server client scope.
+
+## Hosted sign-in and guest streaming review (2026-10-12)
+
+The first Preview used four-character `plex.tv/link` authorization. It now uses a strong authorization request and `https://app.plex.tv/auth#?clientID=...&code=...` as described by [Plex’s API documentation](https://developer.plex.tv/pms/). The client identifies as Web/Browser; changing sign-in does not change Plex server entitlement rules. A signed-out welcome view is available without making account requests.
+
+[Plex distinguishes direct sign-in from big-screen code linking](https://support.plex.tv/articles/203395277-connect-app-to-your-plex-account/). Its [free Movies & Shows service](https://support.plex.tv/articles/video-on-demand-overview/) is distinct from personal server libraries. No public third-party guest catalog/playback contract was found in the reviewed PMS documentation. Guest playback remains unimplemented pending a supported integration, rather than being represented by an iframe or a fake native catalog.

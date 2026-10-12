@@ -4,7 +4,7 @@ An original, unofficial Plex-compatible PortfoliOS application with independent 
 
 ## Implemented
 
-- Cancellable account linking through a separately opened Plex page; server-specific authorization and secure HTTPS discovery.
+- Signed-out welcome screen and optional hosted web sign-in using strong authorization requests, with a fallback link when popups are blocked; server-specific authorization and secure HTTPS discovery.
 - Continue watching, library selection, search, paged titles, bounded artwork loading and show/season navigation.
 - Browser video/audio decoding for conservative directly supported formats; explicit compatible-stream retry and 720p/1080p server conversion through native HLS or the existing Apache-2.0 hls.js vendor runtime, loaded on demand.
 - Native video controls, fullscreen, desktop audio integration and Plex progress reporting.
@@ -18,3 +18,9 @@ Run `npm test` and `node scripts/check-plex-browser.js` with Playwright availabl
 Test your server from the production HTTPS origin before relying on playback. CORS, secure server reachability, local-network permission, browser codec support, server transcoding capability and Plex remote-playback permissions apply. No media proxy, downloaded movie library, browser-side FFmpeg transcoding, Plex-hosted DRM content, Live TV or managed-user switching is included. Cancelling linking does not authorize a subsequent late PIN response.
 
 See [Plex research and source documentation](../../docs/PLEX_CLIENT_RESEARCH.md). The amber player icon is an original compatibility icon, not an assertion of Plex endorsement. hls.js license/provenance remains with the existing IPTV vendor distribution.
+
+## Free catalog status (2026-10-12)
+
+Plex’s official apps provide free ad-supported streaming, but the published third-party API documentation covers Plex Media Server. No documented guest catalog/playback integration has been verified for this client. The signed-out screen explicitly identifies this limitation; it does not load Plex Web, impersonate an official client or claim to stream the free catalog.
+
+The previous four-character TV linking flow has been replaced by the [documented hosted sign-in URL](https://developer.plex.tv/pms/) using a strong PIN request internally. No code entry is required. Credentials still remain memory-only.

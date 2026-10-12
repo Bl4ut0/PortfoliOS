@@ -1,3 +1,3 @@
-@import url('../../../styles/plex-player.css?v=2026.10.11.22');
+@import url('../../../styles/plex-player.css?v=2026.10.12.1');
 .mobile-native-app.mobile-plex-app{padding:0;overflow:auto;background:var(--mobile-surface);color:var(--mobile-fg);}
 .mobile-plex-app .plex-player{--surface:var(--mobile-surface);--surface-raised:var(--mobile-surface-raised);--surface-inset:var(--mobile-surface-high);--text:var(--mobile-fg);--text-muted:var(--mobile-fg-muted);--line:var(--mobile-outline-strong);--theme-primary-ink:var(--mobile-accent-ink);}
