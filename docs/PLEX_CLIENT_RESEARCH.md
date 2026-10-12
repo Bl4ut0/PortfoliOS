@@ -97,3 +97,20 @@ The [Microsoft Store listing](https://apps.microsoft.com/detail/XP9CDQW6ML4NQN) 
 | Official site as top-level navigation | Working guest fallback | Leaves our native app UI. It is an optional handoff, not the requested integrated player, and was not substituted for the application. |
 
 Prioritize the original-client connection spike. Its deliverable is one signed-out guest title playing from the actual PortfoliOS origin with the full required ad/session flow, not a copied expiring stream URL. Do not spoof the official app identity or silently disable browser isolation as a shortcut. Keep the current personal-server implementation and its separate sign-in usable while the spike is evaluated.
+
+## Independent guest connection spike (2026-10-12)
+
+The requested next step was attempted with the independent `PortfoliOS Plex Player` product identity, fresh client identifiers and no Plex account cookies. Publicly delivered code on both official web clients was inspected to identify request shapes. No vendor credentials or official app identity were reused.
+
+`node scripts/check-plex-guest-live.js` is a deliberately separate live integration probe, not part of offline `npm test`. It runs disposable Chrome under `https://os.bl4ut0.dev` with the OS COOP/COEP policy; only the diagnostic HTML response is locally fulfilled. Requests to Plex use the real network. It stores and prints no returned authorization values. A successful anonymous session is required for a zero exit status.
+
+Observed result:
+
+| Request | Actual browser response |
+| --- | --- |
+| POST `https://plex.tv/api/v2/users/anonymous` | 404, code 1002: endpoint not found; no token |
+| POST `https://plex.tv/api/v2/users/signin?skipAuthentication=true` | 400, code 1004: login and password missing; no token |
+
+The browser could read both JSON responses, establishing that these failures were not a browser CORS denial. HTTPS requests outside the browser also tested query/header client identifiers, empty/form/JSON requests and the clients.plex.tv host; no guest authorization was obtained. These results do not prove guest playback impossible or identify the exact vendor restriction. The official website still demonstrates guest playback using its own bootstrap/session flow.
+
+The native guest catalog, Live TV and guest playback remain **unimplemented**. No UI restyling or prerecorded stream URLs were substituted for the failed connection gate. Existing deployed personal-server functionality is unchanged. Further progress needs an independently usable guest bootstrap contract or a vendor-supported integration; investigate the official website's server bootstrap separately before deciding whether a narrow, authorized guest-session broker is technically and operationally suitable. It would also require regional behavior, ad/privacy flow and lifecycle verification. Do not use an unrestricted media proxy or publish another claim of a complete guest app based on synthetic fixtures.
