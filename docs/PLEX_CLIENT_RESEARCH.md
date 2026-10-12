@@ -63,3 +63,37 @@ Acceptance requires account isolation, revoked-link recovery, direct MP4, contai
 The first Preview used four-character `plex.tv/link` authorization. It now uses a strong authorization request and `https://app.plex.tv/auth#?clientID=...&code=...` as described by [Plex’s API documentation](https://developer.plex.tv/pms/). The client identifies as Web/Browser; changing sign-in does not change Plex server entitlement rules. A signed-out welcome view is available without making account requests.
 
 [Plex distinguishes direct sign-in from big-screen code linking](https://support.plex.tv/articles/203395277-connect-app-to-your-plex-account/). Its [free Movies & Shows service](https://support.plex.tv/articles/video-on-demand-overview/) is distinct from personal server libraries. No public third-party guest catalog/playback contract was found in the reviewed PMS documentation. Guest playback remains unimplemented pending a supported integration, rather than being represented by an iframe or a fake native catalog.
+
+## Guest playback investigation (2026-10-12, after deployed sign-in correction)
+
+Release `2026.10.12.1`, commit `0a277fa`, is published. The production HTML release and ten changed non-HTML asset SHA256 hashes were verified. This release changes login only; it does not implement guest playback.
+
+### Direct website observation
+
+A background browser tab on https://watch.plex.tv/ displayed Sign In, a free catalog and Live TV without entering account credentials. Selecting Chef (2014), then Watch Free, opened a Video Player dialog without a login prompt. The observed title URL was https://watch.plex.tv/movie/chef. Availability is regional and time-dependent: the web crawler showed different provider availability from the interactive browser.
+
+The rendered page asset inventory showed requests to these service/path families (query strings and session credentials deliberately omitted):
+
+- `plex.tv/api/v2/users/signin` and geo/privacy endpoints.
+- `vod.provider.plex.tv/playQueues`, title metadata, an HLS `.m3u8` part and timeline reporting.
+- `vod-content.plexvideos.com` fragmented MP4 audio/video segments and separate advertisement media.
+- `discover.provider.plex.tv` metadata/user-state requests.
+
+DOM observation showed HTML video elements, a MediaSource/blob source, separate URL-based video sources and advancing playback time. The sampled elements had no attached MediaKeys at observation time. This is evidence of browser-based guest playback on Plex's own origin, not proof that all content lacks DRM or that the same requests are supported from another origin. No media files, authorization payloads or session tokens were exported or retained. Playback was stopped by closing the player.
+
+The earlier lack of a documented public guest API must not be interpreted as technical impossibility. A guest streaming path demonstrably exists on the official website. Its session contract, advertisement obligations, region selection, permitted client integration and cross-origin behavior remain to be established for an independent player.
+
+### Microsoft Store application
+
+The [Microsoft Store listing](https://apps.microsoft.com/detail/XP9CDQW6ML4NQN) exists for Plex for Windows. [Plex's installation guide](https://support.plex.tv/articles/windows-and-macos-intro-installation/) describes a standalone application pairing the web-style layout with stronger playback capability and downloads. Store distribution does not supply a WASM build, browser SDK or redistribution permission. No executable was installed or modified during research.
+
+### Options and next validation gates
+
+| Option | Fit | Remaining work |
+| --- | --- | --- |
+| Original guest-capable native client | Best fit for the requested PortfoliOS experience | Establish the guest-session request contract with our own client identity; verify catalog/play-queue/manifest CORS from the OS origin; preserve required ads, privacy choices and region restrictions; test live playback and teardown before releasing. |
+| Vendor-supported web player/partner integration | Potentially robust route to Plex-hosted free content | Confirm whether Plex offers an embeddable SDK or approved integration supporting an original host UI. None was verified in this review. |
+| Official native Windows application through a companion | Full official player on supported host OS | Requires a locally installed companion and platform-specific launch integration. It cannot run inside a standard browser-only PortfoliOS session or solve Android portability by itself. |
+| Official site as top-level navigation | Working guest fallback | Leaves our native app UI. It is an optional handoff, not the requested integrated player, and was not substituted for the application. |
+
+Prioritize the original-client connection spike. Its deliverable is one signed-out guest title playing from the actual PortfoliOS origin with the full required ad/session flow, not a copied expiring stream URL. Do not spoof the official app identity or silently disable browser isolation as a shortcut. Keep the current personal-server implementation and its separate sign-in usable while the spike is evaluated.
