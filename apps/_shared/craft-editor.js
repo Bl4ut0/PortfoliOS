@@ -70,18 +70,36 @@
       },{signal:abort.signal});
       root.querySelector('[data-craft-retry]').addEventListener('click',()=>{for(const m of failures.values())queue(m);},{signal:abort.signal});
       root.addEventListener('launch-params',action(async()=>{if(ready&&root.launchParams?.path)await open(await SystemFS.readFile(root.launchParams.path),'launch');}),{signal:abort.signal});
+      let closeChoice = null;
+      function resolveFailedClose(message, context) {
+        say(message);
+        // Automatic handoff must retain unsaved work; only a manual close can discard it.
+        if (context.autoSave || context.reason && context.reason !== 'close') return false;
+        if (closeChoice) return closeChoice;
+        closeChoice = new Promise(resolve => {
+          const panel = document.createElement('div'); panel.className = 'craft-close-confirm';
+          panel.setAttribute('role','group'); panel.setAttribute('aria-label','Unsaved output');
+          panel.innerHTML = '<p>Unsaved output is retained. Retry saving, keep editing, or discard it to close this editor.</p><button type="button" data-retry>Retry save</button><button type="button" data-keep>Keep editing</button><button type="button" data-discard>Discard and close</button>';
+          root.querySelector('.craft-host').append(panel);
+          const finish = discard => { panel.remove(); closeChoice = null; resolve(discard); };
+          panel.querySelector('[data-keep]').onclick = () => finish(false);
+          panel.querySelector('[data-retry]').onclick = () => { for (const output of failures.values()) queue(output); finish(false); };
+          panel.querySelector('[data-discard]').onclick = () => { failures.clear(); finish(true); };
+        });
+        return closeChoice;
+      }
       sessions.set(root,{
-        async beforeClose(){
+        async beforeClose(context = {}){
           if(busy){say('Finish or cancel the file dialog first.');return false;}
-          await writes;if(failures.size){say('Retry the retained output before closing.');return false;}
+          await writes;if(failures.size)return resolveFailedClose('Save was not completed.',context);
           if(!ready)return true;
-          flushing=true;try{const result=await request('flush');await writes;if(!result.ok || failures.size){say(result.error || 'Save your project before closing or switching profiles.');return false;}if(['vectorcraft','designcraft'].includes(config.id)&&interacted&&!closeConfirmed){closeConfirmed=await new Promise(resolve=>{const panel=document.createElement('div');panel.className='craft-close-confirm';panel.innerHTML='<p>The active document has been saved. Save any other open documents before closing this editor.</p><button type="button" data-keep>Keep editing</button><button type="button" data-close>All documents saved � close</button>';root.querySelector('.craft-host').append(panel);panel.querySelector('[data-keep]').onclick=()=>{panel.remove();resolve(false);};panel.querySelector('[data-close]').onclick=()=>{panel.remove();resolve(true);};});return closeConfirmed;}return true;}catch(error){say(error.message);return false;}finally{flushing=false;}
+          flushing=true;try{const result=await request('flush');await writes;if(!result.ok || failures.size)return resolveFailedClose(result.error || 'Save your project before closing or switching profiles.',context);if(['vectorcraft','designcraft'].includes(config.id)&&interacted&&!closeConfirmed){closeConfirmed=await new Promise(resolve=>{const panel=document.createElement('div');panel.className='craft-close-confirm';panel.innerHTML='<p>The active document has been saved. Save any other open documents before closing this editor.</p><button type="button" data-keep>Keep editing</button><button type="button" data-close>All documents saved � close</button>';root.querySelector('.craft-host').append(panel);panel.querySelector('[data-keep]').onclick=()=>{panel.remove();resolve(false);};panel.querySelector('[data-close]').onclick=()=>{panel.remove();resolve(true);};});return closeConfirmed;}return true;}catch(error){say(error.message);return false;}finally{flushing=false;}
         },
         close(){alive=false;clearTimeout(timer);abort.abort();for(const r of requests.values()){clearTimeout(r.timeout);r.reject(new Error('Editor closed.'));}requests.clear();frame.remove();sessions.delete(root);}
       });
       timer=setTimeout(()=>{if(!ready){frame.removeAttribute('src');say('Startup timed out. Close and reopen to retry.');root.querySelector('[data-craft-loading]').textContent='Startup timed out. Close and reopen to retry.';}},90000);
       frame.src='apps/'+config.id+'/runtime/index.php/host.html?host=parent&fresh=1'+(config.id==='lightcraft'?'&store=idb&workers=0':config.id==='effectcraft'?'&empty&home&frameworkers=1&webgl':'');
     }
-    window.appRegistry[config.id]={title:config.title,icon:config.icon,windowClass:config.id+'-window document-window',renderBody:()=>`<main class="craft-host"><p data-craft-status role="status">Loading ${config.title}…</p><div data-craft-loading>Loading ${config.title}…</div><button type="button" data-craft-retry hidden>Retry save</button><iframe title="${config.title} editor" sandbox="allow-scripts allow-downloads" referrerpolicy="no-referrer"></iframe></main>`,onOpen:mount,beforeClose:root=>sessions.get(root)?.beforeClose(),onClose:root=>sessions.get(root)?.close()};
+    window.appRegistry[config.id]={title:config.title,icon:config.icon,windowClass:config.id+'-window document-window',renderBody:()=>`<main class="craft-host"><p data-craft-status role="status">Loading ${config.title}…</p><div data-craft-loading>Loading ${config.title}…</div><button type="button" data-craft-retry hidden>Retry save</button><iframe title="${config.title} editor" sandbox="allow-scripts allow-downloads" referrerpolicy="no-referrer"></iframe></main>`,onOpen:mount,beforeClose:(root,context)=>sessions.get(root)?.beforeClose(context),onClose:root=>sessions.get(root)?.close()};
   };
 })();
