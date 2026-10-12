@@ -77,3 +77,7 @@ Next acceptance gates: layered PhotoCraft and multi-document VectorCraft/DesignC
 - Future: curated licensed pack catalog and conversion tooling for external theme formats. Native Linux/Android pack installation is not implemented.
 
 Installed Store app Desktop defaults (2026.10.11.9): seed all installed Desktop-capable Store apps, retain shortcuts moved into Desktop folders, restore deleted shortcuts on explicit reinstall, and keep installation busy until the shortcut write completes. Browser regression covers all 18 current Desktop Store entries plus profile isolation/reload. Folder move atomicity and Drive move reconciliation from the separate audit remain unresolved.
+
+## Native Plex client research (2026-10-11)
+
+- [ ] Validate native Plex client connectivity, authentication and playback against a real server before enabling a Store entry. Build independent Desktop/Mobile views, not an embedded Plex website. See [research and implementation gates](docs/PLEX_CLIENT_RESEARCH.md). Research only; not currently implemented.
