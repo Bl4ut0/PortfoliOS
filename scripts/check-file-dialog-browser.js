@@ -26,5 +26,10 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT||'playwright');
  await p.screenshot({path:'.tmp/systemfs-dialog-mobile.png'});
  assert(await p.locator('dialog').evaluate(el=>el.getBoundingClientRect().width<=innerWidth));
  await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>result),null);
+ for(const choice of ['cancel','discard','save']){
+  await p.evaluate(()=>{window.closeResult=undefined;SystemFS.showClosePrompt({title:'Close editor'}).then(r=>window.closeResult=r);});
+  await p.locator('[data-choice="'+choice+'"]').click();await p.waitForFunction(()=>window.closeResult!==undefined);
+  assert.equal(await p.evaluate(()=>closeResult),choice);
+ }
  console.log('PASS: places/breadcrumb navigation, filtering, save path, open selection, mobile fit and Escape cancellation.');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

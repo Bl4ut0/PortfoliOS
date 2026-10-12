@@ -90,10 +90,17 @@
       }
       sessions.set(root,{
         async beforeClose(context = {}){
+          if(context.reason === 'close' && !context.autoSave) {
+            if(!interacted && !failures.size && !busy) return true;
+            const choice=await SystemFS.showClosePrompt({title:'Close '+config.title,signal:abort.signal});
+            if(choice==='discard') return true;
+            if(choice!=='save') return false;
+            context={...context,reason:'save-close',autoSave:true};
+          }
           if(busy){say('Finish or cancel the file dialog first.');return false;}
           await writes;if(failures.size)return resolveFailedClose('Save was not completed.',context);
           if(!ready)return true;
-          flushing=true;try{const result=await request('flush');await writes;if(!result.ok || failures.size)return resolveFailedClose(result.error || 'Save your project before closing or switching profiles.',context);if(['vectorcraft','designcraft'].includes(config.id)&&interacted&&!closeConfirmed){closeConfirmed=await new Promise(resolve=>{const panel=document.createElement('div');panel.className='craft-close-confirm';panel.innerHTML='<p>The active document has been saved. Save any other open documents before closing this editor.</p><button type="button" data-keep>Keep editing</button><button type="button" data-close>All documents saved — close</button>';root.querySelector('.craft-host').append(panel);panel.querySelector('[data-keep]').onclick=()=>{panel.remove();resolve(false);};panel.querySelector('[data-close]').onclick=()=>{panel.remove();resolve(true);};});return closeConfirmed;}return true;}catch(error){say(error.message);return false;}finally{flushing=false;}
+          flushing=true;try{const result=await request('flush');await writes;if(!result.ok || failures.size)return resolveFailedClose(result.error || 'Save your project before closing or switching profiles.',context);if(context.reason!=='save-close'&&['vectorcraft','designcraft'].includes(config.id)&&interacted&&!closeConfirmed){closeConfirmed=await new Promise(resolve=>{const panel=document.createElement('div');panel.className='craft-close-confirm';panel.innerHTML='<p>The active document has been saved. Save any other open documents before closing this editor.</p><button type="button" data-keep>Keep editing</button><button type="button" data-close>All documents saved — close</button>';root.querySelector('.craft-host').append(panel);panel.querySelector('[data-keep]').onclick=()=>{panel.remove();resolve(false);};panel.querySelector('[data-close]').onclick=()=>{panel.remove();resolve(true);};});return closeConfirmed;}return true;}catch(error){say(error.message);return false;}finally{flushing=false;}
         },
         close(){alive=false;clearTimeout(timer);abort.abort();for(const r of requests.values()){clearTimeout(r.timeout);r.reject(new Error('Editor closed.'));}requests.clear();frame.remove();sessions.delete(root);}
       });

@@ -43,12 +43,12 @@ function fixture() {
   // The real egui canvas has no DOM buttons. Rotate control coordinates correspond
   // to this fixed 1200x850 app viewport and are checked by dirty state + exported PDF.
   await iframe.click({position:{x:120,y:354}});await page.waitForTimeout(500);await iframe.click({position:{x:80,y:224}});await page.waitForTimeout(500);await page.screenshot({path:path.join(root,'.tmp/pdfcraft/rotate-dialog.png')});await page.waitForTimeout(300);
-  assert.equal(await page.evaluate(()=>window.closeDesktopWindow('pdfcraft')),false,'Dirty editor must veto close');
+  assert.equal(await page.evaluate(()=>window.runAppLifecycleHook('pdfcraft','beforeClose',window.getDesktopWindowElement('pdfcraft'),{reason:'profile-switch'})),false,'Dirty editor must veto close');
   assert.equal(await page.evaluate(async()=>{try{await prepareProfileSwitch();return false;}catch{return true;}}),true,'Dirty editor must veto profile switch');
   await iframe.click({position:{x:500,y:300}});await page.evaluate(()=>{window.pdfTestWrite=SystemFS.writeFile;SystemFS.writeFile=async()=>{throw new Error('Disposable save failure');};});
   await page.keyboard.press('Control+s');
   await page.locator('[data-pdf-status]').filter({hasText:'Save failed'}).waitFor({state:'attached'});
-  assert.equal(await page.evaluate(()=>closeDesktopWindow('pdfcraft')),false,'Failed export must veto close');
+  assert.equal(await page.evaluate(()=>runAppLifecycleHook('pdfcraft','beforeClose',getDesktopWindowElement('pdfcraft'),{reason:'profile-switch'})),false,'Failed export must veto profile switch');
   await page.evaluate(()=>{SystemFS.writeFile=window.pdfTestWrite;delete window.pdfTestWrite;});
   await page.locator('[data-pdf-retry]').click();
   await page.locator('[data-pdf-status]').filter({hasText:'Saved /documents/PdfCraft/original.pdf'}).waitFor({timeout:15000,state:'attached'});
@@ -56,7 +56,7 @@ function fixture() {
   await iframe.click({position:{x:500,y:300}});await page.keyboard.press('Control+Shift+s');
   await page.waitForTimeout(800);await page.screenshot({path:path.join(root,'.tmp/pdfcraft/save-as.png')});
   await page.locator('dialog h2').filter({hasText:'Save PDF As'}).waitFor();
-  assert.equal(await page.evaluate(()=>closeDesktopWindow('pdfcraft')),false,'Open Save As dialog must veto close without hanging');
+  assert.equal(await page.evaluate(()=>runAppLifecycleHook('pdfcraft','beforeClose',getDesktopWindowElement('pdfcraft'),{reason:'profile-switch'})),false,'Open Save As dialog must veto profile switch without hanging');
   await page.locator('dialog [data-action=cancel]:last-child').click();
   await page.locator('[data-pdf-status]').filter({hasText:'Save cancelled'}).waitFor({state:'attached'});
   assert(await page.locator('[data-pdf-retry]').isHidden(),'Cancelling is not a failed save');await iframe.click({position:{x:500,y:300}});await page.keyboard.press('Control+Shift+s');await page.locator('dialog h2').filter({hasText:'Save PDF As'}).waitFor();
@@ -90,7 +90,7 @@ function fixture() {
   await page.evaluate(()=>openDesktopWindow('pdfcraft',{path:'/documents/PdfCraft/original.pdf'}));
   await page.locator('[data-pdf-status]').filter({hasText:'Opened original.pdf'}).waitFor({state:'attached',timeout:90000});await page.waitForTimeout(500);
   const autoFrame=page.locator('iframe[title="PdfCraft PDF editor"]');await autoFrame.click({position:{x:120,y:354}});await page.waitForTimeout(400);await autoFrame.click({position:{x:80,y:224}});await page.waitForTimeout(400);await autoFrame.click({position:{x:500,y:300}});
-  assert.equal(await page.evaluate(()=>closeDesktopWindow('pdfcraft')),false,'Automatic public-switch fixture is dirty');
+  assert.equal(await page.evaluate(()=>runAppLifecycleHook('pdfcraft','beforeClose',getDesktopWindowElement('pdfcraft'),{reason:'profile-switch'})),false,'Automatic public-switch fixture is dirty');
   await page.evaluate(()=>switchToPublicProfile());
   assert.equal(await page.evaluate(()=>SystemFS.readFile('/documents/PdfCraft/original.pdf')),null);
   await page.evaluate(async()=>{setInstalledStoreAppIds(['pdfcraft']);await SystemFS.writeFile('/documents/public-pdf-test.txt','public-pdf-test.txt','/documents','test',4,'text/plain');});

@@ -693,6 +693,23 @@ window.SystemFS = {
         });
     },
 
+    async showClosePrompt({title='Close editor', signal} = {}) {
+        if (signal?.aborted) return 'cancel';
+        const owner=window.state?.currentUserId;
+        return new Promise(resolve=>{
+            const dialog=document.createElement('dialog');dialog.className='systemfs-dialog';dialog.setAttribute('aria-label',title);
+            dialog.innerHTML='<header class="systemfs-dialog-header"><h2></h2></header><p>Save your changes before closing? Closing without saving discards unsaved changes.</p><footer class="systemfs-dialog-footer"><button type="button" data-choice="cancel">Cancel</button><button type="button" data-choice="discard">Close without saving</button><button type="button" data-choice="save">Save and close</button></footer>';
+            dialog.querySelector('h2').textContent=title;
+            let settled=false;
+            const finish=value=>{if(settled)return;settled=true;signal?.removeEventListener('abort',cancel);window.EventBus?.off?.('user:changed',cancel);dialog.close();dialog.remove();resolve(owner===window.state?.currentUserId?value:'cancel');};
+            const cancel=()=>finish('cancel');
+            dialog.addEventListener('click',event=>{const choice=event.target.closest('[data-choice]')?.dataset.choice;if(choice)finish(choice);});
+            dialog.addEventListener('cancel',event=>{event.preventDefault();cancel();});
+            signal?.addEventListener('abort',cancel,{once:true});window.EventBus?.on?.('user:changed',cancel);
+            (document.body.dataset.view==='mobile'?document.getElementById('mobile-device')||document.body:document.body).append(dialog);dialog.showModal();
+        });
+    },
+
     showOpenDialog(options = {}) {
         return this.showFileDialog({ ...options, mode: "open" });
     },

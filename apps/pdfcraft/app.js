@@ -114,6 +114,13 @@
     window.addEventListener('beforeunload', unload, { signal: abort.signal });
     sessions.set(root, {
       async beforeClose(context = {}) {
+        if (context.reason === 'close' && !context.autoSave) {
+          if (!dirty && !pending && !failedSaves.size && !choice) return true;
+          const selected=await window.SystemFS.showClosePrompt({title:'Close PdfCraft',signal:abort.signal});
+          if(selected==='discard') return true;
+          if(selected!=='save') return false;
+          context={...context,reason:'save-close',autoSave:true};
+        }
         if (context.autoSave && dirty && !choice && !failedSaves.size) {
           automaticSave = true;
           const previous = exportsReceived;
