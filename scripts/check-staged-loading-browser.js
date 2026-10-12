@@ -132,6 +132,17 @@ const server = http.createServer((req, res) => {
         assert.equal(await mp.locator('#mobile-device').count(), 1);
         await mountRetry.close();
 
+        // Workspace HTML retries work even without service-worker control.
+        const htmlRetry = await context(); const hp = await page(htmlRetry); await selector(hp);
+        await hp.locator('[data-enter-view=desktop]').click();
+        await hp.locator('[data-session-public]').waitFor();
+        assert.equal(await hp.locator('link[rel=prefetch][href*="workspace.html"]').count(), 0);
+        failures.set('/core/workspace.html', 2); failures.set('/desktop/workspace.html', 2);
+        await hp.locator('[data-session-public]').click(); await ready(hp);
+        assert.equal(failures.get('/core/workspace.html'), 0);
+        assert.equal(failures.get('/desktop/workspace.html'), 0);
+        await htmlRetry.close();
+
         // A remembered private workspace activates storage only after its account is selected.
         const privateContext = await context();
         await privateContext.addInitScript(() => {

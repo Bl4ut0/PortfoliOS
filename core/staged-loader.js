@@ -55,15 +55,26 @@
     }
     function markup(path) {
         return once("html:" + path, async () => {
-            const response = await fetch(url(path));
-            if (!response.ok) throw new Error("Could not load " + path + " (" + response.status + "). Please try again.");
-            return response.text();
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    // Do not reuse a failed speculative response from the HTTP cache.
+                    const response = await fetch(url(path), {cache:"no-store"});
+                    if (response.ok) return await response.text();
+                    const error = new Error("Could not load " + path + " (" + response.status + "). Please try again.");
+                    error.retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
+                    await response.body?.cancel();
+                    throw error;
+                } catch (error) {
+                    if (error.retryable === false || attempt === 2) throw error;
+                    await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
+                }
+            }
         });
     }
     function prefetch(view) {
         const shell = manifest.shells[view];
         if (!shell || navigator.connection?.saveData) return;
-        for (const path of [...shell.scripts, ...shell.styles, "core/workspace.html", view + "/workspace.html"]) {
+        for (const path of [...shell.scripts, ...shell.styles]) {
             if (document.querySelector('link[data-prefetch-path="' + path + '"]')) continue;
             const link = document.createElement("link"); link.rel = "prefetch"; link.href = url(path); link.dataset.prefetchPath = path;
             link.as = path.endsWith(".js") ? "script" : path.endsWith(".css") ? "style" : "fetch"; document.head.appendChild(link);
