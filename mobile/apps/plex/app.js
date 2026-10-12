@@ -1,0 +1,1 @@
+(function(){window.mobileAppRegistry.plex={title:'Plex Player',icon:'apps/plex/icon.svg',viewClass:'mobile-plex-app',render:()=>window.PlexPlayer?.markup()||'<main class="plex-player"></main>',onOpen:root=>PlexPlayer.mount(root,{mobile:true}),onPause:root=>PlexPlayer.pause(root),onBack:root=>PlexPlayer.back(root),onClose:root=>PlexPlayer.close(root)};})();

@@ -31,7 +31,7 @@ const catalog = catalogWindow.mobileAppCatalog;
 const systems = systemsWindow.systems;
 const privateCatalog = catalog.filter((app) => !(app.visibilitySourceId || app.sourceId));
 
-assert.equal(catalog.length, 24);
+assert.equal(catalog.length, 25);
 ["store", "local-ai", "taskmgr", "security-center", "profile", "dossier", "romplayer"].forEach(id => assert.ok(catalog.some(app => app.id === id)));
 const rom = catalog.find(app => app.id === "romplayer");
 assert.equal(catalogWindow.isMobileAppInstalled(rom), false);
@@ -41,7 +41,7 @@ assert.equal(catalog.find((app) => app.id === "media")?.sourceId, undefined);
 assert.equal(catalog.find((app) => app.id === "media")?.visibilitySourceId, "media");
 assert.deepEqual(homeData.config.dock, ["browser", "documents", "music", "settings"]);
 assert.equal(homeData.searchApps(catalog).length, catalog.length);
-assert.equal(homeData.searchApps(privateCatalog).length, 15);
+assert.equal(homeData.searchApps(privateCatalog).length, 16);
 assert.equal(homeData.searchApps(privateCatalog, "app store")[0]?.id, "store");
 assert.equal(homeData.searchApps(catalog, "pdf")[0]?.id, "documents");
 assert.equal(homeData.searchApps(catalog, "photos")[0]?.id, "media");

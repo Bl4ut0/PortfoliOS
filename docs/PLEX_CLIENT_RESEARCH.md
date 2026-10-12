@@ -1,6 +1,6 @@
 # Native Plex client research
 
-Reviewed 2026-10-11. Status: researched proposal; no Plex runtime, account connection, playback certification, or Store entry has been implemented.
+Reviewed 2026-10-11. Status: native Desktop/Mobile Preview implemented with synthetic browser validation. Real Plex server authorization, CORS, codecs, transcoding and playback entitlement remain unverified; this is not playback certification.
 
 ## Product direction
 

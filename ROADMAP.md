@@ -80,4 +80,4 @@ Installed Store app Desktop defaults (2026.10.11.9): seed all installed Desktop-
 
 ## Native Plex client research (2026-10-11)
 
-- [ ] Validate native Plex client connectivity, authentication and playback against a real server before enabling a Store entry. Build independent Desktop/Mobile views, not an embedded Plex website. See [research and implementation gates](docs/PLEX_CLIENT_RESEARCH.md). Research only; not currently implemented.
+- [ ] Validate the native Plex Preview against a real server before promoting it to a supported release. Build independent Desktop/Mobile views, not an embedded Plex website. See [research and implementation gates](docs/PLEX_CLIENT_RESEARCH.md). Preview implemented: native library UI, memory-only linking, browser direct playback and on-demand HLS fallback. Synthetic browser checks pass; real server validation remains open.

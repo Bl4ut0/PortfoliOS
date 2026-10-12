@@ -5,6 +5,7 @@
  * utilities are designed for touch and portfolio apps use mobile-specific views.
  */
 window.mobileAppCatalog = [
+    { id: "plex", title: "Plex Player", icon: "apps/plex/icon.svg", color: "#e5a00d", category: "media", installable: true, description: "Native Plex client preview. Personal libraries and browser playback; server compatibility testing ongoing." },
     { id: "codex", title: "Codex CLI Preview", icon: "fa-solid fa-terminal", color: "#22d3ee", category: "productivity", installable: true, description: "Private workspace readiness and official CLI setup. Browser coding and ChatGPT sign-in are not available yet." },
     { id: "store", title: "Store", icon: "fa-solid fa-shop", color: "#a78bfa", category: "system", pinned: true, description: "Discover mobile apps and desktop alternatives." },
     { id: "local-ai", title: "Lobe", icon: "fa-solid fa-brain", color: "#22d3ee", category: "productivity", description: "Chat with your session-aware assistant." },

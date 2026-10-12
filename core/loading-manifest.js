@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.10.11.21";
+    const release = "2026.10.11.22";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "core/app-icons.js", "data/systems.js", "data/apps.js",
@@ -27,6 +27,7 @@
             }
         },
         services: {
+            plex: ["core/plex-client.js", "core/plex-player.js"],
             craft: ["apps/_shared/craft-editor.js"],
             ai: ["core/local-ai.js", "core/simple-brain.js"],
             media: ["core/file-intents.js", "core/media-service.js"],
@@ -34,6 +35,7 @@
             browser: ["data/bookmarks.js", "core/browser-workspace.js"]
         },
         desktopApps: {
+            plex: ["@plex"],
             photocraft: ["@craft"],
             vectorcraft: ["@craft"],
             designcraft: ["@craft"],
@@ -54,6 +56,7 @@
             openrct2: ["@games"], ut99: ["@games"], romplayer: ["@games"]
         },
         mobileApps: {
+            plex: ["@plex"],
             codex: ["core/codex-preview.js"],
             browser: ["@browser"],
             "local-ai": ["@ai"], music: ["@media"], files: ["@media"], documents: ["@media"], media: ["@media"]

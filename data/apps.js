@@ -79,6 +79,7 @@ window.defaultDesktopIconLayout = {
 };
 
 window.desktopApps = [
+    { id: "plex", title: "Plex Player", icon: "apps/plex/icon.svg", category: "media", modular: true, meta: "Native Plex client preview" },
     { id: "vscode", title: "Code OSS", icon: "apps/vscode/icon.png", category: "development", modular: true, meta: "SystemFS code workspace" },
     { id: "pdfcraft", title: "PdfCraft", icon: "apps/pdfcraft/icon.svg", category: "productivity", modular: true, meta: "PDF editor and organizer" },
     { id: "photocraft", title: "PhotoCraft", icon: "apps/photocraft/icon.svg", category: "productivity", modular: true, meta: "Layered image and raster artwork editing" },
@@ -119,6 +120,7 @@ window.modularApps = window.desktopApps
     .map((app) => app.id);
 
 window.storeApps = [
+    { id: "plex", title: "Plex Player", icon: "apps/plex/icon.svg", category: "Media", description: "Native Plex library and browser player preview. Link your account, choose a secure server, and play personal media. Server/browser compatibility testing is ongoing.", size: "On-demand streaming", publisher: "PortfoliOS / unofficial Plex client" },
     { id: "vscode", title: "Code OSS", icon: "apps/vscode/icon.png", category: "Development", description: "VS Code web workbench for your Documents workspace. Explorer, editing and local saves. Native terminals and desktop-only extensions need a separate runtime.", size: "10 MB runtime", publisher: "Code OSS / CodinGame / PortfoliOS" },
     { id: "pdfcraft", title: "PdfCraft", icon: "apps/pdfcraft/icon.svg", category: "Productivity", description: "Edit and organize PDFs locally with the official PdfCraft WASM editor. Opens and saves workspace PDFs. Desktop interface; runtime loads on first launch.", size: "41 MB runtime", publisher: "ArtCraft / PortfoliOS adapter" },
     { id: "photocraft", title: "PhotoCraft", icon: "apps/photocraft/icon.svg", category: "Productivity", description: "Photoshop-style layers, brushes, image editing, and PSD workflows. Desktop interface; workspace storage.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },

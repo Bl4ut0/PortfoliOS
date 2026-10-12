@@ -241,6 +241,7 @@ const installAppFiles = async (id) => {
     window.renderStore();
 
     const modularStoreApps = [
+        "plex",
         "codex", "pdfcraft", "photocraft", "vectorcraft",
         "lightcraft", "designcraft", "filmcraft", "effectcraft"
     ];
