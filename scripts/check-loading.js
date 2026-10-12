@@ -44,7 +44,7 @@ const handlers = new Map();
 let active = 0, maxActive = 0, fetches = 0, failure = null;
 class SameOriginRequest extends Request { constructor(input, options) { super(typeof input === 'string' ? new URL(input, origin) : input, options); } }
 const sandbox = {
-    URL, Request:SameOriginRequest, Response, Blob, caches, console,
+    URL, Request:SameOriginRequest, Response, Blob, caches, console, setTimeout: callback => setTimeout(callback, 0),
     self:{ location:{origin}, addEventListener:(name, callback) => handlers.set(name, callback), skipWaiting:async()=>{}, clients:{claim:async()=>{}} },
     fetch:async request => {
         fetches++; active++; maxActive = Math.max(active, maxActive);
@@ -77,6 +77,14 @@ module.exports = (async () => {
     fetches = 0;
     await sandbox.serveMobileShellAsset(new Request(origin + asset));
     assert.equal(fetches, 0, 'exact cached versions must not revalidate');
+    let attempts = 0;
+    sandbox.fetch = async () => new Response('temporary', {status:++attempts < 3 ? 503 : 200});
+    assert.equal((await sandbox.serveMobileShellAsset(new Request(origin + '/desktop/shell.js?v=' + build))).status, 200);
+    assert.equal(attempts, 3, 'temporary 503s should recover with bounded retries');
+    attempts = 0;
+    sandbox.fetch = async () => { attempts++; return new Response('missing', {status:404}); };
+    assert.equal((await sandbox.serveMobileShellAsset(new Request(origin + '/desktop/missing.js?v=' + build))).status, 404);
+    assert.equal(attempts, 1, 'permanent HTTP failures must not retry');
     sandbox.fetch = async () => { throw new Error('offline'); };
     await assert.rejects(sandbox.serveMobileShellAsset(new Request(origin + '/mobile/shell.js?v=unknown')), /offline/);
     sandbox.openDB = async () => ({});

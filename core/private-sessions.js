@@ -67,7 +67,7 @@
             await this.assert();
             const target=new URL(url);
             const response=await fetch('/core/private-session.php?action=drive', {
-                ...options, signal:AbortSignal.timeout(75000),
+                ...options, method:'POST', cache:'no-store', signal:AbortSignal.timeout(75000),
                 headers:{'Authorization':'Bearer '+GDriveSync.getToken(),'Content-Type':options.headers?.['Content-Type'] || 'application/octet-stream',
                     'X-PortfoliOS-Session':this.id,'X-PortfoliOS-Epoch':String(this.epoch),
                     'X-Drive-Method':options.method,'X-Drive-Path':target.pathname+target.search,

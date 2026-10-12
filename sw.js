@@ -1,7 +1,7 @@
 /** Offline boot plus assets actually used by a workspace. App binaries stay in SystemFS. */
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const SHELL_RELEASE = "2026.10.11.17";
+const SHELL_RELEASE = "2026.10.11.18";
 const SHELL_CACHE = "portfolio-shell-" + SHELL_RELEASE;
 const versioned = path => path + "?v=" + SHELL_RELEASE;
 const BOOT_ASSETS = ["/", "/manifest.webmanifest", ...[
@@ -57,6 +57,19 @@ function isMobileShellAsset(path) {
         || /^\/(?:mobile\/)?apps\/[^/]+\/app\.(js|css)$/.test(path)
         || path === "/apps/_shared/iframe-game.js";
 }
+async function fetchShellAsset(request) {
+    // Retry temporary origin failures without accepting assets from another release.
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const response = await fetch(request);
+            if (![408, 429, 500, 502, 503, 504].includes(response.status) || attempt === 2) return response;
+            await response.body?.cancel();
+        } catch (error) {
+            if (request.signal?.aborted || attempt === 2) throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+}
 async function serveMobileShellAsset(request) {
     const cache = await caches.open(SHELL_CACHE);
     const navigation = request.mode === "navigate";
@@ -65,7 +78,7 @@ async function serveMobileShellAsset(request) {
     // Exact versioned assets need no repeat revalidation. Never fall back to another release's code.
     if (!navigation && version && cached) return cached;
     try {
-        const response = await fetch(request);
+        const response = await fetchShellAsset(request);
         if (response.ok) await cache.put(request, response.clone());
         return response;
     } catch (error) {
@@ -250,7 +263,7 @@ async function serveFromIndexedDB(relativePath, request) {
                     // Upgrade previously installed HTML to the CDN's CORS policy.
                     body = text.replace('<script src="https://js-dos.com/6.22/current/js-dos.js"></script>', '<script src="https://js-dos.com/6.22/current/js-dos.js" crossorigin="anonymous"></script>');
                 } else if (relativePath === "/apps/quake/index.html" && !text.includes('src="portfolio-data.js')) {
-                    body = text.replace('</body>', '<script src="portfolio-data.js?v=2026.10.11.17"></script></body>');
+                    body = text.replace('</body>', '<script src="portfolio-data.js?v=2026.10.11.18"></script></body>');
                 } else {
                     body = text;
                 }

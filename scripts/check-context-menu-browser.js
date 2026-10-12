@@ -17,6 +17,17 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   }
   await p.goto(target);await enter();
 
+  await p.evaluate(async()=>{await createDesktopFolder('Position Test');await renderDesktopIcons();});
+  const cells=()=>p.evaluate(()=>Object.fromEntries([...document.querySelectorAll('#desktop-icons .desktop-icon')].map(el=>[el.dataset.desktopId,[el.style.left,el.style.top]])));
+  const before=await cells(),drag=p.locator('#desktop-icons .desktop-icon').first(),dragId=await drag.getAttribute('data-desktop-id'),box=await drag.boundingBox();
+  await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();
+  await p.mouse.move(box.x+box.width/2+350,box.y+box.height/2+210,{steps:8});await p.mouse.up();
+  await p.waitForFunction(async()=>Object.keys((await readDesktopLayout()).positions).length===document.querySelectorAll('#desktop-icons .desktop-icon').length);
+  await p.evaluate(()=>renderDesktopIcons());
+  const after=await cells();
+  for(const [id,cell] of Object.entries(before))if(id!==dragId)assert.deepEqual(after[id],cell,'Dragging must preserve other icons: '+id);
+  await p.reload();await enter();await p.waitForFunction(()=>document.querySelectorAll('#desktop-icons .desktop-icon').length>0);assert.deepEqual(await cells(),after,'All visible icon cells survive reload');
+
   const menu=p.locator('#desktop-context-menu');
   const send=()=>menu.getByRole('menuitem',{name:'Send to Desktop (create shortcut)',exact:true});
   async function rightClick(selector){await p.locator(selector).first().click({button:'right'});await menu.waitFor({state:'visible'});}

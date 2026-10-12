@@ -283,7 +283,7 @@ window.renderDesktopIcons = async () => {
 
     // Pass 2: Place remaining apps in default grid slots
     appsToPlaceLater.forEach((item, fallbackIndex) => {
-        let { col, row } = window.getDefaultDesktopIconCell(item, fallbackIndex, maxRows, maxCols);
+        let { col, row } = window.getDefaultDesktopIconCell(item, apps.indexOf(item), maxRows, maxCols);
 
         let gridKey = `${col},${row}`;
         if (occupied.has(gridKey)) {
@@ -412,7 +412,12 @@ window.initDesktopIconDragging = () => {
                 icon.style.top = `${snappedTop}px`;
 
                 try {
-                    await window.saveDesktopLayoutPositions({[icon.dataset.desktopId]:{col:resolved.col,row:resolved.row}},dragOwner);
+                    // Persist every visible cell so unchanged icons do not get repacked on render/reload.
+                    const positions = Object.fromEntries(Array.from(container.querySelectorAll(".desktop-icon")).map(el => [
+                        el.dataset.desktopId,
+                        {col:Math.round((parseFloat(el.style.left)||0)/cellWidth),row:Math.round((parseFloat(el.style.top)||0)/cellHeight)}
+                    ]));
+                    await window.saveDesktopLayoutPositions(positions,dragOwner);
                 } catch(error) { window.showDesktopToast?.('Icon position was not saved: '+error.message); }
 
                 window.renderDesktopIcons();

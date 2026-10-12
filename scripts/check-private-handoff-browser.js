@@ -27,6 +27,7 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   await context.route('**/*',async route=>{
    const req=route.request(),url=new URL(req.url()),headers=req.headers();
    if(url.origin===origin && url.pathname==='/core/private-session.php'){
+    if(req.method()!=='POST')return reply(route,405,{error:'POST required.'});
     const id=headers['x-portfolios-session'],epoch=Number(headers['x-portfolios-epoch']),action=url.searchParams.get('action');
     if(action==='drive'){
      if(active?.id!==id || active?.epoch!==epoch)return reply(route,409,{error:'Lease lost'});
