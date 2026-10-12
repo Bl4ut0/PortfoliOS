@@ -134,7 +134,7 @@
         let path = "";
         segments.forEach((segment) => {
             path += `/${segment}`;
-            crumbs.push({ label: segment, path });
+            crumbs.push({ label: window.SystemFS.getDisplayName({ path, name: segment, isDirectory: true }), path });
         });
         container.innerHTML = crumbs.map((crumb, index) => `
             ${index ? '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>' : ""}
@@ -154,11 +154,11 @@
                 <button type="button" class="mobile-files-open" data-files-open="${escapeHtml(record.path)}">
                     <span class="mobile-files-icon"><i class="${iconFor(record)}"></i></span>
                     <span class="mobile-files-name">
-                        <strong>${escapeHtml(record.name)}</strong>
+                        <strong>${escapeHtml(window.SystemFS.getDisplayName(record))}</strong>
                         <small>${escapeHtml(secondary)}</small>
                     </span>
                 </button>
-                <button type="button" class="mobile-files-more" data-files-more="${escapeHtml(record.path)}" aria-label="Actions for ${escapeHtml(record.name)}">
+                <button type="button" class="mobile-files-more" data-files-more="${escapeHtml(record.path)}" aria-label="Actions for ${escapeHtml(window.SystemFS.getDisplayName(record))}">
                     <i class="fa-solid fa-ellipsis-vertical"></i>
                 </button>
             </article>

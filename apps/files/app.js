@@ -102,7 +102,7 @@
 
                 const segmentBtn = document.createElement("button");
                 segmentBtn.className = "breadcrumb-segment";
-                segmentBtn.textContent = part;
+                segmentBtn.textContent = window.SystemFS.getDisplayName({ path: accumulatedPath, name: part, isDirectory: true });
                 const pathForSegment = accumulatedPath;
                 segmentBtn.addEventListener("click", () => {
                     currentPath = pathForSegment;
@@ -211,7 +211,7 @@
                 el.dataset.fileType = item.type || "";
                 el.dataset.isDirectory = String(!!item.isDirectory);
                 const launcher = item.desktopShortcut && window.getDesktopLauncher(item.desktopShortcut.selectId || item.desktopShortcut.appId);
-                const safeName = escapeHtml(launcher?.title || item.name);
+                const safeName = escapeHtml(launcher?.title || window.SystemFS.getDisplayName(item));
 
                 let iconHtml = '<i class="fa-regular fa-file"></i>';
                 if (item.isDirectory) {

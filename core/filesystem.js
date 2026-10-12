@@ -72,6 +72,16 @@ window.SystemFS = {
         return cleanPath.slice(cleanPath.lastIndexOf("/") + 1);
     },
 
+    // Friendly labels only: canonical paths and user-defined names stay unchanged.
+    getDisplayName(record) {
+        const labels = {
+            "/apps": "Apps", "/documents": "Documents", "/Desktop": "Desktop",
+            "/music": "Music", "/Pictures": "Pictures", "/Downloads": "Downloads",
+            "/ROMs": "ROMs", "/Saved Games": "Saved Games", "/etc": "Etc", "/home": "Home"
+        };
+        return (record.isDirectory && labels[this.normalizePath(record.path)]) || record.name || this.getName(record.path);
+    },
+
     getType(data, type, isDirectory) {
         if (type) return type;
         if (isDirectory) return "directory";
@@ -654,7 +664,7 @@ window.SystemFS = {
                 const entries=await SystemFS.readDir(path);assert();if(token!==revision)return;
                 const list=find('[data-list]');list.replaceChildren();
                 entries.filter(e=>!e.name.startsWith('.') && SystemFS.canBrowsePath(e.path)).sort((a,b)=>Number(b.isDirectory)-Number(a.isDirectory)||a.name.localeCompare(b.name)).forEach(file=>{
-                    const button=document.createElement('button');button.type='button';button.className='systemfs-item-btn';button.textContent=(file.isDirectory?'📁 ':'')+file.name;button.dataset.path=file.path;
+                    const button=document.createElement('button');button.type='button';button.className='systemfs-item-btn';button.textContent=(file.isDirectory?'📁 ':'')+SystemFS.getDisplayName(file);button.dataset.path=file.path;
                     const match=!types.length||types.some(t=>file.name.toLowerCase().endsWith(t.toLowerCase()));button.disabled=mode==='open'&&!file.isDirectory&&!match;
                     button.addEventListener('click',action(async()=>{if(file.isDirectory){await navigate(file.path);return;}selected=file.path;nameInput.value=file.name;replacement=null;confirm.textContent=acceptLabel;list.querySelectorAll('[aria-pressed]').forEach(e=>e.removeAttribute('aria-pressed'));button.setAttribute('aria-pressed','true');}));
                     if(!file.isDirectory&&mode==='open'&&match)button.addEventListener('dblclick',action(async()=>{selected=file.path;await accept();}));list.append(button);
