@@ -24,3 +24,5 @@ See [Plex research and source documentation](../../docs/PLEX_CLIENT_RESEARCH.md)
 Plex’s official apps provide free ad-supported streaming, but the published third-party API documentation covers Plex Media Server. No documented guest catalog/playback integration has been verified for this client. The signed-out screen explicitly identifies this limitation; it does not load Plex Web, impersonate an official client or claim to stream the free catalog.
 
 The previous four-character TV linking flow has been replaced by the [documented hosted sign-in URL](https://developer.plex.tv/pms/) using a strong PIN request internally. No code entry is required. Credentials still remain memory-only.
+
+The signed-out screen includes **Test guest connection**. It sends credential-free live requests from the browser origin and displays HTTP outcomes without retaining or displaying authorization tokens. It is a diagnostic, not a guest streaming implementation.

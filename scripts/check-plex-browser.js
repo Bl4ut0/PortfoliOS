@@ -27,6 +27,8 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT||'playwright');
  const auth=await page.evaluate(()=>{const c=new PlexClient();const url=c.signInUrl({code:'strong-secret'});const id=c.id;c.close();return {url,id}});
  const params=new URLSearchParams(new URL(auth.url).hash.slice(2));assert.equal(params.get('clientID'),auth.id);assert.equal(params.get('code'),'strong-secret');assert.equal(new URL(auth.url).origin,'https://app.plex.tv');
  assert.equal(calls.filter(c=>c.path.startsWith('/api')).length,0,'No Plex network work before linking');
+ await page.getByRole('button',{name:'Test guest connection',exact:true}).click();
+ await page.locator('[data-guest-result]').filter({hasText:'No guest authorization obtained.'}).waitFor();
  await page.getByRole('button',{name:'Sign in to Plex',exact:true}).click();
  await page.getByText('Choose a server and connect.').waitFor();
  assert.ok(calls.some(c=>c.path==='/api/v2/pins'&&c.search==='?strong=true'));

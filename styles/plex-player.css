@@ -9,3 +9,5 @@
 @media(max-width:540px){.plex-player{padding:.75rem;}.plex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;}.plex-library-toolbar{align-items:stretch;}.plex-library-toolbar label,.plex-library-toolbar form{flex:1 1 100%;}.plex-library-toolbar select{flex:1;max-width:100%;}.plex-playback-options button{flex:1;}.plex-playback video{max-height:45dvh;}}
 
 .plex-catalog-note{margin-top:2rem;border-top:1px solid var(--line);padding-top:1rem;color:var(--text-muted)}.plex-catalog-note h3{color:var(--text)}.plex-player [data-auth-link]{display:inline-block;color:var(--theme-primary-ink);padding:.7rem;margin-block:.5rem}
+
+.plex-player [data-guest-result]{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:.85rem;line-height:1.6}
