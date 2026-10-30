@@ -749,6 +749,15 @@
         #0b0616;
 }
 
+.desktop-experience[data-wallpaper="custom"] .desktop-wallpaper,
+.wallpaper-preview[data-preview-wallpaper="custom"] {
+    background-image: var(--custom-wallpaper-url, none);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-color: #070914;
+}
+
 .cli-window .terminal-window {
     width: 100%;
     min-height: 0;

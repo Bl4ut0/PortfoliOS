@@ -262,7 +262,19 @@ window.applyDesktopResolution = () => {
 
 window.applyDesktopPreferences = () => {
     const desktop = window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience");
-    if (desktop) desktop.dataset.wallpaper = state.wallpaper;
+    if (desktop) {
+        desktop.dataset.wallpaper = state.wallpaper;
+        if (state.wallpaper === "custom") {
+            const customUrl = window.Storage ? window.Storage.local.get(window.getPreferencesKey("CustomWallpaperUrl")) : null;
+            if (customUrl) {
+                desktop.style.setProperty("--custom-wallpaper-url", `url("${customUrl}")`);
+            } else {
+                desktop.style.removeProperty("--custom-wallpaper-url");
+            }
+        } else {
+            desktop.style.removeProperty("--custom-wallpaper-url");
+        }
+    }
     
     if (window.renderWallpaperOptions) window.renderWallpaperOptions();
     window.applyVolume();
@@ -273,6 +285,55 @@ window.applyDesktopPreferences = () => {
     
     const resSelect = window.byId ? window.byId("desktop-resolution-select") : document.getElementById("desktop-resolution-select");
     if (resSelect) resSelect.value = state.desktopResolution;
+};
+
+window.setCustomWallpaper = async (recordOrBlob, path) => {
+    try {
+        let url = null;
+        if (typeof recordOrBlob === "string") {
+            url = recordOrBlob;
+        } else if (recordOrBlob instanceof Blob) {
+            url = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(recordOrBlob);
+            });
+        } else if (recordOrBlob?.data instanceof Blob) {
+            url = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(recordOrBlob.data);
+            });
+        } else if (typeof recordOrBlob?.data === "string") {
+            url = recordOrBlob.data;
+        } else if (path && window.SystemFS) {
+            const rec = await window.SystemFS.readFile(path);
+            if (rec?.data instanceof Blob) {
+                url = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.readAsDataURL(rec.data);
+                });
+            } else if (typeof rec?.data === "string") {
+                url = rec.data;
+            }
+        }
+
+        if (url) {
+            if (window.Storage) {
+                window.Storage.local.set(window.getPreferencesKey("CustomWallpaperUrl"), url);
+            }
+            window.setWallpaper("custom");
+            if (window.Toast) {
+                window.Toast.show("Desktop wallpaper updated", { type: "success" });
+            } else if (window.showDesktopToast) {
+                window.showDesktopToast("Desktop wallpaper updated");
+            }
+        }
+    } catch (e) {
+        console.error("Failed to set custom wallpaper:", e);
+        if (window.Toast) window.Toast.show("Failed to set wallpaper", { type: "error" });
+    }
 };
 
 window.getPreferencesKey = (k, userId = window.state?.currentUserId || "bl4ut0") => {

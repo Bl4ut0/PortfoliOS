@@ -222,7 +222,16 @@
                 const safeName = escapeHtml(launcher?.title || window.SystemFS.getDisplayName(item));
 
                 let iconHtml = '<i class="fa-regular fa-file"></i>';
-                if (item.isDirectory) {
+                if (item.metadata?.customIcon) {
+                    const ci = item.metadata.customIcon;
+                    if (/^(?:data:image\/|blob:|https?:|\/|\.)/.test(ci)) {
+                        iconHtml = `<img src="${escapeHtml(ci)}" style="width:32px;height:32px;object-fit:contain;" alt="" />`;
+                    } else {
+                        iconHtml = `<i class="${escapeHtml(ci)}"></i>`;
+                    }
+                } else if (item.path === "/Recycle Bin" || item.metadata?.kind === "recycle-bin") {
+                    iconHtml = '<i class="fa-solid fa-trash-can" style="color: #94a3b8;"></i>';
+                } else if (item.isDirectory) {
                     iconHtml = '<i class="fa-solid fa-folder"></i>';
                 } else if (launcher) {
                     iconHtml = window.getAppIconHtml(launcher.icon, "", item.desktopShortcut.selectId || item.desktopShortcut.appId);
@@ -430,13 +439,189 @@
         URL.revokeObjectURL(url);
     }
 
-    function getFileContextMenuItems(target, windowEl) {
-        if (target.dataset.appContext === 'folder-background') return [
-            {label:'New folder',icon:'fa-solid fa-folder-plus',action:()=>windowEl.querySelector('.btn-new-folder')?.click()},
-            {label:'New text file',icon:'fa-solid fa-file-circle-plus',action:()=>windowEl.querySelector('.btn-new-file')?.click()},
-            {label:'Upload from computer',icon:'fa-solid fa-file-arrow-up',action:()=>windowEl.querySelector('.btn-upload')?.click()},
-            {label:'Refresh folder',icon:'fa-solid fa-rotate-right',action:()=>renderFilesGrid(windowEl)}
+    async function promptRename(path, isDir, windowEl) {
+        const oldName = window.SystemFS.getName(path);
+        const newName = prompt(`Rename ${isDir ? "folder" : "file"}:`, oldName);
+        if (!newName || newName.trim() === "" || newName.trim() === oldName) return;
+        try {
+            await window.SystemFS.rename(path, newName.trim());
+            renderFilesGrid(windowEl);
+            window.showDesktopToast?.("Renamed successfully.");
+        } catch (err) {
+            alert(err.message || "Failed to rename.");
+        }
+    }
+
+    async function promptDelete(path, isDir, windowEl, permanent = false) {
+        const name = window.SystemFS.getName(path);
+        const inTrash = currentPath === "/Recycle Bin" || path.startsWith("/Recycle Bin/");
+        if (permanent || inTrash) {
+            if (!confirm(`Are you sure you want to permanently delete "${name}"? This action cannot be undone.`)) return;
+            try {
+                await window.SystemFS.deleteFileRecursive(path);
+                renderFilesGrid(windowEl);
+                window.showDesktopToast?.(`Permanently deleted ${name}.`);
+            } catch (err) {
+                alert(err.message || "Failed to delete.");
+            }
+        } else {
+            try {
+                await window.SystemFS.moveToTrash(path);
+                renderFilesGrid(windowEl);
+                window.showDesktopToast?.(`Moved "${name}" to Recycle Bin.`);
+            } catch (err) {
+                alert(err.message || "Failed to delete.");
+            }
+        }
+    }
+
+    async function showPropertiesModal(item, windowEl) {
+        const record = await window.SystemFS.readFile(item.path) || item;
+        const dialog = document.createElement("dialog");
+        dialog.className = "file-properties-dialog";
+        const isDir = Boolean(record.isDirectory);
+        const name = record.name || window.SystemFS.getName(record.path);
+        const path = record.path;
+        const type = isDir ? "Folder" : (record.type || "File");
+        const sizeFormatted = isDir ? "Directory" : (window.formatBytes ? window.formatBytes(record.size) : `${record.size || 0} bytes`);
+        const modifiedDate = new Date(record.lastModified || Date.now()).toLocaleString();
+        
+        let currentIcon = record.metadata?.customIcon || (isDir ? "fa-solid fa-folder" : "fa-regular fa-file");
+        let chosenIcon = currentIcon;
+
+        const systemIcons = [
+            "fa-solid fa-folder", "fa-solid fa-folder-open", "fa-solid fa-folder-tree", "fa-solid fa-box-archive",
+            "fa-solid fa-file", "fa-solid fa-file-lines", "fa-solid fa-file-code", "fa-solid fa-file-image",
+            "fa-solid fa-file-audio", "fa-solid fa-file-video", "fa-solid fa-file-pdf", "fa-solid fa-file-zipper",
+            "fa-solid fa-star", "fa-solid fa-heart", "fa-solid fa-gear", "fa-solid fa-terminal",
+            "fa-solid fa-globe", "fa-solid fa-lock", "fa-solid fa-shield-halved", "fa-solid fa-rocket",
+            "fa-solid fa-gamepad", "fa-solid fa-palette", "fa-solid fa-database", "fa-solid fa-cloud"
         ];
+
+        dialog.innerHTML = `
+            <div class="properties-shell">
+                <header class="properties-header">
+                    <span class="properties-title"><i class="fa-solid fa-circle-info"></i> ${escapeHtml(name)} Properties</span>
+                    <button type="button" class="properties-close" data-action="close">×</button>
+                </header>
+                <div class="properties-body">
+                    <div class="properties-top-row">
+                        <div class="properties-icon-preview" data-preview-icon>
+                            <i class="${escapeHtml(currentIcon)}"></i>
+                        </div>
+                        <div class="properties-name-block">
+                            <span class="properties-name-text">${escapeHtml(name)}</span>
+                            <span class="properties-type-text">${escapeHtml(type)}</span>
+                        </div>
+                    </div>
+                    <hr class="properties-divider">
+                    <table class="properties-table">
+                        <tr><td><strong>Location:</strong></td><td><code>${escapeHtml(path)}</code></td></tr>
+                        <tr><td><strong>Size:</strong></td><td>${escapeHtml(sizeFormatted)}</td></tr>
+                        <tr><td><strong>Last Modified:</strong></td><td>${escapeHtml(modifiedDate)}</td></tr>
+                        <tr><td><strong>Accessed/Installed:</strong></td><td>${escapeHtml(new Date(record.lastModified || Date.now()).toLocaleDateString())}</td></tr>
+                    </table>
+                    <hr class="properties-divider">
+                    <div class="properties-custom-icon-section">
+                        <div class="properties-section-title">Customize Icon</div>
+                        <div class="icon-picker-grid" data-icon-grid>
+                            ${systemIcons.map(ic => `<button type="button" class="icon-option ${ic === currentIcon ? 'active' : ''}" data-icon="${ic}"><i class="${ic}"></i></button>`).join('')}
+                        </div>
+                        <div class="properties-icon-browse">
+                            <button type="button" class="btn-toolbar" data-action="browse-icon"><i class="fa-solid fa-magnifying-glass"></i> Browse image from SystemFS...</button>
+                        </div>
+                    </div>
+                </div>
+                <footer class="properties-footer">
+                    <button type="button" class="btn-toolbar" data-action="close">Cancel</button>
+                    <button type="button" class="btn-toolbar btn-primary" data-action="save">Apply &amp; OK</button>
+                </footer>
+            </div>
+        `;
+
+        document.body.appendChild(dialog);
+        dialog.showModal();
+
+        const previewEl = dialog.querySelector("[data-preview-icon]");
+        const updateIconPreview = (iconStr) => {
+            chosenIcon = iconStr;
+            if (/^(?:data:image\/|blob:|https?:|\/|\.)/.test(iconStr)) {
+                previewEl.innerHTML = `<img src="${escapeHtml(iconStr)}" style="width:36px;height:36px;object-fit:contain;" alt="icon" />`;
+            } else {
+                previewEl.innerHTML = `<i class="${escapeHtml(iconStr)}"></i>`;
+            }
+        };
+
+        dialog.querySelectorAll("[data-icon]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                dialog.querySelectorAll("[data-icon]").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                updateIconPreview(btn.dataset.icon);
+            });
+        });
+
+        dialog.querySelector('[data-action="browse-icon"]')?.addEventListener("click", async () => {
+            const picked = await window.SystemFS.showOpenDialog({ folder: "/Pictures", types: [".svg", ".png", ".webp", ".ico", ".jpg"] });
+            if (picked?.path) {
+                dialog.querySelectorAll("[data-icon]").forEach(b => b.classList.remove("active"));
+                updateIconPreview(picked.path);
+            }
+        });
+
+        dialog.querySelector('[data-action="close"]')?.addEventListener("click", () => {
+            dialog.close();
+            dialog.remove();
+        });
+
+        dialog.querySelector('[data-action="save"]')?.addEventListener("click", async () => {
+            try {
+                const currentRecord = await window.SystemFS.readFile(path);
+                if (currentRecord) {
+                    const metadata = { ...(currentRecord.metadata || {}), customIcon: chosenIcon };
+                    await window.SystemFS.writeFile(
+                        currentRecord.path,
+                        currentRecord.name,
+                        currentRecord.parent,
+                        currentRecord.data,
+                        currentRecord.size,
+                        currentRecord.type,
+                        Boolean(currentRecord.isDirectory),
+                        { silent: true, metadata }
+                    );
+                    window.EventBus?.emit("fs:changed", { action: "update", path });
+                    renderFilesGrid(windowEl);
+                    window.renderDesktopIcons?.();
+                    window.showDesktopToast?.("Icon updated.");
+                }
+            } catch (err) {
+                alert("Failed to update icon: " + err.message);
+            }
+            dialog.close();
+            dialog.remove();
+        });
+    }
+
+    function getFileContextMenuItems(target, windowEl) {
+        if (target.dataset.appContext === 'folder-background') {
+            if (currentPath === "/Recycle Bin") {
+                return [
+                    { label: "Empty Recycle Bin", icon: "fa-solid fa-trash-can", action: async () => {
+                        if (confirm("Are you sure you want to permanently delete all items in the Recycle Bin?")) {
+                            await window.SystemFS.emptyTrash();
+                            renderFilesGrid(windowEl);
+                            window.showDesktopToast?.("Recycle Bin emptied.");
+                        }
+                    }},
+                    { label: "Refresh folder", icon: "fa-solid fa-rotate-right", action: () => renderFilesGrid(windowEl) }
+                ];
+            }
+            return [
+                {label:'New folder',icon:'fa-solid fa-folder-plus',action:()=>windowEl.querySelector('.btn-new-folder')?.click()},
+                {label:'New text file',icon:'fa-solid fa-file-circle-plus',action:()=>windowEl.querySelector('.btn-new-file')?.click()},
+                {label:'Upload from computer',icon:'fa-solid fa-file-arrow-up',action:()=>windowEl.querySelector('.btn-upload')?.click()},
+                {label:'Refresh folder',icon:'fa-solid fa-rotate-right',action:()=>renderFilesGrid(windowEl)}
+            ];
+        }
         const path = target.dataset.path;
         const owner = state.currentUserId;
         const name = target.dataset.fileName || window.SystemFS.getName(path);
@@ -444,6 +629,19 @@
         const isDirectory = target.dataset.isDirectory === "true";
 
         if (isDirectory) {
+            const inTrash = currentPath === "/Recycle Bin" || path.startsWith("/Recycle Bin/");
+            if (inTrash) {
+                return [
+                    { label: "Restore", icon: "fa-solid fa-rotate-left", action: async () => {
+                        await window.SystemFS.restoreFromTrash(path);
+                        renderFilesGrid(windowEl);
+                        window.showDesktopToast?.(`Restored ${name}`);
+                    }},
+                    { label: "Delete permanently", icon: "fa-solid fa-trash", action: () => promptDelete(path, true, windowEl, true) },
+                    { type: "separator" },
+                    { label: "Properties", icon: "fa-solid fa-circle-info", action: () => readFileForAction(path, (rec) => showPropertiesModal(rec, windowEl)) }
+                ];
+            }
             return [
                 {
                     label: "Open folder",
@@ -456,7 +654,12 @@
                         renderFilesGrid(windowEl);
                     }
                 },
-                { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(path) }
+                { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(path) },
+                { type: "separator" },
+                { label: "Rename", icon: "fa-solid fa-pen-to-square", action: () => promptRename(path, true, windowEl) },
+                { label: "Delete", icon: "fa-solid fa-trash-can", action: () => promptDelete(path, true, windowEl, false) },
+                { type: "separator" },
+                { label: "Properties", icon: "fa-solid fa-circle-info", action: () => readFileForAction(path, (rec) => showPropertiesModal(rec, windowEl)) }
             ];
         }
 
@@ -553,6 +756,20 @@
             }
         }
 
+        const inTrash = currentPath === "/Recycle Bin" || path.startsWith("/Recycle Bin/");
+        if (inTrash) {
+            return [
+                { label: "Restore", icon: "fa-solid fa-rotate-left", action: async () => {
+                    await window.SystemFS.restoreFromTrash(path);
+                    renderFilesGrid(windowEl);
+                    window.showDesktopToast?.(`Restored ${name}`);
+                }},
+                { label: "Delete permanently", icon: "fa-solid fa-trash", action: () => promptDelete(path, false, windowEl, true) },
+                { type: "separator" },
+                { label: "Properties", icon: "fa-solid fa-circle-info", action: () => readFileForAction(path, (rec) => showPropertiesModal(rec, windowEl)) }
+            ];
+        }
+
         const items = [
             {
                 label: isAudioFile(name, type) ? "Play" : "Open",
@@ -572,10 +789,22 @@
         if (openWith.length) {
             items.push({ label: "Open with", icon: "fa-solid fa-table-list", children: openWith });
         }
+        if (isRasterImage(name, type) || isVectorImage(name, type)) {
+            items.push({
+                label: "Set as desktop wallpaper",
+                icon: "fa-solid fa-image",
+                action: () => readFileForAction(path, (item) => window.setCustomWallpaper?.(item, item.path))
+            });
+        }
         items.push(
             { type: "separator" },
             { label: "Download", icon: "fa-solid fa-download", action: () => readFileForAction(path, downloadFileToHost) },
-            { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(path) }
+            { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(path) },
+            { type: "separator" },
+            { label: "Rename", icon: "fa-solid fa-pen-to-square", action: () => promptRename(path, false, windowEl) },
+            { label: "Delete", icon: "fa-solid fa-trash-can", action: () => promptDelete(path, false, windowEl, false) },
+            { type: "separator" },
+            { label: "Properties", icon: "fa-solid fa-circle-info", action: () => readFileForAction(path, (rec) => showPropertiesModal(rec, windowEl)) }
         );
         return items;
     }
@@ -648,9 +877,12 @@
                         <button class="sidebar-shortcut" data-path="/"><i class="fa-solid fa-computer"></i> Root (/)</button>
                         <button class="sidebar-shortcut" data-path="/Desktop"><i class="fa-solid fa-desktop"></i> Desktop</button>
                         <button class="sidebar-shortcut" data-path="/documents"><i class="fa-solid fa-file-lines"></i> Documents</button>
+                        <button class="sidebar-shortcut" data-path="/Pictures"><i class="fa-solid fa-image"></i> Pictures</button>
                         <button class="sidebar-shortcut" data-path="/music"><i class="fa-solid fa-music"></i> Music</button>
+                        <button class="sidebar-shortcut" data-path="/Downloads"><i class="fa-solid fa-download"></i> Downloads</button>
                         <button class="sidebar-shortcut" data-path="/ROMs"><i class="fa-solid fa-gamepad"></i> ROMs</button>
                         <button class="sidebar-shortcut" data-path="/Saved Games"><i class="fa-solid fa-gamepad"></i> Saved Games</button>
+                        <button class="sidebar-shortcut" data-path="/Recycle Bin"><i class="fa-solid fa-trash-can"></i> Recycle Bin</button>
                         <div class="files-storage-status">
                             <span><i class="fa-solid fa-hard-drive"></i> Saved locally</span>
                             <button type="button" data-open-settings-panel="cloud-sync" title="Open Cloud Sync settings">

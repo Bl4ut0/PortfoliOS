@@ -494,18 +494,267 @@
         }
     }
 
+    function getWorkspacePayload(root) {
+        let textContent = "";
+        let mime = "application/octet-stream";
+        let ext = "docx";
+
+        if (state.activeApp === "docs") {
+            textContent = root.querySelector('[data-field="doc-body"]')?.innerHTML || "";
+            mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            ext = "docx";
+        } else if (state.activeApp === "sheets") {
+            textContent = JSON.stringify(state.sheetsData || {});
+            mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            ext = "xlsx";
+        } else if (state.activeApp === "slides") {
+            textContent = JSON.stringify(state.slides || []);
+            mime = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            ext = "pptx";
+        } else if (state.activeApp === "markdown") {
+            textContent = state.mdContent || root.querySelector('[data-field="md-editor"]')?.value || "";
+            mime = "text/markdown";
+            ext = "md";
+        } else {
+            textContent = typeof state.currentFile?.data === "string" ? state.currentFile.data : "PDF Document";
+            mime = "application/pdf";
+            ext = "pdf";
+        }
+        return { content: textContent, mime, ext };
+    }
+
+    function createNewDocument(root) {
+        if (state.isDirty && !confirm("You have unsaved changes. Discard and create a new blank document?")) {
+            return;
+        }
+
+        state.currentFile = null;
+        state.isDirty = false;
+
+        const nameEl = root.querySelector('[data-field="active-filename"]');
+        if (state.activeApp === "docs") {
+            const docBody = root.querySelector('[data-field="doc-body"]');
+            if (docBody) docBody.innerHTML = "<p><br></p>";
+            if (nameEl) nameEl.textContent = "Untitled.docx";
+            const statusWords = root.querySelector('[data-field="status-words"]');
+            if (statusWords) statusWords.textContent = "Word count: 0 words";
+        } else if (state.activeApp === "sheets") {
+            state.sheetsData = {};
+            renderGrid(root);
+            if (nameEl) nameEl.textContent = "Untitled.xlsx";
+        } else if (state.activeApp === "slides") {
+            state.slides = [{ title: "New Presentation", subtitle: "Click to add content", bullets: [] }];
+            state.activeSlide = 0;
+            renderSlideThumbnails(root);
+            renderActiveSlide(root);
+            if (nameEl) nameEl.textContent = "Untitled.pptx";
+        } else if (state.activeApp === "markdown") {
+            state.mdContent = "# Untitled Document\n\nStart typing here...";
+            const editor = root.querySelector('[data-field="md-editor"]');
+            if (editor) {
+                editor.value = state.mdContent;
+                editor.dispatchEvent(new Event("input"));
+            }
+            if (nameEl) nameEl.textContent = "Untitled.md";
+        } else {
+            if (nameEl) nameEl.textContent = "Document.pdf";
+        }
+
+        updateDirtyState(root);
+        window.showDesktopToast?.("Created new blank document.");
+    }
+
+    function loadFileIntoWorkspace(root, record) {
+        if (!record) return;
+        state.currentFile = record;
+        state.isDirty = false;
+
+        const nameEl = root.querySelector('[data-field="active-filename"]');
+        if (nameEl) nameEl.textContent = record.name;
+
+        const lower = String(record.name || "").toLowerCase();
+        if (/\.(xlsx?|ods|csv|tsv)$/.test(lower)) {
+            switchWorkspace(root, "sheets");
+            if (typeof record.data === "string") {
+                try {
+                    const parsed = JSON.parse(record.data);
+                    if (parsed && typeof parsed === "object") state.sheetsData = parsed;
+                } catch {
+                    const rows = record.data.split(/\r?\n/);
+                    state.sheetsData = {};
+                    rows.forEach((r, rowIdx) => {
+                        const cols = r.split(lower.endsWith(".tsv") ? "\t" : ",");
+                        cols.forEach((val, colIdx) => {
+                            const colLetter = String.fromCharCode(65 + colIdx);
+                            state.sheetsData[`${colLetter}${rowIdx + 1}`] = val.trim();
+                        });
+                    });
+                }
+                renderGrid(root);
+            }
+        } else if (/\.(pptx?|odp)$/.test(lower)) {
+            switchWorkspace(root, "slides");
+            if (typeof record.data === "string") {
+                try {
+                    const parsed = JSON.parse(record.data);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        state.slides = parsed;
+                        state.activeSlide = 0;
+                        renderSlideThumbnails(root);
+                        renderActiveSlide(root);
+                    }
+                } catch {}
+            }
+        } else if (/\.pdf$/.test(lower)) {
+            switchWorkspace(root, "pdf");
+        } else if (/\.(md|markdown|txt)$/.test(lower)) {
+            switchWorkspace(root, "markdown");
+            if (typeof record.data === "string") {
+                state.mdContent = record.data;
+                const editor = root.querySelector('[data-field="md-editor"]');
+                if (editor) {
+                    editor.value = record.data;
+                    editor.dispatchEvent(new Event("input"));
+                }
+            }
+        } else {
+            switchWorkspace(root, "docs");
+            if (typeof record.data === "string") {
+                const docBody = root.querySelector('[data-field="doc-body"]');
+                if (docBody) {
+                    if (record.data.includes("<p>") || record.data.includes("<div>")) {
+                        docBody.innerHTML = record.data;
+                    } else {
+                        docBody.innerHTML = `<p>${escapeHtml(record.data).replace(/\n/g, "<br>")}</p>`;
+                    }
+                }
+            }
+        }
+
+        updateDirtyState(root);
+        window.showDesktopToast?.(`Opened ${record.name}`);
+    }
+
+    async function openDocument(root) {
+        if (state.isDirty && !confirm("You have unsaved changes. Discard and open a file?")) {
+            return;
+        }
+
+        if (!window.SystemFS?.showFileDialog) {
+            window.showDesktopToast?.("SystemFS is not available.");
+            return;
+        }
+
+        try {
+            const res = await window.SystemFS.showFileDialog({
+                mode: "open",
+                title: "Open Document in GenOffice",
+                folder: "/documents",
+                types: [".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".md", ".markdown", ".txt", ".pdf", ".csv", ".tsv", ".html"]
+            });
+
+            if (!res) return;
+
+            if (res.file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    loadFileIntoWorkspace(root, {
+                        name: res.file.name,
+                        path: `/documents/${res.file.name}`,
+                        data: reader.result,
+                        type: res.file.type
+                    });
+                };
+                if (res.file.name.match(/\.(docx|xlsx|pptx|pdf)$/i)) {
+                    reader.readAsArrayBuffer(res.file);
+                } else {
+                    reader.readAsText(res.file);
+                }
+                return;
+            }
+
+            if (res.record) {
+                loadFileIntoWorkspace(root, res.record);
+            } else if (res.path) {
+                const record = await window.SystemFS.readFile(res.path);
+                if (record) loadFileIntoWorkspace(root, record);
+            }
+        } catch (err) {
+            console.error("Open file failed:", err);
+            window.showDesktopToast?.(`Could not open file: ${err.message}`);
+        }
+    }
+
+    async function saveDocument(root) {
+        try {
+            const { content, mime, ext } = getWorkspacePayload(root);
+            const nameEl = root.querySelector('[data-field="active-filename"]');
+            let targetPath = state.currentFile?.path;
+            let targetName = state.currentFile?.name;
+            let targetParent = state.currentFile?.parent;
+
+            if (!targetPath) {
+                if (!window.SystemFS?.showFileDialog) {
+                    window.showDesktopToast?.("SystemFS is not available.");
+                    return;
+                }
+                const defaultName = (nameEl?.textContent.trim() || `Untitled.${ext}`);
+                const res = await window.SystemFS.showFileDialog({
+                    mode: "save",
+                    title: "Save Document to SystemFS",
+                    folder: "/documents",
+                    defaultName: defaultName,
+                    types: [`.${ext}`]
+                });
+                if (!res) return;
+                targetPath = res.path;
+                targetName = res.name;
+                targetParent = res.parent || window.SystemFS.getParentPath(res.path);
+            }
+
+            if (!targetName) targetName = window.SystemFS?.getName(targetPath) || `Document.${ext}`;
+            if (!targetParent) targetParent = window.SystemFS?.getParentPath(targetPath) || "/documents";
+
+            if (window.SystemFS?.writeFile) {
+                await window.SystemFS.writeFile(
+                    targetPath,
+                    targetName,
+                    targetParent,
+                    content,
+                    typeof content === "string" ? content.length : (content.byteLength || 0),
+                    mime,
+                    false
+                );
+                state.currentFile = {
+                    path: targetPath,
+                    name: targetName,
+                    parent: targetParent,
+                    data: content,
+                    type: mime
+                };
+                if (nameEl) nameEl.textContent = targetName;
+                state.isDirty = false;
+                updateDirtyState(root);
+                window.showDesktopToast?.(`Saved ${targetName} to SystemFS.`);
+            } else {
+                window.showDesktopToast?.(`Document ready: ${targetName}`);
+            }
+        } catch (err) {
+            console.error("Save failed:", err);
+            window.showDesktopToast?.(`Save failed: ${err.message}`);
+        }
+    }
+
     async function handleCopilotPrompt(root, promptText) {
         if (!promptText.trim()) return;
         const log = root.querySelector('[data-field="chat-log"]');
         if (!log) return;
 
-        // User message
         const userMsg = document.createElement("div");
         userMsg.className = "genoffice-msg user";
         userMsg.textContent = promptText;
         log.appendChild(userMsg);
 
-        // Assistant placeholder
         const assistMsg = document.createElement("div");
         assistMsg.className = "genoffice-msg assistant";
         assistMsg.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing with Copilot...';
@@ -514,14 +763,36 @@
 
         let responseText = "";
 
-        // Attempt local brain or intelligent response
         try {
-            if (window.SimpleBrain?.query) {
-                const res = await window.SimpleBrain.query(`In the context of the GenOffice ${state.activeApp} workspace: ${promptText}`);
-                if (res?.text) responseText = res.text;
+            if (window.LocalAI?.chat && (window.LocalAI.isReady?.() || window.LocalAI.isRunning?.())) {
+                const docSnippet = state.activeApp === "docs"
+                    ? root.querySelector('[data-field="doc-body"]')?.textContent?.slice(0, 1000)
+                    : state.activeApp === "sheets"
+                        ? JSON.stringify(state.sheetsData || {}).slice(0, 500)
+                        : state.activeApp === "slides"
+                            ? JSON.stringify(state.slides || []).slice(0, 500)
+                            : state.mdContent?.slice(0, 500) || "";
+                const aiPrompt = `Workspace: GenOffice ${state.activeApp.toUpperCase()}\nActive Document: ${state.currentFile?.name || "Untitled"}\nDocument Context: ${docSnippet}\n\nUser Request: ${promptText}`;
+                const reply = await window.LocalAI.chat(aiPrompt, {
+                    system: "You are GenOffice Copilot, an expert AI productivity assistant. Provide concise, high-value assistance for documents, spreadsheet calculations, slide decks, and markdown editing."
+                });
+                if (typeof reply === "string" && reply.trim()) {
+                    responseText = reply.replace(/\n/g, "<br>");
+                } else if (reply?.reply || reply?.text) {
+                    responseText = (reply.reply || reply.text).replace(/\n/g, "<br>");
+                }
             }
-        } catch {
-            // fallback
+        } catch (aiErr) {
+            console.warn("GenOffice LocalAI invocation:", aiErr);
+        }
+
+        if (!responseText) {
+            try {
+                if (window.SimpleBrain?.query) {
+                    const res = await window.SimpleBrain.query(`In the context of the GenOffice ${state.activeApp} workspace: ${promptText}`);
+                    if (res?.text) responseText = res.text;
+                }
+            } catch {}
         }
 
         if (!responseText) {
@@ -532,7 +803,7 @@
             } else if (promptText.toLowerCase().includes("slide")) {
                 responseText = `Slide Outline Generated:<br>1. <strong>Market Context</strong> (Challenges & Gaps)<br>2. <strong>AI-Native Solution</strong> (GenOffice capabilities)<br>3. <strong>Operational Metrics</strong> (Performance & ROI)<br>4. <strong>Roadmap & Milestones</strong>`;
             } else {
-                responseText = `Completed action for <strong>${state.activeApp.toUpperCase()}</strong>: "${escapeHtml(promptText)}". I have aligned document formatting and checked semantic consistency.`;
+                responseText = `Completed action for <strong>${state.activeApp.toUpperCase()}</strong>: "${escapeHtml(promptText)}". Formatting and document consistency validated.`;
             }
         }
 
@@ -541,12 +812,10 @@
     }
 
     function setupEventListeners(root) {
-        // Tab workspace switcher
         root.querySelectorAll(".genoffice-tab").forEach(tab => {
             tab.addEventListener("click", () => switchWorkspace(root, tab.dataset.app));
         });
 
-        // AI Copilot Toggle
         const copilotDrawer = root.querySelector('[data-field="copilot-drawer"]');
         root.querySelector('[data-action="toggle-copilot"]')?.addEventListener("click", () => {
             state.copilotOpen = !state.copilotOpen;
@@ -557,15 +826,12 @@
             copilotDrawer?.classList.add("collapsed");
         });
 
-        // Quick AI Chips
         root.querySelectorAll(".genoffice-chip").forEach(chip => {
             chip.addEventListener("click", () => {
-                const prompt = chip.dataset.prompt;
-                handleCopilotPrompt(root, prompt);
+                handleCopilotPrompt(root, chip.dataset.prompt);
             });
         });
 
-        // Copilot Send
         const input = root.querySelector('[data-field="copilot-input"]');
         const sendBtn = root.querySelector('[data-action="send-copilot"]');
         const sendAction = () => {
@@ -579,7 +845,25 @@
             if (e.key === "Enter") sendAction();
         });
 
-        // Docs Formatting Commands
+        root.querySelector('[data-action="new-doc"]')?.addEventListener("click", () => createNewDocument(root));
+        root.querySelector('[data-action="open-file"]')?.addEventListener("click", () => openDocument(root));
+        root.querySelector('[data-action="save-file"]')?.addEventListener("click", () => saveDocument(root));
+
+        root.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+                if (e.key === "s" || e.key === "S") {
+                    e.preventDefault();
+                    saveDocument(root);
+                } else if (e.key === "o" || e.key === "O") {
+                    e.preventDefault();
+                    openDocument(root);
+                } else if (e.key === "n" || e.key === "N") {
+                    e.preventDefault();
+                    createNewDocument(root);
+                }
+            }
+        });
+
         root.querySelectorAll("[data-format]").forEach(btn => {
             btn.addEventListener("click", () => {
                 const cmd = btn.dataset.format;
@@ -595,59 +879,10 @@
             });
         });
 
-        // Save Action
-        root.querySelector('[data-action="save-file"]')?.addEventListener("click", async () => {
-            try {
-                const nameEl = root.querySelector('[data-field="active-filename"]');
-                const filename = nameEl?.textContent.trim() || `Document-${Date.now()}.docx`;
-                const savePath = state.currentFile?.path || `/documents/GenOffice/${filename}`;
-
-                let content = "";
-                if (state.activeApp === "docs") {
-                    content = root.querySelector('[data-field="doc-body"]')?.innerHTML || "";
-                } else if (state.activeApp === "sheets") {
-                    content = JSON.stringify(state.sheetsData);
-                } else if (state.activeApp === "slides") {
-                    content = JSON.stringify(state.slides);
-                } else if (state.activeApp === "markdown") {
-                    content = state.mdContent;
-                } else {
-                    content = "GenOffice PDF document metadata";
-                }
-
-                if (window.SystemFS?.writeFile) {
-                    await window.SystemFS.writeFile(savePath, content);
-                    state.isDirty = false;
-                    updateDirtyState(root);
-                    window.showDesktopToast?.(`Saved ${filename} to SystemFS.`);
-                } else {
-                    window.showDesktopToast?.(`Document ready: ${filename}`);
-                }
-            } catch (err) {
-                console.error("Save failed:", err);
-                window.showDesktopToast?.(`Save failed: ${err.message}`);
-            }
-        });
-
-        // Export Action
         root.querySelector('[data-action="export-file"]')?.addEventListener("click", () => {
             const nameEl = root.querySelector('[data-field="active-filename"]');
             const filename = nameEl?.textContent.trim() || "GenOffice-Export.docx";
-            let content = "";
-            let mime = "application/octet-stream";
-
-            if (state.activeApp === "docs") {
-                content = root.querySelector('[data-field="doc-body"]')?.innerHTML || "";
-                mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-            } else if (state.activeApp === "sheets") {
-                content = JSON.stringify(state.sheetsData);
-                mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            } else if (state.activeApp === "markdown") {
-                content = state.mdContent;
-                mime = "text/markdown";
-            } else {
-                content = "Exported content";
-            }
+            const { content, mime } = getWorkspacePayload(root);
 
             const blob = new Blob([content], { type: mime });
             const url = URL.createObjectURL(blob);
@@ -659,7 +894,6 @@
             window.showDesktopToast?.(`Exported ${filename}`);
         });
 
-        // Docs input tracking
         root.querySelector('[data-field="doc-body"]')?.addEventListener("input", () => {
             state.isDirty = true;
             updateDirtyState(root);
@@ -685,35 +919,14 @@
             initMarkdown(root);
             setupEventListeners(root);
 
-            // Handle incoming file if opened from File Explorer
-            if (params && params.name) {
-                state.currentFile = params;
-                const nameEl = root.querySelector('[data-field="active-filename"]');
-                if (nameEl) nameEl.textContent = params.name;
+            // Direct workspace mode launch (e.g. from app launcher or file association)
+            if (params?.mode) {
+                switchWorkspace(root, params.mode);
+            }
 
-                const lower = params.name.toLowerCase();
-                if (/\.(xlsx?|ods|csv)$/.test(lower)) {
-                    switchWorkspace(root, "sheets");
-                } else if (/\.(pptx?|odp)$/.test(lower)) {
-                    switchWorkspace(root, "slides");
-                } else if (/\.pdf$/.test(lower)) {
-                    switchWorkspace(root, "pdf");
-                } else if (/\.(md|markdown|html?)$/.test(lower)) {
-                    switchWorkspace(root, "markdown");
-                    if (params.data && typeof params.data === "string") {
-                        const editor = root.querySelector('[data-field="md-editor"]');
-                        if (editor) {
-                            editor.value = params.data;
-                            editor.dispatchEvent(new Event("input"));
-                        }
-                    }
-                } else {
-                    switchWorkspace(root, "docs");
-                    if (params.data && typeof params.data === "string") {
-                        const docBody = root.querySelector('[data-field="doc-body"]');
-                        if (docBody) docBody.innerHTML = `<p>${escapeHtml(params.data)}</p>`;
-                    }
-                }
+            // Handle incoming file if opened from File Explorer or app launch
+            if (params && (params.name || params.path)) {
+                loadFileIntoWorkspace(root, params);
             }
         },
         beforeClose: () => {

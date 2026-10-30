@@ -21,7 +21,8 @@ window.wallpaperOptions = [
     { id: "sakura", label: "Sakura", icon: "fa-solid fa-spa" },
     { id: "glacier", label: "Glacier", icon: "fa-solid fa-snowflake" },
     { id: "solar", label: "Solar", icon: "fa-solid fa-sun" },
-    { id: "retrowave", label: "Retrowave", icon: "fa-solid fa-guitar" }
+    { id: "retrowave", label: "Retrowave", icon: "fa-solid fa-guitar" },
+    { id: "custom", label: "Custom", icon: "fa-solid fa-image" }
 ];
 
 window.screensaverOptions = [

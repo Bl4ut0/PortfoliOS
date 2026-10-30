@@ -700,3 +700,212 @@
 }
 
 .musicmini-empty button span { color: inherit; }
+
+/* Queue System & Metadata Dialog */
+.musicmini-queue-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding-bottom: 1rem;
+}
+
+.musicmini-queue-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.2rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #94a3b8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.musicmini-queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.musicmini-queue-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 150ms ease, border-color 150ms ease;
+}
+
+.musicmini-queue-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.musicmini-queue-item.is-now-playing {
+    background: rgba(34, 211, 238, 0.08);
+    border-color: rgba(34, 211, 238, 0.3);
+}
+
+.musicmini-queue-item.is-library-upcoming {
+    opacity: 0.85;
+}
+
+.musicmini-queue-item .musicmini-track-copy {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.musicmini-queue-item .musicmini-track-copy strong {
+    font-size: 0.85rem;
+    color: var(--text-bright, #f8fafc);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.musicmini-queue-item .musicmini-track-copy small {
+    font-size: 0.72rem;
+    color: var(--text-muted, #94a3b8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.musicmini-queue-empty {
+    font-size: 0.82rem;
+    color: var(--text-muted, #94a3b8);
+    font-style: italic;
+    padding: 0.5rem 0.2rem;
+    margin: 0;
+}
+
+.mm-btn-clear {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 0.72rem;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.mm-btn-clear:hover {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+/* Metadata Editor Dialog */
+.musicmini-metadata-dialog {
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    background: #0f172a;
+    color: #f8fafc;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+    max-width: 440px;
+    width: 90vw;
+    backdrop-filter: blur(16px);
+}
+
+.musicmini-metadata-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+}
+
+.mm-meta-shell {
+    display: flex;
+    flex-direction: column;
+}
+
+.mm-meta-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mm-meta-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--theme-primary, #22d3ee);
+}
+
+.mm-meta-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.mm-meta-close:hover {
+    color: #fff;
+}
+
+.mm-meta-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.1rem;
+}
+
+.mm-meta-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mm-meta-field span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mm-meta-field input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    padding: 0.45rem 0.65rem;
+    color: #fff;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 150ms ease;
+}
+
+.mm-meta-field input:focus {
+    border-color: var(--theme-primary, #22d3ee);
+}
+
+.mm-meta-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.mm-meta-row .mm-meta-field {
+    flex: 1;
+}
+
+.mm-meta-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 0.4rem;
+}

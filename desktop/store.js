@@ -448,7 +448,7 @@ window.uninstallApp = (id) => {
         quake: "/apps/quake",
         diablo: "/apps/diablo",
         openrct2: "/apps/openrct2/runtime",
-        iptv: "/Apps/IPTV Stream"
+        iptv: "/apps/IPTV Stream"
     };
 
     if (localCleanupDirs[id] && window.SystemFS) {

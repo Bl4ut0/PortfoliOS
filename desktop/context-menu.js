@@ -84,9 +84,45 @@ window.getContextMenuItems = (event) => {
 
     if (desktopIcon?.dataset.desktopPath && !desktopIcon.dataset.openApp) {
         const path = desktopIcon.dataset.desktopPath;
+        const name = window.SystemFS?.getName(path) || path.split('/').pop();
+        const ext = name.toLowerCase().split('.').pop();
+        const isImg = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'].includes(ext);
         return [
             {label:'Open',icon:'fa-solid fa-folder-open',action:()=>window.openDesktopFile(path)},
-            {label:'Manage in File Explorer',icon:'fa-solid fa-folder',action:()=>window.openDesktopFile('/Desktop')}
+            {label:'Manage in File Explorer',icon:'fa-solid fa-folder',action:()=>window.openDesktopFile('/Desktop')},
+            ...(isImg ? [{
+                label: 'Set as desktop wallpaper',
+                icon: 'fa-solid fa-image',
+                action: async () => {
+                    const record = await window.SystemFS?.readFile(path);
+                    if (record) window.setCustomWallpaper?.(record, path);
+                }
+            }] : []),
+            {type:'separator'},
+            {
+                label: 'Rename',
+                icon: 'fa-solid fa-pen-to-square',
+                action: async () => {
+                    const newName = prompt('Rename item:', name);
+                    if (newName && newName.trim() && newName.trim() !== name) {
+                        try {
+                            await window.SystemFS?.rename(path, newName.trim());
+                            window.renderDesktopIcons?.();
+                        } catch (e) { alert(e.message); }
+                    }
+                }
+            },
+            {
+                label: 'Delete',
+                icon: 'fa-solid fa-trash-can',
+                action: async () => {
+                    try {
+                        await window.SystemFS?.moveToTrash(path);
+                        window.renderDesktopIcons?.();
+                        window.showDesktopToast?.(`Moved "${name}" to Recycle Bin.`);
+                    } catch (e) { alert(e.message); }
+                }
+            }
         ];
     }
     if (desktopIcon) {

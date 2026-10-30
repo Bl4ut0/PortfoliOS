@@ -6,7 +6,7 @@
     "use strict";
 
     const APP_ID = "iptv";
-    const STORAGE_ROOT = "/Apps/IPTV Stream";
+    const STORAGE_ROOT = "/apps/IPTV Stream";
     const PROFILE_PATH = `${STORAGE_ROOT}/profile.json`;
     const EPG_PATH = `${STORAGE_ROOT}/epg-cache.json`;
     const MAINTENANCE_PATH = `${STORAGE_ROOT}/maintenance.json`;

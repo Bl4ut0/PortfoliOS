@@ -231,38 +231,45 @@ window.mountDesktop = async () => {
                     powerMenu.hidden = true;
                     const startMenu = document.getElementById("start-menu");
                     if (startMenu) startMenu.classList.remove("active");
-                    if (window.isPrivateUser?.(window.state?.currentUserId)) {
-                        window.showDesktopToast?.("Logging out...");
-                        try {
-                            const hasToken = !!window.GDriveSync?.getToken();
-                            if (hasToken) {
-                                await window.switchToPublicProfile?.({ saveToDrive: true });
-                            } else {
-                                await window.switchToPublicProfile?.({ saveToDrive: false });
-                            }
-                        } catch (err) {
-                            console.warn("Save on logout skipped, switching to public profile:", err);
+
+                    window.showDesktopToast?.("Logging out and closing applications...");
+
+                    // 1. Close all open applications
+                    if (window.state?.openApps) {
+                        const appsToClose = Array.from(window.state.openApps);
+                        for (const appId of appsToClose) {
                             try {
-                                await window.switchToPublicProfile?.({ saveToDrive: false });
-                            } catch (fallbackErr) {
-                                window.setCurrentUser?.("bl4ut0", { allowProfileSwitch: true });
-                                window.resetPublicLocalState?.();
-                                await window.SystemFS?.resetPublicWorkspace?.();
-                                await window.SystemFS?.ensureDefaultFiles?.();
-                                window.state.sessionChosen = true;
-                                window.closeSessionChooser?.();
+                                await window.closeDesktopWindow?.(appId);
+                            } catch (closeErr) {
+                                console.warn(`Failed closing ${appId} during logout:`, closeErr);
                             }
                         }
-                        await window.GDriveSync?.logout?.();
-                        window.showDesktopToast?.("Logged out to public profile.");
-                    } else {
-                        // Already in public guest profile: clean guest workspace without opening auth
-                        window.showDesktopToast?.("Resetting public guest workspace...");
-                        window.resetPublicLocalState?.();
-                        await window.SystemFS?.resetPublicWorkspace?.();
-                        await window.SystemFS?.ensureDefaultFiles?.();
-                        window.location.reload();
                     }
+
+                    // 2. Release private session lease and clear credentials without triggering lock screens
+                    if (window.isPrivateUser?.(window.state?.currentUserId)) {
+                        try {
+                            await window.PrivateSessions?.release?.({ allowOffline: true, synced: true });
+                        } catch (err) {
+                            console.warn("Private session release during logout:", err);
+                        }
+                        window.GDriveSync?.closeReconnectPrompt?.();
+                        window.GDriveSync?.clearBrowserSession?.();
+                    }
+
+                    // 3. Mark session ended and return to login screen / profile chooser
+                    window.state.sessionChosen = false;
+                    window.state.workspaceStarted = false;
+
+                    // 4. Switch to public profile and reset guest workspace
+                    window.setCurrentUser?.("bl4ut0", { allowProfileSwitch: true });
+                    window.resetPublicLocalState?.();
+                    await window.SystemFS?.resetPublicWorkspace?.();
+                    await window.SystemFS?.ensureDefaultFiles?.();
+
+                    // 5. Open session chooser / profile selector
+                    window.openSessionChooser?.();
+                    window.showDesktopToast?.("Logged out. Please choose a workspace.");
                 });
 
                 powerMenu.querySelector("#power-restart-btn").addEventListener("click", () => {

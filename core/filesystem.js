@@ -56,6 +56,9 @@ window.SystemFS = {
             }
             parts.push(part);
         });
+        if (parts.length > 0 && parts[0].toLowerCase() === "apps") {
+            parts[0] = "apps";
+        }
         return parts.length ? `/${parts.join("/")}` : "/";
     },
 
@@ -77,7 +80,8 @@ window.SystemFS = {
         const labels = {
             "/apps": "Apps", "/documents": "Documents", "/Desktop": "Desktop",
             "/music": "Music", "/Pictures": "Pictures", "/Downloads": "Downloads",
-            "/ROMs": "ROMs", "/Saved Games": "Saved Games", "/etc": "Etc", "/home": "Home"
+            "/ROMs": "ROMs", "/Saved Games": "Saved Games", "/etc": "Etc", "/home": "Home",
+            "/Recycle Bin": "Recycle Bin"
         };
         return (record.isDirectory && labels[this.normalizePath(record.path)]) || record.name || this.getName(record.path);
     },
@@ -328,6 +332,13 @@ window.SystemFS = {
             await this.writeFile(this.savedGamesRoot, "Saved Games", "/", null, 0, "directory", true, { silent: true });
         }
 
+        if (!await this.readFile(this.getTrashRoot())) {
+            await this.writeFile(this.getTrashRoot(), "Recycle Bin", "/", null, 0, "directory", true, {
+                silent: true,
+                metadata: { kind: "recycle-bin", sync: false }
+            });
+        }
+
         if (!await this.readFile("/documents/welcome.txt")) {
             await this.writeFile(
                 "/documents/welcome.txt",
@@ -547,6 +558,254 @@ window.SystemFS = {
         }
     },
 
+    getTrashRoot() {
+        return "/Recycle Bin";
+    },
+
+    async rename(oldPath, newName) {
+        const actingUser = window.state?.currentUserId;
+        await this.ensureReady();
+        this.assertProfile(actingUser);
+
+        const cleanOld = this.normalizePath(oldPath);
+        if (cleanOld === "/") throw new Error("Cannot rename the root directory.");
+        const trimmedName = String(newName || "").trim();
+        if (!trimmedName || /[\\/:*?"<>|]/.test(trimmedName)) {
+            throw new Error("Invalid name. Names cannot be empty or contain slashes or special characters.");
+        }
+
+        const parent = this.getParentPath(cleanOld);
+        const cleanNew = this.normalizePath(parent + "/" + trimmedName);
+        if (cleanOld === cleanNew) return cleanNew;
+
+        const existing = await this.readFile(cleanNew);
+        if (existing) {
+            throw new Error("An item with that name already exists in this folder.");
+        }
+
+        const oldRecord = await this.readFile(cleanOld);
+        if (!oldRecord) throw new Error("The item to rename was not found.");
+
+        const isDir = Boolean(oldRecord.isDirectory);
+        if (!isDir) {
+            await this.writeFile(
+                cleanNew,
+                trimmedName,
+                parent,
+                oldRecord.data,
+                oldRecord.size,
+                oldRecord.type,
+                false,
+                { silent: true, metadata: oldRecord.metadata || {} }
+            );
+            await this.deleteFile(cleanOld, { silent: true });
+        } else {
+            await this.ensureDirectory(cleanNew, { silent: true, metadata: oldRecord.metadata || {} });
+            const allFiles = await this.getAllFiles();
+            for (const file of allFiles) {
+                if (file.path.startsWith(cleanOld + "/")) {
+                    const relative = file.path.slice(cleanOld.length);
+                    const childNewPath = cleanNew + relative;
+                    const childParent = this.getParentPath(childNewPath);
+                    await this.writeFile(
+                        childNewPath,
+                        file.name,
+                        childParent,
+                        file.data,
+                        file.size,
+                        file.type,
+                        Boolean(file.isDirectory),
+                        { silent: true, metadata: file.metadata || {} }
+                    );
+                    await this.deleteFile(file.path, { silent: true });
+                }
+            }
+            await this.deleteFile(cleanOld, { silent: true });
+        }
+
+        if (window.EventBus) {
+            window.EventBus.emit("fs:changed", { action: "rename", oldPath: cleanOld, newPath: cleanNew });
+        }
+        return cleanNew;
+    },
+
+    async moveToTrash(path) {
+        const actingUser = window.state?.currentUserId;
+        await this.ensureReady();
+        this.assertProfile(actingUser);
+
+        const cleanPath = this.normalizePath(path);
+        const trashRoot = this.getTrashRoot();
+        if (cleanPath === "/" || cleanPath === trashRoot) {
+            throw new Error("Cannot delete this directory.");
+        }
+
+        if (cleanPath.startsWith(trashRoot + "/")) {
+            return await this.deleteFileRecursive(cleanPath);
+        }
+
+        await this.ensureDirectory(trashRoot, {
+            silent: true,
+            metadata: { kind: "recycle-bin", sync: false }
+        });
+
+        const record = await this.readFile(cleanPath);
+        if (!record) throw new Error("Item not found.");
+
+        const name = record.name || this.getName(cleanPath);
+        let trashName = name;
+        let candidatePath = `${trashRoot}/${trashName}`;
+        let counter = 1;
+        while (await this.readFile(candidatePath)) {
+            const dot = name.lastIndexOf(".");
+            if (dot > 0 && !record.isDirectory) {
+                trashName = `${name.slice(0, dot)} (${counter})${name.slice(dot)}`;
+            } else {
+                trashName = `${name} (${counter})`;
+            }
+            candidatePath = `${trashRoot}/${trashName}`;
+            counter++;
+        }
+
+        const updatedMetadata = {
+            ...(record.metadata || {}),
+            originalPath: cleanPath,
+            deletedAt: Date.now()
+        };
+
+        if (!record.isDirectory) {
+            await this.writeFile(
+                candidatePath,
+                trashName,
+                trashRoot,
+                record.data,
+                record.size,
+                record.type,
+                false,
+                { silent: true, metadata: updatedMetadata }
+            );
+            await this.deleteFile(cleanPath, { silent: true });
+        } else {
+            await this.ensureDirectory(candidatePath, { silent: true, metadata: updatedMetadata });
+            const allFiles = await this.getAllFiles();
+            for (const file of allFiles) {
+                if (file.path.startsWith(cleanPath + "/")) {
+                    const rel = file.path.slice(cleanPath.length);
+                    const childPath = candidatePath + rel;
+                    const childParent = this.getParentPath(childPath);
+                    await this.writeFile(
+                        childPath,
+                        file.name,
+                        childParent,
+                        file.data,
+                        file.size,
+                        file.type,
+                        Boolean(file.isDirectory),
+                        { silent: true, metadata: file.metadata || {} }
+                    );
+                    await this.deleteFile(file.path, { silent: true });
+                }
+            }
+            await this.deleteFile(cleanPath, { silent: true });
+        }
+
+        if (window.EventBus) {
+            window.EventBus.emit("fs:changed", { action: "trash", path: cleanPath, trashPath: candidatePath });
+        }
+        return candidatePath;
+    },
+
+    async restoreFromTrash(trashPath) {
+        const actingUser = window.state?.currentUserId;
+        await this.ensureReady();
+        this.assertProfile(actingUser);
+
+        const cleanTrash = this.normalizePath(trashPath);
+        const record = await this.readFile(cleanTrash);
+        if (!record) throw new Error("Trash item not found.");
+
+        let targetPath = record.metadata?.originalPath;
+        if (!targetPath) {
+            targetPath = `/documents/${record.name}`;
+        }
+        targetPath = this.normalizePath(targetPath);
+        const targetParent = this.getParentPath(targetPath);
+        await this.ensureDirectory(targetParent, { silent: true });
+
+        let finalPath = targetPath;
+        let counter = 1;
+        while (await this.readFile(finalPath)) {
+            const name = this.getName(targetPath);
+            const dot = name.lastIndexOf(".");
+            if (dot > 0 && !record.isDirectory) {
+                finalPath = `${targetParent}/${name.slice(0, dot)} (Restored ${counter})${name.slice(dot)}`;
+            } else {
+                finalPath = `${targetParent}/${name} (Restored ${counter})`;
+            }
+            counter++;
+        }
+
+        const restoredMetadata = { ...(record.metadata || {}) };
+        delete restoredMetadata.originalPath;
+        delete restoredMetadata.deletedAt;
+
+        if (!record.isDirectory) {
+            await this.writeFile(
+                finalPath,
+                this.getName(finalPath),
+                targetParent,
+                record.data,
+                record.size,
+                record.type,
+                false,
+                { silent: true, metadata: restoredMetadata }
+            );
+            await this.deleteFile(cleanTrash, { silent: true });
+        } else {
+            await this.ensureDirectory(finalPath, { silent: true, metadata: restoredMetadata });
+            const allFiles = await this.getAllFiles();
+            for (const file of allFiles) {
+                if (file.path.startsWith(cleanTrash + "/")) {
+                    const rel = file.path.slice(cleanTrash.length);
+                    const childPath = finalPath + rel;
+                    const childParent = this.getParentPath(childPath);
+                    await this.writeFile(
+                        childPath,
+                        file.name,
+                        childParent,
+                        file.data,
+                        file.size,
+                        file.type,
+                        Boolean(file.isDirectory),
+                        { silent: true, metadata: file.metadata || {} }
+                    );
+                    await this.deleteFile(file.path, { silent: true });
+                }
+            }
+            await this.deleteFile(cleanTrash, { silent: true });
+        }
+
+        if (window.EventBus) {
+            window.EventBus.emit("fs:changed", { action: "restore", trashPath: cleanTrash, restoredPath: finalPath });
+        }
+        return finalPath;
+    },
+
+    async emptyTrash() {
+        const actingUser = window.state?.currentUserId;
+        await this.ensureReady();
+        this.assertProfile(actingUser);
+
+        const trashRoot = this.getTrashRoot();
+        const items = await this.readDir(trashRoot);
+        for (const item of items) {
+            await this.deleteFileRecursive(item.path, { silent: true });
+        }
+        if (window.EventBus) {
+            window.EventBus.emit("fs:changed", { action: "empty-trash", path: trashRoot });
+        }
+    },
+
     async readDir(parentDir = "/") {
         const readingUser = window.state?.currentUserId;
         await this.ensureReady();
@@ -652,7 +911,7 @@ window.SystemFS = {
             const esc=window.escapeHtml;
             dialog.innerHTML=`<header class="systemfs-dialog-header"><h2>${esc(title)}</h2><button type="button" data-action="cancel" aria-label="Close">×</button></header>
               <nav class="systemfs-dialog-nav" aria-label="Folder navigation"><button type="button" data-action="up" aria-label="Parent folder">↑</button><div class="systemfs-breadcrumbs" data-location></div><input class="systemfs-input systemfs-search" data-search type="search" aria-label="Search current folder" placeholder="Search this folder"></nav>
-              <div class="systemfs-browser-body"><aside class="systemfs-places" aria-label="Places">${[['/','Workspace'],['/Desktop','Desktop'],['/documents','Documents'],['/Downloads','Downloads'],['/Pictures','Pictures'],['/music','Music'],['/Saved Games','Saved Games']].map(([path,label])=>`<button type="button" data-folder="${path}"><span aria-hidden="true">${path==='/'?'▣':'▸'}</span>${label}</button>`).join('')}</aside><section class="systemfs-browser-content" aria-label="Folder contents"><div class="systemfs-list-head"><span>Name</span><span>Type</span></div><div class="systemfs-dialog-list" data-list></div><p class="systemfs-item-count" data-count></p></section></div>
+              <div class="systemfs-browser-body"><aside class="systemfs-places" aria-label="Places">${[['/','Workspace'],['/Desktop','Desktop'],['/documents','Documents'],['/Downloads','Downloads'],['/Pictures','Pictures'],['/music','Music'],['/Saved Games','Saved Games'],['/Recycle Bin','Recycle Bin']].map(([path,label])=>`<button type="button" data-folder="${path}"><span aria-hidden="true">${path==='/'?'▣':'▸'}</span>${label}</button>`).join('')}</aside><section class="systemfs-browser-content" aria-label="Folder contents"><div class="systemfs-list-head"><span>Name</span><span>Type</span></div><div class="systemfs-dialog-list" data-list></div><p class="systemfs-item-count" data-count></p></section></div>
               <div class="systemfs-new-folder-row"><input class="systemfs-input" data-new-folder aria-label="New folder name" placeholder="New folder name"><button type="button" data-action="create-folder">New folder</button></div><label class="systemfs-filename-row">File name <input class="systemfs-input" data-filename aria-label="File name" value="${esc(mode==='open'?'':defaultName)}" ${mode==='open'?'readonly':''}></label><div data-device ${mode==='save'?'hidden':''}><label class="systemfs-device-upload">Upload from computer <input type="file" data-upload ${types.length?'accept="'+esc(types.join(','))+'"':''}></label><p data-drop class="systemfs-dropzone">Drop a file from your computer here</p></div><p data-warning role="status"></p><footer class="systemfs-dialog-footer"><span class="systemfs-file-filter">${esc(types.length?types.join(', '):'All files')}</span><button type="button" data-action="cancel">Cancel</button><button type="button" data-action="confirm" class="systemfs-btn-primary">${esc(acceptLabel)}</button></footer>`;
             (document.body.dataset.view==='mobile' ? document.getElementById('mobile-device') || document.body : document.body).append(dialog);
             const find=selector=>dialog.querySelector(selector), warning=find('[data-warning]'), nameInput=find('[data-filename]'), confirm=find('[data-action=confirm]');

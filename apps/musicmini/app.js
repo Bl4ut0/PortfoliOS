@@ -1068,6 +1068,173 @@
         }).join("");
     }
 
+    function renderQueueView() {
+        const current = selectedTrack();
+        const queuedItems = appState.queue || [];
+        const upcomingFromLibrary = appState.library.filter(t => t.path !== appState.currentPath);
+
+        return `
+            <div class="musicmini-queue-container">
+                <div class="musicmini-queue-section-header">
+                    <span>Now Playing</span>
+                </div>
+                ${current ? `
+                    <div class="musicmini-queue-item is-now-playing">
+                        <span class="musicmini-track-art">${artworkContent(current, "fa-music")}</span>
+                        <div class="musicmini-track-copy">
+                            <strong>${escapeHtml(trackTitle(current))}</strong>
+                            <small>${escapeHtml(trackArtist(current))} &bull; ${escapeHtml(trackAlbum(current))}</small>
+                        </div>
+                        <i class="fa-solid fa-volume-high" style="color:var(--theme-primary, #22d3ee)"></i>
+                    </div>
+                ` : `<p class="musicmini-queue-empty">No track currently playing.</p>`}
+
+                <div class="musicmini-queue-section-header">
+                    <span>Next In Queue (${queuedItems.length})</span>
+                    ${queuedItems.length > 0 ? `<button type="button" class="mm-btn-clear" data-mm-clear-queue>Clear Queue</button>` : ''}
+                </div>
+                ${queuedItems.length > 0 ? `
+                    <div class="musicmini-queue-list">
+                        ${queuedItems.map((track, idx) => `
+                            <div class="musicmini-queue-item">
+                                <span class="musicmini-track-art">${artworkContent(track, "fa-music")}</span>
+                                <div class="musicmini-track-copy">
+                                    <strong>${escapeHtml(trackTitle(track))}</strong>
+                                    <small>${escapeHtml(trackArtist(track))} &bull; ${escapeHtml(trackAlbum(track))}</small>
+                                </div>
+                                <button type="button" class="musicmini-track-action" data-mm-unqueue="${idx}" title="Remove from queue">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : `<p class="musicmini-queue-empty">Queue is empty. Click <i class="fa-solid fa-list-ul"></i> on any track to add it here.</p>`}
+
+                <div class="musicmini-queue-section-header">
+                    <span>Next From Library</span>
+                </div>
+                <div class="musicmini-queue-list">
+                    ${upcomingFromLibrary.slice(0, 8).map((track, idx) => `
+                        <div class="musicmini-queue-item is-library-upcoming">
+                            <span class="musicmini-track-art">${artworkContent(track, "fa-music")}</span>
+                            <div class="musicmini-track-copy">
+                                <strong>${escapeHtml(trackTitle(track))}</strong>
+                                <small>${escapeHtml(trackArtist(track))} &bull; ${escapeHtml(trackAlbum(track))}</small>
+                            </div>
+                            <button type="button" class="musicmini-track-action" data-mm-queue="${escapeHtml(track.path)}" title="Add to queue">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function openMetadataEditor(track) {
+        const dialog = document.createElement("dialog");
+        dialog.className = "musicmini-metadata-dialog";
+        const meta = track.metadata || {};
+
+        dialog.innerHTML = `
+            <div class="mm-meta-shell">
+                <header class="mm-meta-header">
+                    <h3><i class="fa-solid fa-tags"></i> Edit Track Metadata</h3>
+                    <button type="button" class="mm-meta-close" data-mm-close-meta>&times;</button>
+                </header>
+                <form class="mm-meta-form" data-mm-meta-form>
+                    <label class="mm-meta-field">
+                        <span>Title</span>
+                        <input type="text" name="title" value="${escapeHtml(trackTitle(track))}" required />
+                    </label>
+                    <label class="mm-meta-field">
+                        <span>Artist</span>
+                        <input type="text" name="artist" value="${escapeHtml(trackArtist(track))}" />
+                    </label>
+                    <label class="mm-meta-field">
+                        <span>Album</span>
+                        <input type="text" name="album" value="${escapeHtml(trackAlbum(track))}" />
+                    </label>
+                    <label class="mm-meta-field">
+                        <span>Album Artist</span>
+                        <input type="text" name="albumArtist" value="${escapeHtml(trackAlbumArtist(track))}" />
+                    </label>
+                    <div class="mm-meta-row">
+                        <label class="mm-meta-field">
+                            <span>Year</span>
+                            <input type="text" name="year" value="${escapeHtml(cleanTagText(meta.year))}" placeholder="e.g. 2024" />
+                        </label>
+                        <label class="mm-meta-field">
+                            <span>Track #</span>
+                            <input type="number" name="trackNumber" value="${escapeHtml(meta.trackNumber || '')}" placeholder="1" />
+                        </label>
+                    </div>
+                    <label class="mm-meta-field">
+                        <span>Genre</span>
+                        <input type="text" name="genre" value="${escapeHtml(cleanTagText(meta.genre))}" placeholder="e.g. Rock, Electronic" />
+                    </label>
+                    <footer class="mm-meta-footer">
+                        <button type="button" class="btn-toolbar" data-mm-close-meta>Cancel</button>
+                        <button type="submit" class="btn-toolbar btn-primary">Save Metadata</button>
+                    </footer>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(dialog);
+        dialog.showModal();
+
+        dialog.querySelectorAll("[data-mm-close-meta]").forEach(btn => {
+            btn.addEventListener("click", () => { dialog.close(); dialog.remove(); });
+        });
+
+        dialog.querySelector("[data-mm-meta-form]").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newTitle = formData.get("title")?.trim() || track.name;
+            const newArtist = formData.get("artist")?.trim() || "Unknown Artist";
+            const newAlbum = formData.get("album")?.trim() || "Unknown Album";
+            const newAlbumArtist = formData.get("albumArtist")?.trim() || newArtist;
+            const newYear = formData.get("year")?.trim() || "";
+            const newGenre = formData.get("genre")?.trim() || "";
+            const newTrackNum = parseInt(formData.get("trackNumber"), 10) || 0;
+
+            try {
+                const record = await window.SystemFS.readFile(track.path);
+                if (record) {
+                    record.metadata = {
+                        ...(record.metadata || {}),
+                        title: newTitle,
+                        artist: newArtist,
+                        album: newAlbum,
+                        albumArtist: newAlbumArtist,
+                        year: newYear,
+                        genre: newGenre,
+                        trackNumber: newTrackNum
+                    };
+                    await window.SystemFS.writeFile(
+                        record.path,
+                        record.name,
+                        record.parent,
+                        record.data,
+                        record.size,
+                        record.type,
+                        false,
+                        { silent: true, metadata: record.metadata }
+                    );
+                    track.metadata = record.metadata;
+                    renderLibrary();
+                    renderNowPlaying();
+                    window.showDesktopToast?.("Metadata updated successfully.");
+                }
+            } catch (err) {
+                alert("Failed to save metadata: " + err.message);
+            }
+            dialog.close();
+            dialog.remove();
+        });
+    }
+
     function renderLibrary() {
         const list = rootEl?.querySelector("[data-mm-library]");
         if (!list) return;

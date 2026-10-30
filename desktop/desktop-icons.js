@@ -239,7 +239,8 @@ window.renderDesktopIcons = async () => {
                 const defaultId=entry.name.slice(0,-'.portfolios-link.json'.length);
                 return {...launcher,id:defaults.some(item=>item.id===defaultId)?defaultId:entry.path,path:entry.path};
             }
-            return {id:entry.path,path:entry.path,isDirectory:entry.isDirectory,title:entry.name,icon:entry.isDirectory?'fa-solid fa-folder':'fa-regular fa-file',color:entry.isDirectory?'#fbbf24':'#22d3ee'};
+            const icon = entry.metadata?.customIcon || (entry.path === '/Desktop/Recycle Bin' ? 'fa-solid fa-trash-can' : (entry.isDirectory ? 'fa-solid fa-folder' : 'fa-regular fa-file'));
+            return {id:entry.path,path:entry.path,isDirectory:entry.isDirectory,title:entry.name,icon,color:entry.isDirectory?'#fbbf24':'#22d3ee'};
         }));
         apps=resolved.filter(Boolean).sort((a,b)=>{
             const ai=defaults.findIndex(item=>item.id===a.id),bi=defaults.findIndex(item=>item.id===b.id);
