@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sc-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    <linearGradient id="sc-top" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="sc-left" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <linearGradient id="sc-right" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0369a1"/>
+      <stop offset="100%" stop-color="#075985"/>
+    </linearGradient>
+    <linearGradient id="sc-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#818cf8" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base background rounded tile -->
+  <rect width="512" height="512" rx="112" fill="url(#sc-bg)"/>
+  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="#38bdf8" stroke-width="3" stroke-opacity="0.25"/>
+
+  <!-- CAD Grid lines -->
+  <g stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.15" stroke-dasharray="4,6">
+    <line x1="96" y1="96" x2="416" y2="96"/>
+    <line x1="96" y1="256" x2="416" y2="256"/>
+    <line x1="96" y1="416" x2="416" y2="416"/>
+    <line x1="96" y1="96" x2="96" y2="416"/>
+    <line x1="256" y1="96" x2="256" y2="416"/>
+    <line x1="416" y1="96" x2="416" y2="416"/>
+  </g>
+
+  <!-- 3D Isometric Solid Body -->
+  <!-- Top Face -->
+  <polygon points="256,128 384,202 256,276 128,202" fill="url(#sc-top)" stroke="#7dd3fc" stroke-width="3"/>
+
+  <!-- Left Face -->
+  <polygon points="128,202 256,276 256,412 128,338" fill="url(#sc-left)" stroke="#0ea5e9" stroke-width="3"/>
+
+  <!-- Right Face -->
+  <polygon points="256,276 384,202 384,338 256,412" fill="url(#sc-right)" stroke="#0284c7" stroke-width="3"/>
+
+  <!-- Internal Chamfer / Feature Hollow Cutout -->
+  <polygon points="256,170 320,207 256,244 192,207" fill="#0f172a" fill-opacity="0.45" stroke="#38bdf8" stroke-width="2"/>
+  <line x1="256" y1="244" x2="256" y2="300" stroke="#38bdf8" stroke-width="2" stroke-opacity="0.7"/>
+
+  <!-- Parametric CAD Dimension Lines & Nodes -->
+  <!-- Dimension leader left -->
+  <line x1="96" y1="202" x2="96" y2="338" stroke="url(#sc-glow)" stroke-width="2.5"/>
+  <line x1="90" y1="202" x2="102" y2="202" stroke="url(#sc-glow)" stroke-width="2.5"/>
+  <line x1="90" y1="338" x2="102" y2="338" stroke="url(#sc-glow)" stroke-width="2.5"/>
+  <circle cx="96" cy="270" r="3" fill="#22d3ee"/>
+
+  <!-- Dimension leader top-right -->
+  <line x1="270" y1="110" x2="398" y2="184" stroke="url(#sc-glow)" stroke-width="2.5"/>
+  <circle cx="270" cy="110" r="4" fill="#38bdf8"/>
+  <circle cx="398" cy="184" r="4" fill="#38bdf8"/>
+
+  <!-- Vertex Anchors / CAD Control Points -->
+  <circle cx="256" cy="128" r="5" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"/>
+  <circle cx="384" cy="202" r="5" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"/>
+  <circle cx="128" cy="202" r="5" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"/>
+  <circle cx="256" cy="276" r="6" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="256" cy="412" r="5" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"/>
+</svg>

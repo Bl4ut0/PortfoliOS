@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const window={EventBus:{on(){}}};
 vm.runInNewContext(fs.readFileSync('core/workspace-recovery.js','utf8'),{window,Blob,crypto:require('node:crypto').webcrypto,Date});
-const {decision,mergeSettings}=window.WorkspaceRecovery;
+const {decision,mergeSettings,evaluateClash}=window.WorkspaceRecovery;
 assert.equal(decision('a','a','a'),'equal');
 assert.equal(decision('a','b','a'),'upload');
 assert.equal(decision('a','a','b'),'download');
@@ -17,4 +17,27 @@ const both=mergeSettings({theme:'dark'},{theme:'light'},{theme:'oled'});
 assert.equal(both.settings.theme,'oled');assert.equal(both.conflicts[0],'theme');
 assert.equal(mergeSettings({},JSON.parse('{"__proto__":"x"}'),{}).settings.__proto__,'x');
 assert.equal(Object.getPrototypeOf(settings),null);
-console.log('PASS: content merge, edit/delete conflict classification, independent preferences, reset markers, conflict retention and passive settings maps.');
+
+// Clash evaluation tests (auto-select newer if larger; compare with user if unsure)
+assert.equal(typeof evaluateClash, 'function');
+const localNewerLarger = evaluateClash({ updatedAt: 200, size: 500 }, { modifiedTime: new Date(100).toISOString(), size: 300 });
+assert.equal(localNewerLarger.confident, true);
+assert.equal(localNewerLarger.choice, 'local');
+
+const remoteNewerLarger = evaluateClash({ updatedAt: 100, size: 300 }, { modifiedTime: new Date(200).toISOString(), size: 500 });
+assert.equal(remoteNewerLarger.confident, true);
+assert.equal(remoteNewerLarger.choice, 'remote');
+
+const localNewerSmaller = evaluateClash({ updatedAt: 200, size: 100 }, { modifiedTime: new Date(100).toISOString(), size: 500 });
+assert.equal(localNewerSmaller.confident, false);
+assert.equal(localNewerSmaller.choice, null);
+
+const remoteNewerSmaller = evaluateClash({ updatedAt: 100, size: 500 }, { modifiedTime: new Date(200).toISOString(), size: 100 });
+assert.equal(remoteNewerSmaller.confident, false);
+assert.equal(remoteNewerSmaller.choice, null);
+
+const equalAmbiguous = evaluateClash({ updatedAt: 100, size: 300 }, { modifiedTime: new Date(100).toISOString(), size: 300 });
+assert.equal(equalAmbiguous.confident, false);
+assert.equal(equalAmbiguous.choice, null);
+
+console.log('PASS: content merge, clash evaluation, edit/delete conflict classification, independent preferences, reset markers, conflict retention and passive settings maps.');

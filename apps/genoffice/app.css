@@ -1,0 +1,723 @@
+.desktop-window.genoffice-window {
+  --app-window-width: min(82rem, calc(100% - 2rem));
+  --app-window-height: min(54rem, calc(100% - 4.5rem));
+  --app-window-left: clamp(1rem, 6vw, 4.5rem);
+  --app-window-top: 2.2rem;
+}
+
+/* Shell Layout */
+.genoffice-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--body, system-ui, sans-serif);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Header & Workspace Switcher */
+.genoffice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--surface-raised, #181c24);
+  border-bottom: 1px solid var(--line, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+}
+
+.genoffice-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.genoffice-brand img {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.genoffice-doc-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.genoffice-filename {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-soft, #94a3b8);
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.genoffice-filename:focus {
+  outline: none;
+  background: var(--surface-inset, #0f1218);
+  border-color: var(--theme-primary, #6366f1);
+  color: var(--text);
+}
+
+.genoffice-dirty-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  display: none;
+}
+.genoffice-dirty-dot.is-dirty {
+  display: inline-block;
+}
+
+/* Workspace Navigation Tabs */
+.genoffice-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--surface-inset, #0d1117);
+  padding: 0.2rem;
+  border-radius: 6px;
+  border: 1px solid var(--line, rgba(255,255,255,0.06));
+}
+
+.genoffice-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-soft, #94a3b8);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.genoffice-tab:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.genoffice-tab.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.genoffice-tab.active[data-app="docs"] { background: #2563eb; }
+.genoffice-tab.active[data-app="sheets"] { background: #16a34a; }
+.genoffice-tab.active[data-app="slides"] { background: #ea580c; }
+.genoffice-tab.active[data-app="pdf"] { background: #dc2626; }
+.genoffice-tab.active[data-app="markdown"] { background: #8b5cf6; }
+
+.genoffice-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.genoffice-copilot-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.25);
+  transition: transform 0.1s ease, filter 0.15s ease;
+}
+
+.genoffice-copilot-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* Ribbon & Toolbar */
+.genoffice-ribbon {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--surface, #131720);
+  border-bottom: 1px solid var(--line, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+}
+
+.genoffice-tool-group {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding-right: 0.4rem;
+  border-right: 1px solid var(--line, rgba(255,255,255,0.08));
+}
+
+.genoffice-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 1.8rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.8rem;
+  color: var(--text-soft, #94a3b8);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s ease;
+}
+
+.genoffice-btn:hover {
+  color: var(--text);
+  background: var(--surface-raised, rgba(255,255,255,0.06));
+  border-color: var(--line, rgba(255,255,255,0.1));
+}
+
+.genoffice-btn:active, .genoffice-btn.is-active {
+  color: var(--theme-primary-ink, #ffffff);
+  background: color-mix(in srgb, var(--theme-primary, #6366f1) 25%, transparent);
+  border-color: var(--theme-primary, #6366f1);
+}
+
+.genoffice-btn-primary {
+  color: #ffffff;
+  background: var(--theme-primary, #4f46e5);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.genoffice-btn-primary:hover {
+  background: color-mix(in srgb, var(--theme-primary, #4f46e5) 85%, #ffffff);
+}
+
+/* Main Work Area */
+.genoffice-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.genoffice-view-container {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.genoffice-view {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.genoffice-view.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Docs Workspace */
+.genoffice-docs-stage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.5rem 1rem;
+  background: var(--surface-inset, #0b0e14);
+  display: flex;
+  justify-content: center;
+}
+
+.genoffice-doc-page {
+  width: 100%;
+  max-width: 780px;
+  min-height: 980px;
+  padding: 3.5rem 4rem;
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 4px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+  user-select: text;
+}
+
+.genoffice-doc-page h1 { font-size: 2.1rem; margin-top: 0; margin-bottom: 0.8rem; font-weight: 800; color: #0f172a; }
+.genoffice-doc-page h2 { font-size: 1.5rem; margin-top: 1.4rem; margin-bottom: 0.6rem; font-weight: 700; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.3rem; }
+.genoffice-doc-page h3 { font-size: 1.2rem; margin-top: 1.2rem; margin-bottom: 0.4rem; font-weight: 600; color: #334155; }
+.genoffice-doc-page p { margin-bottom: 1rem; }
+.genoffice-doc-page blockquote { border-left: 4px solid #3b82f6; margin: 1rem 0; padding-left: 1rem; color: #475569; font-style: italic; }
+.genoffice-doc-page table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.genoffice-doc-page th, .genoffice-doc-page td { border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; text-align: left; }
+.genoffice-doc-page th { background: #f8fafc; font-weight: 600; }
+
+/* Sheets Workspace */
+.genoffice-sheets-stage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--surface-inset, #0b0e14);
+}
+
+.genoffice-formula-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--surface, #131720);
+  border-bottom: 1px solid var(--line, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+}
+
+.genoffice-cell-address {
+  width: 50px;
+  font-weight: 700;
+  font-family: var(--mono, monospace);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 0.2rem 0.4rem;
+  background: var(--surface-inset, #0b0e14);
+  border: 1px solid var(--line, rgba(255,255,255,0.1));
+  border-radius: 3px;
+  color: #10b981;
+}
+
+.genoffice-fx-icon {
+  font-weight: 800;
+  font-style: italic;
+  color: var(--text-soft, #94a3b8);
+  font-size: 0.85rem;
+}
+
+.genoffice-formula-input {
+  flex: 1;
+  font-family: var(--mono, monospace);
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--surface-inset, #0b0e14);
+  border: 1px solid var(--line, rgba(255,255,255,0.1));
+  border-radius: 3px;
+  color: var(--text);
+  outline: none;
+}
+
+.genoffice-formula-input:focus {
+  border-color: #10b981;
+}
+
+.genoffice-grid-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  background: var(--surface-inset, #0f1218);
+}
+
+.genoffice-grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: var(--body, system-ui, sans-serif);
+  font-size: 0.85rem;
+}
+
+.genoffice-grid th {
+  background: var(--surface-raised, #1a202c);
+  color: var(--text-soft, #a0aec0);
+  border: 1px solid var(--line, #2d3748);
+  padding: 0.25rem 0.5rem;
+  font-weight: 600;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  user-select: none;
+}
+
+.genoffice-grid th.row-header {
+  left: 0;
+  width: 44px;
+  z-index: 3;
+}
+
+.genoffice-grid td {
+  border: 1px solid var(--line, #2d3748);
+  padding: 0.2rem 0.4rem;
+  min-width: 90px;
+  max-width: 180px;
+  height: 24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--surface, #131720);
+  color: var(--text);
+  outline: none;
+}
+
+.genoffice-grid td:focus, .genoffice-grid td.is-selected {
+  outline: 2px solid #10b981;
+  outline-offset: -1px;
+  background: rgba(16, 185, 129, 0.12);
+  z-index: 1;
+}
+
+/* Slides Workspace */
+.genoffice-slides-stage {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: var(--surface-inset, #0b0e14);
+}
+
+.genoffice-slides-strip {
+  width: 170px;
+  border-right: 1px solid var(--line, rgba(255,255,255,0.08));
+  background: var(--surface, #131720);
+  padding: 0.75rem 0.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.genoffice-slide-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #ffffff;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0.4rem;
+  color: #1e293b;
+  overflow: hidden;
+  font-size: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+
+.genoffice-slide-thumb:hover {
+  transform: scale(1.02);
+}
+
+.genoffice-slide-thumb.active {
+  border-color: #ea580c;
+  box-shadow: 0 0 0 1px #ea580c;
+}
+
+.genoffice-slide-num {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.genoffice-slide-viewport {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.genoffice-slide-canvas {
+  width: 100%;
+  max-width: 860px;
+  aspect-ratio: 16 / 9;
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 6px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  padding: 3rem 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  user-select: text;
+}
+
+.genoffice-slide-canvas h1 {
+  font-size: 2.4rem;
+  margin: 0 0 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  outline: none;
+}
+
+.genoffice-slide-canvas p, .genoffice-slide-canvas ul {
+  font-size: 1.25rem;
+  color: #334155;
+  line-height: 1.6;
+  margin: 0;
+  outline: none;
+}
+
+/* PDF Workspace */
+.genoffice-pdf-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-inset, #0b0e14);
+}
+
+.genoffice-pdf-viewer {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.genoffice-pdf-page {
+  width: 100%;
+  max-width: 740px;
+  min-height: 940px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  padding: 3rem;
+  border-radius: 4px;
+  position: relative;
+  user-select: text;
+}
+
+.genoffice-pdf-annotation {
+  background: rgba(254, 240, 138, 0.5);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Markdown Workspace */
+.genoffice-markdown-stage {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: var(--surface-inset, #0b0e14);
+}
+
+.genoffice-md-editor {
+  flex: 1;
+  min-height: 0;
+  padding: 1rem;
+  font-family: var(--mono, "Courier New", monospace);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  background: var(--surface, #131720);
+  color: var(--text);
+  border: none;
+  border-right: 1px solid var(--line, rgba(255,255,255,0.08));
+  resize: none;
+  outline: none;
+  user-select: text;
+}
+
+.genoffice-md-preview {
+  flex: 1;
+  min-height: 0;
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  background: var(--surface-inset, #0b0e14);
+  color: var(--text);
+  line-height: 1.6;
+  user-select: text;
+}
+
+.genoffice-md-preview h1, .genoffice-md-preview h2, .genoffice-md-preview h3 {
+  color: var(--text);
+  border-bottom: 1px solid var(--line, rgba(255,255,255,0.1));
+  padding-bottom: 0.3rem;
+}
+
+.genoffice-md-preview code {
+  background: var(--surface-raised, #1f2937);
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+  font-family: var(--mono, monospace);
+  font-size: 0.85em;
+}
+
+.genoffice-md-preview pre {
+  background: var(--surface-raised, #1f2937);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+/* AI Copilot Sidebar */
+.genoffice-copilot-drawer {
+  width: 320px;
+  border-left: 1px solid var(--line, rgba(255,255,255,0.08));
+  background: var(--surface-raised, #161a23);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width 0.2s ease, transform 0.2s ease;
+}
+
+.genoffice-copilot-drawer.collapsed {
+  display: none;
+}
+
+.genoffice-copilot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(99, 102, 241, 0.15));
+  border-bottom: 1px solid var(--line, rgba(255,255,255,0.08));
+}
+
+.genoffice-copilot-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #c084fc;
+}
+
+.genoffice-copilot-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.genoffice-ai-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.genoffice-chip {
+  text-align: left;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  background: var(--surface, #11141c);
+  border: 1px solid var(--line, rgba(255,255,255,0.08));
+  color: var(--text-soft, #cbd5e1);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.genoffice-chip:hover {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: #a855f7;
+  color: #ffffff;
+}
+
+.genoffice-chat-log {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 80px;
+}
+
+.genoffice-msg {
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  user-select: text;
+}
+
+.genoffice-msg.user {
+  background: #312e81;
+  color: #e0e7ff;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+}
+
+.genoffice-msg.assistant {
+  background: var(--surface, #11141c);
+  border: 1px solid var(--line, rgba(255,255,255,0.08));
+  color: var(--text);
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+}
+
+.genoffice-copilot-input-box {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.65rem 0.85rem;
+  border-top: 1px solid var(--line, rgba(255,255,255,0.08));
+  background: var(--surface, #11141c);
+}
+
+.genoffice-copilot-input {
+  flex: 1;
+  background: var(--surface-inset, #0b0e14);
+  border: 1px solid var(--line, rgba(255,255,255,0.1));
+  border-radius: 4px;
+  padding: 0.35rem 0.55rem;
+  color: var(--text);
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.genoffice-copilot-input:focus {
+  border-color: #a855f7;
+}
+
+/* Status Bar */
+.genoffice-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.75rem;
+  background: var(--surface-raised, #181c24);
+  border-top: 1px solid var(--line, rgba(255,255,255,0.08));
+  font-size: 0.75rem;
+  color: var(--text-soft, #94a3b8);
+  flex-shrink: 0;
+}
+
+.genoffice-status-section {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}

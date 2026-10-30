@@ -67,6 +67,14 @@
         return /\.(?:fx|effectcraft)$/i.test(name);
     }
 
+    function isCadFile(name = "") {
+        return /\.(?:solidcraft|step|stp|iges|igs|stl|3mf|obj|gltf|glb|dxf)$/i.test(name);
+    }
+
+    function isGenOfficeFile(name = "") {
+        return /\.(?:docx?|xlsx?|pptx?|odt|ods|odp|rtf|csv|tsv|md|markdown|html?|pdf)$/i.test(name);
+    }
+
 
     function renderBreadcrumbs(windowEl) {
         const breadcrumbsContainer = windowEl.querySelector(".files-breadcrumbs");
@@ -224,6 +232,14 @@
                     iconHtml = '<i class="fa-regular fa-file-audio"></i>';
                 } else if (item.type.startsWith("text/")) {
                     iconHtml = '<i class="fa-regular fa-file-lines"></i>';
+                } else if (/\.(?:docx?|odt|rtf)$/i.test(item.name)) {
+                    iconHtml = '<i class="fa-solid fa-file-word" style="color: #2563eb;"></i>';
+                } else if (/\.(?:xlsx?|ods|csv|tsv)$/i.test(item.name)) {
+                    iconHtml = '<i class="fa-solid fa-file-excel" style="color: #16a34a;"></i>';
+                } else if (/\.(?:pptx?|odp)$/i.test(item.name)) {
+                    iconHtml = '<i class="fa-solid fa-file-powerpoint" style="color: #ea580c;"></i>';
+                } else if (isCadFile(item.name)) {
+                    iconHtml = '<i class="fa-solid fa-cube"></i>';
                 }
 
                 el.innerHTML = `
@@ -284,6 +300,8 @@
         const lowerName = item.name.toLowerCase();
         if (isPdfFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("pdfcraft"))) {
             window.openDesktopWindow("pdfcraft", { path: item.path });
+        } else if (isCadFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("solidcraft"))) {
+            window.openDesktopWindow("solidcraft", { path: item.path });
         } else if (isVectorImage(lowerName, item.type) && (!window.isAppInstalled || window.isAppInstalled("vectorcraft"))) {
             window.openDesktopWindow("vectorcraft", { path: item.path });
         } else if (isRawImage(lowerName) && (!window.isAppInstalled || window.isAppInstalled("lightcraft"))) {
@@ -296,6 +314,8 @@
             window.openDesktopWindow("filmcraft", { path: item.path });
         } else if (isRasterImage(lowerName, item.type) && (!window.isAppInstalled || window.isAppInstalled("photocraft"))) {
             window.openDesktopWindow("photocraft", { path: item.path });
+        } else if (isGenOfficeFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("genoffice"))) {
+            window.openDesktopWindow("genoffice", item);
         } else if (isOfficeFile(lowerName)) {
             window.openDesktopWindow("office", item);
         } else if (isTextFile(lowerName, item.type)) {
@@ -441,6 +461,20 @@
         }
 
         const openWith = [];
+        if (isCadFile(name) && (!window.isAppInstalled || window.isAppInstalled("solidcraft"))) {
+            openWith.push({
+                label: "SolidCraft",
+                icon: "fa-solid fa-cube",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("solidcraft", { path: item.path }))
+            });
+        }
+        if (isGenOfficeFile(name) && (!window.isAppInstalled || window.isAppInstalled("genoffice"))) {
+            openWith.push({
+                label: "GenOffice",
+                icon: "fa-solid fa-file-invoice",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("genoffice", item))
+            });
+        }
         if (isPdfFile(name) && (!window.isAppInstalled || window.isAppInstalled("pdfcraft"))) {
             openWith.push({
                 label: "PDFCraft",

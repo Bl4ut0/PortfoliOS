@@ -36,6 +36,8 @@
         },
         desktopApps: {
             plex: ["@plex"],
+            solidcraft: ["@craft"],
+            genoffice: ["@ai"],
             photocraft: ["@craft"],
             vectorcraft: ["@craft"],
             designcraft: ["@craft"],

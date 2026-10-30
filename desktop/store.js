@@ -242,7 +242,7 @@ const installAppFiles = async (id) => {
 
     const modularStoreApps = [
         "plex",
-        "codex", "pdfcraft", "photocraft", "vectorcraft",
+        "codex", "solidcraft", "genoffice", "pdfcraft", "photocraft", "vectorcraft",
         "lightcraft", "designcraft", "filmcraft", "effectcraft"
     ];
     if (modularStoreApps.includes(id)) {
@@ -456,7 +456,7 @@ window.uninstallApp = (id) => {
             .catch(err => console.error(`Failed to clean up ${id} local files:`, err));
     }
 
-    if (["codex", "pdfcraft", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft"].includes(id)) {
+    if (["codex", "solidcraft", "pdfcraft", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft"].includes(id)) {
         document.getElementById(`app-script-${id}`)?.remove();
         document.getElementById(`app-style-${id}`)?.remove();
         delete window.appRegistry[id];

@@ -1,6 +1,6 @@
 # PortfoliOS WASM application catalog
 
-Reviewed 2026-10-11. 31 entries; 219 documentation references. Generated from [catalog.json](catalog.json); edit the JSON and run node scripts/build-wasm-catalog.js.
+Reviewed 2026-10-11. 33 entries; 231 documentation references. Generated from [catalog.json](catalog.json); edit the JSON and run node scripts/build-wasm-catalog.js.
 
 [Library home](README.md) | [Documentation index](DOCUMENTATION.md) | [Integration guide](INTEGRATION.md) | [Expansion roadmap](ROADMAP.md)
 
@@ -45,6 +45,8 @@ Candidate means researched, not installed. Upstream browser support is separate 
 | [DesignCraft](#designcraft) | Publishing | wasm-application | integrated |
 | [FilmCraft](#filmcraft) | Video | wasm-application | integrated |
 | [EffectCraft](#effectcraft) | Motion graphics | wasm-application | integrated |
+| [SolidCraft](#solidcraft) | 3D CAD & Modeling | wasm-application | integrated |
+| [GenOffice](#genoffice) | AI Office Suite | browser-app-with-wasm-kernel | integrated |
 | [Doom](#doomsource) | Existing games | wasm-runtime | integrated |
 | [Duke Nukem 3D](#duke32) | Existing games | wasm-runtime | integrated |
 | [Diablo](#diablo) | Existing games | wasm-runtime | integrated |
@@ -289,6 +291,66 @@ Motion graphics, visual effects, and compositing.
 - [Developer and integration documentation directory](https://github.com/storytold/effectcraft/tree/main/docs) (documentation).
 - [MIT license](https://github.com/storytold/effectcraft/blob/main/LICENSE-MIT) (license).
 - [Apache-2.0 license](https://github.com/storytold/effectcraft/blob/main/LICENSE-APACHE) (license).
+
+<a id="solidcraft"></a>
+
+### SolidCraft
+
+Parametric 3D CAD modeling with geometric constraint solver, history tree, and built-in MCP agent server.
+
+- **Classification:** wasm-application; integrated; maintain.
+- **Runtime:** Pure Rust parametric CAD engine and WebGL2/WebGPU renderer compiled to WebAssembly; native Model Context Protocol server.
+- **Upstream readiness:** Active development; browser and native desktop builds available with full parametric sketcher and 3D modeling operations.
+- **PortfoliOS readiness:** Desktop adapter and modular Store entry integrated with SystemFS file routing, explorer context menus, and SecurityKernel verification.
+- **Desktop:** Lazy native Desktop adapter; SystemFS CAD file bridge; responsive window shell.
+- **Mobile:** Desktop and tablet focused; full precision CAD sketching requires pointer/mouse or stylus input.
+- **Files and backup:** Native .solidcraft parametric projects; STEP/IGES/3MF/STL/OBJ/glTF/DXF export to /documents/SolidCraft/ with clash prevention.
+- **Lifecycle:** Prompts on unsaved modifications; abort controllers on close; isolated memory cleanup.
+- **Performance evidence:** Client-side WebAssembly computation stays outside the shell startup path. Zero compute offload required.
+- **Next action:** Bundle upstream production WASM binaries into apps/solidcraft/runtime/ once official web distribution artifacts are packaged.
+- **License review:** Open-source parametric CAD licensing; verify upstream third-party solver notices before distributing pre-compiled release bundles.
+- **Artifact evidence:** version 0.1.0; SHA-256 unrecorded; measurement report apps/solidcraft/README.md.
+- **Local evidence:** [apps/solidcraft/README.md](../../apps/solidcraft/README.md).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter, file explorer, and SystemFS integration review.).
+
+**Documentation**
+
+- [Project website](https://solidcraft.io) (overview).
+- [Source repository](https://github.com/tangency-labs/solidcraft) (source).
+- [Build and development guide](https://github.com/tangency-labs/solidcraft#readme) (build-api).
+- [Releases and binaries](https://github.com/tangency-labs/solidcraft/releases) (releases).
+- [Upstream issue tracker](https://github.com/tangency-labs/solidcraft/issues) (issues).
+- [License terms](https://github.com/tangency-labs/solidcraft#license) (license).
+
+<a id="genoffice"></a>
+
+### GenOffice
+
+AI-native open-source office suite for Docs, Sheets, Slides, PDF, and Markdown with byte-preserving patch mechanisms and local AI Copilot.
+
+- **Classification:** browser-app-with-wasm-kernel; integrated; maintain.
+- **Runtime:** Multi-app TypeScript and React editor workspaces with pure Rust calculation engine sidecars/WASM modules and local LLM agent skills.
+- **Upstream readiness:** Active open-source development by Genspark; cross-platform desktop and web-compatible sandboxed renderers with byte-preserving OOXML patch mechanisms.
+- **PortfoliOS readiness:** Integrated desktop workspace with full SystemFS routing, File Explorer file associations, context menus, and SecurityKernel scan verification.
+- **Desktop:** Multi-workspace desktop application with tabbed Docs, Sheets, Slides, PDF, and Notes editors, formula bar, presenter mode, and collapsible AI Copilot.
+- **Mobile:** Responsive desktop/tablet workspace; touch-friendly tab switching and reader mode.
+- **Files and backup:** Standard OOXML (.docx, .xlsx, .pptx), PDF, and Markdown documents saved to /documents/GenOffice/ with SecurityKernel verification.
+- **Lifecycle:** Dirty-state checking with confirmation on close; abort controllers; isolated memory cleanup.
+- **Performance evidence:** Modular lazy-loaded bundle outside the shell startup path; client-side execution with zero external compute dependency.
+- **Next action:** Track upstream release packaging and bundle official web distribution artifacts into apps/genoffice/runtime/.
+- **License review:** Apache-2.0 open-source licensing; verify bundled dependencies and font notices before distribution.
+- **Artifact evidence:** version 0.1.0; SHA-256 unrecorded; measurement report apps/genoffice/README.md.
+- **Local evidence:** [apps/genoffice/README.md](../../apps/genoffice/README.md).
+- **Reviewed:** 2026-10-11 (2026-10-11 adapter, file explorer, and SystemFS integration review.).
+
+**Documentation**
+
+- [Project overview](https://github.com/genspark-ai/genoffice) (overview).
+- [Source repository](https://github.com/genspark-ai/genoffice) (source).
+- [Build and developer guide](https://github.com/genspark-ai/genoffice#readme) (build-api).
+- [Releases and downloadable artifacts](https://github.com/genspark-ai/genoffice/releases) (releases).
+- [Upstream issue tracker](https://github.com/genspark-ai/genoffice/issues) (issues).
+- [Apache-2.0 license](https://github.com/genspark-ai/genoffice#license) (license).
 
 <a id="graphite"></a>
 

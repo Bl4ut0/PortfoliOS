@@ -10,8 +10,8 @@ $s=portfolios_lease_step($s,'release','A',$epoch,104,'snapshot123');check($s['ac
 try{portfolios_lease_step($s,'release','A',$epoch,105);throw new LogicException('stale release accepted');}catch(RuntimeException $e){}
 $s=portfolios_lease_step($s,'force','A',0,106);check($s['active']['id']==='A' && $s['active']['epoch']>$epoch,'forced epoch fenced');
 $s=portfolios_lease_step($s,'assert','A',$epoch,107);check(!($s['active']['epoch']===$epoch),'old epoch never renews');
-$s=portfolios_lease_step($s,'claim','B',0,1000);check($s['active']['id']==='A','expired does not imply safely saved');
-$s=portfolios_lease_step($s,'force','B',0,1001);check(portfolios_lease_view($s,'B',1001)['owned'],'explicit force recovers expired owner');
+$s=portfolios_lease_step($s,'claim','B',0,1000);check($s['active']['id']==='B','expired owner automatically cleaned up and claimed');
+check(portfolios_lease_view($s,'B',1000)['owned'],'claimed session owns lease');
 $s=portfolios_lease_step($s,'request','C',0,1002);$s=portfolios_lease_step($s,'cancel','C',0,1003);check(!$s['pending'],'request cancellation');
 $resume=portfolios_lease_step([],'claim','reload-tab',0,100);
 $old=$resume['active']['epoch'];

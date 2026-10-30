@@ -553,6 +553,128 @@
       "licenseNotes": "MIT/Apache-2.0 source licensing; review bundled font/asset notices and ArtCraft branding terms before distributing or modifying a build."
     },
     {
+      "id": "solidcraft",
+      "name": "SolidCraft",
+      "category": "3D CAD & Modeling",
+      "kind": "wasm-application",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "Parametric 3D CAD modeling with geometric constraint solver, history tree, and built-in MCP agent server.",
+      "runtime": "Pure Rust parametric CAD engine and WebGL2/WebGPU renderer compiled to WebAssembly; native Model Context Protocol server.",
+      "upstreamReadiness": "Active development; browser and native desktop builds available with full parametric sketcher and 3D modeling operations.",
+      "portfoliosReadiness": "Desktop adapter and modular Store entry integrated with SystemFS file routing, explorer context menus, and SecurityKernel verification.",
+      "desktop": "Lazy native Desktop adapter; SystemFS CAD file bridge; responsive window shell.",
+      "mobile": "Desktop and tablet focused; full precision CAD sketching requires pointer/mouse or stylus input.",
+      "storage": "Native .solidcraft parametric projects; STEP/IGES/3MF/STL/OBJ/glTF/DXF export to /documents/SolidCraft/ with clash prevention.",
+      "lifecycle": "Prompts on unsaved modifications; abort controllers on close; isolated memory cleanup.",
+      "performance": "Client-side WebAssembly computation stays outside the shell startup path. Zero compute offload required.",
+      "nextAction": "Bundle upstream production WASM binaries into apps/solidcraft/runtime/ once official web distribution artifacts are packaged.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project website",
+          "url": "https://solidcraft.io"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/tangency-labs/solidcraft"
+        },
+        {
+          "type": "build-api",
+          "label": "Build and development guide",
+          "url": "https://github.com/tangency-labs/solidcraft#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and binaries",
+          "url": "https://github.com/tangency-labs/solidcraft/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/tangency-labs/solidcraft/issues"
+        },
+        {
+          "type": "license",
+          "label": "License terms",
+          "url": "https://github.com/tangency-labs/solidcraft#license"
+        }
+      ],
+      "localEvidence": [
+        "apps/solidcraft/README.md"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "2026-10-11 adapter, file explorer, and SystemFS integration review.",
+      "artifact": {
+        "version": "0.1.0",
+        "sha256": null,
+        "measurementReport": "apps/solidcraft/README.md"
+      },
+      "licenseNotes": "Open-source parametric CAD licensing; verify upstream third-party solver notices before distributing pre-compiled release bundles."
+    },
+    {
+      "id": "genoffice",
+      "name": "GenOffice",
+      "category": "AI Office Suite",
+      "kind": "browser-app-with-wasm-kernel",
+      "status": "integrated",
+      "priority": "maintain",
+      "summary": "AI-native open-source office suite for Docs, Sheets, Slides, PDF, and Markdown with byte-preserving patch mechanisms and local AI Copilot.",
+      "runtime": "Multi-app TypeScript and React editor workspaces with pure Rust calculation engine sidecars/WASM modules and local LLM agent skills.",
+      "upstreamReadiness": "Active open-source development by Genspark; cross-platform desktop and web-compatible sandboxed renderers with byte-preserving OOXML patch mechanisms.",
+      "portfoliosReadiness": "Integrated desktop workspace with full SystemFS routing, File Explorer file associations, context menus, and SecurityKernel scan verification.",
+      "desktop": "Multi-workspace desktop application with tabbed Docs, Sheets, Slides, PDF, and Notes editors, formula bar, presenter mode, and collapsible AI Copilot.",
+      "mobile": "Responsive desktop/tablet workspace; touch-friendly tab switching and reader mode.",
+      "storage": "Standard OOXML (.docx, .xlsx, .pptx), PDF, and Markdown documents saved to /documents/GenOffice/ with SecurityKernel verification.",
+      "lifecycle": "Dirty-state checking with confirmation on close; abort controllers; isolated memory cleanup.",
+      "performance": "Modular lazy-loaded bundle outside the shell startup path; client-side execution with zero external compute dependency.",
+      "nextAction": "Track upstream release packaging and bundle official web distribution artifacts into apps/genoffice/runtime/.",
+      "documentation": [
+        {
+          "type": "overview",
+          "label": "Project overview",
+          "url": "https://github.com/genspark-ai/genoffice"
+        },
+        {
+          "type": "source",
+          "label": "Source repository",
+          "url": "https://github.com/genspark-ai/genoffice"
+        },
+        {
+          "type": "build-api",
+          "label": "Build and developer guide",
+          "url": "https://github.com/genspark-ai/genoffice#readme"
+        },
+        {
+          "type": "releases",
+          "label": "Releases and downloadable artifacts",
+          "url": "https://github.com/genspark-ai/genoffice/releases"
+        },
+        {
+          "type": "issues",
+          "label": "Upstream issue tracker",
+          "url": "https://github.com/genspark-ai/genoffice/issues"
+        },
+        {
+          "type": "license",
+          "label": "Apache-2.0 license",
+          "url": "https://github.com/genspark-ai/genoffice#license"
+        }
+      ],
+      "localEvidence": [
+        "apps/genoffice/README.md"
+      ],
+      "lastReviewed": "2026-10-11",
+      "evidence": "2026-10-11 adapter, file explorer, and SystemFS integration review.",
+      "artifact": {
+        "version": "0.1.0",
+        "sha256": null,
+        "measurementReport": "apps/genoffice/README.md"
+      },
+      "licenseNotes": "Apache-2.0 open-source licensing; verify bundled dependencies and font notices before distribution."
+    },
+    {
       "id": "graphite",
       "name": "Graphite",
       "category": "Graphics",

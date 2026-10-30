@@ -79,6 +79,14 @@ try {
     if ($action==='release' && $s['pending'] && ($body['synced'] ?? false)!==true) lease_error(409,'Finish saving to Drive before handing this workspace to the waiting session.');
     $s=portfolios_lease_step($s,$action,$id,$epoch,$now,$snapshot);
     portfolios_lease_store($file,$s);
+    if (random_int(1, 20) === 1) {
+        foreach (glob($dir.'/*.tmp') ?: [] as $tmp) {
+            if (is_file($tmp) && filemtime($tmp) < $now - 600) @unlink($tmp);
+        }
+        foreach (glob($dir.'/auth-*.json') ?: [] as $ac) {
+            if (is_file($ac) && filemtime($ac) < $now - 3600) @unlink($ac);
+        }
+    }
     echo json_encode(portfolios_lease_view($s,$id,time()),JSON_THROW_ON_ERROR);
 } catch (Throwable $error) { lease_error(503,'Session coordination unavailable. Your local files are retained.'); }
 finally { flock($handle,LOCK_UN); fclose($handle); }

@@ -221,3 +221,155 @@ dialog.systemfs-browser {width:min(820px,94vw);padding:0;overflow:hidden;max-hei
  .systemfs-row-type {display:none;}
 }
 dialog.systemfs-browser, .systemfs-browser button, .systemfs-browser input {font-family:inherit;}
+
+/* Session Clash / Conflict Resolution Dialog */
+dialog.session-clash-dialog {
+    width: min(840px, 95vw);
+    max-height: 90vh;
+    padding: 1.25rem;
+}
+.session-clash-header {
+    margin-bottom: 1rem;
+}
+.session-clash-header h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.25rem;
+    color: var(--text);
+}
+.session-clash-path {
+    font-family: var(--mono, monospace);
+    font-size: 0.88rem;
+    color: var(--theme-primary-ink, #22d3ee);
+    background: var(--surface-inset, #141418);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+    word-break: break-all;
+    margin: 0.25rem 0 0.5rem;
+}
+.session-clash-banner {
+    padding: 0.65rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+    background: rgba(234, 179, 8, 0.12);
+    border: 1px solid rgba(234, 179, 8, 0.35);
+    color: #fde047;
+}
+.session-clash-banner.info {
+    background: rgba(34, 211, 238, 0.1);
+    border-color: rgba(34, 211, 238, 0.3);
+    color: var(--theme-primary-ink, #22d3ee);
+}
+.session-clash-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+@media (max-width: 640px) {
+    .session-clash-columns {
+        grid-template-columns: 1fr;
+    }
+}
+.session-clash-card {
+    background: var(--surface-inset, #141418);
+    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.12));
+    border-radius: 8px;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.session-clash-card.recommended {
+    border-color: var(--theme-primary-ink, #22d3ee);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.15);
+}
+.session-clash-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.session-clash-card-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+.session-clash-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-soft, #a1a1aa);
+}
+.session-clash-badge.newer {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+}
+.session-clash-badge.larger {
+    background: rgba(168, 85, 247, 0.2);
+    color: #c084fc;
+}
+.session-clash-meta {
+    font-size: 0.82rem;
+    color: var(--text-soft, #a1a1aa);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+.session-clash-preview-box {
+    flex: 1;
+    min-height: 120px;
+    max-height: 220px;
+    overflow: auto;
+    background: #090a0f;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 0.5rem;
+}
+.session-clash-preview-box pre {
+    margin: 0;
+    font-family: var(--mono, monospace);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: #e2e8f0;
+}
+.session-clash-preview-img {
+    max-width: 100%;
+    max-height: 180px;
+    object-fit: contain;
+    border-radius: 4px;
+    display: block;
+    margin: auto;
+}
+.session-clash-preview-binary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    font-size: 0.82rem;
+    color: var(--text-soft, #a1a1aa);
+}
+.session-clash-card button {
+    margin-top: auto;
+    width: 100%;
+    padding: 0.55rem;
+    font-weight: 500;
+}
+.session-clash-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line-strong, rgba(255, 255, 255, 0.1));
+}

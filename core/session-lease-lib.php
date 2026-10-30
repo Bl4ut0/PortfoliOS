@@ -4,24 +4,25 @@ function portfolios_lease_step(array $s, string $action, string $id, int $epoch,
     $s += ['generation'=>0, 'active'=>null, 'pending'=>null, 'lastSnapshot'=>null];
     if ($s['pending'] && $s['pending']['expires'] <= $now) $s['pending'] = null;
     $active = $s['active'];
-    $mine = $active && $active['id'] === $id && $active['epoch'] === $epoch && $active['expires'] > $now;
+    $activeExpired = $active && $active['expires'] <= $now;
+    $mine = $active && $active['id'] === $id && $active['epoch'] === $epoch && !$activeExpired;
     if ($action === 'claim' || $action === 'force') {
         if ($active && $active['id'] === $id && $action !== 'force') {
             // Resuming the same tab is not a takeover. Fence its old requests if
             // the lease expired, and preserve any legitimate waiting handoff.
-            if ($active['expires'] <= $now) {
+            if ($activeExpired) {
                 $s['generation']++;
                 $s['active']['epoch'] = $s['generation'];
             }
             $s['active']['expires'] = $now + 180;
-        } elseif (!$active || $action === 'force') {
+        } elseif (!$active || $activeExpired || $action === 'force') {
+            // When no session is active or the prior lease has expired, claim automatically
             $s['generation']++;
             $s['active'] = ['id'=>$id, 'epoch'=>$s['generation'], 'expires'=>$now+180];
             $s['pending'] = null;
         }
-        // Expired owners still require explicit force: silence is not a confirmed save.
     } elseif ($action === 'request') {
-        if (!$active) return portfolios_lease_step($s, 'claim', $id, 0, $now);
+        if (!$active || $activeExpired) return portfolios_lease_step($s, 'claim', $id, 0, $now);
         if ($active['id'] !== $id && (!$s['pending'] || $s['pending']['id'] === $id))
             $s['pending'] = ['id'=>$id, 'requested'=>$now, 'expires'=>$now+300];
     } elseif ($action === 'cancel') {
@@ -42,9 +43,10 @@ function portfolios_lease_step(array $s, string $action, string $id, int $epoch,
 }
 function portfolios_lease_view(array $s, string $id, int $now): array {
     $a=$s['active'];
-    return ['owned'=>!!$a && $a['id']===$id && $a['expires']>$now,
+    $isActive = $a && $a['expires'] > $now;
+    return ['owned'=>!!$isActive && $a['id']===$id,
         'epoch'=>$a && $a['id']===$id ? $a['epoch'] : null,
-        'expires'=>$a['expires'] ?? null, 'occupied'=>!!$a,
+        'expires'=>$a['expires'] ?? null, 'occupied'=>!!$isActive,
         'handoffRequested'=>!!$s['pending'] && ($a['id'] ?? null)===$id,
         'waiting'=>($s['pending']['id'] ?? null)===$id,
         'lastSnapshot'=>$s['lastSnapshot']];

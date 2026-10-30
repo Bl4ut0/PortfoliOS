@@ -104,6 +104,28 @@ A release or tracker URL is a navigation reference; it does not guarantee a bina
 | license | [MIT license](https://github.com/storytold/effectcraft/blob/main/LICENSE-MIT) |
 | license | [Apache-2.0 license](https://github.com/storytold/effectcraft/blob/main/LICENSE-APACHE) |
 
+## SolidCraft
+
+| Documentation area | Reference |
+| --- | --- |
+| overview | [Project website](https://solidcraft.io) |
+| source | [Source repository](https://github.com/tangency-labs/solidcraft) |
+| build-api | [Build and development guide](https://github.com/tangency-labs/solidcraft#readme) |
+| releases | [Releases and binaries](https://github.com/tangency-labs/solidcraft/releases) |
+| issues | [Upstream issue tracker](https://github.com/tangency-labs/solidcraft/issues) |
+| license | [License terms](https://github.com/tangency-labs/solidcraft#license) |
+
+## GenOffice
+
+| Documentation area | Reference |
+| --- | --- |
+| overview | [Project overview](https://github.com/genspark-ai/genoffice) |
+| source | [Source repository](https://github.com/genspark-ai/genoffice) |
+| build-api | [Build and developer guide](https://github.com/genspark-ai/genoffice#readme) |
+| releases | [Releases and downloadable artifacts](https://github.com/genspark-ai/genoffice/releases) |
+| issues | [Upstream issue tracker](https://github.com/genspark-ai/genoffice/issues) |
+| license | [Apache-2.0 license](https://github.com/genspark-ai/genoffice#license) |
+
 ## Graphite
 
 | Documentation area | Reference |
