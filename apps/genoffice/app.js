@@ -790,7 +790,8 @@
             try {
                 if (window.SimpleBrain?.query) {
                     const res = await window.SimpleBrain.query(`In the context of the GenOffice ${state.activeApp} workspace: ${promptText}`);
-                    if (res?.text) responseText = res.text;
+                    if (res?.text) responseText = res.text.replace(/\n/g, "<br>");
+                    else if (typeof res === "string") responseText = res.replace(/\n/g, "<br>");
                 }
             } catch {}
         }
