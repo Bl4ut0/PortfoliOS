@@ -94,6 +94,8 @@ window.mountDesktop = async () => {
         const powerMenu = document.getElementById("power-options-menu");
         if (powerMenu && !powerMenu.hidden && !event.target.closest("#power-options-menu") && !event.target.closest("[data-start-power]")) {
             powerMenu.hidden = true;
+            powerMenu.style.display = "none";
+            powerMenu.remove();
         }
         const calPanel = window.byId ? window.byId("calendar-panel") : document.getElementById("calendar-panel");
         if (calPanel && !event.target.closest("#calendar-panel") && !event.target.closest("#clock-toggle")) {
@@ -222,15 +224,21 @@ window.mountDesktop = async () => {
                 
                 powerMenu.querySelector("#power-switch-user-btn").addEventListener("click", () => {
                     powerMenu.hidden = true;
-                    const startMenu = document.getElementById("start-menu");
-                    if (startMenu) startMenu.classList.remove("active");
+                    powerMenu.style.display = "none";
+                    powerMenu.remove();
+                    const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+                    if (startMenu) startMenu.hidden = true;
+                    window.closeUserProfilePrompt?.();
                     window.openSessionChooser?.();
                 });
 
                 powerMenu.querySelector("#power-logout-btn").addEventListener("click", async () => {
                     powerMenu.hidden = true;
-                    const startMenu = document.getElementById("start-menu");
-                    if (startMenu) startMenu.classList.remove("active");
+                    powerMenu.style.display = "none";
+                    powerMenu.remove();
+                    const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+                    if (startMenu) startMenu.hidden = true;
+                    window.closeUserProfilePrompt?.();
 
                     window.showDesktopToast?.("Logging out and closing applications...");
 
@@ -273,12 +281,17 @@ window.mountDesktop = async () => {
                 });
 
                 powerMenu.querySelector("#power-restart-btn").addEventListener("click", () => {
+                    powerMenu.hidden = true;
+                    powerMenu.style.display = "none";
+                    powerMenu.remove();
                     window.showDesktopToast?.("Restarting system...");
                     setTimeout(() => window.location.reload(), 800);
                 });
                 
                 powerMenu.querySelector("#power-shutdown-btn").addEventListener("click", () => {
                     powerMenu.hidden = true;
+                    powerMenu.style.display = "none";
+                    powerMenu.remove();
                     let shutdownOverlay = document.getElementById("shutdown-overlay");
                     if (!shutdownOverlay) {
                         shutdownOverlay = document.createElement("div");
@@ -310,7 +323,9 @@ window.mountDesktop = async () => {
             const scale = window.getDesktopScale ? window.getDesktopScale() : 1;
             powerMenu.style.left = `${rect.left / scale}px`;
             powerMenu.style.bottom = `${(window.innerHeight - rect.top) / scale + 8}px`;
-            powerMenu.hidden = !powerMenu.hidden;
+            const willShow = powerMenu.hidden || powerMenu.style.display === "none";
+            powerMenu.hidden = !willShow;
+            powerMenu.style.display = willShow ? "flex" : "none";
             return;
         }
 

@@ -1011,6 +1011,10 @@
     backdrop-filter: blur(20px);
 }
 
+.power-options-menu[hidden] {
+    display: none !important;
+}
+
 .power-option-item {
     display: flex;
     align-items: center;

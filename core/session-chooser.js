@@ -16,6 +16,9 @@
     window.closeSessionChooser = () => {
         window.clearInterval(clockTimer);
         clockTimer = null;
+        document.getElementById("power-options-menu")?.remove();
+        const sm = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+        if (sm) sm.hidden = true;
         document.getElementById("session-chooser")?.remove();
         document.body.classList.remove("session-locked");
         inerted.forEach(([node, value]) => { node.inert = value; });
@@ -24,6 +27,9 @@
     };
 
     window.openSessionChooser = (experience = document.body.dataset.view) => {
+        document.getElementById("power-options-menu")?.remove();
+        const sm = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+        if (sm) sm.hidden = true;
         if (document.getElementById("session-chooser")) return;
         if (window.GDriveSync?.syncInProgress) { window.showDesktopToast?.("Wait for the current Drive backup to finish before switching accounts."); return; }
         window.GDriveSync?.closeReconnectPrompt();
