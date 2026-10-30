@@ -5,7 +5,10 @@ require_once __DIR__.'/session-drive-lib.php';
 header('Content-Type: application/json'); header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 function lease_error(int $status, string $message): never {
-    http_response_code($status); echo json_encode(['error'=>$message]); exit;
+    http_response_code($status);
+    header('X-Error-Message: ' . preg_replace('/[\r\n]/', '', $message));
+    echo json_encode(['error'=>$message]);
+    exit;
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') lease_error(405, 'POST required.');
 $origin = parse_url($_SERVER['HTTP_ORIGIN'] ?? '');
@@ -15,7 +18,13 @@ if (!$originHost || $originHost !== $host || !in_array($origin['scheme'] ?? '', 
 if (($origin['scheme'] ?? '')!=='https' && !preg_match('/^(localhost|127\.0\.0\.1)(:[0-9]+)?$/D',$host)) lease_error(403,'HTTPS required.');
 if (!function_exists('curl_init')) lease_error(503, 'Session coordination requires server cURL support.');
 $headers=function_exists('getallheaders') ? array_change_key_case(getallheaders(),CASE_LOWER) : [];
-$authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $headers['authorization'] ?? '';
+$getHeader = function(string $name) use ($headers): string {
+    $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+    $redirectKey = 'REDIRECT_' . $serverKey;
+    $lowerName = strtolower($name);
+    return $_SERVER[$serverKey] ?? $_SERVER[$redirectKey] ?? $headers[$lowerName] ?? '';
+};
+$authorization = $getHeader('Authorization');
 if (!preg_match('/^Bearer ([A-Za-z0-9._~+\/-]{16,4096})$/D', $authorization, $match)) lease_error(401, 'Google sign-in required.');
 $token = $match[1];
 // Private server metadata contains no bearer credentials or document contents.
@@ -35,8 +44,8 @@ if (!$identity || ($identity['verifiedUntil'] ?? 0)<=time()) {
     $identity=['sub'=>$identity['sub'],'verifiedUntil'=>time()+30];
     file_put_contents($cacheFile,json_encode($identity),LOCK_EX);chmod($cacheFile,0600);
 }
-$id=$_SERVER['HTTP_X_PORTFOLIOS_SESSION'] ?? '';
-$epoch=(int)($_SERVER['HTTP_X_PORTFOLIOS_EPOCH'] ?? 0);
+$id = $getHeader('X-PortfoliOS-Session');
+$epoch = (int)$getHeader('X-PortfoliOS-Epoch');
 if (!preg_match('/^[a-f0-9-]{36}$/D',$id)) lease_error(400,'Invalid session identifier.');
 $action=$_GET['action'] ?? '';
 if (!in_array($action,['claim','request','force','cancel','renew','assert','release','drive'],true)) lease_error(400,'Invalid session action.');
@@ -50,10 +59,17 @@ try {
     if ($action==='drive') {
         $view=portfolios_lease_view($s,$id,$now);
         if (!$view['owned'] || $view['epoch']!==$epoch) lease_error(409,'This workspace no longer owns the active session.');
-        $method=$_SERVER['HTTP_X_DRIVE_METHOD'] ?? '';
-        $target=$_SERVER['HTTP_X_DRIVE_PATH'] ?? '';
+        $method = strtoupper($getHeader('X-Drive-Method'));
+        $target = $getHeader('X-Drive-Path');
         $targetParts=parse_url($target);$params=[];parse_str($targetParts['query'] ?? '',$params);
-        if (!in_array($method,['POST','PATCH','PUT','DELETE'],true) || isset($targetParts['host']) || !preg_match('~^/(?:upload/)?drive/v3/files(?:/[A-Za-z0-9_-]+)?$~D',$targetParts['path'] ?? '') || array_diff(array_keys($params),['uploadType','fields','upload_id']) || isset($params['uploadType']) && !in_array($params['uploadType'],['multipart','media','resumable'],true) || isset($params['fields']) && $params['fields']!=='id,version' || isset($params['upload_id']) && !preg_match('/^[A-Za-z0-9._~%-]{10,2048}$/D',$params['upload_id'])) lease_error(400,'Unsupported Drive operation.');
+        if (!in_array($method,['POST','PATCH','PUT','DELETE'],true) 
+            || isset($targetParts['host']) 
+            || !preg_match('~^/(?:upload/)?drive/v3/files(?:/[A-Za-z0-9_-]+)?$~D',$targetParts['path'] ?? '') 
+            || array_diff(array_keys($params),['uploadType','fields','upload_id','alt','supportsAllDrives']) 
+            || (isset($params['uploadType']) && !in_array($params['uploadType'],['multipart','media','resumable'],true)) 
+            || (isset($params['fields']) && !preg_match('/^[A-Za-z0-9_(),.* -]{1,256}$/D',$params['fields'])) 
+            || (isset($params['upload_id']) && !preg_match('/^[A-Za-z0-9._~%+=:\/-]{10,4096}$/D',$params['upload_id']))) 
+            lease_error(400,'Unsupported Drive operation.');
         if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0)>268435456) lease_error(413,'Drive upload exceeds the 256 MiB gateway limit.');
         $length=(int)($_SERVER['CONTENT_LENGTH'] ?? 0);
         $stream=fopen('php://input','rb');
@@ -61,8 +77,12 @@ try {
         $type=$_SERVER['CONTENT_TYPE'] ?? 'application/octet-stream';
         if (strpbrk($type,"\r\n")!==false) lease_error(400,'Invalid content type.');
         $upstreamHeaders=[];
-        foreach(['HTTP_CONTENT_RANGE'=>'Content-Range','HTTP_X_UPLOAD_CONTENT_TYPE'=>'X-Upload-Content-Type','HTTP_X_UPLOAD_CONTENT_LENGTH'=>'X-Upload-Content-Length'] as $key=>$label) {
-            if(isset($_SERVER[$key])) {if(strpbrk($_SERVER[$key],"\r\n")!==false)lease_error(400,'Invalid upload header.');$upstreamHeaders[$label]=$_SERVER[$key];}
+        foreach(['Content-Range'=>'Content-Range','X-Upload-Content-Type'=>'X-Upload-Content-Type','X-Upload-Content-Length'=>'X-Upload-Content-Length'] as $hKey=>$label) {
+            $hVal = $getHeader($hKey);
+            if ($hVal !== '') {
+                if (strpbrk($hVal,"\r\n")!==false) lease_error(400,'Invalid upload header.');
+                $upstreamHeaders[$label] = $hVal;
+            }
         }
         $result=portfolios_drive_request('https://www.googleapis.com'.$target,$method,$token,$stream,$length,$type,$upstreamHeaders);
         fclose($stream);$response=$result['body'];$status=$result['status'];$location=$result['location'];

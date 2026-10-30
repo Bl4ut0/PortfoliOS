@@ -1,7 +1,7 @@
 /* Critical boot styles only. Selected experience styles load after selection. */
-@import url("styles/tokens.css?v=2026.10.30.6");
-@import url("styles/reset.css?v=2026.10.30.6");
-@import url("styles/boot.css?v=2026.10.30.6");
+@import url("styles/tokens.css?v=2026.10.30.7");
+@import url("styles/reset.css?v=2026.10.30.7");
+@import url("styles/boot.css?v=2026.10.30.7");
 
 /* Profile icon controls shared by the two native settings surfaces. */
 .app-icon-settings { margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--line, #475569); }

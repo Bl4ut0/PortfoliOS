@@ -80,15 +80,16 @@
             if(!value.owned || value.epoch!==this.epoch) {this.owned=false;throw new Error('The private workspace moved to another session. Local changes are retained.');}
             this.verifiedAt=Date.now();return value;
         },
-        async drive(url, options) {
+        async drive(url, options = {}) {
             if(!this.required())return fetch(url,options);
             await this.assert();
             const target=new URL(url);
+            const driveMethod = String(options.method || 'POST').toUpperCase();
             const response=await fetch('/core/private-session.php?action=drive', {
                 ...options, method:'POST', cache:'no-store', signal:AbortSignal.timeout(75000),
                 headers:{'Authorization':'Bearer '+GDriveSync.getToken(),'Content-Type':options.headers?.['Content-Type'] || 'application/octet-stream',
                     'X-PortfoliOS-Session':this.id,'X-PortfoliOS-Epoch':String(this.epoch),
-                    'X-Drive-Method':options.method,'X-Drive-Path':target.pathname+target.search,
+                    'X-Drive-Method':driveMethod,'X-Drive-Path':target.pathname+target.search,
                     ...(options.headers?.['Content-Range'] ? {'Content-Range':options.headers['Content-Range']} : {}),
                     ...(options.headers?.['X-Upload-Content-Type'] ? {'X-Upload-Content-Type':options.headers['X-Upload-Content-Type'],'X-Upload-Content-Length':options.headers['X-Upload-Content-Length']} : {})}
             });

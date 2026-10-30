@@ -1,6 +1,13 @@
 # Preserve bearer headers for the authenticated PHP session coordinator.
 <IfModule mod_setenvif.c>
     SetEnvIfNoCase Authorization "(.+)" HTTP_AUTHORIZATION=$1
+    SetEnvIfNoCase X-PortfoliOS-Session "(.+)" HTTP_X_PORTFOLIOS_SESSION=$1
+    SetEnvIfNoCase X-PortfoliOS-Epoch "(.+)" HTTP_X_PORTFOLIOS_EPOCH=$1
+    SetEnvIfNoCase X-Drive-Method "(.+)" HTTP_X_DRIVE_METHOD=$1
+    SetEnvIfNoCase X-Drive-Path "(.+)" HTTP_X_DRIVE_PATH=$1
+    SetEnvIfNoCase Content-Range "(.+)" HTTP_CONTENT_RANGE=$1
+    SetEnvIfNoCase X-Upload-Content-Type "(.+)" HTTP_X_UPLOAD_CONTENT_TYPE=$1
+    SetEnvIfNoCase X-Upload-Content-Length "(.+)" HTTP_X_UPLOAD_CONTENT_LENGTH=$1
 </IfModule>
 
 DirectoryIndex index.php index.html
