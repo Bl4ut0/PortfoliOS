@@ -232,15 +232,36 @@ window.mountDesktop = async () => {
                     const startMenu = document.getElementById("start-menu");
                     if (startMenu) startMenu.classList.remove("active");
                     if (window.isPrivateUser?.(window.state?.currentUserId)) {
-                        window.showDesktopToast?.("Signing out of private workspace...");
+                        window.showDesktopToast?.("Logging out...");
                         try {
-                            await window.switchToPublicProfile?.({ saveToDrive: !!window.GDriveSync?.getToken() });
+                            const hasToken = !!window.GDriveSync?.getToken();
+                            if (hasToken) {
+                                await window.switchToPublicProfile?.({ saveToDrive: true });
+                            } else {
+                                await window.switchToPublicProfile?.({ saveToDrive: false });
+                            }
                         } catch (err) {
-                            window.showDesktopToast?.(err.message || "Sign-out failed.");
+                            console.warn("Save on logout skipped, switching to public profile:", err);
+                            try {
+                                await window.switchToPublicProfile?.({ saveToDrive: false });
+                            } catch (fallbackErr) {
+                                window.setCurrentUser?.("bl4ut0", { allowProfileSwitch: true });
+                                window.resetPublicLocalState?.();
+                                await window.SystemFS?.resetPublicWorkspace?.();
+                                await window.SystemFS?.ensureDefaultFiles?.();
+                                window.state.sessionChosen = true;
+                                window.closeSessionChooser?.();
+                            }
                         }
+                        await window.GDriveSync?.logout?.();
+                        window.showDesktopToast?.("Logged out to public profile.");
                     } else {
-                        window.showDesktopToast?.("Opening account chooser...");
-                        window.openSessionChooser?.();
+                        // Already in public guest profile: clean guest workspace without opening auth
+                        window.showDesktopToast?.("Resetting public guest workspace...");
+                        window.resetPublicLocalState?.();
+                        await window.SystemFS?.resetPublicWorkspace?.();
+                        await window.SystemFS?.ensureDefaultFiles?.();
+                        window.location.reload();
                     }
                 });
 

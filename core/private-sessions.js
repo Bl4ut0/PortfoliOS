@@ -117,10 +117,13 @@
             let value=await this.request('claim');
             if(!value.owned) value=await this.chooseTakeover();
             this.adopt(value);
-            const text=this.show('Restoring your private workspace and checking recovery changes…');
+            const text=this.show('Opening private workspace…');
             try {
                 await window.savePreferencesToFilesystem?.({strict:true});
-                await GDriveSync.sync((done,total,path)=>{text.textContent='Preparing workspace: '+path;});
+                await GDriveSync.sync((done,total,path)=>{
+                    const name = path ? path.split('/').pop() : '';
+                    text.textContent = name ? 'Syncing: ' + name : 'Preparing workspace…';
+                }, { live: true });
                 await window.loadPreferencesFromFilesystem?.();
                 this.ready=true;this.hide();
             } catch(error) {this.ready=false;this.hide();throw error;}
@@ -158,7 +161,7 @@
                 await window.MobileOS?.flushForHandoff?.();
                 await window.prepareProfileSwitch({autoSave:true});
                 await window.savePreferencesToFilesystem?.({strict:true});
-                await GDriveSync.sync((done,total,path)=>{text.textContent='Saving before handoff: '+path;});
+                await GDriveSync.sync((done,total,path)=>{text.textContent='Saving before handoff: '+path;}, { snapshot: true });
                 await this.request('release',{snapshot:window.WorkspaceRecovery?.lastSnapshot || null,synced:true});
                 this.owned=false;clearInterval(this.timer);this.lock('Your workspace was saved to Drive and handed to the other session.');
             } catch(error) {

@@ -309,7 +309,7 @@
                 }catch(error){status.textContent=error.message;button.disabled=false;}
             };
         },
-        async sync(sync,onProgress) {
+        async sync(sync,onProgress,options={}) {
             const owner=window.state.currentUserId, scope=sync.getCurrentSyncScope();
             const baseKey='portfolios:recovery-base:'+owner;
             let previous;try{previous=JSON.parse(localStorage.getItem(baseKey) || '{}');}catch{throw new Error('Local sync history is unreadable. Local files were retained.');}
@@ -332,11 +332,15 @@
             // Durable immutable delta before the first destructive reconciliation step.
             const intentRecord=await SystemFS.readFile('/.sync-deletions.json');
             const intents=intentRecord?.data ? JSON.parse(await window.readFilesystemRecordText(intentRecord)) : {};
-            const snapshot=await this.snapshot(sync,records,baseline,owner,intents);
+            // Live syncing directly reconciles Drive files; snapshots only run when explicitly requested (e.g. handoff) or forced.
+            const shouldSnapshot = Boolean(options.snapshot || options.forceSnapshot);
+            const snapshot = shouldSnapshot ? await this.snapshot(sync,records,baseline,owner,intents) : null;
             const localMap=new Map(records.map(record=>[record.path,record]));
             const next=Object.assign(Object.create(null),ledger.files),report={snapshot,conflicts:[],deletions:[]};
             this.lastSnapshot=snapshot || previous.snapshot || ledger.snapshot || null;
-            const paths=[...new Set([...localMap.keys(),...remoteMap.keys(),...Object.keys(baseline),...Object.keys(ledger.files)])].filter(path=>this.eligible(path,localMap.get(path),owner)).sort();
+            const allCandidatePaths=[...new Set([...localMap.keys(),...remoteMap.keys(),...Object.keys(baseline),...Object.keys(ledger.files)])].filter(path=>this.eligible(path,localMap.get(path),owner)).sort();
+            const targetFilter = options.paths && Array.isArray(options.paths) && options.paths.length ? new Set(options.paths.map(p => SystemFS.normalizePath ? SystemFS.normalizePath(p) : p)) : null;
+            const paths = targetFilter ? allCandidatePaths.filter(p => targetFilter.has(p) || p === ledgerPath || p === '/home/' + owner + '/settings.json') : allCandidatePaths;
             let processed=0;
             for(const path of paths) {
                 await PrivateSessions.assert();

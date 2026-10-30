@@ -647,18 +647,29 @@ window.GDriveSync = {
         });
     },
     
-    scheduleAutomaticSync() {
+    scheduleAutomaticSync(event = null) {
         const userId = window.state?.currentUserId;
         if (!window.state?.sessionChosen || !window.state?.workspaceStarted) return;
         if (this.profileSwitchInProgress || !window.isPrivateUser?.(userId) || !this.getToken() || (window.PrivateSessions?.required() && !window.PrivateSessions.owned)) return;
+        if (event?.path) {
+            this.dirtyLivePaths = this.dirtyLivePaths || new Set();
+            this.dirtyLivePaths.add(event.path);
+        }
         if (this.pendingSyncTimer !== null) window.clearTimeout(this.pendingSyncTimer);
-        this.pendingSyncTimer = window.setTimeout(() => {
+        // Fast responsive live sync: 350ms debounce keeps Drive continuously up to date as files are edited
+        this.pendingSyncTimer = window.setTimeout(async () => {
             this.pendingSyncTimer = null;
             if (!window.state?.sessionChosen || !window.state?.workspaceStarted) return;
             if (this.profileSwitchInProgress || window.state?.currentUserId !== userId || !this.getToken()) return;
             if (this.syncInProgress || this.authInProgress) { this.scheduleAutomaticSync(); return; }
-            window.triggerGDriveSync?.({ silent: true });
-        }, 1500);
+            const paths = this.dirtyLivePaths && this.dirtyLivePaths.size ? Array.from(this.dirtyLivePaths) : null;
+            this.dirtyLivePaths = new Set();
+            try {
+                await window.triggerGDriveSync?.({ silent: true, live: true, paths });
+            } catch (err) {
+                console.warn("Live sync error:", err);
+            }
+        }, 350);
     },
 
     rememberLiveSession() {
@@ -907,7 +918,7 @@ window.GDriveSync = {
         }
     },
     
-    async sync(onProgress, { allowProfileSwitch = false } = {}) {
+    async sync(onProgress, { allowProfileSwitch = false, ...options } = {}) {
         if (!window.isPrivateUser?.(window.state?.currentUserId)) {
             throw new Error("Cloud Sync is reserved for private workspaces. The public portfolio profile does not sync to Google Drive.");
         }
@@ -923,7 +934,7 @@ window.GDriveSync = {
             throw new Error("Security Center is unavailable; Cloud Sync is blocked to protect your files.");
         }
         await window.PrivateSessions?.assert();
-        if (window.PrivateSessions?.required()) return window.WorkspaceRecovery.sync(this, onProgress);
+        if (window.PrivateSessions?.required()) return window.WorkspaceRecovery.sync(this, onProgress, { allowProfileSwitch, ...options });
         const scope = this.getCurrentSyncScope();
         const remoteFiles = await this.fetchRemoteFiles();
         const localFiles = await window.SystemFS.getAllFiles();
@@ -1132,7 +1143,7 @@ document.addEventListener("visibilitychange", () => {
 
 if (window.EventBus) {
     window.EventBus.on("fs:changed", event => {
-        if (event?.action !== "sync") window.GDriveSync.scheduleAutomaticSync();
+        if (event?.action !== "sync") window.GDriveSync.scheduleAutomaticSync(event);
     });
     window.EventBus.on("preferences:saved", () => window.GDriveSync.scheduleAutomaticSync());
 }

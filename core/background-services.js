@@ -1,4 +1,4 @@
-async function triggerGDriveSync({ silent = false } = {}) {
+async function triggerGDriveSync({ silent = false, ...options } = {}) {
     const syncBtn = document.getElementById("settings-gdrive-sync-btn");
     const progressContainer = document.getElementById("settings-gdrive-progress-container");
     const progressBar = document.getElementById("settings-gdrive-progress-bar");
@@ -25,7 +25,7 @@ async function triggerGDriveSync({ silent = false } = {}) {
                 if (progressText) progressText.textContent = `Syncing [${processed}/${total}]: ${path.split("/").pop()}`;
                 if (progressBar) progressBar.style.width = `${percent}%`;
             }
-        });
+        }, { silent, ...options });
         if (window.loadPreferencesFromFilesystem) {
             await window.loadPreferencesFromFilesystem();
         }
