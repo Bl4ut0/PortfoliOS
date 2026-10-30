@@ -45,7 +45,7 @@
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "session-chooser-title");
         overlay.innerHTML = `
-            <header class="session-lock-header"><span><span class="portfolios-mark" aria-hidden="true"><span class="prompt-chevron">&gt;</span><span class="prompt-cursor">_</span></span> PortfoliOS</span><span>${overlay.dataset.experience === "mobile" ? "Mobile" : "Desktop"}</span></header>
+            <header class="session-lock-header"><span><span class="portfolios-mark" aria-hidden="true"><span class="prompt-chevron">&gt;</span><span class="prompt-cursor">_</span></span> PortfoliOS</span><span style="display:inline-flex;align-items:center;gap:12px;"><button type="button" class="session-theme-toggle" data-session-theme title="Choose theme"><i class="fa-solid fa-palette" aria-hidden="true"></i> <span>Theme</span></button><span>${overlay.dataset.experience === "mobile" ? "Mobile" : "Desktop"}</span></span></header>
             <div class="session-chooser-panel">
                 <div class="session-lock-clock" aria-hidden="true"><span data-session-time></span><span data-session-date></span></div>
                 <span class="session-chooser-eyebrow">Welcome back</span>
@@ -75,7 +75,7 @@
                 <p class="session-chooser-error" data-session-error role="alert" hidden></p>
                 <button type="button" class="session-chooser-offline" data-session-offline hidden>Continue this remembered profile offline</button>
             </div>
-            <footer class="session-lock-footer"><button type="button" data-session-cancel ${window.state?.sessionChosen ? "" : "hidden"}>Return to workspace</button><button type="button" data-session-experience><span class="session-action-symbol" aria-hidden="true">←</span> Change experience</button><span>${symbol("lock")} Your personal workspace</span></footer>
+            <footer class="session-lock-footer"><button type="button" data-session-cancel ${window.state?.sessionChosen ? "" : "hidden"}>Return to workspace</button><button type="button" data-session-experience><span class="session-action-symbol" aria-hidden="true">←</span> Change experience</button><button type="button" data-session-theme><i class="fa-solid fa-palette" aria-hidden="true"></i> Theme</button><span>${symbol("lock")} Your personal workspace</span></footer>
         `;
         const mobile = overlay.dataset.experience === 'mobile';
         const host = mobile ? document.getElementById('mobile-device') : document.body;
@@ -146,9 +146,59 @@
             }
         };
         let choosing = false;
+        const toggleThemePicker = () => {
+            const existing = overlay.querySelector("#session-theme-picker-modal");
+            if (existing) { existing.remove(); return; }
+            const themes = window.portfolioThemes || (window.getPortfolioThemeOptions ? window.getPortfolioThemeOptions() : []);
+            const currentThemeId = document.documentElement.dataset.theme || window.state?.themeId || "dark";
+            const modal = document.createElement("div");
+            modal.id = "session-theme-picker-modal";
+            modal.className = "session-theme-picker-modal";
+            modal.innerHTML = `
+                <div class="session-theme-picker-content">
+                    <div class="session-theme-picker-header">
+                        <strong><i class="fa-solid fa-palette"></i> Choose System Theme</strong>
+                        <button type="button" class="session-theme-close" data-theme-close aria-label="Close">&times;</button>
+                    </div>
+                    <div class="session-theme-picker-grid">
+                        ${themes.map(t => `
+                            <button type="button" class="session-theme-card ${t.id === currentThemeId ? "is-active" : ""}" data-theme-select="${t.id}">
+                                <div class="session-theme-card-preview" style="background:${t.tokens?.["--bg"] || "#050608"}; border-color:${t.tokens?.["--line-strong"] || "#333"};">
+                                    <div class="session-theme-swatches">
+                                        <span style="background:${t.tokens?.["--theme-primary"] || "#22d3ee"};"></span>
+                                        <span style="background:${t.tokens?.["--theme-accent"] || "#34d399"};"></span>
+                                    </div>
+                                </div>
+                                <div class="session-theme-card-info">
+                                    <span class="session-theme-card-name">${t.label || t.id}</span>
+                                    <small>${t.colorScheme === "light" ? "Light" : "Dark"}</small>
+                                </div>
+                            </button>
+                        `).join("")}
+                    </div>
+                </div>
+            `;
+            overlay.appendChild(modal);
+        };
+
         overlay.addEventListener("click", async event => {
             const button = event.target.closest("button");
             if (!button || button.disabled || choosing) return;
+            if (button.hasAttribute("data-session-theme")) {
+                toggleThemePicker();
+                return;
+            }
+            if (button.hasAttribute("data-theme-close") || event.target.closest(".session-theme-picker-modal") && !event.target.closest(".session-theme-picker-content")) {
+                overlay.querySelector("#session-theme-picker-modal")?.remove();
+                return;
+            }
+            const themeBtn = event.target.closest("[data-theme-select]");
+            if (themeBtn) {
+                const newThemeId = themeBtn.dataset.themeSelect;
+                if (window.setPortfolioTheme) window.setPortfolioTheme(newThemeId);
+                overlay.querySelector("#session-theme-picker-modal")?.remove();
+                return;
+            }
             if (button.hasAttribute("data-session-cancel")) { window.closeSessionChooser(); return; }
             if (button.hasAttribute("data-session-experience")) {
                 document.getElementById("boot-screen")?.classList.remove("hidden");

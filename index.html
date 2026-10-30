@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="portfolios-build" content="2026.10.30.9">
+    <meta name="portfolios-build" content="2026.10.30.10">
     <meta http-equiv="Content-Security-Policy" content="base-uri 'self'; object-src 'none'; form-action 'self' https://accounts.google.com">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
@@ -19,8 +19,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="mobile/apple-touch-icon.png">
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23090a0f'/%3E%3Cpath d='M8 10l7 6-7 6' stroke='%23f8fafc' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M18 22h7' stroke='%2322d3ee' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
-    <script src="mobile/viewport.js?v=2026.10.30.9"></script>
-    <link rel="stylesheet" href="styles-v1.css?v=2026.10.30.9">
+    <script src="mobile/viewport.js?v=2026.10.30.10"></script>
+    <link rel="stylesheet" href="styles-v1.css?v=2026.10.30.10">
     <script>
         // Instant Theme Resolver (eliminates boot and login screen flashbang)
         (function() {
@@ -48,20 +48,161 @@
                 themeId = themeId || "dark";
                 document.documentElement.dataset.theme = themeId;
                 var presets = {
-                    "dark": { bg: "#050608", text: "#fafafa", pri: "#22d3ee", acc: "#34d399", cs: "dark" },
-                    "light": { bg: "#f8fafc", text: "#0f172a", pri: "#0284c7", acc: "#059669", cs: "light" },
-                    "oled": { bg: "#000000", text: "#ffffff", pri: "#00e5ff", acc: "#f8fafc", cs: "dark" },
-                    "black-accent": { bg: "#f5f5f4", text: "#111111", pri: "#111111", acc: "#3f3f46", cs: "light" },
-                    "terminal": { bg: "#020402", text: "#ecfdf5", pri: "#22c55e", acc: "#84cc16", cs: "dark" },
-                    "glacier": { bg: "#eef7ff", text: "#0f172a", pri: "#2563eb", acc: "#7c3aed", cs: "light" },
-                    "sunset": { bg: "#160b18", text: "#fff7ed", pri: "#fb7185", acc: "#f59e0b", cs: "dark" }
+                    "dark": {
+                        cs: "dark",
+                        tokens: {
+                            "--bg": "#050608",
+                            "--panel": "rgba(9, 11, 16, 0.62)",
+                            "--panel-strong": "rgba(14, 18, 26, 0.85)",
+                            "--line": "rgba(255, 255, 255, 0.07)",
+                            "--line-strong": "rgba(255, 255, 255, 0.14)",
+                            "--text": "#fafafa",
+                            "--text-soft": "#a1a1aa",
+                            "--text-muted": "#71717a",
+                            "--theme-primary": "#22d3ee",
+                            "--theme-accent": "#34d399",
+                            "--glass-bg": "rgba(10, 12, 18, 0.62)",
+                            "--glass-border": "rgba(255, 255, 255, 0.07)",
+                            "--glass-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.12)",
+                            "--glass-shadow": "0 25px 50px -12px rgba(0, 0, 0, 0.75)",
+                            "--on-primary": "#061017",
+                            "--surface-raised": "rgba(255, 255, 255, 0.04)"
+                        }
+                    },
+                    "light": {
+                        cs: "light",
+                        tokens: {
+                            "--bg": "#f8fafc",
+                            "--panel": "rgba(255, 255, 255, 0.85)",
+                            "--panel-strong": "rgba(255, 255, 255, 0.96)",
+                            "--line": "rgba(15, 23, 42, 0.12)",
+                            "--line-strong": "rgba(15, 23, 42, 0.22)",
+                            "--text": "#0f172a",
+                            "--text-soft": "#475569",
+                            "--text-muted": "#64748b",
+                            "--theme-primary": "#0284c7",
+                            "--theme-accent": "#059669",
+                            "--glass-bg": "rgba(255, 255, 255, 0.82)",
+                            "--glass-border": "rgba(15, 23, 42, 0.12)",
+                            "--glass-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.9)",
+                            "--glass-shadow": "0 22px 45px -18px rgba(15, 23, 42, 0.15)",
+                            "--on-primary": "#ffffff",
+                            "--surface-raised": "rgba(15, 23, 42, 0.05)"
+                        }
+                    },
+                    "oled": {
+                        cs: "dark",
+                        tokens: {
+                            "--bg": "#000000",
+                            "--panel": "rgba(10, 10, 10, 0.85)",
+                            "--panel-strong": "rgba(0, 0, 0, 0.96)",
+                            "--line": "rgba(255, 255, 255, 0.09)",
+                            "--line-strong": "rgba(255, 255, 255, 0.2)",
+                            "--text": "#ffffff",
+                            "--text-soft": "#d4d4d8",
+                            "--text-muted": "#8a8a93",
+                            "--theme-primary": "#00e5ff",
+                            "--theme-accent": "#f8fafc",
+                            "--glass-bg": "rgba(10, 10, 10, 0.85)",
+                            "--glass-border": "rgba(255, 255, 255, 0.1)",
+                            "--glass-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.09)",
+                            "--glass-shadow": "0 28px 60px -18px rgba(0, 0, 0, 0.95)",
+                            "--on-primary": "#000000",
+                            "--surface-raised": "rgba(255, 255, 255, 0.06)"
+                        }
+                    },
+                    "black-accent": {
+                        cs: "light",
+                        tokens: {
+                            "--bg": "#f5f5f4",
+                            "--panel": "rgba(255, 255, 255, 0.85)",
+                            "--panel-strong": "rgba(255, 255, 255, 0.96)",
+                            "--line": "rgba(24, 24, 27, 0.13)",
+                            "--line-strong": "rgba(24, 24, 27, 0.24)",
+                            "--text": "#111111",
+                            "--text-soft": "#3f3f46",
+                            "--text-muted": "#71717a",
+                            "--theme-primary": "#111111",
+                            "--theme-accent": "#3f3f46",
+                            "--glass-bg": "rgba(255, 255, 255, 0.82)",
+                            "--glass-border": "rgba(24, 24, 27, 0.14)",
+                            "--glass-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.85)",
+                            "--glass-shadow": "0 22px 45px -18px rgba(24, 24, 27, 0.15)",
+                            "--on-primary": "#ffffff",
+                            "--surface-raised": "rgba(24, 24, 27, 0.05)"
+                        }
+                    },
+                    "terminal": {
+                        cs: "dark",
+                        tokens: {
+                            "--bg": "#020402",
+                            "--panel": "rgba(2, 8, 4, 0.8)",
+                            "--panel-strong": "rgba(4, 18, 8, 0.94)",
+                            "--line": "rgba(134, 239, 172, 0.12)",
+                            "--line-strong": "rgba(134, 239, 172, 0.25)",
+                            "--text": "#ecfdf5",
+                            "--text-soft": "#bbf7d0",
+                            "--text-muted": "#6ee7b7",
+                            "--theme-primary": "#22c55e",
+                            "--theme-accent": "#84cc16",
+                            "--glass-bg": "rgba(2, 8, 4, 0.8)",
+                            "--glass-border": "rgba(134, 239, 172, 0.12)",
+                            "--glass-highlight": "inset 0 1px 0 0 rgba(134, 239, 172, 0.12)",
+                            "--glass-shadow": "0 25px 50px -14px rgba(0, 0, 0, 0.9)",
+                            "--on-primary": "#020402",
+                            "--surface-raised": "rgba(34, 197, 94, 0.08)"
+                        }
+                    },
+                    "glacier": {
+                        cs: "light",
+                        tokens: {
+                            "--bg": "#eef7ff",
+                            "--panel": "rgba(255, 255, 255, 0.85)",
+                            "--panel-strong": "rgba(248, 250, 252, 0.96)",
+                            "--line": "rgba(30, 64, 175, 0.13)",
+                            "--line-strong": "rgba(30, 64, 175, 0.24)",
+                            "--text": "#0f172a",
+                            "--text-soft": "#334155",
+                            "--text-muted": "#64748b",
+                            "--theme-primary": "#2563eb",
+                            "--theme-accent": "#7c3aed",
+                            "--glass-bg": "rgba(255, 255, 255, 0.82)",
+                            "--glass-border": "rgba(30, 64, 175, 0.13)",
+                            "--glass-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.85)",
+                            "--glass-shadow": "0 24px 48px -18px rgba(30, 64, 175, 0.15)",
+                            "--on-primary": "#ffffff",
+                            "--surface-raised": "rgba(37, 99, 235, 0.05)"
+                        }
+                    },
+                    "sunset": {
+                        cs: "dark",
+                        tokens: {
+                            "--bg": "#160b18",
+                            "--panel": "rgba(30, 15, 32, 0.78)",
+                            "--panel-strong": "rgba(45, 20, 45, 0.92)",
+                            "--line": "rgba(254, 205, 211, 0.12)",
+                            "--line-strong": "rgba(254, 205, 211, 0.22)",
+                            "--text": "#fff7ed",
+                            "--text-soft": "#fed7aa",
+                            "--text-muted": "#f9a8d4",
+                            "--theme-primary": "#fb7185",
+                            "--theme-accent": "#f59e0b",
+                            "--glass-bg": "rgba(30, 15, 32, 0.78)",
+                            "--glass-border": "rgba(254, 205, 211, 0.1)",
+                            "--glass-highlight": "inset 0 1px 0 0 rgba(254, 205, 211, 0.12)",
+                            "--glass-shadow": "0 25px 55px -16px rgba(0, 0, 0, 0.72)",
+                            "--on-primary": "#160b18",
+                            "--surface-raised": "rgba(251, 113, 133, 0.08)"
+                        }
+                    }
                 };
                 var p = presets[themeId] || presets["dark"];
                 document.documentElement.style.colorScheme = p.cs;
-                document.documentElement.style.setProperty("--bg", p.bg);
-                document.documentElement.style.setProperty("--text", p.text);
-                document.documentElement.style.setProperty("--theme-primary", primary || p.pri);
-                document.documentElement.style.setProperty("--theme-accent", accent || p.acc);
+                for (var key in p.tokens) {
+                    document.documentElement.style.setProperty(key, p.tokens[key]);
+                }
+                if (primary) document.documentElement.style.setProperty("--theme-primary", primary);
+                if (accent) document.documentElement.style.setProperty("--theme-accent", accent);
             } catch(err) {}
         })();
         // Global System Debug Logger
@@ -168,9 +309,9 @@
         </div>
     </noscript>
 
-    <script src="core/loading-manifest.js?v=2026.10.30.9"></script>
-    <script src="core/staged-loader.js?v=2026.10.30.9"></script>
-    <script src="core/boot.js?v=2026.10.30.9"></script>
-    <script src="main.js?v=2026.10.30.9"></script>
+    <script src="core/loading-manifest.js?v=2026.10.30.10"></script>
+    <script src="core/staged-loader.js?v=2026.10.30.10"></script>
+    <script src="core/boot.js?v=2026.10.30.10"></script>
+    <script src="main.js?v=2026.10.30.10"></script>
 </body>
 </html>

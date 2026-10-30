@@ -19,10 +19,13 @@ if (($origin['scheme'] ?? '')!=='https' && !preg_match('/^(localhost|127\.0\.0\.
 if (!function_exists('curl_init')) lease_error(503, 'Session coordination requires server cURL support.');
 $headers=function_exists('getallheaders') ? array_change_key_case(getallheaders(),CASE_LOWER) : [];
 $getHeader = function(string $name) use ($headers): string {
-    $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
-    $redirectKey = 'REDIRECT_' . $serverKey;
-    $lowerName = strtolower($name);
-    return $_SERVER[$serverKey] ?? $_SERVER[$redirectKey] ?? $headers[$lowerName] ?? '';
+    $clean = strtoupper(str_replace('-', '_', $name));
+    return $_SERVER['HTTP_' . $clean] 
+        ?? $_SERVER['REDIRECT_HTTP_' . $clean] 
+        ?? $_SERVER[$clean] 
+        ?? $_SERVER['REDIRECT_' . $clean] 
+        ?? $headers[strtolower($name)] 
+        ?? '';
 };
 $authorization = $getHeader('Authorization');
 if (!preg_match('/^Bearer ([A-Za-z0-9._~+\/-]{16,4096})$/D', $authorization, $match)) lease_error(401, 'Google sign-in required.');
@@ -65,10 +68,10 @@ try {
         if (!in_array($method,['POST','PATCH','PUT','DELETE'],true) 
             || isset($targetParts['host']) 
             || !preg_match('~^/(?:upload/)?drive/v3/files(?:/[A-Za-z0-9_-]+)?$~D',$targetParts['path'] ?? '') 
-            || array_diff(array_keys($params),['uploadType','fields','upload_id','alt','supportsAllDrives']) 
+            || array_diff(array_keys($params),['uploadType','fields','upload_id','alt','supportsAllDrives','fileId','retry','continue','enforce_single_parent','quotaUser','prettyPrint','key']) 
             || (isset($params['uploadType']) && !in_array($params['uploadType'],['multipart','media','resumable'],true)) 
             || (isset($params['fields']) && !preg_match('/^[A-Za-z0-9_(),.* -]{1,256}$/D',$params['fields'])) 
-            || (isset($params['upload_id']) && !preg_match('/^[A-Za-z0-9._~%+=:\/-]{10,4096}$/D',$params['upload_id']))) 
+            || (isset($params['upload_id']) && !preg_match('/^[A-Za-z0-9._~%+=:\/-]{1,4096}$/D',$params['upload_id']))) 
             lease_error(400,'Unsupported Drive operation.');
         if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0)>268435456) lease_error(413,'Drive upload exceeds the 256 MiB gateway limit.');
         $length=(int)($_SERVER['CONTENT_LENGTH'] ?? 0);

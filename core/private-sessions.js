@@ -98,16 +98,38 @@
         },
         async upload(metadata,blob,fileId=null) {
             const url='https://www.googleapis.com/upload/drive/v3/files'+(fileId?'/'+encodeURIComponent(fileId):'')+'?uploadType=resumable&fields=id,version';
-            const started=await this.drive(url,{method:fileId?'PATCH':'POST',headers:{'Content-Type':'application/json','X-Upload-Content-Type':blob.type || 'application/octet-stream','X-Upload-Content-Length':String(blob.size)},body:JSON.stringify(metadata)});
+            const started=await this.drive(url,{method:fileId?'PATCH':'POST',headers:{'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':blob.type || 'application/octet-stream','X-Upload-Content-Length':String(blob.size)},body:JSON.stringify(metadata)});
             if(!started.ok)throw new Error('Resumable upload could not start ('+started.status+').');
             const location=started.headers.get('X-Drive-Upload-Location');
             if(!location || !location.startsWith('https://www.googleapis.com/upload/drive/v3/files'))throw new Error('Drive did not return a safe upload session.');
             const chunkSize=4*1024*1024;
             for(let offset=0;offset<blob.size;offset+=chunkSize){
                 const end=Math.min(offset+chunkSize,blob.size);
-                const response=await this.drive(location,{method:'PUT',headers:{'Content-Type':blob.type || 'application/octet-stream','Content-Range':'bytes '+offset+'-'+(end-1)+'/'+blob.size},body:blob.slice(offset,end)});
-                if(end<blob.size){if(response.status!==308)throw new Error('Drive chunk was not acknowledged ('+response.status+').');}
-                else {if(!response.ok)throw new Error('Drive upload did not finish ('+response.status+').');return response.json();}
+                const chunk=blob.slice(offset,end);
+                let response=null;
+                for(let attempt=0;attempt<3;attempt++){
+                    try {
+                        response=await this.drive(location,{
+                            method:'PUT',
+                            headers:{
+                                'Content-Type':blob.type || 'application/octet-stream',
+                                'Content-Range':'bytes '+offset+'-'+(end-1)+'/'+blob.size,
+                                'X-Upload-Content-Length':String(chunk.size)
+                            },
+                            body:chunk
+                        });
+                        if(response.status===308 || response.ok) break;
+                    } catch(err) {
+                        if(attempt===2) throw err;
+                    }
+                    await new Promise(r=>setTimeout(r,800*(attempt+1)));
+                }
+                if(end<blob.size){
+                    if(response.status!==308 && !response.ok) throw new Error('Drive chunk was not acknowledged ('+response.status+').');
+                } else {
+                    if(!response.ok) throw new Error('Drive upload did not finish ('+response.status+').');
+                    return response.json();
+                }
             }
             throw new Error('Empty files use the normal upload path.');
         },

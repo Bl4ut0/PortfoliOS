@@ -751,7 +751,7 @@ window.GDriveSync = {
         do {
             const params = new URLSearchParams({
                 q: `'${syncFolderId}' in parents and trashed=false`,
-                fields: "nextPageToken,files(id,name,mimeType,modifiedTime,version,appProperties)",
+                fields: "nextPageToken,files(id,name,mimeType,modifiedTime,version,appProperties,size)",
                 pageSize: "1000"
             });
             if (pageToken) params.set("pageToken", pageToken);
@@ -792,7 +792,7 @@ window.GDriveSync = {
         return await response.blob();
     },
     
-    async uploadFile(path, name, mimeType, data) {
+    async uploadFile(path, name, mimeType, data, fileHash = "") {
         const token = this.getToken();
         if (!token) throw new Error("Not authenticated");
  
@@ -803,7 +803,7 @@ window.GDriveSync = {
             name: name,
             mimeType: mimeType,
             parents: [syncFolderId],
-            appProperties: { path: path, scope: scope.id }
+            appProperties: { path: path, scope: scope.id, hash: fileHash || "" }
         };
 
         const boundary = "foo_bar_baz_boundary";
@@ -876,7 +876,7 @@ window.GDriveSync = {
         return await response.json();
     },
     
-    async updateFile(fileId, mimeType, data) {
+    async updateFile(fileId, mimeType, data, path = "", fileHash = "") {
         const token = this.getToken();
         if (!token) throw new Error("Not authenticated");
 
@@ -885,7 +885,7 @@ window.GDriveSync = {
             contentBlob = new Blob([contentBlob || ""], { type: mimeType });
         }
 
-        if(window.PrivateSessions?.required() && contentBlob.size>4*1024*1024)return window.PrivateSessions.upload({},contentBlob,fileId);
+        if(window.PrivateSessions?.required() && contentBlob.size>4*1024*1024)return window.PrivateSessions.upload({ appProperties: { ...(path?{path}:{}) , ...(fileHash?{hash:fileHash}:{}) } },contentBlob,fileId);
 
         const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media` + (window.PrivateSessions?.required() ? "&fields=id,version" : "");
         const request = {
@@ -987,10 +987,13 @@ window.GDriveSync = {
 
         const manifestKey = this.getScopedStorageKey("sync_manifest", scope);
         const lastSyncKey = this.getScopedStorageKey("last_sync_time", scope);
+        const sigKey = this.getScopedStorageKey("sync_signatures", scope);
         const manifestStr = window.Storage ? window.Storage.local.get(manifestKey) : null;
         const lastSyncTime = window.Storage ? window.Storage.local.get(lastSyncKey) : null;
+        const sigStr = window.Storage ? window.Storage.local.get(sigKey) : null;
         const isFirstSync = !manifestStr || !lastSyncTime;
         const manifest = new Set(JSON.parse(manifestStr || "[]"));
+        const syncSignatures = JSON.parse(sigStr || "{}");
 
         const getParentPath = (p) => {
             const parts = p.split("/");
@@ -1062,17 +1065,36 @@ window.GDriveSync = {
                     if (!local.isDirectory) {
                         const localTime = local.lastModified;
                         const remoteTime = new Date(remote.modifiedTime).getTime();
+                        const localHash = local.metadata?.security?.hash || "";
+                        const remoteHash = remote.appProperties?.hash || "";
 
-                        if (localTime > remoteTime + 2000) {
+                        // If confirmation hashes match, file content is already identical:
+                        if (localHash && remoteHash && localHash === remoteHash) {
+                            acknowledgedPaths.add(path);
+                            processed++;
+                            continue;
+                        }
+
+                        // Has the local file changed since last sync?
+                        const prevSig = syncSignatures[path];
+                        const localChanged = !prevSig || prevSig.hash !== localHash || prevSig.size !== local.size;
+                        const remoteChanged = !prevSig || prevSig.remoteVersion !== remote.version;
+
+                        if (localChanged && (!remoteChanged || localTime >= remoteTime)) {
                             const checked = await window.SecurityKernel.scanExisting(local, "cloud-upload");
                             if (checked.status !== "accepted") throw new Error(`Cloud upload blocked for ${path}.`);
-                            await this.updateFile(remote.id, checked.record.type, checked.record.data);
-                        } else if (remoteTime > localTime + 2000) {
+                            const hash = checked.scan?.hash || localHash;
+                            await this.updateFile(remote.id, checked.record.type, checked.record.data, path, hash);
+                            syncSignatures[path] = { hash, size: local.size, mtime: localTime, remoteId: remote.id, remoteVersion: remote.version };
+                        } else if (remoteChanged && (!localChanged || remoteTime > localTime)) {
                             const fileBlob = await this.downloadFile(remote.id);
-                            await window.SecurityKernel.importFile({
+                            const imported = await window.SecurityKernel.importFile({
                                 path, name: remote.name, parent: getParentPath(path), data: fileBlob,
-                                size: fileBlob.size, type: remote.mimeType, source: "cloud-download"
+                                size: fileBlob.size, type: remote.mimeType, source: "cloud-download",
+                                options: { lastModified: remoteTime }
                             });
+                            const hash = imported.scan?.hash || remoteHash;
+                            syncSignatures[path] = { hash, size: fileBlob.size, mtime: remoteTime, remoteId: remote.id, remoteVersion: remote.version };
                         }
                     }
                 }
@@ -1096,6 +1118,7 @@ window.GDriveSync = {
         if (window.Storage) {
             window.Storage.local.set(manifestKey, JSON.stringify(finalPaths));
             window.Storage.local.set(lastSyncKey, String(Date.now()));
+            window.Storage.local.set(sigKey, JSON.stringify(syncSignatures));
         }
 
         if (onProgress) onProgress(total, total, "Complete");
