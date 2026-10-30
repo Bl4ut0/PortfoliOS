@@ -1,13 +1,13 @@
 .boot-screen {
-    --boot-bg: #080a0f;
-    --boot-panel: rgba(9, 11, 16, 0.62);
-    --boot-line: rgba(255, 255, 255, 0.12);
-    --boot-text: #f8fafc;
-    --boot-text-soft: #cbd5e1;
-    --boot-text-muted: #94a3b8;
-    --boot-cyan: #22d3ee;
-    --boot-green: #34d399;
-    --boot-amber: #f59e0b;
+    --boot-bg: var(--bg, #080a0f);
+    --boot-panel: var(--glass-bg, var(--surface-raised, rgba(9, 11, 16, 0.62)));
+    --boot-line: var(--line, rgba(255, 255, 255, 0.12));
+    --boot-text: var(--text, #f8fafc);
+    --boot-text-soft: var(--text-soft, #cbd5e1);
+    --boot-text-muted: var(--text-muted, #94a3b8);
+    --boot-cyan: var(--theme-primary, #22d3ee);
+    --boot-green: var(--theme-accent, #34d399);
+    --boot-amber: var(--amber, #f59e0b);
     position: fixed;
     inset: 0;
     z-index: 150;
@@ -95,10 +95,10 @@
     width: 3.5rem;
     height: 3.5rem;
     margin-bottom: 1.25rem;
-    background: rgba(34, 211, 238, 0.08);
-    border: 1px solid rgba(34, 211, 238, 0.24);
+    background: var(--control, rgba(34, 211, 238, 0.08));
+    border: 1px solid var(--control-border, rgba(34, 211, 238, 0.24));
     border-radius: var(--radius-md);
-    box-shadow: 0 0 16px rgba(34, 211, 238, 0.14);
+    box-shadow: 0 0 16px var(--theme-primary-glow, rgba(34, 211, 238, 0.14));
 }
 
 .boot-mark span {
@@ -115,7 +115,7 @@
 
 .boot-mark .prompt-cursor {
     color: var(--boot-cyan);
-    text-shadow: 0 0 8px rgba(34, 211, 238, 0.8);
+    text-shadow: 0 0 8px var(--theme-primary-glow, rgba(34, 211, 238, 0.8));
 }
 
 .boot-panel h1 {
@@ -181,10 +181,10 @@
 }
 
 .primary-action {
-    color: #031016;
+    color: var(--theme-primary-ink, #031016);
     background: var(--boot-cyan);
-    border-color: rgba(34, 211, 238, 0.7);
-    box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25);
+    border-color: var(--theme-primary, rgba(34, 211, 238, 0.7));
+    box-shadow: 0 4px 14px var(--theme-primary-glow, rgba(34, 211, 238, 0.25));
 }
 
 .secondary-action {
@@ -250,6 +250,6 @@ body[data-startup-stage=boot] > .os-shell:not(#session-phone), body[data-startup
 
 /* The PortfoliOS mark is the same white chevron/cyan cursor used at boot. */
 .portfolios-mark { display:inline-flex; align-items:center; justify-content:center; gap:0; flex-shrink:0; font:800 1.15rem/1 var(--mono,monospace); letter-spacing:0; }
-.portfolios-mark .prompt-chevron { color:#f8fafc; }
-.portfolios-mark .prompt-cursor { color:#22d3ee; }
-.brand-icon.portfolios-mark { background:#090a0f; }
+.portfolios-mark .prompt-chevron { color:var(--text, #f8fafc); }
+.portfolios-mark .prompt-cursor { color:var(--theme-primary, #22d3ee); text-shadow:0 0 8px var(--theme-primary-glow, rgba(34, 211, 238, 0.6)); }
+.brand-icon.portfolios-mark { background:var(--surface-inset, #090a0f); border:1px solid var(--line-strong, rgba(255, 255, 255, 0.14)); }

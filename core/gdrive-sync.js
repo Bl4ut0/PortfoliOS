@@ -596,7 +596,19 @@ window.GDriveSync = {
                     finish(reject, error);
                 }
             };
-            const params = new URLSearchParams({ nonce, clientId, scope: this.scopes, prompt: selectAccount ? "select_account" : "", hint: selectAccount ? "" : (this.getSavedGoogleProfile()?.email || "") });
+            const currentTheme = window.state?.themeId || (window.Storage ? window.Storage.local.get("bl4ut0_last_theme") : "dark") || "dark";
+            const currentPrimary = window.state?.themePrimary || (window.Storage ? window.Storage.local.get("bl4ut0_last_theme_primary") : "") || "";
+            const currentAccent = window.state?.themeAccent || (window.Storage ? window.Storage.local.get("bl4ut0_last_theme_accent") : "") || "";
+            const params = new URLSearchParams({
+                nonce,
+                clientId,
+                scope: this.scopes,
+                prompt: selectAccount ? "select_account" : "",
+                hint: selectAccount ? "" : (this.getSavedGoogleProfile()?.email || ""),
+                theme: currentTheme,
+                ...(currentPrimary ? { primary: currentPrimary } : {}),
+                ...(currentAccent ? { accent: currentAccent } : {})
+            });
             const popup = window.open("/auth/google.php#" + params, "portfolios-google-signin", "popup,width=520,height=650");
             if (!popup) finish(reject, new Error("Google sign-in was blocked. Allow popups for this site, then try again."));
         });

@@ -356,6 +356,7 @@ window.setPortfolioTheme = (themeId, options = {}) => {
 
     if (window.Storage) {
         window.Storage.local.set(window.getPreferencesKey("ThemeId"), theme.id);
+        window.Storage.local.set("bl4ut0_last_theme", theme.id);
     }
     window.applyThemeColors();
     if (window.EventBus) window.EventBus.emit("theme:changed", { themeId: theme.id, theme });
@@ -545,10 +546,16 @@ window.setSystemVolume = window.setDesktopVolume;
 window.setThemeColor = (type, value) => {
     if (type === "primary") {
         state.themePrimary = value;
-        if (window.Storage) window.Storage.local.set(window.getPreferencesKey("ThemePrimary"), value);
+        if (window.Storage) {
+            window.Storage.local.set(window.getPreferencesKey("ThemePrimary"), value);
+            window.Storage.local.set("bl4ut0_last_theme_primary", value);
+        }
     } else if (type === "accent") {
         state.themeAccent = value;
-        if (window.Storage) window.Storage.local.set(window.getPreferencesKey("ThemeAccent"), value);
+        if (window.Storage) {
+            window.Storage.local.set(window.getPreferencesKey("ThemeAccent"), value);
+            window.Storage.local.set("bl4ut0_last_theme_accent", value);
+        }
     }
     window.applyThemeColors();
     if (window.EventBus) window.EventBus.emit("theme:changed", { themeId: state.themeId, type, value });
@@ -561,6 +568,8 @@ window.resetThemeColors = () => {
     if (window.Storage) {
         window.Storage.local.remove(window.getPreferencesKey("ThemePrimary"));
         window.Storage.local.remove(window.getPreferencesKey("ThemeAccent"));
+        window.Storage.local.remove("bl4ut0_last_theme_primary");
+        window.Storage.local.remove("bl4ut0_last_theme_accent");
     }
     window.applyThemeColors();
     if (window.EventBus) window.EventBus.emit("theme:reset", { themeId: state.themeId });
@@ -579,3 +588,6 @@ window.showDesktopToast = (message) => {
 };
 
 window.addEventListener("message", window.handleGameRuntimeMessage);
+
+// Immediately apply theme custom properties so boot screen and login screen match from frame 1
+window.applyThemeColors();

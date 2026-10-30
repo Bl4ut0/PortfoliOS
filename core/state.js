@@ -81,9 +81,12 @@
         
         rawState.wallpaper = getPrefVal("Wallpaper", "bl4ut0Wallpaper", userId === "bl4ut0" ? "aurora" : "ember");
         rawState.volume = Number(getPrefVal("Volume", "bl4ut0Volume", 70));
-        rawState.themeId = getPrefVal("ThemeId", "bl4ut0ThemeId", "dark");
-        rawState.themePrimary = getPrefVal("ThemePrimary", "bl4ut0ThemePrimary", null);
-        rawState.themeAccent = getPrefVal("ThemeAccent", "bl4ut0ThemeAccent", null);
+        const savedThemeId = window.Storage.local.get("bl4ut0_last_theme") || "dark";
+        const savedPrimary = window.Storage.local.get("bl4ut0_last_theme_primary") || null;
+        const savedAccent = window.Storage.local.get("bl4ut0_last_theme_accent") || null;
+        rawState.themeId = getPrefVal("ThemeId", "bl4ut0ThemeId", savedThemeId);
+        rawState.themePrimary = getPrefVal("ThemePrimary", "bl4ut0ThemePrimary", savedPrimary);
+        rawState.themeAccent = getPrefVal("ThemeAccent", "bl4ut0ThemeAccent", savedAccent);
         rawState.desktopResolution = getPrefVal("DesktopResolution", "bl4ut0DesktopResolution", "auto");
         rawState.screensaver = getPrefVal("Screensaver", "bl4ut0Screensaver", "none");
         rawState.screensaverDelay = Number(getPrefVal("ScreensaverDelay", "bl4ut0ScreensaverDelay", 5));

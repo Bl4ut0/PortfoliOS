@@ -5,6 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="referrer" content="no-referrer">
     <title>Google Sign-in / PortfoliOS</title>
+    <script>
+        (function() {
+            try {
+                var hash = location.hash ? location.hash.slice(1) : "";
+                var params = new URLSearchParams(hash);
+                var theme = params.get("theme") || localStorage.getItem("bl4ut0_last_theme") || "dark";
+                var primary = params.get("primary") || localStorage.getItem("bl4ut0_last_theme_primary");
+                var accent = params.get("accent") || localStorage.getItem("bl4ut0_last_theme_accent");
+                var themes = {
+                    dark: { bg: "#06090f", card: "rgba(15, 23, 42, 0.85)", border: "rgba(103, 232, 249, 0.22)", text: "#f8fafc", textSoft: "#94a3b8", primary: "#38bdf8", accent: "#34d399", glow: "rgba(56, 189, 248, 0.22)" },
+                    light: { bg: "#f8fafc", card: "rgba(255, 255, 255, 0.95)", border: "rgba(14, 116, 144, 0.25)", text: "#0f172a", textSoft: "#475569", primary: "#0284c7", accent: "#059669", glow: "rgba(2, 132, 199, 0.16)" },
+                    oled: { bg: "#000000", card: "rgba(10, 10, 10, 0.95)", border: "rgba(255, 255, 255, 0.18)", text: "#ffffff", textSoft: "#a1a1aa", primary: "#06b6d4", accent: "#10b981", glow: "rgba(6, 182, 212, 0.25)" },
+                    "black-accent": { bg: "#050505", card: "rgba(18, 18, 20, 0.92)", border: "rgba(255, 255, 255, 0.16)", text: "#f4f4f5", textSoft: "#a1a1aa", primary: "#f43f5e", accent: "#fb7185", glow: "rgba(244, 63, 94, 0.25)" },
+                    terminal: { bg: "#050b06", card: "rgba(8, 20, 12, 0.94)", border: "rgba(74, 222, 128, 0.28)", text: "#f0fdf4", textSoft: "#86efac", primary: "#4ade80", accent: "#22c55e", glow: "rgba(74, 222, 128, 0.25)" },
+                    glacier: { bg: "#07111a", card: "rgba(12, 28, 42, 0.92)", border: "rgba(56, 189, 248, 0.25)", text: "#f0f9ff", textSoft: "#7dd3fc", primary: "#38bdf8", accent: "#67e8f9", glow: "rgba(56, 189, 248, 0.25)" },
+                    sunset: { bg: "#130810", card: "rgba(33, 15, 26, 0.92)", border: "rgba(251, 146, 60, 0.25)", text: "#fff7ed", textSoft: "#fdba74", primary: "#fb923c", accent: "#f43f5e", glow: "rgba(251, 146, 60, 0.25)" }
+                };
+                var cfg = themes[theme] || themes.dark;
+                var root = document.documentElement;
+                root.dataset.theme = theme;
+                root.style.setProperty("--bg-base", cfg.bg);
+                root.style.setProperty("--bg-card", cfg.card);
+                root.style.setProperty("--border-card", cfg.border);
+                root.style.setProperty("--text-primary", cfg.text);
+                root.style.setProperty("--text-secondary", cfg.textSoft);
+                root.style.setProperty("--accent-cyan", primary || cfg.primary);
+                root.style.setProperty("--accent-glow", cfg.glow);
+            } catch (e) {}
+        })();
+    </script>
     <style>
         :root {
             --bg-base: #06090f;
@@ -34,9 +64,9 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-base);
             background-image: 
-                radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.18), transparent 70%),
-                radial-gradient(ellipse 60% 40% at 90% 100%, rgba(99, 102, 241, 0.12), transparent 60%),
-                linear-gradient(180deg, #070b13 0%, #03060a 100%);
+                radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in srgb, var(--accent-cyan) 20%, transparent), transparent 70%),
+                radial-gradient(ellipse 60% 40% at 90% 100%, color-mix(in srgb, var(--accent-cyan) 12%, transparent), transparent 60%),
+                linear-gradient(180deg, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 90%, black) 100%);
             color: var(--text-primary);
             min-height: 100vh;
             display: grid;
@@ -53,7 +83,7 @@
             border-radius: 20px;
             padding: 36px 32px;
             box-shadow: 
-                0 25px 60px rgba(0, 0, 0, 0.7),
+                0 25px 60px rgba(0, 0, 0, 0.6),
                 0 0 35px var(--accent-glow);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
@@ -75,19 +105,32 @@
         .brand-header {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-bottom: 24px;
-            padding: 4px 12px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-card);
             border-radius: 999px;
         }
 
-        .brand-mark {
-            font-family: monospace;
-            font-weight: 700;
-            color: var(--accent-cyan);
+        .portfolios-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 800;
             font-size: 13px;
+            line-height: 1;
+            letter-spacing: 0;
+        }
+
+        .portfolios-mark .prompt-chevron {
+            color: var(--text-primary);
+        }
+
+        .portfolios-mark .prompt-cursor {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 8px var(--accent-glow);
         }
 
         .brand-text {
@@ -102,11 +145,11 @@
             height: 64px;
             margin: 0 auto 20px;
             border-radius: 18px;
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.15));
-            border: 1px solid rgba(103, 232, 249, 0.3);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--accent-cyan) 22%, transparent), color-mix(in srgb, var(--accent-cyan) 8%, transparent));
+            border: 1px solid var(--border-card);
             display: grid;
             place-items: center;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
 
         .auth-icon-wrap svg {
@@ -142,7 +185,7 @@
             border: 1px solid #e2e8f0;
             border-radius: 12px;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
         }
@@ -150,7 +193,7 @@
         .signin-button:hover:not(:disabled) {
             background: #f8fafc;
             border-color: #cbd5e1;
-            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2), 0 0 15px rgba(56, 189, 248, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), 0 0 15px var(--accent-glow);
             transform: translateY(-1px);
         }
 
@@ -244,7 +287,7 @@
 <body>
     <main class="auth-container">
         <div class="brand-header">
-            <span class="brand-mark">&gt;_</span>
+            <span class="portfolios-mark" aria-hidden="true"><span class="prompt-chevron">&gt;</span><span class="prompt-cursor">_</span></span>
             <span class="brand-text">PortfoliOS Workspace</span>
         </div>
 
@@ -292,6 +335,6 @@
         <p class="footnote">You can safely close this window at any time to cancel sign-in.</p>
     </main>
 
-    <script src="google.js?v=2026.10.30.2"></script>
+    <script src="google.js?v=2026.10.30.9"></script>
 </body>
 </html>

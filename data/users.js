@@ -230,16 +230,26 @@ window.applyCurrentUserProfile = () => {
         
         window.state.wallpaper = window.Storage.local.get(getKey("Wallpaper")) || (userId === "bl4ut0" ? "aurora" : "ember");
         window.state.volume = Number(window.Storage.local.get(getKey("Volume")) || 70);
-        window.state.themeId = window.Storage.local.get(getKey("ThemeId")) || "dark";
-        window.state.themePrimary = window.Storage.local.get(getKey("ThemePrimary")) || null;
-        window.state.themeAccent = window.Storage.local.get(getKey("ThemeAccent")) || null;
+        const savedTheme = window.Storage.local.get(getKey("ThemeId"));
+        const savedPrimary = window.Storage.local.get(getKey("ThemePrimary"));
+        const savedAccent = window.Storage.local.get(getKey("ThemeAccent"));
+        window.state.themeId = savedTheme || window.Storage.local.get("bl4ut0_last_theme") || "dark";
+        window.state.themePrimary = savedPrimary || window.Storage.local.get("bl4ut0_last_theme_primary") || null;
+        window.state.themeAccent = savedAccent || window.Storage.local.get("bl4ut0_last_theme_accent") || null;
         window.state.desktopResolution = window.Storage.local.get(getKey("DesktopResolution")) || "auto";
         window.state.screensaver = window.Storage.local.get(getKey("Screensaver")) || "none";
         window.state.screensaverDelay = Number(window.Storage.local.get(getKey("ScreensaverDelay")) || 5);
     }
 
-    if (window.state.sessionChosen && desktop && window.applyDesktopPreferences) {
-        window.applyDesktopPreferences();
+    if (window.state.sessionChosen) {
+        if (window.Storage) {
+            window.Storage.local.set("bl4ut0_last_theme", window.state.themeId);
+            if (window.state.themePrimary) window.Storage.local.set("bl4ut0_last_theme_primary", window.state.themePrimary);
+            if (window.state.themeAccent) window.Storage.local.set("bl4ut0_last_theme_accent", window.state.themeAccent);
+        }
+        if (desktop && window.applyDesktopPreferences) {
+            window.applyDesktopPreferences();
+        }
     }
 
     Array.from(window.state.openApps || []).forEach((appId) => {
