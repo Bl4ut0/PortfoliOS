@@ -196,6 +196,7 @@ window.GDriveSync = {
     },
 
     canPresentReconnectPrompt() {
+        if (this.getToken()) return false;
         const userId = window.state?.currentUserId;
         if (!(userId === "private" || /^private_[a-zA-Z0-9_-]+$/.test(userId || ""))) return false;
         if (document.getElementById("session-chooser")) return false;
@@ -211,9 +212,13 @@ window.GDriveSync = {
     },
 
     showReconnectPrompt(reason = "Your saved Google Drive session is no longer valid.") {
+        if (this.getToken()) {
+            this.closeReconnectPrompt();
+            return false;
+        }
         this.pendingReconnectReason = reason;
         if (!this.canPresentReconnectPrompt()) return false;
-        if (document.getElementById("gdrive-reconnect-prompt")) return;
+        if (document.getElementById("gdrive-reconnect-prompt")) return false;
         const profile = this.googleProfile || this.getSavedGoogleProfile();
         const account = profile?.email || profile?.name || "your Google account";
         const prompt = document.createElement("aside");
@@ -553,6 +558,8 @@ window.GDriveSync = {
         if (expectedSub && profile.sub !== expectedSub) throw new Error("Choose the Google account matching this saved profile, or use Sign in with another account.");
         await window.activateGooglePrivateProfile?.(profile);
         this.tokenUserId = window.state?.currentUserId || "private";
+        this.rememberLiveSession();
+        this.pendingReconnectReason = null;
         await this.persistAuthRecord();
         this.closeReconnectPrompt();
         this.emitAuthChanged("connected");
@@ -673,6 +680,8 @@ window.GDriveSync = {
     },
 
     rememberLiveSession() {
+        const isPrivate = window.isPrivateUser ? window.isPrivateUser(this.tokenUserId) : (this.tokenUserId && this.tokenUserId !== "bl4ut0");
+        if (!isPrivate) return;
         if (this.token && this.tokenUserId && Date.now() < this.tokenExpiresAt) {
             this.accountSessions[this.tokenUserId] = { token: this.token, expiresAt: this.tokenExpiresAt, profile: this.googleProfile };
         }
@@ -1093,9 +1102,14 @@ if (window.EventBus) {
         window.GDriveSync.pendingSyncTimer = null;
         if (user.preserveGoogleSession && window.GDriveSync.getToken()) return;
         window.GDriveSync.rememberLiveSession();
-        const cached = window.GDriveSync.accountSessions[user.id];
         window.GDriveSync.closeReconnectPrompt();
         window.GDriveSync.clearBrowserSession();
+        if (user.id === "bl4ut0") {
+            window.GDriveSync.pendingReconnectReason = null;
+            window.GDriveSync.googleProfile = null;
+            return;
+        }
+        const cached = window.GDriveSync.accountSessions[user.id];
         window.GDriveSync.googleProfile = window.getSavedPrivateProfile?.(user.id) || null;
         if (cached && Date.now() < cached.expiresAt) {
             window.GDriveSync.token = cached.token;
@@ -1104,11 +1118,6 @@ if (window.EventBus) {
             window.GDriveSync.googleProfile = cached.profile;
             window.GDriveSync.pendingReconnectReason = null;
             window.GDriveSync.emitAuthChanged("connected");
-            return;
-        }
-        if (user.id === "bl4ut0") {
-            window.GDriveSync.pendingReconnectReason = null;
-            window.GDriveSync.googleProfile = null;
             return;
         }
         const restored = await window.GDriveSync.restoreSession({ promptOnInvalid: true });

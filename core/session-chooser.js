@@ -105,6 +105,8 @@
         clockTimer = window.setInterval(updateClock, 30000);
         let offlineProfileId = null;
         const complete = async () => {
+            window.GDriveSync?.closeReconnectPrompt?.();
+            if (window.GDriveSync) window.GDriveSync.pendingReconnectReason = null;
             try {
                 await window.startSelectedWorkspace?.();
             } catch (error) {
@@ -112,12 +114,15 @@
                 throw error;
             }
             window.closeSessionChooser();
+            window.GDriveSync?.closeReconnectPrompt?.();
+            if (window.GDriveSync) window.GDriveSync.pendingReconnectReason = null;
 
             if (window.PrivateSessions?.required()) {
                 try {
                     await window.PrivateSessions.enter();
                     window.state.sessionChosen = true;
-                    window.GDriveSync.pendingReconnectReason = null;
+                    if (window.GDriveSync) window.GDriveSync.pendingReconnectReason = null;
+                    window.GDriveSync?.closeReconnectPrompt?.();
                 } catch (error) {
                     window.state.sessionChosen = false;
                     window.openSessionChooser();
@@ -130,7 +135,8 @@
                 }
             } else {
                 window.state.sessionChosen = true;
-                window.GDriveSync.pendingReconnectReason = null;
+                if (window.GDriveSync) window.GDriveSync.pendingReconnectReason = null;
+                window.GDriveSync?.closeReconnectPrompt?.();
             }
         };
         let choosing = false;
@@ -179,7 +185,7 @@
                 } else if (id || button.hasAttribute("data-session-google")) {
                     if (id) {
                         await window.prepareProfileSwitch();
-                        window.setCurrentUser(id);
+                        window.setCurrentUser(id, { preserveGoogleSession: true });
                         if (profiles[id].source !== "google" || window.GDriveSync.getToken()) {
                             await window.SystemFS?.ensureDefaultFiles?.();
                             await complete();

@@ -60,6 +60,9 @@
             }
             window.state.workspaceStarted = true;
             document.body.dataset.startupStage = "workspace";
+            if (window.GDriveSync?.getToken?.()) {
+                window.GDriveSync.closeReconnectPrompt?.();
+            }
             status(""); loader.mark(view + ":workspace-ready"); background();
             return true;
         })().catch(error => { document.body.dataset.startupStage = "login"; status(error.message, true); throw error; }).finally(() => { workspace = null; });
