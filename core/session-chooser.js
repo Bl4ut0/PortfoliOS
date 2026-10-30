@@ -105,12 +105,33 @@
         clockTimer = window.setInterval(updateClock, 30000);
         let offlineProfileId = null;
         const complete = async () => {
-            await window.PrivateSessions?.enter();
-            window.state.sessionChosen = true;
-            window.GDriveSync.pendingReconnectReason = null;
-            try { await window.startSelectedWorkspace?.(); }
-            catch (error) { window.state.sessionChosen = false; throw error; }
+            try {
+                await window.startSelectedWorkspace?.();
+            } catch (error) {
+                window.state.sessionChosen = false;
+                throw error;
+            }
             window.closeSessionChooser();
+
+            if (window.PrivateSessions?.required()) {
+                try {
+                    await window.PrivateSessions.enter();
+                    window.state.sessionChosen = true;
+                    window.GDriveSync.pendingReconnectReason = null;
+                } catch (error) {
+                    window.state.sessionChosen = false;
+                    window.openSessionChooser();
+                    const errEl = document.querySelector("[data-session-error]");
+                    if (errEl) {
+                        errEl.hidden = false;
+                        errEl.textContent = error?.message || "Your workspace could not be opened. Please try again.";
+                    }
+                    throw error;
+                }
+            } else {
+                window.state.sessionChosen = true;
+                window.GDriveSync.pendingReconnectReason = null;
+            }
         };
         let choosing = false;
         overlay.addEventListener("click", async event => {

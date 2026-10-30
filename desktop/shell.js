@@ -200,6 +200,15 @@ window.mountDesktop = async () => {
                 powerMenu.id = "power-options-menu";
                 powerMenu.className = "power-options-menu";
                 powerMenu.innerHTML = `
+                    <button type="button" class="power-option-item" id="power-switch-user-btn">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Switch User</span>
+                    </button>
+                    <button type="button" class="power-option-item" id="power-logout-btn">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span>Log Out</span>
+                    </button>
+                    <hr class="power-menu-divider">
                     <button type="button" class="power-option-item" id="power-restart-btn">
                         <i class="fa-solid fa-rotate-right"></i>
                         <span>Restart</span>
@@ -211,6 +220,30 @@ window.mountDesktop = async () => {
                 `;
                 document.body.appendChild(powerMenu);
                 
+                powerMenu.querySelector("#power-switch-user-btn").addEventListener("click", () => {
+                    powerMenu.hidden = true;
+                    const startMenu = document.getElementById("start-menu");
+                    if (startMenu) startMenu.classList.remove("active");
+                    window.openSessionChooser?.();
+                });
+
+                powerMenu.querySelector("#power-logout-btn").addEventListener("click", async () => {
+                    powerMenu.hidden = true;
+                    const startMenu = document.getElementById("start-menu");
+                    if (startMenu) startMenu.classList.remove("active");
+                    if (window.isPrivateUser?.(window.state?.currentUserId)) {
+                        window.showDesktopToast?.("Signing out of private workspace...");
+                        try {
+                            await window.switchToPublicProfile?.({ saveToDrive: !!window.GDriveSync?.getToken() });
+                        } catch (err) {
+                            window.showDesktopToast?.(err.message || "Sign-out failed.");
+                        }
+                    } else {
+                        window.showDesktopToast?.("Opening account chooser...");
+                        window.openSessionChooser?.();
+                    }
+                });
+
                 powerMenu.querySelector("#power-restart-btn").addEventListener("click", () => {
                     window.showDesktopToast?.("Restarting system...");
                     setTimeout(() => window.location.reload(), 800);

@@ -49,9 +49,20 @@
             node.setAttribute('role','dialog'); node.setAttribute('aria-modal','true');
             node.setAttribute('aria-label','Private workspace session');
             const panel=document.createElement('div'); panel.className='session-chooser-panel';
+            if (node.dataset.experience === 'desktop') {
+                const header = document.createElement('div');
+                header.className = 'session-transfer-header';
+                header.innerHTML = '<span class="portfolios-mark" aria-hidden="true">&gt;_</span> <span>PortfoliOS Workspace</span>';
+                panel.append(header);
+
+                const iconWrap = document.createElement('div');
+                iconWrap.className = 'session-transfer-icon';
+                iconWrap.innerHTML = '<div class="session-transfer-spinner" aria-hidden="true"></div><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>';
+                panel.append(iconWrap);
+            }
             const title=document.createElement('h1'); title.textContent='Private workspace'; panel.append(title);
             const text=document.createElement('p'); text.textContent=message; text.setAttribute('role','status'); panel.append(text);
-            for(const [label,callback] of actions) {const button=document.createElement('button');button.className='session-public-action';button.textContent=label;button.onclick=()=>callback().catch(error=>{text.textContent=error.message;});panel.append(button);}
+            for(const [label,callback] of actions) {const button=document.createElement('button');button.type='button';button.className='session-public-action';button.textContent=label;button.onclick=()=>callback().catch(error=>{text.textContent=error.message;});panel.append(button);}
             node.append(panel);
             const host=node.dataset.experience==='mobile' ? document.getElementById('mobile-device') || document.body : document.body;
             this.inerted=Array.from(host.children).map(child=>[child,child.inert]);this.inerted.forEach(([child])=>child.inert=true);

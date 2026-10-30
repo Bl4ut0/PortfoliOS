@@ -100,3 +100,121 @@ body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
 .session-lock-header .portfolios-mark { width:32px; height:32px; border:1px solid var(--line-strong); border-radius:8px; background:#090a0f; }
 .session-account-icon:has([data-session-avatar=public]) { background:#fff; }
 .session-account-icon img[data-session-avatar=public] { object-fit:contain; padding:7px; box-sizing:border-box; }
+
+/* Floating modal window for private session resolution on Desktop */
+#session-transfer-overlay[data-experience=desktop] {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(6, 9, 15, 0.52);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#session-transfer-overlay[data-experience=desktop] .session-chooser-panel {
+    width: min(92vw, 460px);
+    margin: auto;
+    padding: 28px 32px 32px;
+    background: var(--surface-raised, rgba(16, 28, 46, 0.94));
+    border: 1px solid var(--line-strong, rgba(103, 232, 249, 0.28));
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(56, 189, 248, 0.12);
+    color: var(--text, #f1f5f9);
+    text-align: center;
+    animation: desktopModalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes desktopModalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+#session-transfer-overlay[data-experience=desktop] .session-transfer-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--theme-primary-ink, #38bdf8);
+    letter-spacing: 0.03em;
+}
+
+#session-transfer-overlay[data-experience=desktop] .session-transfer-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.15));
+    border: 1px solid rgba(103, 232, 249, 0.3);
+    display: grid;
+    place-items: center;
+    color: var(--theme-primary-ink, #38bdf8);
+    font-size: 20px;
+    position: relative;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+#session-transfer-overlay[data-experience=desktop] .session-transfer-spinner {
+    position: absolute;
+    inset: -3px;
+    border-radius: 17px;
+    border: 2px solid transparent;
+    border-top-color: var(--theme-primary-ink, #38bdf8);
+    border-right-color: var(--theme-primary-ink, #38bdf8);
+    animation: transferSpin 1.2s linear infinite;
+}
+
+@keyframes transferSpin {
+    to { transform: rotate(360deg); }
+}
+
+#session-transfer-overlay[data-experience=desktop] h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 8px 0 10px;
+    color: var(--text, #f1f5f9);
+}
+
+#session-transfer-overlay[data-experience=desktop] p {
+    font-size: 13.5px;
+    color: var(--text-soft, #94a3b8);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    word-break: break-word;
+}
+
+#session-transfer-overlay[data-experience=desktop] .session-public-action {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px 16px;
+    background: var(--surface-raised, rgba(255, 255, 255, 0.06));
+    border: 1px solid var(--line-strong, rgba(103, 232, 249, 0.25));
+    border-radius: 10px;
+    color: var(--text, #f1f5f9);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+#session-transfer-overlay[data-experience=desktop] .session-public-action:hover {
+    background: var(--control-hover, rgba(56, 189, 248, 0.15));
+    border-color: var(--theme-primary-ink, #38bdf8);
+    color: #ffffff;
+}
