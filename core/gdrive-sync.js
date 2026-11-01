@@ -2,6 +2,19 @@
  * PortfoliOS: Google Drive Cloud Sync (GDriveSync)
  * Handles OAuth2 login, file sync manifest, and bi-directional file synchronization.
  */
+async function safeJson(response, fallback = {}) {
+    if (!response) return fallback;
+    try {
+        if (typeof response.json === 'function') {
+            const data = await response.json();
+            return data ?? fallback;
+        }
+    } catch {
+        return fallback;
+    }
+    return fallback;
+}
+
 window.GDriveSync = {
     token: null,
     tokenUserId: null,
@@ -367,7 +380,7 @@ window.GDriveSync = {
             const errText = await response.text();
             throw new Error(`Failed to load Google profile: ${response.status} - ${errText}`);
         }
-        const profile = await response.json();
+        const profile = await safeJson(response, {});
         this.googleProfile = {
             name: profile.name || "",
             email: profile.email || "",
@@ -445,7 +458,7 @@ window.GDriveSync = {
             const errText = await response.text();
             throw new Error(`Failed to search Drive folder: ${response.status} - ${errText}`);
         }
-        const result = await response.json();
+        const result = await safeJson(response, {});
         return result.files && result.files.length > 0 ? result.files[0] : null;
     },
 
@@ -468,7 +481,7 @@ window.GDriveSync = {
             const errText = await response.text();
             throw new Error(`Failed to create Drive folder: ${response.status} - ${errText}`);
         }
-        return response.json();
+        return await safeJson(response, {});
     },
     
     async getOrCreateParentFolder(token) {
@@ -763,7 +776,7 @@ window.GDriveSync = {
                 const errText = await response.text();
                 throw new Error(`Google Drive API error: ${response.status} - ${errText}`);
             }
-            const result = await response.json();
+            const result = await safeJson(response, {});
             if (result.files) files.push(...result.files);
             pageToken = result.nextPageToken || null;
         } while (pageToken);
@@ -842,7 +855,7 @@ window.GDriveSync = {
             const errText = await response.text();
             throw new Error(`Upload failed: ${response.status} - ${errText}`);
         }
-        return await response.json();
+        return await safeJson(response, {});
     },
     
     async createRemoteFolder(path, name) {
@@ -873,7 +886,7 @@ window.GDriveSync = {
             const errText = await response.text();
             throw new Error(`Folder creation failed: ${response.status} - ${errText}`);
         }
-        return await response.json();
+        return await safeJson(response, {});
     },
     
     async updateFile(fileId, mimeType, data, path = "", fileHash = "") {
@@ -920,7 +933,7 @@ window.GDriveSync = {
             const errText = await response.text();
             throw new Error(`Update failed: ${response.status} - ${errText}`);
         }
-        return await response.json();
+        return await safeJson(response, {});
     },
     
     async deleteFile(fileId) {
@@ -992,8 +1005,10 @@ window.GDriveSync = {
         const lastSyncTime = window.Storage ? window.Storage.local.get(lastSyncKey) : null;
         const sigStr = window.Storage ? window.Storage.local.get(sigKey) : null;
         const isFirstSync = !manifestStr || !lastSyncTime;
-        const manifest = new Set(JSON.parse(manifestStr || "[]"));
-        const syncSignatures = JSON.parse(sigStr || "{}");
+        let manifest = new Set();
+        try { if (manifestStr && manifestStr.trim()) manifest = new Set(JSON.parse(manifestStr)); } catch {}
+        let syncSignatures = {};
+        try { if (sigStr && sigStr.trim()) syncSignatures = JSON.parse(sigStr); } catch {}
 
         const getParentPath = (p) => {
             const parts = p.split("/");

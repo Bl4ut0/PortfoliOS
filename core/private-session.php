@@ -94,6 +94,7 @@ try {
         portfolios_lease_store($file,$s);
         if ($response===false || !$status) lease_error(502,'Drive request outcome is uncertain. Retry sync to reconcile; do not assume it failed.');
         if($location && str_starts_with($location,'https://www.googleapis.com/upload/drive/v3/files'))header('X-Drive-Upload-Location: '.$location);
+        if ($response === '' || $response === false) $response = '{}';
         http_response_code($status); echo $response; exit;
     }
     $body=json_decode(file_get_contents('php://input'),true) ?: [];

@@ -16,7 +16,7 @@ function portfolios_drive_request(string $url, string $method, string $token, $s
         CURLOPT_CONNECTTIMEOUT => 15,
         CURLOPT_FOLLOWLOCATION => false
     ];
-    if ($method === 'PUT' || $method === 'POST') {
+    if ($length > 0 && in_array($method, ['PUT', 'POST', 'PATCH'], true)) {
         $curlOpts[CURLOPT_UPLOAD] = true;
         $curlOpts[CURLOPT_INFILE] = $stream;
         $curlOpts[CURLOPT_INFILESIZE] = $length;

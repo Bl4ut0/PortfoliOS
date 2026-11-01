@@ -1,3 +1,15 @@
+async function safeJson(response, fallback = {}) {
+    if (!response) return fallback;
+    try {
+        if (typeof response.json === 'function') {
+            const data = await response.json();
+            return data ?? fallback;
+        }
+    } catch {
+        return fallback;
+    }
+    return fallback;
+}
 /** Versioned Drive checkpoints and immutable session recovery deltas. */
 (function () {
     const ledgerPath='/.portfolios-sync-state.json';
@@ -217,7 +229,7 @@
             const body=new Blob(['--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n',JSON.stringify({name,parents:[folder]}),'\r\n--'+boundary+'\r\nContent-Type: application/octet-stream\r\n\r\n',blob,'\r\n--'+boundary+'--\r\n'],{type:'multipart/related; boundary='+boundary});
             const response=await PrivateSessions.drive('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Content-Type':body.type},body});
             if(!response.ok)throw new Error('Recovery snapshot upload failed ('+response.status+').');
-            return response.json();
+            return await safeJson(response, {});
         },
         async snapshot(sync, records, baseline, owner, intents={}) {
             const changes=records.filter(record=>!record.isDirectory && baseline[record.path]?.hash!==record.hash);
@@ -254,7 +266,8 @@
                 if(pageToken)params.set('pageToken',pageToken);
                 const response=await fetch('https://www.googleapis.com/drive/v3/files?'+params,{headers:{Authorization:'Bearer '+GDriveSync.getToken()}});
                 if(!response.ok)throw new Error('Recovery history could not be loaded.');
-                const result=await response.json();files.push(...(result.files || []));pageToken=result.nextPageToken || '';
+                const result = await safeJson(response, {});
+                files.push(...(result.files || []));pageToken=result.nextPageToken || '';
             }while(pageToken);
             return files;
         },
@@ -318,7 +331,7 @@
             for(const record of remoteFiles){const path=record.appProperties.path;if(remoteMap.has(path))throw new Error('Drive contains duplicate entries for '+path+'. Resolve duplicates before syncing.');remoteMap.set(path,record);}
             let ledger={schema:1,files:{}};
             const ledgerRecord=remoteMap.get(ledgerPath);
-            if(ledgerRecord){ledger=JSON.parse(await (await sync.downloadFile(ledgerRecord.id)).text());if(ledger.schema!==1 || !ledger.files || typeof ledger.files!=='object')throw new Error('Unsupported cloud checkpoint.');}
+            if(ledgerRecord){const lText=await (await sync.downloadFile(ledgerRecord.id)).text();try{ledger=lText&&lText.trim()?JSON.parse(lText):{schema:1,files:{}};}catch{ledger={schema:1,files:{}};}if(ledger.schema!==1 || !ledger.files || typeof ledger.files!=='object')throw new Error('Unsupported cloud checkpoint.');}
             const records=[];
             for(const original of await SystemFS.getAllFiles()) {
                 if(!this.eligible(original.path,original,owner))continue;
@@ -331,7 +344,7 @@
             }
             // Durable immutable delta before the first destructive reconciliation step.
             const intentRecord=await SystemFS.readFile('/.sync-deletions.json');
-            const intents=intentRecord?.data ? JSON.parse(await window.readFilesystemRecordText(intentRecord)) : {};
+            let intents={};if(intentRecord?.data){try{const it=await window.readFilesystemRecordText(intentRecord);if(it&&it.trim())intents=JSON.parse(it);}catch{}}
             // Live syncing directly reconciles Drive files; snapshots only run when explicitly requested (e.g. handoff) or forced.
             const shouldSnapshot = Boolean(options.snapshot || options.forceSnapshot);
             const snapshot = shouldSnapshot ? await this.snapshot(sync,records,baseline,owner,intents) : null;
@@ -366,7 +379,8 @@
                 if(action==='delete-remote' && (!intents[path] || intents[path].revision!==baseline[path]?.localRevision))action='download';
                 if(path==='/home/'+owner+'/settings.json' && local && remote && localHash!==remoteHash){
                     remoteBlob ||= await sync.downloadFile(remote.id);
-                    const l=JSON.parse(await blobOf(local).text()),r=JSON.parse(await remoteBlob.text());
+                    let l={},r={};try{const lt=await blobOf(local).text();if(lt&&lt.trim())l=JSON.parse(lt);}catch{}
+                    try{const rt=await remoteBlob.text();if(rt&&rt.trim())r=JSON.parse(rt);}catch{}
                     // A pending preference save can lag behind the filesystem snapshot.
                     // Do not import over choices already changed in the live profile.
                     const keys=new Set([...Object.keys(l),...Object.keys(window.WorkspaceSessions?.revisions(owner) || {})]);
@@ -458,7 +472,9 @@
                     next[path]={hash:remoteHash,localRevision:result.record.revision,remoteVersion:remote.version};
                 } else next[path]={hash:localHash,localRevision:local?.revision,remoteVersion:remote?.version};
                 if(path==='/home/'+owner+'/settings.json' && next[path]?.hash){
-                    const settingsBlob=action==='download'?remoteBlob:blobOf(local);next[path].settings=JSON.parse(await settingsBlob.text());
+                    const settingsBlob=action==='download'?remoteBlob:blobOf(local);
+                    let sVal={};try{const st=await settingsBlob.text();if(st&&st.trim())sVal=JSON.parse(st);}catch{}
+                    next[path].settings=sVal;
                 }
             }
             await PrivateSessions.assert();

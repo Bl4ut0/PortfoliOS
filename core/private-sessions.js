@@ -38,8 +38,16 @@
                 headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json','X-PortfoliOS-Session':this.id,'X-PortfoliOS-Epoch':String(this.epoch)},
                 body:JSON.stringify(body)
             });
-            const value=await response.json();
-            if (!response.ok) {const error=new Error(value.error || 'Session coordination is unavailable.');error.status=response.status;throw error;}
+            const text = await response.text();
+            let value = {};
+            try {
+                if (text && text.trim()) value = JSON.parse(text);
+            } catch {
+                const error = new Error(!response.ok ? `Session coordination failed (${response.status}).` : 'Invalid response from session coordinator.');
+                error.status = response.status;
+                throw error;
+            }
+            if (!response.ok) {const error=new Error(value.error || `Session coordination is unavailable (${response.status}).`);error.status=response.status;throw error;}
             return value;
         },
         show(message, actions = []) {
@@ -128,7 +136,8 @@
                     if(response.status!==308 && !response.ok) throw new Error('Drive chunk was not acknowledged ('+response.status+').');
                 } else {
                     if(!response.ok) throw new Error('Drive upload did not finish ('+response.status+').');
-                    return response.json();
+                    const text = await response.text();
+                    try { return text && text.trim() ? JSON.parse(text) : {}; } catch { return {}; }
                 }
             }
             throw new Error('Empty files use the normal upload path.');

@@ -430,7 +430,7 @@ window.loadPreferencesFromFilesystem = async () => {
     const restore=async()=>{
         const record=await window.SystemFS.readFile('/home/'+userId+'/settings.json');
         if(!record?.data)return;
-        const settings=JSON.parse(await window.readFilesystemRecordText(record));
+        let settings={};try{const st=await window.readFilesystemRecordText(record);if(st&&st.trim())settings=JSON.parse(st);}catch{}
         if(userId!==window.state.currentUserId)return;
         const revisions=settings.__portfoliosPreferenceRevisions || {};
         const prefix='bl4ut0_'+userId+'_', installedKey=window.getInstalledStoreAppsKey?.(userId) || 'bl4ut0_installed_apps_'+userId;
