@@ -99,7 +99,8 @@
                     'X-PortfoliOS-Session':this.id,'X-PortfoliOS-Epoch':String(this.epoch),
                     'X-Drive-Method':driveMethod,'X-Drive-Path':target.pathname+target.search,
                     ...(options.headers?.['Content-Range'] ? {'Content-Range':options.headers['Content-Range']} : {}),
-                    ...(options.headers?.['X-Upload-Content-Type'] ? {'X-Upload-Content-Type':options.headers['X-Upload-Content-Type'],'X-Upload-Content-Length':options.headers['X-Upload-Content-Length']} : {})}
+                    ...(options.headers?.['X-Upload-Content-Type'] ? {'X-Upload-Content-Type':options.headers['X-Upload-Content-Type']} : {}),
+                    ...(options.headers?.['X-Upload-Content-Length'] ? {'X-Upload-Content-Length':options.headers['X-Upload-Content-Length']} : {})}
             });
             if(response.status===409){this.verifiedAt=0;this.owned=false;this.lock('This account is now active elsewhere. Your local files are retained.');}
             return response;
@@ -133,9 +134,17 @@
                     await new Promise(r=>setTimeout(r,800*(attempt+1)));
                 }
                 if(end<blob.size){
-                    if(response.status!==308 && !response.ok) throw new Error('Drive chunk was not acknowledged ('+response.status+').');
+                    if(response.status!==308 && !response.ok) {
+                        let detail = '';
+                        try { const errData = await response.json(); detail = errData.error?.message || errData.error || ''; } catch { try { detail = await response.text(); } catch {} }
+                        throw new Error('Drive chunk was not acknowledged ('+response.status+(detail ? ': '+detail : '')+').');
+                    }
                 } else {
-                    if(!response.ok) throw new Error('Drive upload did not finish ('+response.status+').');
+                    if(!response.ok) {
+                        let detail = '';
+                        try { const errData = await response.json(); detail = errData.error?.message || errData.error || ''; } catch { try { detail = await response.text(); } catch {} }
+                        throw new Error('Drive upload did not finish ('+response.status+(detail ? ': '+detail : '')+').');
+                    }
                     const text = await response.text();
                     try { return text && text.trim() ? JSON.parse(text) : {}; } catch { return {}; }
                 }

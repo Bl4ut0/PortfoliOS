@@ -65,19 +65,40 @@ try {
         $method = strtoupper($getHeader('X-Drive-Method'));
         $target = $getHeader('X-Drive-Path');
         $targetParts=parse_url($target);$params=[];parse_str($targetParts['query'] ?? '',$params);
-        if (!in_array($method,['POST','PATCH','PUT','DELETE'],true) 
-            || isset($targetParts['host']) 
-            || !preg_match('~^/(?:upload/)?drive/v3/files(?:/[A-Za-z0-9_-]+)?$~D',$targetParts['path'] ?? '') 
-            || array_diff(array_keys($params),['uploadType','fields','upload_id','alt','supportsAllDrives','fileId','retry','continue','enforce_single_parent','quotaUser','prettyPrint','key']) 
-            || (isset($params['uploadType']) && !in_array($params['uploadType'],['multipart','media','resumable'],true)) 
-            || (isset($params['fields']) && !preg_match('/^[A-Za-z0-9_(),.* -]{1,256}$/D',$params['fields'])) 
-            || (isset($params['upload_id']) && !preg_match('/^[A-Za-z0-9._~%+=:\/-]{1,4096}$/D',$params['upload_id']))) 
-            lease_error(400,'Unsupported Drive operation.');
-        if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0)>268435456) lease_error(413,'Drive upload exceeds the 256 MiB gateway limit.');
-        $length=(int)($_SERVER['CONTENT_LENGTH'] ?? 0);
-        $stream=fopen('php://input','rb');
+        $validationError = null;
+        if (!in_array($method,['POST','PATCH','PUT','DELETE'],true)) {
+            $validationError = 'method ' . $method;
+        } elseif (isset($targetParts['host'])) {
+            $validationError = 'host not permitted';
+        } elseif (!preg_match('~^/(?:upload/)?drive/v3/files(?:/[A-Za-z0-9_-]+)?$~D',$targetParts['path'] ?? '')) {
+            $validationError = 'path ' . ($targetParts['path'] ?? '');
+        } else {
+            $disallowed = array_diff(array_keys($params),['uploadType','fields','upload_id','alt','supportsAllDrives','fileId','retry','continue','enforce_single_parent','quotaUser','prettyPrint','key','userProject','trace','client_type']);
+            if (!empty($disallowed)) {
+                $validationError = 'param(s) ' . implode(',', $disallowed);
+            } elseif (isset($params['uploadType']) && !in_array($params['uploadType'],['multipart','media','resumable'],true)) {
+                $validationError = 'uploadType ' . $params['uploadType'];
+            } elseif (isset($params['fields']) && !preg_match('/^[A-Za-z0-9_(),.* -]{1,256}$/D',$params['fields'])) {
+                $validationError = 'fields';
+            } elseif (isset($params['upload_id']) && !preg_match('/^[A-Za-z0-9._~%+=:\/ -]{1,4096}$/D',$params['upload_id'])) {
+                $validationError = 'upload_id';
+            }
+        }
+        if ($validationError !== null) {
+            lease_error(400, 'Unsupported Drive operation: ' . $validationError . '.');
+        }
+        $length = (int)($getHeader('Content-Length') ?: $getHeader('X-Upload-Content-Length') ?: ($_SERVER['CONTENT_LENGTH'] ?? 0));
+        if ($length > 268435456) lease_error(413,'Drive upload exceeds the 256 MiB gateway limit.');
+        $stream = fopen('php://input','rb');
         if (!$stream) lease_error(503,'Drive upload stream unavailable.');
-        $type=$_SERVER['CONTENT_TYPE'] ?? 'application/octet-stream';
+        if ($length <= 0 && in_array($method, ['PUT', 'POST', 'PATCH'], true)) {
+            $buffer = stream_get_contents($stream);
+            $length = strlen($buffer);
+            $stream = fopen('php://memory', 'r+b');
+            fwrite($stream, $buffer);
+            rewind($stream);
+        }
+        $type = $getHeader('Content-Type') ?: ($_SERVER['CONTENT_TYPE'] ?? 'application/octet-stream');
         if (strpbrk($type,"\r\n")!==false) lease_error(400,'Invalid content type.');
         $upstreamHeaders=[];
         foreach(['Content-Range'=>'Content-Range','X-Upload-Content-Type'=>'X-Upload-Content-Type','X-Upload-Content-Length'=>'X-Upload-Content-Length'] as $hKey=>$label) {

@@ -1,7 +1,8 @@
 <?php
 /** Streaming transport. HTTP entry supplies only validated fixed-origin Drive URLs. */
 function portfolios_drive_request(string $url, string $method, string $token, $stream, int $length, string $type, array $extraHeaders=[]): array {
-    $headers=['Authorization: Bearer '.$token,'Content-Type: '.$type];
+    $headers=['Authorization: Bearer '.$token,'Content-Type: '.$type,'Expect:'];
+    if ($length > 0) $headers[] = 'Content-Length: ' . $length;
     foreach($extraHeaders as $label=>$value)$headers[]=$label.': '.$value;
     $location=null;$curl=curl_init($url);
     $curlOpts = [
