@@ -5,6 +5,77 @@
     --app-window-left: clamp(3rem, 16vw, 15rem);
     --app-window-top: 5.1rem;
     --app-window-min-height: 26rem;
+    overflow: hidden;
 }
 
-.desktop-window.browser-window > .web-browser { flex: 1; min-height: 0; }
+/* Integrated window header: window controls share the same line as the tabs */
+.desktop-window.browser-window > .window-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0 0.5rem 0 0.5rem;
+    background: transparent;
+    border-bottom: none;
+    z-index: 20;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Draggable strip at the very top edge above tabs */
+.desktop-window.browser-window > .window-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 7rem;
+    height: 6px;
+    pointer-events: auto;
+    cursor: default;
+}
+
+/* Omit "Browser" text and icon since it's clearly the browser */
+.desktop-window.browser-window > .window-bar > span {
+    display: none !important;
+}
+
+/* Window actions on the right side of the tab strip */
+.desktop-window.browser-window > .window-bar > .window-actions {
+    pointer-events: auto;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-right: 0.25rem;
+    z-index: 21;
+}
+
+.desktop-window.browser-window > .window-bar > .window-actions button {
+    width: 1.65rem;
+    height: 1.65rem;
+    font-size: 0.72rem;
+    background: color-mix(in srgb, var(--surface, #1e1e2e) 70%, transparent);
+    backdrop-filter: blur(8px);
+}
+
+.desktop-window.browser-window > .window-bar > .window-actions button[data-close-window]:hover {
+    color: #ffffff;
+    background: #e05252;
+    border-color: #e05252;
+}
+
+/* Browser content fills the full window height under the integrated bar */
+.desktop-window.browser-window > .web-browser {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+/* Ensure chooser/settings view has breathing room below window controls when opened */
+.desktop-window.browser-window > .web-browser:not(.is-embedded) {
+    padding-top: 2.75rem;
+}
