@@ -6,8 +6,7 @@
 window.standardInstalledAppIds = [
     "devhub", "profile", "dossier", "browser", "network", "linux", "cli",
     "settings", "store", "files", "security-center", "addons", "guildcraft", "homelab",
-    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office", "portfolio-studio",
-    "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes"
+    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office", "portfolio-studio"
 ];
 
 window.desktopPinnedIds = [
@@ -36,7 +35,7 @@ window.startMenuGroups = [
     {
         id: "system",
         label: "System",
-        ids: ["store", "files", "security-center", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes"]
+        ids: ["store", "files", "security-center", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
     },
     {
         id: "portfolio",
@@ -48,6 +47,7 @@ window.startMenuGroups = [
         label: "Installed Store Apps",
         ids: [
             "pdfcraft", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft",
+            "solidcraft", "genoffice", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes",
             "romplayer", "openrct2", "webamp", "iptv", "doomsource", "duke32", "diablo", "quake", "ut99"
         ]
     }
@@ -309,6 +309,8 @@ window.isStoreAppInstalled = function(id) {
 
 window.isAppInstalled = function(id) {
     if (window.isVisibleForCurrentUser && !window.isVisibleForCurrentUser(id)) return false;
+    const isStore = (window.storeApps || []).some(app => app.id === id);
+    if (isStore) return window.getInstalledStoreAppIds().includes(id);
     if ((window.standardInstalledAppIds || []).includes(id)) return true;
     return window.getInstalledStoreAppIds().includes(id);
 };

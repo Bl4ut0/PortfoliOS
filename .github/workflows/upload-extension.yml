@@ -1,0 +1,51 @@
+name: Chrome Web Store Extension Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish immediately to review (true) or upload as draft (false)'
+        required: true
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'relay-v*'
+      - 'extension-v*'
+    paths:
+      - 'services/native-relay/extension/**'
+      - '.github/workflows/upload-extension.yml'
+
+jobs:
+  upload-extension:
+    name: Package and Upload Extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Package Extension
+        run: node scripts/package-extension.js
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolios-native-relay
+          path: dist/portfolios-native-relay.zip
+          if-no-files-found: error
+
+      - name: Upload to Chrome Web Store
+        uses: mnao305/chrome-extension-upload@v5
+        with:
+          file-path: dist/portfolios-native-relay.zip
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          publish: ${{ github.event.inputs.publish == true || startsWith(github.ref, 'refs/tags/') }}

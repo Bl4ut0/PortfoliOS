@@ -53,8 +53,11 @@ window.getContextMenuItems = (event) => {
     if (storeCard || launcher) {
         const id = storeCard?.dataset.storeContext || launcher.dataset.openApp;
         const selectId = launcher?.dataset.select || '';
-        const installed = Boolean(window.isAppInstalled?.(id));
         const storeApp = (window.storeApps || []).find(app => app.id === id);
+        const isStore = Boolean(storeCard || storeApp);
+        const installed = isStore
+            ? (window.isStoreAppInstalled ? window.isStoreAppInstalled(id) : Boolean(window.getInstalledStoreAppIds?.().includes(id)))
+            : Boolean(window.isAppInstalled?.(id));
         if (!installed) return storeApp?.installable !== false && storeApp ? [{label:'Install',icon:'fa-solid fa-download',disabled:state.installingApps?.[id] !== undefined,action:()=>window.installApp(id)}] : [];
         return [
             {label:'Open',icon:'fa-solid fa-up-right-from-square',action:()=>{if(selectId)window.renderDossier?.(selectId);return window.openDesktopWindow(id);}},

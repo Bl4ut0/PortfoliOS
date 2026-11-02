@@ -536,7 +536,9 @@ window.createDesktopFolder = (requestedName) => {
 // Explicit user actions target the root Desktop, even if another copy is in a folder.
 window.createDesktopAppShortcut = async (appId, selectId = '') => {
     const owner = state.currentUserId;
-    if (!window.isAppInstalled?.(appId) || (selectId && !window.systemById?.(selectId))) throw new Error('This application is not available.');
+    const isStore = (window.storeApps || []).some(app => app.id === appId);
+    const installed = isStore ? (window.isStoreAppInstalled ? window.isStoreAppInstalled(appId) : Boolean(window.getInstalledStoreAppIds?.().includes(appId))) : Boolean(window.isAppInstalled?.(appId));
+    if (!installed || (selectId && !window.systemById?.(selectId))) throw new Error('This application is not available.');
     const launcher = window.getDesktopLauncher(selectId || appId);
     if (!launcher || launcher.launchApp !== appId) throw new Error('Invalid application shortcut.');
     await window.ensureDesktopShortcuts([launcher], owner, true);
