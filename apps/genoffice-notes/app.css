@@ -1,0 +1,8 @@
+@import "../genoffice/app.css";
+
+.desktop-window.genoffice-notes-window {
+  --app-window-width: min(82rem, calc(100% - 2rem));
+  --app-window-height: min(54rem, calc(100% - 4.5rem));
+  --app-window-left: clamp(1rem, 6vw, 4.5rem);
+  --app-window-top: 2.2rem;
+}

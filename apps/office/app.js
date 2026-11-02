@@ -570,11 +570,58 @@
         input.select();
     }
 
+    async function saveAsOfficeFile(windowEl) {
+        if (officeState.activeView === "dashboard") return;
+        const spec = getSaveSpec();
+        const defaultFolder = officeState.currentFile?.parent || "/documents";
+        const defaultName = officeState.currentFile?.name || spec.defaultName;
+
+        if (window.SystemFS?.showSaveDialog) {
+            try {
+                const res = await window.SystemFS.showSaveDialog({
+                    title: "Save As",
+                    folder: defaultFolder,
+                    defaultName: defaultName,
+                    types: [spec.extension]
+                });
+                if (!res) return;
+                await writeActiveOfficeFile(windowEl, res.path, res.name, res.parent || window.SystemFS.getParentPath(res.path));
+            } catch (error) {
+                console.error("Save As failed:", error);
+                window.showDesktopToast?.(error.message || "The file could not be saved.");
+            }
+        } else {
+            await saveAsOfficeFile(windowEl);
+        }
+    }
+
+    async function openOfficeFile(windowEl) {
+        if (window.SystemFS?.showOpenDialog) {
+            try {
+                const res = await window.SystemFS.showOpenDialog({
+                    title: "Open Office File",
+                    folder: "/documents",
+                    types: [".txt", ".json", ".ods", ".xlsx", ".csv"]
+                });
+                if (!res) return;
+                if (res.record) {
+                    await loadOfficeFile(windowEl, res.record);
+                } else if (res.path) {
+                    const rec = await window.SystemFS.readFile(res.path);
+                    if (rec) await loadOfficeFile(windowEl, rec);
+                }
+            } catch (error) {
+                console.error("Open failed:", error);
+                window.showDesktopToast?.(error.message || "The file could not be opened.");
+            }
+        }
+    }
+
     // Save active document back to SystemFS. Unsaved files use the in-app picker.
     async function saveActiveOfficeFile(windowEl) {
         if (officeState.activeView === "dashboard") return;
         if (!officeState.currentFile?.path) {
-            await openSaveDialog(windowEl);
+            await saveAsOfficeFile(windowEl);
             return;
         }
 
@@ -805,13 +852,21 @@
                             <span>Office Preview</span>
                         </div>
                         <div class="office-menubar-item btn-menubar-save"><i class="fa-regular fa-floppy-disk"></i> Save</div>
+                        <div class="office-menubar-item btn-menubar-save-as"><i class="fa-solid fa-floppy-disk"></i> Save As</div>
+                        <div class="office-menubar-item btn-menubar-open"><i class="fa-solid fa-folder-open"></i> Open</div>
                         <div class="office-menubar-item btn-menubar-dashboard"><i class="fa-solid fa-house"></i> Close to Dashboard</div>
                     </div>
 
                     <!-- Dynamic app-centric Ribbon bar -->
                     <div class="office-toolbar">
                         <div class="office-toolbar-group">
-                            <button type="button" class="office-tool-btn btn-toolbar-save" title="Save file to virtual drive">
+                            <button type="button" class="office-tool-btn btn-toolbar-open" title="Open file from SystemFS (Ctrl+O)">
+                                <i class="fa-solid fa-folder-open"></i> Open
+                            </button>
+                            <button type="button" class="office-tool-btn btn-toolbar-save-as" title="Save As new file (Ctrl+Shift+S)">
+                                <i class="fa-solid fa-floppy-disk"></i> Save As
+                            </button>
+                            <button type="button" class="office-tool-btn btn-toolbar-save" title="Save file to SystemFS (Ctrl+S)">
                                 <i class="fa-solid fa-floppy-disk"></i> Save
                             </button>
                             <span class="office-tool-separator"></span>
@@ -1105,6 +1160,32 @@
             const handleSave = () => saveActiveOfficeFile(windowEl);
             windowEl.querySelectorAll(".btn-menubar-save").forEach(btn => btn.addEventListener("click", handleSave));
             windowEl.querySelectorAll(".btn-toolbar-save").forEach(btn => btn.addEventListener("click", handleSave));
+            const handleSaveAs = () => saveAsOfficeFile(windowEl);
+            const handleOpen = () => openOfficeFile(windowEl);
+            windowEl.querySelectorAll(".btn-menubar-save-as").forEach(btn => btn.addEventListener("click", handleSaveAs));
+            windowEl.querySelectorAll(".btn-toolbar-save-as").forEach(btn => btn.addEventListener("click", handleSaveAs));
+            windowEl.querySelectorAll(".btn-menubar-open").forEach(btn => btn.addEventListener("click", handleOpen));
+            windowEl.querySelectorAll(".btn-toolbar-open").forEach(btn => btn.addEventListener("click", handleOpen));
+
+            windowEl.addEventListener("keydown", (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.shiftKey && (e.key === "s" || e.key === "S")) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSaveAs();
+                    } else if (!e.shiftKey && !e.altKey) {
+                        if (e.key === "s" || e.key === "S") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSave();
+                        } else if (e.key === "o" || e.key === "O") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleOpen();
+                        }
+                    }
+                }
+            });
 
             // SystemFS Save As dialog actions
             const saveOverlay = windowEl.querySelector(".office-save-overlay");

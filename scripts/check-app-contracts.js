@@ -117,6 +117,7 @@ function evaluateAppWindow(appId, source) {
     };
     windowObject.window = windowObject;
     vm.runInNewContext(read("apps/_shared/craft-editor.js"), sandbox, { filename: "apps/_shared/craft-editor.js" });
+    vm.runInNewContext(read("apps/_shared/genoffice-core.js"), sandbox, { filename: "apps/_shared/genoffice-core.js" });
     vm.runInNewContext(source, sandbox, { filename: `apps/${appId}/app.js` });
     return windowObject;
 }

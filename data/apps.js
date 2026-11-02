@@ -6,12 +6,13 @@
 window.standardInstalledAppIds = [
     "devhub", "profile", "dossier", "browser", "network", "linux", "cli",
     "settings", "store", "files", "security-center", "addons", "guildcraft", "homelab",
-    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office", "portfolio-studio"
+    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office", "portfolio-studio",
+    "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes"
 ];
 
 window.desktopPinnedIds = [
     "store", "files", "cli", "browser", "devhub", "office",
-    "pdfcraft", "solidcraft", "genoffice", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft",
+    "pdfcraft", "solidcraft", "genoffice", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft",
     "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "ut99", "webamp", "musicmini", "iptv"
 ];
 
@@ -35,7 +36,7 @@ window.startMenuGroups = [
     {
         id: "system",
         label: "System",
-        ids: ["store", "files", "security-center", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
+        ids: ["store", "files", "security-center", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes"]
     },
     {
         id: "portfolio",
@@ -77,7 +78,11 @@ window.defaultDesktopIconLayout = {
     ut99: { col: 3, row: 1 },
     webamp: { col: 3, row: 2 },
     musicmini: { col: 3, row: 3 },
-    iptv: { col: 3, row: 4 }
+    iptv: { col: 3, row: 4 },
+    "genoffice-docs": { col: 4, row: 0 },
+    "genoffice-sheets": { col: 4, row: 1 },
+    "genoffice-slides": { col: 4, row: 2 },
+    "genoffice-notes": { col: 4, row: 3 }
 };
 
 window.desktopApps = [
@@ -85,6 +90,10 @@ window.desktopApps = [
     { id: "vscode", title: "Code OSS", icon: "apps/vscode/icon.png", category: "development", modular: true, meta: "SystemFS code workspace" },
     { id: "solidcraft", title: "SolidCraft", icon: "apps/solidcraft/icon.svg", category: "productivity", modular: true, meta: "Parametric 3D CAD & solid modeling" },
     { id: "genoffice", title: "GenOffice", icon: "apps/genoffice/icon.svg", category: "productivity", modular: true, meta: "AI-native office suite for Docs, Sheets, Slides & PDFs" },
+    { id: "genoffice-docs", title: "GenDocs", icon: "apps/genoffice-docs/icon.svg", category: "productivity", modular: true, meta: "AI-native word processor for OOXML (.docx) and rich text" },
+    { id: "genoffice-sheets", title: "GenSheets", icon: "apps/genoffice-sheets/icon.svg", category: "productivity", modular: true, meta: "AI-native spreadsheet studio with formula calculations" },
+    { id: "genoffice-slides", title: "GenSlides", icon: "apps/genoffice-slides/icon.svg", category: "productivity", modular: true, meta: "AI-native presentation and slide deck studio" },
+    { id: "genoffice-notes", title: "GenNotes", icon: "apps/genoffice-notes/icon.svg", category: "productivity", modular: true, meta: "AI-native markdown and technical documentation editor" },
     { id: "pdfcraft", title: "PdfCraft", icon: "apps/pdfcraft/icon.svg", category: "productivity", modular: true, meta: "PDF editor and organizer" },
     { id: "photocraft", title: "PhotoCraft", icon: "apps/photocraft/icon.svg", category: "productivity", modular: true, meta: "Layered image and raster artwork editing" },
     { id: "vectorcraft", title: "VectorCraft", icon: "apps/vectorcraft/icon.svg", category: "productivity", modular: true, meta: "Vector illustration and SVG design" },
@@ -125,6 +134,10 @@ window.modularApps = window.desktopApps
 
 window.storeApps = [
     { id: "genoffice", title: "GenOffice", icon: "apps/genoffice/icon.svg", category: "Productivity", description: "Open-source AI-native office suite by Genspark. Features six integrated editors for Word (.docx), Excel (.xlsx), PowerPoint (.pptx), PDF, Markdown, and HTML with byte-preserving patch engines, Local AI agent skills, and full SystemFS integration.", size: "Modular suite", publisher: "Genspark AI / PortfoliOS" },
+    { id: "genoffice-docs", title: "GenDocs", icon: "apps/genoffice-docs/icon.svg", category: "Productivity", description: "AI-native Word processor and document editor. Seamless OOXML (.docx), .doc, and rich text authoring with clean blank workspace startup, Save As routing, and SystemFS workspace storage.", size: "Productivity suite", publisher: "Genspark AI / PortfoliOS" },
+    { id: "genoffice-sheets", title: "GenSheets", icon: "apps/genoffice-sheets/icon.svg", category: "Productivity", description: "AI-native spreadsheet studio and calculation engine. Dynamic formula calculation, cell editing, CSV/TSV data interchange, and .xlsx workbook preservation in SystemFS.", size: "Productivity suite", publisher: "Genspark AI / PortfoliOS" },
+    { id: "genoffice-slides", title: "GenSlides", icon: "apps/genoffice-slides/icon.svg", category: "Productivity", description: "AI-native presentation deck designer. Clean slide deck creation, presenter mode, visual outlines, and OOXML (.pptx) deck editing saved directly to SystemFS.", size: "Productivity suite", publisher: "Genspark AI / PortfoliOS" },
+    { id: "genoffice-notes", title: "GenNotes", icon: "apps/genoffice-notes/icon.svg", category: "Productivity", description: "AI-native Markdown and technical documentation studio. Live side-by-side rendering, code fences, clean notes workspace, and direct integration with SystemFS /documents/Notes.", size: "Productivity suite", publisher: "Genspark AI / PortfoliOS" },
     { id: "solidcraft", title: "SolidCraft", icon: "apps/solidcraft/icon.svg", category: "Productivity", description: "Parametric 3D CAD modeling studio built in pure Rust and WebAssembly. Features a parametric timeline, 2D constraint sketches, solid modeling, MCP agent server, and STEP/STL/3MF export.", size: "WASM runtime", publisher: "Tangency Labs / PortfoliOS adapter" },
     { id: "plex", title: "Plex Player", icon: "apps/plex/icon.svg", category: "Media", description: "Native Plex library and browser player preview. Link your account, choose a secure server, and play personal media. Server/browser compatibility testing is ongoing.", size: "On-demand streaming", publisher: "PortfoliOS / unofficial Plex client" },
     { id: "vscode", title: "Code OSS", icon: "apps/vscode/icon.png", category: "Development", description: "VS Code web workbench for your Documents workspace. Explorer, editing and local saves. Native terminals and desktop-only extensions need a separate runtime.", size: "10 MB runtime", publisher: "Code OSS / CodinGame / PortfoliOS" },

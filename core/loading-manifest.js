@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.11.02.01";
+    const release = "2026.11.02.02";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "core/app-icons.js", "data/systems.js", "data/apps.js",
@@ -29,6 +29,7 @@
         services: {
             plex: ["core/plex-client.js", "core/plex-player.js"],
             craft: ["apps/_shared/craft-editor.js"],
+            genoffice: ["apps/_shared/genoffice-core.js"],
             ai: ["core/local-ai.js", "core/simple-brain.js"],
             media: ["core/file-intents.js", "core/media-service.js"],
             games: ["apps/_shared/iframe-game.js"],
@@ -37,7 +38,11 @@
         desktopApps: {
             plex: ["@plex"],
             solidcraft: ["@craft"],
-            genoffice: ["@ai"],
+            genoffice: ["@ai", "@genoffice"],
+            "genoffice-docs": ["@ai", "@genoffice"],
+            "genoffice-sheets": ["@ai", "@genoffice"],
+            "genoffice-slides": ["@ai", "@genoffice"],
+            "genoffice-notes": ["@ai", "@genoffice"],
             photocraft: ["@craft"],
             vectorcraft: ["@craft"],
             designcraft: ["@craft"],

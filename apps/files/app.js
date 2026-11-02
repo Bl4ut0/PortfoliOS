@@ -67,6 +67,22 @@
         return /\.(?:fx|effectcraft)$/i.test(name);
     }
 
+    function isWordDocument(name = "") {
+        return /\.(?:docx?|odt|rtf)$/i.test(name);
+    }
+
+    function isSpreadsheet(name = "") {
+        return /\.(?:xlsx?|ods|csv|tsv)$/i.test(name);
+    }
+
+    function isPresentation(name = "") {
+        return /\.(?:pptx?|odp)$/i.test(name);
+    }
+
+    function isMarkdownFile(name = "") {
+        return /\.(?:md|markdown)$/i.test(name);
+    }
+
     function isCadFile(name = "") {
         return /\.(?:solidcraft|step|stp|iges|igs|stl|3mf|obj|gltf|glb|dxf)$/i.test(name);
     }
@@ -323,6 +339,14 @@
             window.openDesktopWindow("filmcraft", { path: item.path });
         } else if (isRasterImage(lowerName, item.type) && (!window.isAppInstalled || window.isAppInstalled("photocraft"))) {
             window.openDesktopWindow("photocraft", { path: item.path });
+        } else if (isWordDocument(lowerName) && (!window.isAppInstalled || window.isAppInstalled("genoffice-docs"))) {
+            window.openDesktopWindow("genoffice-docs", item);
+        } else if (isSpreadsheet(lowerName) && (!window.isAppInstalled || window.isAppInstalled("genoffice-sheets"))) {
+            window.openDesktopWindow("genoffice-sheets", item);
+        } else if (isPresentation(lowerName) && (!window.isAppInstalled || window.isAppInstalled("genoffice-slides"))) {
+            window.openDesktopWindow("genoffice-slides", item);
+        } else if (isMarkdownFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("genoffice-notes"))) {
+            window.openDesktopWindow("genoffice-notes", item);
         } else if (isGenOfficeFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("genoffice"))) {
             window.openDesktopWindow("genoffice", item);
         } else if (isOfficeFile(lowerName)) {
@@ -669,6 +693,34 @@
                 label: "SolidCraft",
                 icon: "fa-solid fa-cube",
                 action: () => readFileForAction(path, (item) => window.openDesktopWindow("solidcraft", { path: item.path }))
+            });
+        }
+        if (isWordDocument(name) && (!window.isAppInstalled || window.isAppInstalled("genoffice-docs"))) {
+            openWith.push({
+                label: "GenDocs",
+                icon: "fa-solid fa-file-word",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("genoffice-docs", item))
+            });
+        }
+        if (isSpreadsheet(name) && (!window.isAppInstalled || window.isAppInstalled("genoffice-sheets"))) {
+            openWith.push({
+                label: "GenSheets",
+                icon: "fa-solid fa-table",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("genoffice-sheets", item))
+            });
+        }
+        if (isPresentation(name) && (!window.isAppInstalled || window.isAppInstalled("genoffice-slides"))) {
+            openWith.push({
+                label: "GenSlides",
+                icon: "fa-solid fa-file-powerpoint",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("genoffice-slides", item))
+            });
+        }
+        if (isMarkdownFile(name) && (!window.isAppInstalled || window.isAppInstalled("genoffice-notes"))) {
+            openWith.push({
+                label: "GenNotes",
+                icon: "fa-brands fa-markdown",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("genoffice-notes", item))
             });
         }
         if (isGenOfficeFile(name) && (!window.isAppInstalled || window.isAppInstalled("genoffice"))) {

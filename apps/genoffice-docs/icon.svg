@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="gd-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <!-- Word Blue Gradient -->
+    <linearGradient id="gd-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <!-- Document Page Gradient -->
+    <linearGradient id="gd-doc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+
+    <!-- Fold Corner Shadow -->
+    <linearGradient id="gd-fold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+
+    <!-- AI Sparkle Magenta/Violet -->
+    <linearGradient id="gd-ai" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="gd-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Base Rounded Tile -->
+  <rect width="512" height="512" rx="112" fill="url(#gd-bg)"/>
+  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="#3b82f6" stroke-width="3" stroke-opacity="0.35"/>
+
+  <!-- Document Page with Folded Top-Right Corner -->
+  <path d="M 140 100 L 320 100 L 390 170 L 390 412 A 16 16 0 0 1 374 428 L 140 428 A 16 16 0 0 1 124 412 L 124 116 A 16 16 0 0 1 140 100 Z"
+        fill="url(#gd-doc)" filter="drop-shadow(0 12px 24px rgba(0,0,0,0.4))"/>
+
+  <!-- Folded Corner Flap -->
+  <path d="M 320 100 L 320 154 A 16 16 0 0 0 336 170 L 390 170 Z" fill="url(#gd-fold)"/>
+
+  <!-- Document Header Bar -->
+  <rect x="160" y="148" width="130" height="24" rx="6" fill="url(#gd-blue)"/>
+
+  <!-- Content Text Lines -->
+  <rect x="160" y="200" width="200" height="12" rx="4" fill="#94a3b8"/>
+  <rect x="160" y="226" width="170" height="12" rx="4" fill="#cbd5e1"/>
+  <rect x="160" y="252" width="190" height="12" rx="4" fill="#cbd5e1"/>
+  <rect x="160" y="278" width="140" height="12" rx="4" fill="#cbd5e1"/>
+
+  <rect x="160" y="316" width="180" height="12" rx="4" fill="#94a3b8"/>
+  <rect x="160" y="342" width="200" height="12" rx="4" fill="#cbd5e1"/>
+  <rect x="160" y="368" width="150" height="12" rx="4" fill="#cbd5e1"/>
+
+  <!-- Word Badge Overhang -->
+  <rect x="100" y="210" width="100" height="100" rx="20" fill="url(#gd-blue)" filter="drop-shadow(0 8px 16px rgba(29,78,216,0.5))"/>
+  <text x="150" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle">W</text>
+
+  <!-- AI Sparkle Emblem -->
+  <g transform="translate(370, 70)" filter="url(#gd-glow)">
+    <path d="M 28 0 C 28 15 15 28 0 28 C 15 28 28 41 28 56 C 28 41 41 28 56 28 C 41 28 28 15 28 0 Z" fill="url(#gd-ai)"/>
+  </g>
+  <g transform="translate(425, 125) scale(0.55)" filter="url(#gd-glow)">
+    <path d="M 28 0 C 28 15 15 28 0 28 C 15 28 28 41 28 56 C 28 41 41 28 56 28 C 41 28 28 15 28 0 Z" fill="url(#gd-ai)"/>
+  </g>
+</svg>

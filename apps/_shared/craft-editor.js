@@ -30,7 +30,7 @@
       }
       async function open(record, id) {
         const file=await inspect(record,config.id+'-open'); assert(); paths.set(file.name,record.path);
-        send('file-result',{id,files:[file]},[file.bytes]); say('Opening '+file.name+'�'); interacted=true;closeConfirmed=false;
+        send('file-result',{id,files:[file]},[file.bytes]); say('Opening '+file.name+'...'); interacted=true;closeConfirmed=false;
       }
       const action = callback => async (...args) => { busy++; try { await callback(...args); } catch(error) { say(error.message); } finally { busy--; } };
       async function picker(message) {
@@ -41,9 +41,9 @@
         } catch(error) { if(current()) send('file-result',{id:message.id,files:[]}); throw error; }
       }
       async function save(message) {
-        assert(); const name=safe(message.name); let path=message.targetPath || paths.get(name);
+        assert(); const name=safe(message.name); let path=message.saveAs ? null : (message.targetPath || paths.get(name));
         if (!path && (flushing || message.autosave)) { const folder='/documents/'+config.title; await SystemFS.ensureDirectory(folder); assert(); path=folder+'/'+name; if(await SystemFS.readFile(path)) path=folder+'/'+crypto.randomUUID().slice(0,8)+'-'+name; }
-        if (!path) { const choice=await SystemFS.showSaveDialog({title:'Save '+config.title+' file',defaultName:name,signal:abort.signal}); assert(); if (!choice) { failures.delete(message.id); say('Save cancelled.'); return; } path=choice.path; }
+        if (!path) { const choice=await SystemFS.showSaveDialog({title:'Save '+config.title+' file',defaultName:name,folder:'/documents/'+config.title,signal:abort.signal}); assert(); if (!choice) { failures.delete(message.id); say('Save cancelled.'); return; } path=choice.path; }
         message.targetPath=path; assert();
         const result=await SecurityKernel.importFile({path,name:SystemFS.getName(path),parent:SystemFS.getParentPath(path),data:message.bytes,size:message.bytes.byteLength,type:message.mime || 'application/octet-stream',source:config.id+'-output',options:{documentPolicy:config.id==='vectorcraft'?'passive-svg':undefined}}); assert();
         if(result.status!=='accepted') throw new Error('Output quarantined. Review it in Security Center.');
@@ -64,12 +64,22 @@
         else if(m.type==='craft:opened'&&typeof m.name==='string')say('Opened '+safe(m.name));
         else if(m.type==='craft:focus-needed')say('Use Open in the editor to load '+safe(m.name)+'.');
         else if(m.type==='craft:failed-save') say('Editor export failed: '+String(m.error||'Unknown error'));
-        else if(m.type==='craft:save' && typeof m.id==='string' && m.id.length<=64 && typeof m.name==='string' && m.name.length<=512 && m.bytes instanceof ArrayBuffer && m.bytes.byteLength>0 && m.bytes.byteLength<=LIMIT) queue({id:m.id,name:m.name,bytes:m.bytes,mime:typeof m.mime==='string'?m.mime:'',autosave:flushing});
+        else if((m.type==='craft:save' || m.type==='craft:save-as') && typeof m.id==='string' && m.id.length<=64 && typeof m.name==='string' && m.name.length<=512 && m.bytes instanceof ArrayBuffer && m.bytes.byteLength>0 && m.bytes.byteLength<=LIMIT) queue({id:m.id,name:m.name,saveAs:Boolean(m.saveAs || m.type==='craft:save-as'),bytes:m.bytes,mime:typeof m.mime==='string'?m.mime:'',autosave:flushing});
         else if(m.type==='craft:drop' && typeof m.name==='string' && m.name.length<=512 && m.bytes instanceof ArrayBuffer && m.bytes.byteLength<=LIMIT && !busy) action(async()=>open(await imported(new File([m.bytes],m.name,{type:m.mime || ''})),'launch'))();
         else if(m.type==='craft:result' && typeof m.id==='string' && requests.has(m.id)){const r=requests.get(m.id);clearTimeout(r.timeout);requests.delete(m.id);r.resolve(m);}
       },{signal:abort.signal});
       root.querySelector('[data-craft-retry]').addEventListener('click',()=>{for(const m of failures.values())queue(m);},{signal:abort.signal});
       root.addEventListener('launch-params',action(async()=>{if(ready&&root.launchParams?.path)await open(await SystemFS.readFile(root.launchParams.path),'launch');}),{signal:abort.signal});
+      root.addEventListener('keydown', event => {
+        if ((event.ctrlKey || event.metaKey) && event.shiftKey && (event.key === 's' || event.key === 'S')) {
+          event.preventDefault(); event.stopPropagation();
+          action(async () => {
+            const activeName = paths.keys().next().value || 'untitled';
+            const choice = await SystemFS.showSaveDialog({ title: 'Save ' + config.title + ' file as', defaultName: activeName, folder: '/documents/' + config.title, signal: abort.signal });
+            if (choice) { paths.set(activeName, choice.path); try { await request('flush'); say('Saved ' + choice.path); } catch(e) { say(e.message); } }
+          })();
+        }
+      }, { signal: abort.signal });
       let closeChoice = null;
       function resolveFailedClose(message, context) {
         say(message);
@@ -100,13 +110,13 @@
           if(busy){say('Finish or cancel the file dialog first.');return false;}
           await writes;if(failures.size)return resolveFailedClose('Save was not completed.',context);
           if(!ready)return true;
-          flushing=true;try{const result=await request('flush');await writes;if(!result.ok || failures.size)return resolveFailedClose(result.error || 'Save your project before closing or switching profiles.',context);if(context.reason!=='save-close'&&['vectorcraft','designcraft'].includes(config.id)&&interacted&&!closeConfirmed){closeConfirmed=await new Promise(resolve=>{const panel=document.createElement('div');panel.className='craft-close-confirm';panel.innerHTML='<p>The active document has been saved. Save any other open documents before closing this editor.</p><button type="button" data-keep>Keep editing</button><button type="button" data-close>All documents saved � close</button>';root.querySelector('.craft-host').append(panel);panel.querySelector('[data-keep]').onclick=()=>{panel.remove();resolve(false);};panel.querySelector('[data-close]').onclick=()=>{panel.remove();resolve(true);};});return closeConfirmed;}return true;}catch(error){say(error.message);return false;}finally{flushing=false;}
+          flushing=true;try{const result=await request('flush');await writes;if(!result.ok || failures.size)return resolveFailedClose(result.error || 'Save your project before closing or switching profiles.',context);if(context.reason!=='save-close'&&['vectorcraft','designcraft'].includes(config.id)&&interacted&&!closeConfirmed){closeConfirmed=await new Promise(resolve=>{const panel=document.createElement('div');panel.className='craft-close-confirm';panel.innerHTML='<p>The active document has been saved. Save any other open documents before closing this editor.</p><button type="button" data-keep>Keep editing</button><button type="button" data-close>All documents saved  -  close</button>';root.querySelector('.craft-host').append(panel);panel.querySelector('[data-keep]').onclick=()=>{panel.remove();resolve(false);};panel.querySelector('[data-close]').onclick=()=>{panel.remove();resolve(true);};});return closeConfirmed;}return true;}catch(error){say(error.message);return false;}finally{flushing=false;}
         },
         close(){alive=false;clearTimeout(timer);abort.abort();for(const r of requests.values()){clearTimeout(r.timeout);r.reject(new Error('Editor closed.'));}requests.clear();frame.remove();sessions.delete(root);}
       });
       timer=setTimeout(()=>{if(!ready){frame.removeAttribute('src');say('Startup timed out. Close and reopen to retry.');root.querySelector('[data-craft-loading]').textContent='Startup timed out. Close and reopen to retry.';}},90000);
       frame.src='apps/'+config.id+'/runtime/index.php/host.html?host=parent&fresh=1'+(config.id==='lightcraft'?'&store=idb&workers=0':config.id==='effectcraft'?'&empty&home&frameworkers=1&webgl':'');
     }
-    window.appRegistry[config.id]={title:config.title,icon:config.icon,windowClass:config.id+'-window document-window',renderBody:()=>`<main class="craft-host"><p data-craft-status role="status">Loading ${config.title}…</p><div data-craft-loading>Loading ${config.title}…</div><button type="button" data-craft-retry hidden>Retry save</button><iframe title="${config.title} editor" sandbox="allow-scripts allow-downloads" referrerpolicy="no-referrer"></iframe></main>`,onOpen:mount,beforeClose:(root,context)=>sessions.get(root)?.beforeClose(context),onClose:root=>sessions.get(root)?.close()};
+    window.appRegistry[config.id]={title:config.title,icon:config.icon,windowClass:config.id+'-window document-window',renderBody:()=>`<main class="craft-host"><p data-craft-status role="status">Loading ${config.title}â¦</p><div data-craft-loading>Loading ${config.title}â¦</div><button type="button" data-craft-retry hidden>Retry save</button><iframe title="${config.title} editor" sandbox="allow-scripts allow-downloads" referrerpolicy="no-referrer"></iframe></main>`,onOpen:mount,beforeClose:(root,context)=>sessions.get(root)?.beforeClose(context),onClose:root=>sessions.get(root)?.close()};
   };
 })();
