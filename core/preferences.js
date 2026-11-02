@@ -173,7 +173,16 @@ window.getThemeButtonText = color => {
     return (1.05 / (luminance + 0.05)) > ((luminance + 0.05) / 0.05) ? '#ffffff' : '#000000';
 };
 
-window.applyThemeColors = () => {
+window.applyThemeColors = (options = {}) => {
+    const isManual = options.manual === true || options.animate === true;
+    if (isManual) {
+        document.documentElement.classList.add("theme-transitioning");
+        window.clearTimeout(window._themeTransitionTimer);
+        window._themeTransitionTimer = window.setTimeout(() => {
+            document.documentElement.classList.remove("theme-transitioning");
+        }, 260);
+    }
+
     const primaryPicker = window.byId ? window.byId("theme-primary-picker") : document.getElementById("theme-primary-picker");
     const accentPicker = window.byId ? window.byId("theme-accent-picker") : document.getElementById("theme-accent-picker");
     const theme = window.getPortfolioTheme();
@@ -194,6 +203,13 @@ window.applyThemeColors = () => {
     }
     if (state.themeAccent) {
         document.documentElement.style.setProperty("--theme-accent", state.themeAccent);
+    }
+
+    // Persist quick reference keys for instant frame 0 loading on refresh
+    if (window.Storage) {
+        if (state.themePrimary) window.Storage.local.set("bl4ut0_last_theme_primary", state.themePrimary);
+        if (state.themeAccent) window.Storage.local.set("bl4ut0_last_theme_accent", state.themeAccent);
+        if (state.themeId) window.Storage.local.set("bl4ut0_last_theme", state.themeId);
     }
 
     const currentPrimary = state.themePrimary || tokens["--theme-primary"] || "#22d3ee";
@@ -358,7 +374,7 @@ window.setPortfolioTheme = (themeId, options = {}) => {
         window.Storage.local.set(window.getPreferencesKey("ThemeId"), theme.id);
         window.Storage.local.set("bl4ut0_last_theme", theme.id);
     }
-    window.applyThemeColors();
+    window.applyThemeColors({ manual: true, animate: true });
     if (window.EventBus) window.EventBus.emit("theme:changed", { themeId: theme.id, theme });
     if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
@@ -557,7 +573,7 @@ window.setThemeColor = (type, value) => {
             window.Storage.local.set("bl4ut0_last_theme_accent", value);
         }
     }
-    window.applyThemeColors();
+    window.applyThemeColors({ manual: true, animate: true });
     if (window.EventBus) window.EventBus.emit("theme:changed", { themeId: state.themeId, type, value });
     if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
@@ -571,7 +587,7 @@ window.resetThemeColors = () => {
         window.Storage.local.remove("bl4ut0_last_theme_primary");
         window.Storage.local.remove("bl4ut0_last_theme_accent");
     }
-    window.applyThemeColors();
+    window.applyThemeColors({ manual: true, animate: true });
     if (window.EventBus) window.EventBus.emit("theme:reset", { themeId: state.themeId });
     if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };

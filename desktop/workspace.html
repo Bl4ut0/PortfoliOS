@@ -845,6 +845,16 @@
                                             <h3>Reset &amp; Recovery Options</h3>
                                             <p class="settings-info-text" style="margin-bottom: 0.8rem;">Troubleshoot desktop issues by resetting your state configurations or performing a factory restore.</p>
                                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                                <!-- BIOS Setup Card -->
+                                                <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.6rem; background: rgba(34, 211, 238, 0.04); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, var(--line)); padding: 0.8rem; border-radius: var(--radius-sm); grid-column: span 2;">
+                                                    <div>
+                                                        <strong style="display: block; font-size: 0.82rem; color: var(--theme-primary); margin-bottom: 2px;"><i class="fa-solid fa-microchip"></i> PortfoliOS BIOS Setup Utility</strong>
+                                                        <span style="font-size: 0.72rem; color: var(--text-soft, #9ca3af); line-height: 1.35; display: block;">Configure virtual WebAssembly RAM limit (default 1GB), preferred GPU device, browser storage quotas, and boot options. Shortcut: [F9].</span>
+                                                    </div>
+                                                    <button type="button" id="settings-open-bios-btn" class="settings-btn btn-primary" style="align-self: flex-start; padding: 6px 14px; font-size: 0.75rem; margin-top: 0.25rem;">
+                                                        <i class="fa-solid fa-sliders"></i> Enter BIOS Setup [F9]
+                                                    </button>
+                                                </div>
                                                 <!-- Reset Variables Card -->
                                                 <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.6rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); padding: 0.8rem; border-radius: var(--radius-sm);">
                                                     <div>

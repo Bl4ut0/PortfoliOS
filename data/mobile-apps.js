@@ -6,15 +6,15 @@
  */
 window.mobileAppCatalog = [
     { id: "plex", title: "Plex Player", icon: "apps/plex/icon.svg", color: "#e5a00d", category: "media", installable: true, description: "Native Plex client preview. Personal libraries and browser playback; server compatibility testing ongoing." },
-    { id: "codex", title: "Codex CLI Preview", icon: "fa-solid fa-terminal", color: "#22d3ee", category: "productivity", installable: true, description: "Private workspace readiness and official CLI setup. Browser coding and ChatGPT sign-in are not available yet." },
+    { id: "codex", title: "Codex CLI", icon: "apps/codex/icon.svg", color: "#22d3ee", category: "productivity", installable: true, description: "Private workspace readiness and official CLI setup. Terminal container runs in Desktop view." },
     { id: "store", title: "Store", icon: "fa-solid fa-shop", color: "#a78bfa", category: "system", pinned: true, description: "Discover mobile apps and desktop alternatives." },
-    { id: "local-ai", title: "Lobe", icon: "fa-solid fa-brain", color: "#22d3ee", category: "productivity", description: "Chat with your session-aware assistant." },
+    { id: "local-ai", title: "Local AI", icon: "apps/local-ai/icon.svg", color: "#a855f7", category: "productivity", description: "Chat with your session-aware assistant." },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", color: "#34d399", category: "system", description: "Review, resume, and close running mobile apps." },
     { id: "security-center", title: "Security Center", icon: "fa-solid fa-shield-halved", color: "#38bdf8", category: "system", description: "Check local file policy and scan your workspace." },
     { id: "profile", title: "Identity", icon: "fa-solid fa-id-card", color: "#e879f9", category: "system", description: "Your active account and backup status." },
     { id: "dossier", title: "Dossier", icon: "fa-solid fa-folder-open", color: "#60a5fa", category: "portfolio", description: "Browse projects available in this profile." },
     { id: "romplayer", title: "ROM Player", icon: "fa-solid fa-gamepad", color: "#f59e0b", category: "games", installable: true, description: "Play your NES, SNES, Game Boy, GBA, and Sega ROMs with touch controls. Cores download when launched." },
-    { id: "browser", title: "Browser", icon: "fa-solid fa-compass", color: "#38bdf8", category: "system", pinned: true },
+    { id: "browser", title: "Portal", icon: "apps/browser/icon.svg", color: "#38bdf8", category: "system", pinned: true, description: "Portal web browser (based on Browser.js)." },
     { id: "documents", title: "Documents", icon: "fa-solid fa-file-pen", color: "#60a5fa", category: "productivity", pinned: true },
     { id: "music", title: "Music", icon: "fa-solid fa-headphones", color: "#f472b6", category: "media", pinned: true },
     { id: "settings", title: "Settings", icon: "fa-solid fa-gear", color: "#94a3b8", category: "system", pinned: true },

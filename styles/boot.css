@@ -253,3 +253,65 @@ body[data-startup-stage=boot] > .os-shell:not(#session-phone), body[data-startup
 .portfolios-mark .prompt-chevron { color:var(--text, #f8fafc); }
 .portfolios-mark .prompt-cursor { color:var(--theme-primary, #22d3ee); text-shadow:0 0 8px var(--theme-primary-glow, rgba(34, 211, 238, 0.6)); }
 .brand-icon.portfolios-mark { background:var(--surface-inset, #090a0f); border:1px solid var(--line-strong, rgba(255, 255, 255, 0.14)); }
+
+.boot-action-bios {
+    border-color: rgba(34, 211, 238, 0.28);
+    color: var(--boot-cyan);
+}
+
+.boot-action-bios:hover {
+    border-color: var(--boot-cyan);
+    background: rgba(34, 211, 238, 0.12);
+    box-shadow: 0 4px 16px var(--theme-primary-glow, rgba(34, 211, 238, 0.2));
+}
+
+.boot-bios-hint {
+    margin-top: 1.4rem;
+    display: flex;
+    justify-content: flex-start;
+    animation: bios-pulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes bios-pulse {
+    0% { opacity: 0.75; }
+    100% { opacity: 1; }
+}
+
+.boot-bios-hint-btn {
+    background: transparent;
+    border: none;
+    padding: 0.35rem 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    color: var(--boot-text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.boot-bios-hint-btn kbd {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--boot-line);
+    border-radius: 3px;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--boot-cyan);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.boot-bios-hint-btn:hover {
+    color: var(--boot-cyan);
+    background: rgba(34, 211, 238, 0.08);
+}
+
+.boot-bios-hint-btn:hover kbd {
+    border-color: var(--boot-cyan);
+}
+
+.boot-screen.is-ready .boot-bios-hint {
+    display: none;
+}

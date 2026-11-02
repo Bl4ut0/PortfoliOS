@@ -537,6 +537,11 @@
     }
 
     async function openMobileApp(appId, launchContext = {}) {
+        if (appId === "bios") {
+            setShadeOpen(false);
+            window.openBiosSetup?.();
+            return true;
+        }
         const catalogApp = getVisibleMobileCatalog().find((app) => app.id === appId);
         if (!catalogApp) return false;
         if (tasks.has(appId)) {

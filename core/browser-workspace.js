@@ -2,7 +2,7 @@
 (function () {
     const home = 'https://www.google.com/';
     const providers = [
-        { id: 'browserjs', name: 'Browser.js', embed: '/apps/browser/browserjs.php', icon: 'fa-solid fa-window-maximize', detail: 'In-window browser · tabs, address bar and search · PortfoliOS relay' },
+        { id: 'browserjs', name: 'Portal', embed: '/apps/browser/browserjs.php', icon: 'fa-solid fa-window-maximize', detail: 'In-window browser · tabs, address bar and search · based on Browser.js' },
         { id: 'browserjs-hosted', name: 'Hosted Browser.js', embed: 'https://browser.puter.com/', partition: 'browserjs', icon: 'fa-solid fa-window-maximize', detail: 'Upstream hosted browser · opens its own New Tab page' },
         { id: 'scramjet', name: 'Scramjet', embed: 'https://scramjet.mercurywork.shop/', icon: 'fa-solid fa-globe', detail: 'In-window Google start page · community relay · desktop-oriented controls' },
         { id: 'proxysite', name: 'ProxySite', url: 'https://www.proxysite.com/', icon: 'fa-solid fa-globe', detail: 'Free web proxy · opens in a separate tab' },
@@ -69,7 +69,7 @@
                 </div>
             </aside>
 
-            <header class="web-browser-heading"><span aria-hidden="true">◎</span><div><p>Your window to the web</p><h2>Browser</h2></div></header>
+            <header class="web-browser-heading"><span aria-hidden="true"><img src="/apps/browser/icon.svg" alt="" style="width:28px;height:28px;vertical-align:middle;display:inline-block;border-radius:6px;" onerror="this.outerHTML='◎'"></span><div><p>Your window to the web</p><h2>Portal</h2></div></header>
             <form class="web-browser-address" data-web-address-form><input data-web-address aria-label="Website address" autocomplete="off" spellcheck="false" inputmode="url" placeholder="Enter a website address"><button type="submit">Go</button></form>
             <nav class="web-browser-bookmarks" data-web-bookmarks aria-label="Website bookmarks"></nav>
             <div class="web-browser-message" data-web-message role="status" aria-live="polite"></div>
@@ -79,13 +79,13 @@
                 <label class="web-browser-remember"><input type="checkbox" data-web-remember> Remember my choice for this profile</label>
                 <button type="button" class="web-browser-primary" data-web-embedded-start hidden>Open browser</button><button type="button" class="web-browser-primary" data-web-fresh hidden>Reload PortfoliOS for a fresh browsing profile</button>
                 <a class="web-browser-primary" data-web-launch target="_blank" rel="noopener noreferrer" hidden>Continue</a><button type="button" class="web-browser-primary" data-web-start hidden>Start remote browser</button>
-                <p class="web-browser-note">Browser.js opens its search/New Tab page; Scramjet starts at Google. Community services may be unavailable or restrict websites. Browsing state is temporary and clears when PortfoliOS reloads.</p>
+                <p class="web-browser-note">Portal opens its search/New Tab page; Scramjet starts at Google. Community services may be unavailable or restrict websites. Browsing state is temporary and clears when PortfoliOS reloads.</p>
             </section>
             <section class="web-browser-handoff" data-web-handoff hidden><h3 data-web-handoff-title></h3><p>Enter your destination on the provider’s page. You can copy the address below before opening it.</p><div class="web-browser-destination"><code data-web-destination></code><button type="button" data-web-copy>Copy address</button></div><a class="web-browser-primary" data-web-reopen target="_blank" rel="noopener noreferrer">Open provider in new tab ↗</a><p class="web-browser-note">PortfoliOS cannot read or control that tab. Use its browser controls to navigate.</p></section>
             <button type="button" class="web-browser-recovery" data-web-recover hidden>Connection options</button><button type="button" class="web-browser-native-settings" data-web-native hidden>Browser settings</button>
             <section class="web-browser-relay" data-web-relay hidden></section>
             <section class="web-browser-remote" data-web-remote hidden><div class="web-browser-remote-bar"><span data-web-countdown></span><button type="button" data-web-stop>End session</button></div><div data-web-viewport></div></section>
-            <footer class="web-browser-note">Your provider handles the websites you visit. A private workspace does not make browsing invisible to that provider.</footer>
+            <footer class="web-browser-note">Portal is a custom branded browser based on Browser.js. Your provider handles the websites you visit. A private workspace does not make browsing invisible to that provider.</footer>
         </section>`;
     }
     function mount(root, options = {}) {

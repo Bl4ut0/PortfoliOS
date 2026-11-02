@@ -1,3 +1,60 @@
+const setupStoreTooltips = (contentEl) => {
+    let tooltip = document.getElementById("store-tooltip");
+    if (!tooltip) {
+        tooltip = document.createElement("div");
+        tooltip.id = "store-tooltip";
+        tooltip.className = "store-tooltip";
+        tooltip.setAttribute("role", "tooltip");
+        tooltip.setAttribute("aria-hidden", "true");
+        document.body.appendChild(tooltip);
+    }
+
+    const hideTooltip = () => {
+        tooltip.classList.remove("is-visible");
+        tooltip.setAttribute("aria-hidden", "true");
+    };
+
+    if (contentEl._storeTooltipAttached) return;
+    contentEl._storeTooltipAttached = true;
+
+    contentEl.addEventListener("mouseover", (event) => {
+        const descEl = event.target.closest(".store-app-card-desc");
+        if (!descEl) return;
+        const text = descEl.dataset.storeDesc || descEl.textContent.trim();
+        const isTruncated = descEl.scrollHeight > descEl.clientHeight + 1;
+        if (!text || !isTruncated) {
+            hideTooltip();
+            return;
+        }
+
+        tooltip.textContent = text;
+        tooltip.classList.add("is-visible");
+        tooltip.setAttribute("aria-hidden", "false");
+
+        const rect = descEl.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        let left = rect.left + (rect.width - tooltipRect.width) / 2;
+        left = Math.max(12, Math.min(window.innerWidth - tooltipRect.width - 12, left));
+
+        let top = rect.top - tooltipRect.height - 8;
+        if (top < 10) {
+            top = rect.bottom + 8;
+        }
+
+        tooltip.style.left = `${Math.round(left)}px`;
+        tooltip.style.top = `${Math.round(top)}px`;
+    });
+
+    contentEl.addEventListener("mouseout", (event) => {
+        const descEl = event.target.closest(".store-app-card-desc");
+        if (descEl && !descEl.contains(event.relatedTarget)) {
+            hideTooltip();
+        }
+    });
+
+    window.addEventListener("scroll", hideTooltip, { passive: true, capture: true });
+};
+
 /**
  * PortfoliOS: Application Store
  * Manages rendering the app store catalog, categories, app installation progress emulation, and uninstallation.
@@ -132,7 +189,7 @@ window.renderStore = () => {
                     </div>
                     <b class="store-app-state">${escapeHtml(stateLabel)}</b>
                 </div>
-                <p class="store-app-card-desc">${description}</p>
+                <p class="store-app-card-desc" data-store-desc="${description}" aria-label="${description}">${description}</p>
                 <div class="store-app-card-footer">
                     <div class="store-app-card-meta">
                         <div>${installable ? "Size" : "Mode"}: ${size}</div>
@@ -145,6 +202,8 @@ window.renderStore = () => {
             </div>
         `;
     }).join("");
+
+    setupStoreTooltips(contentEl);
 
     contentEl.innerHTML = `
         <div class="store-hero">
@@ -242,7 +301,7 @@ const installAppFiles = async (id) => {
 
     const modularStoreApps = [
         "plex",
-        "codex", "solidcraft", "genoffice", "pdfcraft", "photocraft", "vectorcraft",
+        "codex", "solidcraft", "genoffice", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes", "pdfcraft", "photocraft", "vectorcraft",
         "lightcraft", "designcraft", "filmcraft", "effectcraft"
     ];
     if (modularStoreApps.includes(id)) {
@@ -456,7 +515,7 @@ window.uninstallApp = (id) => {
             .catch(err => console.error(`Failed to clean up ${id} local files:`, err));
     }
 
-    if (["codex", "solidcraft", "pdfcraft", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft"].includes(id)) {
+    if (["codex", "solidcraft", "genoffice", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes", "pdfcraft", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft"].includes(id)) {
         document.getElementById(`app-script-${id}`)?.remove();
         document.getElementById(`app-style-${id}`)?.remove();
         delete window.appRegistry[id];

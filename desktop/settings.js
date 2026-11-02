@@ -821,6 +821,13 @@ function initDebugSettings() {
 
 // System Reset / Recovery Options
 function initSystemResetSettings() {
+    const biosBtn = document.getElementById("settings-open-bios-btn");
+    if (biosBtn) {
+        biosBtn.addEventListener("click", () => {
+            window.openBiosSetup?.();
+        });
+    }
+
     const resetVarsBtn = document.getElementById("settings-reset-variables-btn");
     const fullResetBtn = document.getElementById("settings-full-reset-btn");
 

@@ -96,7 +96,18 @@
     };
     document.addEventListener("DOMContentLoaded", () => {
         document.body.dataset.startupStage = "boot";
-        boot().addEventListener("portfolio:selector-ready", registerWorker, { once: true });
+        boot().addEventListener("portfolio:selector-ready", () => {
+            registerWorker();
+            const target = window.PortfoliOS_BIOS?.get("bootTarget");
+            if (target && target !== "prompt") {
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (!urlParams.has("view")) {
+                        void window.switchView(target);
+                    }
+                } catch (_) {}
+            }
+        }, { once: true });
         loader.mark("boot-start"); window.runBootSequence();
         if (window.requestIdleCallback) window.requestIdleCallback(registerWorker, { timeout: 2000 }); else setTimeout(registerWorker, 0);
         document.addEventListener("click", event => {

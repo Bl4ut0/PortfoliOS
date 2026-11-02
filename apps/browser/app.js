@@ -1,6 +1,6 @@
 (function () {
     window.appRegistry.browser = {
-        title: 'Browser', icon: 'fa-brands fa-chrome', windowClass: 'browser-window document-window',
+        title: 'Portal', icon: 'apps/browser/icon.svg', windowClass: 'browser-window document-window',
         renderBody: () => window.BrowserWorkspace.render(),
         onOpen: () => window.DesktopBrowser.refresh(),
         onRestore: () => window.DesktopBrowser.refresh(),

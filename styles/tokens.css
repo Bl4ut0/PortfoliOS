@@ -53,3 +53,18 @@
     --window-bottom: 5.6rem;
     --panel-bottom: calc(var(--taskbar-height) + 2.05rem);
 }
+
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+    transition: background-color 220ms ease, border-color 220ms ease, color 180ms ease, fill 180ms ease, stroke 180ms ease, box-shadow 220ms ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    html.theme-transitioning,
+    html.theme-transitioning *,
+    html.theme-transitioning *::before,
+    html.theme-transitioning *::after {
+        transition: none !important;
+    }
+}

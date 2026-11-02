@@ -338,6 +338,11 @@
             }
             if (event.target.closest("[data-settings-storage-refresh]")) {
                 await refreshStorageSummary(root);
+                return;
+            }
+            if (event.target.closest("[data-settings-open-bios]")) {
+                window.openBiosSetup?.();
+                return;
             }
         }, { signal });
 
@@ -453,6 +458,14 @@
                     <div><h3>Storage</h3><p data-mobile-storage-summary>Checking browser storage…</p></div>
                 </div>
                 <button type="button" class="mobile-settings-action" data-settings-storage-refresh><i class="fa-solid fa-rotate"></i><span>Refresh storage</span></button>
+            </section>
+
+            <section class="mobile-settings-card">
+                <div class="mobile-settings-section-title">
+                    <i class="fa-solid fa-microchip"></i>
+                    <div><h3>PortfoliOS BIOS</h3><p>Virtual hardware, RAM limit, and system setup.</p></div>
+                </div>
+                <button type="button" class="mobile-settings-action" data-settings-open-bios><i class="fa-solid fa-sliders"></i><span>Open BIOS Setup Utility</span></button>
             </section>
 
             <section class="mobile-settings-card">

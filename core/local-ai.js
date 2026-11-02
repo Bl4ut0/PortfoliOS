@@ -926,20 +926,21 @@
             throw new Error(lastError);
         }
 
-        // Request the high-performance discrete GPU instead of integrated (e.g. Intel Iris)
+        // Request preferred GPU adapter based on BIOS hardware configuration
         try {
-            const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+            const powerPreference = window.PortfoliOS_BIOS?.getGpuPreference?.() || "high-performance";
+            const adapter = await navigator.gpu.requestAdapter(powerPreference === "default" ? undefined : { powerPreference });
             if (adapter) {
                 const info = await adapter.requestAdapterInfo?.() || {};
                 emitAIDebug("WebGPU adapter selected.", getAIDebugSnapshot({
                     vendor: info.vendor || "unknown",
                     device: info.device || info.description || "unknown"
                 }));
-                console.log(`[LocalAI] GPU adapter: ${info.vendor || "unknown"} — ${info.device || info.description || "unknown"}`);
+                console.log(`[LocalAI] GPU adapter (${powerPreference}): ${info.vendor || "unknown"} — ${info.device || info.description || "unknown"}`);
             }
         } catch (gpuErr) {
-            emitAIDebug("Could not request high-performance GPU adapter.", getAIDebugSnapshot({ error: serializeDebugValue(gpuErr) }));
-            console.warn("[LocalAI] Could not request high-performance GPU adapter:", gpuErr);
+            emitAIDebug("Could not request GPU adapter.", getAIDebugSnapshot({ error: serializeDebugValue(gpuErr) }));
+            console.warn("[LocalAI] Could not request GPU adapter:", gpuErr);
         }
 
         setStatus("loading", "Loading WebLLM runtime...", 0.02);

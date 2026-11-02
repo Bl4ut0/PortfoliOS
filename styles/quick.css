@@ -146,9 +146,31 @@
 
 .quick-title-row {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr auto;
     gap: 0.75rem;
     align-items: center;
+}
+
+.quick-bios-btn {
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 35%, var(--line));
+    color: var(--theme-primary);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.35rem 0.65rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.quick-bios-btn:hover {
+    background: color-mix(in srgb, var(--theme-primary) 18%, transparent);
+    border-color: var(--theme-primary);
+    transform: translateY(-1px);
 }
 
 .quick-title-row h1 {

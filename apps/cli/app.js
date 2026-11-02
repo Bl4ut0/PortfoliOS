@@ -14,7 +14,7 @@
 
     window.appRegistry.cli = {
         title: "Portfolio CLI",
-        icon: "fa-solid fa-terminal",
+        icon: "apps/cli/icon.svg",
         windowClass: "cli-window utility-window",
         renderBody: () => window.renderAppTemplate("cli"),
         onOpen: refresh,

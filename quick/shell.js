@@ -155,6 +155,13 @@ if (window.EventBus) {
 
 window.mountQuick = () => {
     window.renderQuick();
+    const quickBiosBtn = document.getElementById("quick-bios-btn");
+    if (quickBiosBtn) {
+        quickBiosBtn.addEventListener("click", () => {
+            window.openBiosSetup?.();
+        });
+    }
+
     document.querySelector("[data-view-panel=quick]").addEventListener("click", event => {
         const quickRouteButton = event.target.closest("[data-quick-route]");
         if (quickRouteButton) {
