@@ -266,6 +266,11 @@
     user-select: none;
 }
 
+.desktop-window.is-dragging iframe,
+.desktop-window.is-resizing iframe {
+    pointer-events: none !important;
+}
+
 .desktop-window.is-dragging .window-bar {
     cursor: grabbing;
 }
