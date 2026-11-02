@@ -1,6 +1,6 @@
-# PortfoliOS Native Game Relay
+# PortfoliOS Native Relay
 
-High-performance, cross-browser native networking bridge for running desktop-class multiplayer games (Unreal Tournament 2004, Diablo DevilutionX, Quake) inside PortfoliOS (`os.bl4ut0.dev`).
+High-performance, cross-browser native networking bridge for PortfoliOS applications (`os.bl4ut0.dev`).
 
 ---
 

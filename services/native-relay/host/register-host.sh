@@ -1,5 +1,5 @@
 #!/bin/bash
-# Registers PortfoliOS Native Game Relay Host with Chrome, Chromium, Edge, and Firefox on Linux / macOS.
+# Registers PortfoliOS Native Relay Host with Chrome, Chromium, Edge, and Firefox on Linux / macOS.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RUNNER_PATH="$SCRIPT_DIR/host-runner.sh"

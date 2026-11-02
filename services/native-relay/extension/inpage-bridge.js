@@ -1,7 +1,7 @@
 /**
- * PortfoliOS Native Game Relay - In-Page Bridge
- * Provides `window.PortfoliOSNativeRelay` in the page context of os.bl4ut0.com.
- * Used by Wasm games (UT2004, Diablo DevilutionX, Quake, etc.) for real UDP/TCP networking.
+ * PortfoliOS Native Relay - In-Page Bridge
+ * Provides `window.PortfoliOSNativeRelay` in the page context of os.bl4ut0.dev and os.bl4ut0.com.
+ * Enables UDP/TCP network bridging for PortfoliOS applications.
  */
 
 (function () {
@@ -286,5 +286,5 @@
     }
   };
 
-  console.log('[PortfoliOS] Native Game Relay bridge ready.');
+  console.log('[PortfoliOS] Native Relay bridge ready.');
 })();

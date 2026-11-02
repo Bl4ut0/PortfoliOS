@@ -1,6 +1,6 @@
 /**
- * PortfoliOS Native Game Relay - Content Script
- * Injected strictly into os.bl4ut0.com and local dev origins.
+ * PortfoliOS Native Relay - Content Script
+ * Injected into os.bl4ut0.dev, os.bl4ut0.com, and local dev origins.
  * Bridges in-page window.postMessage to background service worker.
  */
 

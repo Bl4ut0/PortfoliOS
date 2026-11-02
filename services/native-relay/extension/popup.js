@@ -1,5 +1,5 @@
 /**
- * PortfoliOS Native Game Relay - Popup Controller
+ * PortfoliOS Native Relay - Popup Controller
  * Shows service health, live UDP/TCP traffic metered by the background worker,
  * the active PortfoliOS connection and quick navigation to the desktop experience.
  */

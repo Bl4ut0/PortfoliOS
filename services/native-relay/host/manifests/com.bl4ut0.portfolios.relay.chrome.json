@@ -1,6 +1,6 @@
-﻿{
+{
     "path":  "C:\\Dev Projects\\PortfoliOS\\PortfoliOS\\services\\native-relay\\host\\host-runner.bat",
-    "description":  "PortfoliOS Native Game Relay Host (UDP/TCP Bridge)",
+    "description":  "PortfoliOS Native Relay Host (UDP/TCP Bridge)",
     "name":  "com.bl4ut0.portfolios.relay",
     "allowed_origins":  [
                             "chrome-extension://geabloiejcoihaoeepacmkfkamfflijp/"

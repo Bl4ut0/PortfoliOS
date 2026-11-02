@@ -1,5 +1,5 @@
 /**
- * PortfoliOS Native Game Relay - Background Service Worker
+ * PortfoliOS Native Relay - Background Service Worker
  * Bridges content script messages to the local Native Messaging Host,
  * meters UDP/TCP traffic per socket and streams live stats to the popup.
  */

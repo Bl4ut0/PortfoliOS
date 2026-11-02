@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Registers the PortfoliOS Native Game Relay Host with Chrome, Edge, Brave, and Firefox on Windows.
+    Registers the PortfoliOS Native Relay Host with Chrome, Edge, Brave, and Firefox on Windows.
 
 .PARAMETER ChromeExtensionId
     The unpacked Chrome/Edge extension ID (e.g. from chrome://extensions).
@@ -40,7 +40,7 @@ if (-not [string]::IsNullOrWhiteSpace($ChromeExtensionId)) {
 
 $chromeJson = @{
     name = "com.bl4ut0.portfolios.relay"
-    description = "PortfoliOS Native Game Relay Host (UDP/TCP Bridge)"
+    description = "PortfoliOS Native Relay Host (UDP/TCP Bridge)"
     path = $runnerPath
     type = "stdio"
     allowed_origins = $chromeAllowed
@@ -52,7 +52,7 @@ Write-Host "Wrote Chrome manifest: $chromeManifestPath" -ForegroundColor Green
 # Update Firefox manifest with absolute path
 $firefoxJson = @{
     name = "com.bl4ut0.portfolios.relay"
-    description = "PortfoliOS Native Game Relay Host (UDP/TCP Bridge)"
+    description = "PortfoliOS Native Relay Host (UDP/TCP Bridge)"
     path = $runnerPath
     type = "stdio"
     allowed_extensions = @("relay@os.bl4ut0.dev", "relay@os.bl4ut0.com")

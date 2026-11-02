@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "PortfoliOS Native Game Relay",
+  "name": "PortfoliOS Native Relay",
   "version": "1.1.0",
-  "description": "Enables UDP & TCP multiplayer networking for UT2004, Diablo, and PortfoliOS apps. Scoped to os.bl4ut0.dev and os.bl4ut0.com.",
+  "description": "Native UDP & TCP network bridge for PortfoliOS apps. Scoped to os.bl4ut0.dev.",
   "permissions": [
     "nativeMessaging",
     "tabs"
@@ -41,7 +41,7 @@
     }
   ],
   "action": {
-    "default_title": "PortfoliOS Native Game Relay",
+    "default_title": "PortfoliOS Native Relay",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

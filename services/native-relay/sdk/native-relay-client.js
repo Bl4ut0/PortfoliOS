@@ -1,6 +1,6 @@
 /**
- * PortfoliOS Game Networking SDK
- * Unified networking client for PortfoliOS WebAssembly games (UT2004, Diablo, Quake, etc.).
+ * PortfoliOS Networking SDK
+ * Unified networking client for PortfoliOS applications and WebAssembly environments.
  *
  * Tier 1: Local Native Relay via Browser Extension (Direct UDP/TCP, zero extra latency, LAN support).
  * Tier 2: Cloud WebSocket Relay Fallback (ut99-relay / central server proxy).
@@ -9,7 +9,7 @@
 export class GameNetworkClient {
   constructor(options = {}) {
     this.options = {
-      cloudRelayUrl: options.cloudRelayUrl || 'wss://relay.os.bl4ut0.com/v1/relay',
+      cloudRelayUrl: options.cloudRelayUrl || 'wss://relay.os.bl4ut0.dev/v1/relay',
       preferNative: options.preferNative !== false,
       ...options
     };

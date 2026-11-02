@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * PortfoliOS Native Game Relay Host
- * Bridges browser WebAssembly/Emscripten games (UT2004, Diablo, etc.)
- * to raw UDP & TCP sockets on the local network via WebExtensions Native Messaging.
+ * PortfoliOS Native Relay Host
+ * Bridges PortfoliOS browser applications to raw UDP & TCP sockets
+ * on the local network via WebExtensions Native Messaging.
  *
  * Compatible with Chrome, Edge, Brave, and Mozilla Firefox.
  */
