@@ -1,11 +1,13 @@
 (function() {
     const APP_ID = "romplayer";
     const ROM_ROOT = "/ROMs";
+    const SAVE_ROOT = "/Saved Games/ROMs";
     const RUNTIME_URL = "apps/romplayer/runtime.html";
     const ARCHIVE_EXTENSIONS = ["zip"];
 
     let selectedSystemId = "nes";
     let currentItems = [];
+    let activeGame = null;
     let runtimeMessageHandler = null;
     let unsubscribeFs = null;
     let unregisterAudio = null;
@@ -209,6 +211,17 @@
             .join(",");
     }
 
+    async function ensureSavedRomDirectory(system = getSystem()) {
+        if (!window.SystemFS) return null;
+        await window.SystemFS.ensureSavedGameDirectory("ROMs");
+        const systemPath = `${SAVE_ROOT}/${system.folder}`;
+        await window.SystemFS.ensureDirectory(systemPath, {
+            silent: true,
+            metadata: { kind: "rom-save-dir", system: system.id }
+        });
+        return systemPath;
+    }
+
     async function ensureRomDirectories() {
         if (!window.SystemFS) return;
         await window.SystemFS.ensureDirectory(ROM_ROOT, {
@@ -221,6 +234,143 @@
                 silent: true,
                 metadata: { sync: false, kind: "rom-system", system: system.id }
             });
+        }
+
+        try {
+            await window.SystemFS.ensureSavedGameDirectory("ROMs");
+            for (const system of SYSTEMS) {
+                await window.SystemFS.ensureDirectory(`${SAVE_ROOT}/${system.folder}`, {
+                    silent: true,
+                    metadata: { kind: "rom-save-dir", system: system.id }
+                });
+            }
+        } catch (e) {
+            console.warn("PortfoliOS: Could not pre-create ROM save directories", e);
+        }
+    }
+
+    async function saveRomState(stateBuffer, screenshot) {
+        if (!activeGame || !window.SystemFS) return;
+        try {
+            const saveDir = await ensureSavedRomDirectory(activeGame.system);
+            if (!saveDir) return;
+            const blob = await toBlob(stateBuffer, "application/octet-stream");
+            const fileName = `${activeGame.baseName}.state`;
+            const path = `${saveDir}/${fileName}`;
+            await window.SystemFS.writeFile(
+                path,
+                fileName,
+                saveDir,
+                blob,
+                blob.size,
+                "application/octet-stream",
+                false,
+                {
+                    metadata: {
+                        app: APP_ID,
+                        kind: "rom-state",
+                        system: activeGame.system.id,
+                        romPath: activeGame.record.path,
+                        romName: activeGame.record.name
+                    }
+                }
+            );
+            if (window.showDesktopToast) {
+                window.showDesktopToast(`Saved state: ${activeGame.record.name}`);
+            }
+        } catch (error) {
+            console.error("PortfoliOS: Failed to save ROM state", error);
+        }
+    }
+
+    async function saveRomBattery(saveBuffer) {
+        if (!activeGame || !window.SystemFS) return;
+        try {
+            const saveDir = await ensureSavedRomDirectory(activeGame.system);
+            if (!saveDir) return;
+            const blob = await toBlob(saveBuffer, "application/octet-stream");
+            const fileName = `${activeGame.baseName}.sav`;
+            const path = `${saveDir}/${fileName}`;
+            await window.SystemFS.writeFile(
+                path,
+                fileName,
+                saveDir,
+                blob,
+                blob.size,
+                "application/octet-stream",
+                false,
+                {
+                    metadata: {
+                        app: APP_ID,
+                        kind: "rom-battery",
+                        system: activeGame.system.id,
+                        romPath: activeGame.record.path,
+                        romName: activeGame.record.name
+                    }
+                }
+            );
+            if (window.showDesktopToast) {
+                window.showDesktopToast(`Saved battery data: ${activeGame.record.name}`);
+            }
+        } catch (error) {
+            console.error("PortfoliOS: Failed to save ROM battery data", error);
+        }
+    }
+
+    function requestRomSave(windowEl) {
+        if (!activeGame) {
+            if (window.showDesktopToast) {
+                window.showDesktopToast("No active game running to save.");
+            }
+            return;
+        }
+        const iframe = windowEl?.querySelector(".romplayer-frame");
+        window.postMessageToIframe?.(iframe, {
+            source: "romplayer",
+            type: "request-save-state"
+        });
+    }
+
+    async function loadRomState(windowEl) {
+        if (!activeGame || !window.SystemFS) {
+            if (window.showDesktopToast) {
+                window.showDesktopToast("No active game running to load state for.");
+            }
+            return;
+        }
+        try {
+            const saveDir = `${SAVE_ROOT}/${activeGame.system.folder}`;
+            const fileName = `${activeGame.baseName}.state`;
+            const path = `${saveDir}/${fileName}`;
+            const record = await window.SystemFS.readFile(path);
+            if (!record || !record.data) {
+                if (window.showDesktopToast) {
+                    window.showDesktopToast(`No saved state found for ${activeGame.record.name}.`);
+                }
+                return;
+            }
+            let buffer;
+            if (record.data instanceof Blob) {
+                buffer = await record.data.arrayBuffer();
+            } else if (record.data instanceof ArrayBuffer) {
+                buffer = record.data;
+            } else if (ArrayBuffer.isView(record.data)) {
+                buffer = record.data.buffer.slice(record.data.byteOffset, record.data.byteOffset + record.data.byteLength);
+            } else {
+                buffer = new TextEncoder().encode(String(record.data)).buffer;
+            }
+
+            const iframe = windowEl?.querySelector(".romplayer-frame");
+            window.postMessageToIframe?.(iframe, {
+                source: "romplayer",
+                type: "load-state",
+                payload: { state: buffer }
+            });
+        } catch (error) {
+            console.error("PortfoliOS: Failed to load ROM state", error);
+            if (window.showDesktopToast) {
+                window.showDesktopToast("Failed to restore save state.");
+            }
         }
     }
 
@@ -366,6 +516,30 @@
         const iframe = windowEl.querySelector(".romplayer-frame");
         if (!iframe) return;
 
+        const cleanBaseName = sanitizeName(record.name.replace(/\.[^/.]+$/, "")) || "game";
+        activeGame = {
+            record,
+            system,
+            baseName: cleanBaseName
+        };
+
+        let initialSaveState = null;
+        try {
+            if (window.SystemFS) {
+                const saveDir = `${SAVE_ROOT}/${system.folder}`;
+                const statePath = `${saveDir}/${cleanBaseName}.state`;
+                const stateRecord = await window.SystemFS.readFile(statePath);
+                if (stateRecord && stateRecord.data) {
+                    initialSaveState = stateRecord.data instanceof Blob
+                        ? await stateRecord.data.arrayBuffer()
+                        : stateRecord.data;
+                    console.log(`PortfoliOS: Preloading save state for ${record.name} from ${statePath}`);
+                }
+            }
+        } catch (e) {
+            console.warn("PortfoliOS: No existing save state preloaded", e);
+        }
+
         const romBlob = await toBlob(record.data, record.type);
         const payload = {
             core: system.core,
@@ -374,6 +548,7 @@
             name: record.name,
             path: record.path,
             rom: romBlob,
+            saveState: initialSaveState,
             volume: (window.PortfolioOSAppFramework?.getDesktopVolume?.() ?? 70) / 100
         };
 
@@ -413,6 +588,7 @@
     }
 
     function stopRuntime(windowEl) {
+        activeGame = null;
         const iframe = windowEl.querySelector(".romplayer-frame");
         if (iframe) {
             iframe.onload = null;
@@ -523,6 +699,20 @@
             setRuntimeState(windowEl, "RUNNING", data.detail || "Game started.");
         } else if (data.type === "error") {
             setRuntimeState(windowEl, "ERROR", data.detail || "Runtime error.");
+        } else if (data.type === "save-state" && activeGame) {
+            const stateData = data.detail?.state;
+            if (stateData) {
+                saveRomState(stateData, data.detail?.screenshot);
+            }
+        } else if (data.type === "save-update" && activeGame) {
+            const saveData = data.detail?.save;
+            if (saveData) {
+                saveRomBattery(saveData);
+            }
+        } else if (data.type === "state-loaded") {
+            if (window.showDesktopToast) {
+                window.showDesktopToast(data.detail || "Save state restored.");
+            }
         }
     }
 
@@ -542,8 +732,17 @@
                         <span class="romplayer-current-path">${escapeHtml(getSystemPath())}</span>
                     </div>
                     <div class="romplayer-actions">
-                        <button class="romplayer-icon-button" type="button" data-rom-action="open-files" title="Open File Explorer">
+                        <button class="romplayer-icon-button" type="button" data-rom-action="open-files" title="Open ROMs folder in File Explorer">
                             <i class="fa-solid fa-folder-open"></i>
+                        </button>
+                        <button class="romplayer-icon-button" type="button" data-rom-action="open-saves" title="Open /Saved Games/ROMs in File Explorer">
+                            <i class="fa-solid fa-box-archive"></i>
+                        </button>
+                        <button class="romplayer-icon-button" type="button" data-rom-action="save-state" title="Quick Save to SystemFS (Ctrl+S / F5)">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                        </button>
+                        <button class="romplayer-icon-button" type="button" data-rom-action="load-state" title="Quick Load from SystemFS (Ctrl+O / F8)">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
                         </button>
                         <button class="romplayer-icon-button" type="button" data-rom-action="refresh" title="Refresh library">
                             <i class="fa-solid fa-rotate"></i>
@@ -607,7 +806,7 @@
                 windowEl.dataset.romplayerInitialized = "1";
                 setupDragAndDrop(windowEl);
 
-                windowEl.addEventListener("click", (event) => {
+                windowEl.addEventListener("click", async (event) => {
                     const systemButton = event.target.closest("[data-system-id]");
                     if (systemButton) {
                         selectedSystemId = systemButton.dataset.systemId;
@@ -642,8 +841,33 @@
                         }
                     } else if (action === "stop") {
                         stopRuntime(windowEl);
+                    } else if (action === "save-state") {
+                        requestRomSave(windowEl);
+                    } else if (action === "load-state") {
+                        await loadRomState(windowEl);
+                    } else if (action === "open-saves" && window.openDesktopWindow) {
+                        const targetDir = activeGame
+                            ? `${SAVE_ROOT}/${activeGame.system.folder}`
+                            : SAVE_ROOT;
+                        window.openDesktopWindow("files", { path: targetDir });
                     } else if (action === "open-files" && window.openDesktopWindow) {
                         window.openDesktopWindow("files");
+                    }
+                });
+
+                windowEl.addEventListener("keydown", async (event) => {
+                    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+                        event.preventDefault();
+                        requestRomSave(windowEl);
+                    } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "o") {
+                        event.preventDefault();
+                        await loadRomState(windowEl);
+                    } else if (event.key === "F5") {
+                        event.preventDefault();
+                        requestRomSave(windowEl);
+                    } else if (event.key === "F8") {
+                        event.preventDefault();
+                        await loadRomState(windowEl);
                     }
                 });
 
@@ -679,6 +903,13 @@
         },
         onFocus: (windowEl) => {
             window.focusGameIframe?.(windowEl.querySelector(".romplayer-frame"));
+        },
+        beforeClose: async (windowEl) => {
+            if (activeGame) {
+                requestRomSave(windowEl);
+                await new Promise((resolve) => setTimeout(resolve, 150));
+            }
+            return true;
         },
         onClose: (windowEl) => {
             stopRuntime(windowEl);

@@ -75,7 +75,7 @@
             function configure(payload) {
                 window.EJS_player = "#game";
                 window.EJS_core = payload.core;
-                window.EJS_gameUrl = payload.rom;
+                window.EJS_gameUrl = payload.rom instanceof Blob ? URL.createObjectURL(payload.rom) : payload.rom;
                 window.EJS_gameName = payload.name;
                 window.EJS_pathtodata = DATA_PATH;
                 window.EJS_startOnLoaded = true;
@@ -85,12 +85,35 @@
                 if (payload.touch) window.EJS_defaultOptions = { "virtual-gamepad": "enabled" };
                 window.EJS_volume = typeof payload.volume === "number" ? payload.volume : 0.7;
                 window.EJS_alignStartButton = "center";
+                if (payload.saveState) {
+                    try {
+                        const saveBlob = payload.saveState instanceof Blob
+                            ? payload.saveState
+                            : new Blob([payload.saveState], { type: "application/octet-stream" });
+                        window.EJS_loadStateURL = URL.createObjectURL(saveBlob);
+                    } catch (e) {
+                        console.warn("ROM Player: Could not set initial save state URL", e);
+                    }
+                }
                 window.EJS_ready = function() {
                     post("ready", payload.name);
                 };
                 window.EJS_onGameStart = function() {
                     post("started", payload.name);
                     if (pausedByShell) window.EJS_emulator?.pause?.();
+                };
+                window.EJS_onSaveState = function(data) {
+                    const stateData = data?.state || data;
+                    post("save-state", {
+                        state: stateData,
+                        screenshot: data?.screenshot
+                    });
+                };
+                window.EJS_onSaveUpdate = function(e) {
+                    const saveData = e?.save || e;
+                    post("save-update", {
+                        save: saveData
+                    });
                 };
             }
 
@@ -131,6 +154,31 @@
 
                 if (data.type === "volume" && window.EJS_emulator) {
                     window.EJS_emulator.volume = Math.max(0, Math.min(1, Number(data.value) || 0));
+                }
+
+                if (data.type === "request-save-state") {
+                    try {
+                        const gm = window.EJS_emulator?.gameManager;
+                        const state = gm?.getState?.();
+                        if (state) {
+                            post("save-state", { state });
+                        }
+                    } catch (err) {
+                        console.warn("ROM Player runtime: Failed to extract state", err);
+                    }
+                }
+
+                if (data.type === "load-state" && data.payload?.state) {
+                    try {
+                        const gm = window.EJS_emulator?.gameManager;
+                        const stateBytes = data.payload.state instanceof Uint8Array
+                            ? data.payload.state
+                            : new Uint8Array(data.payload.state);
+                        gm?.loadState?.(stateBytes);
+                        post("state-loaded", "State restored successfully.");
+                    } catch (err) {
+                        console.warn("ROM Player runtime: Failed to load state", err);
+                    }
                 }
             });
         })();
