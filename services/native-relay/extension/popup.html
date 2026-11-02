@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PortfoliOS Native Relay</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <span class="logo-mark">&gt;<span>_</span></span>
+        <div class="brand-text">
+          <h1>PortfoliOS</h1>
+          <span class="badge">Native Game Relay</span>
+        </div>
+      </div>
+      <div class="header-status">
+        <span id="overall-status-dot" class="dot dot-checking"></span>
+      </div>
+    </header>
+
+    <!-- Services Status Cards -->
+    <section class="status-section">
+      <div class="status-card">
+        <div class="status-info">
+          <span class="status-label">Native Client Bridge</span>
+          <span id="host-status-text" class="status-desc">Connecting to host…</span>
+        </div>
+        <span id="host-status-pill" class="pill pill-checking">Checking</span>
+      </div>
+
+      <div class="status-card">
+        <div class="status-info">
+          <span class="status-label">PortfoliOS Service</span>
+          <span id="web-status-text" class="status-desc">os.bl4ut0.dev</span>
+        </div>
+        <span id="web-status-pill" class="pill pill-checking">Checking</span>
+      </div>
+    </section>
+
+    <!-- Capabilities / Active Tunnel Info -->
+    <section class="info-section">
+      <div class="info-row">
+        <span>Supported Protocols</span>
+        <span class="info-highlight">Raw UDP (UT2004) &amp; TCP (Diablo)</span>
+      </div>
+      <div class="info-row">
+        <span>Domain Scope</span>
+        <span class="info-val">os.bl4ut0.dev (Locked)</span>
+      </div>
+    </section>
+
+    <!-- Navigation / Action Buttons -->
+    <section class="actions-section">
+      <button id="btn-desktop" class="btn btn-primary" type="button">
+        <span class="btn-icon">🖥️</span>
+        <div class="btn-text">
+          <strong>Open Desktop Workspace</strong>
+          <small>Enter private profile / desktop</small>
+        </div>
+        <span class="btn-arrow">→</span>
+      </button>
+
+      <button id="btn-mobile" class="btn btn-secondary" type="button">
+        <span class="btn-icon">📱</span>
+        <div class="btn-text">
+          <strong>Open Mobile Workspace</strong>
+          <small>Switch to mobile experience</small>
+        </div>
+        <span class="btn-arrow">→</span>
+      </button>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span id="footer-note">WebExtensions Native Messaging</span>
+      <button id="btn-recheck" class="btn-text-link" type="button" title="Refresh connection status">Recheck</button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

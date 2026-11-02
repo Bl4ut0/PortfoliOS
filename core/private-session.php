@@ -73,7 +73,7 @@ try {
         } elseif (!preg_match('~^/(?:upload/)?drive/v3/files(?:/[A-Za-z0-9_-]+)?$~D',$targetParts['path'] ?? '')) {
             $validationError = 'path ' . ($targetParts['path'] ?? '');
         } else {
-            $disallowed = array_diff(array_keys($params),['uploadType','fields','upload_id','alt','supportsAllDrives','fileId','retry','continue','enforce_single_parent','quotaUser','prettyPrint','key','userProject','trace','client_type']);
+            $disallowed = array_diff(array_keys($params),['uploadType','fields','upload_id','session_crd','crd','authuser','hl','cx','alt','supportsAllDrives','fileId','retry','continue','enforce_single_parent','quotaUser','prettyPrint','key','userProject','trace','client_type']);
             if (!empty($disallowed)) {
                 $validationError = 'param(s) ' . implode(',', $disallowed);
             } elseif (isset($params['uploadType']) && !in_array($params['uploadType'],['multipart','media','resumable'],true)) {
@@ -82,6 +82,10 @@ try {
                 $validationError = 'fields';
             } elseif (isset($params['upload_id']) && !preg_match('/^[A-Za-z0-9._~%+=:\/ -]{1,4096}$/D',$params['upload_id'])) {
                 $validationError = 'upload_id';
+            } elseif (isset($params['session_crd']) && !preg_match('/^[A-Za-z0-9._~%+=:\/ -]{1,4096}$/D',$params['session_crd'])) {
+                $validationError = 'session_crd';
+            } elseif (isset($params['crd']) && !preg_match('/^[A-Za-z0-9._~%+=:\/ -]{1,4096}$/D',$params['crd'])) {
+                $validationError = 'crd';
             }
         }
         if ($validationError !== null) {

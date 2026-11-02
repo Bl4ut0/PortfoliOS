@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "PortfoliOS Native Game Relay",
+  "version": "1.0.1",
+  "description": "Enables UDP & TCP multiplayer networking for UT2004, Diablo, and PortfoliOS apps. Scoped to os.bl4ut0.dev and os.bl4ut0.com.",
+  "permissions": [
+    "nativeMessaging",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://os.bl4ut0.dev/*",
+    "*://os.bl4ut0.com/*",
+    "*://localhost/*",
+    "*://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://os.bl4ut0.dev/*",
+        "*://os.bl4ut0.com/*",
+        "*://localhost/*",
+        "*://127.0.0.1/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inpage-bridge.js"],
+      "matches": [
+        "*://os.bl4ut0.dev/*",
+        "*://os.bl4ut0.com/*",
+        "*://localhost/*",
+        "*://127.0.0.1/*"
+      ]
+    }
+  ],
+  "action": {
+    "default_title": "PortfoliOS Native Game Relay",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "relay@os.bl4ut0.dev",
+      "strict_min_version": "109.0"
+    }
+  }
+}

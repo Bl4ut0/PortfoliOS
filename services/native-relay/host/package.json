@@ -1,0 +1,12 @@
+{
+  "name": "portfolios-native-relay-host",
+  "version": "1.0.0",
+  "description": "PortfoliOS Native Messaging Relay Host for UDP/TCP browser game networking",
+  "main": "host.mjs",
+  "type": "module",
+  "scripts": {
+    "register:windows": "powershell -ExecutionPolicy Bypass -File .\\register-host.ps1",
+    "register:unix": "bash ./register-host.sh"
+  },
+  "dependencies": {}
+}

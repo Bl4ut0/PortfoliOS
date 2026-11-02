@@ -160,13 +160,26 @@
             const text=this.show('Opening private workspace…');
             try {
                 await window.savePreferencesToFilesystem?.({strict:true});
+                const criticalPaths = [
+                    '/Desktop/desktop-layout.json',
+                    '/Pictures/Icon Packs/active.json'
+                ];
                 await GDriveSync.sync((done,total,path)=>{
                     const name = path ? path.split('/').pop() : '';
-                    text.textContent = name ? 'Syncing: ' + name : 'Preparing workspace…';
-                }, { live: true });
+                    text.textContent = name ? 'Loading: ' + name : 'Preparing workspace…';
+                }, { live: true, paths: criticalPaths, silent: true });
                 await window.loadPreferencesFromFilesystem?.();
                 this.ready=true;this.hide();
             } catch(error) {this.ready=false;this.hide();throw error;}
+
+            // Seamlessly live-load remaining personal files in the background without blocking the UI
+            setTimeout(() => {
+                if (this.owned && window.state?.sessionChosen && window.triggerGDriveSync) {
+                    window.triggerGDriveSync({ silent: true, live: true }).catch(err => {
+                        console.warn('[PrivateSessions] Background file sync:', err.message);
+                    });
+                }
+            }, 100);
         },
         chooseTakeover() {
             return new Promise((resolve,reject)=>{
