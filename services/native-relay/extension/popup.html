@@ -17,58 +17,101 @@
           <span class="badge">Native Game Relay</span>
         </div>
       </div>
-      <div class="header-status">
+      <div class="header-status" title="Overall relay status">
+        <span id="overall-status-label" class="header-status-label">Checking</span>
         <span id="overall-status-dot" class="dot dot-checking"></span>
       </div>
     </header>
 
-    <!-- Services Status Cards -->
-    <section class="status-section">
-      <div class="status-card">
-        <div class="status-info">
-          <span class="status-label">Native Client Bridge</span>
-          <span id="host-status-text" class="status-desc">Connecting to host…</span>
+    <!-- Service chips -->
+    <section class="chips">
+      <div class="chip" id="host-chip" title="Local native messaging host">
+        <span class="dot dot-checking" id="host-dot"></span>
+        <div class="chip-text">
+          <span class="chip-label">Native host</span>
+          <span class="chip-value" id="host-status-text">Checking…</span>
         </div>
-        <span id="host-status-pill" class="pill pill-checking">Checking</span>
       </div>
-
-      <div class="status-card">
-        <div class="status-info">
-          <span class="status-label">PortfoliOS Service</span>
-          <span id="web-status-text" class="status-desc">os.bl4ut0.dev</span>
+      <div class="chip" id="web-chip" title="PortfoliOS web service">
+        <span class="dot dot-checking" id="web-dot"></span>
+        <div class="chip-text">
+          <span class="chip-label">Web service</span>
+          <span class="chip-value" id="web-status-text">Checking…</span>
         </div>
-        <span id="web-status-pill" class="pill pill-checking">Checking</span>
       </div>
     </section>
 
-    <!-- Capabilities / Active Tunnel Info -->
-    <section class="info-section">
-      <div class="info-row">
-        <span>Supported Protocols</span>
-        <span class="info-highlight">Raw UDP (UT2004) &amp; TCP (Diablo)</span>
+    <!-- Live traffic -->
+    <section class="panel traffic">
+      <div class="panel-head">
+        <span class="panel-title">Live traffic</span>
+        <span class="panel-meta" id="session-duration">Idle</span>
       </div>
-      <div class="info-row">
-        <span>Domain Scope</span>
-        <span class="info-val">os.bl4ut0.dev (Locked)</span>
+
+      <div class="rates">
+        <div class="rate rate-up">
+          <span class="rate-arrow">↑</span>
+          <div>
+            <span class="rate-value" id="rate-up">0 B/s</span>
+            <span class="rate-sub">Upload · <span id="total-up">0 B</span></span>
+          </div>
+        </div>
+        <div class="rate rate-down">
+          <span class="rate-arrow">↓</span>
+          <div>
+            <span class="rate-value" id="rate-down">0 B/s</span>
+            <span class="rate-sub">Download · <span id="total-down">0 B</span></span>
+          </div>
+        </div>
       </div>
+
+      <canvas id="sparkline" width="296" height="44" aria-label="Traffic over the last 60 seconds"></canvas>
+
+      <table class="proto-table">
+        <thead>
+          <tr><th>Protocol</th><th>↑ Up</th><th>↓ Down</th><th>Packets</th><th>Open</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="proto-tag proto-udp">UDP</span></td>
+            <td id="udp-up">0 B/s</td>
+            <td id="udp-down">0 B/s</td>
+            <td id="udp-packets">0</td>
+            <td id="udp-open">0</td>
+          </tr>
+          <tr>
+            <td><span class="proto-tag proto-tcp">TCP</span></td>
+            <td id="tcp-up">0 B/s</td>
+            <td id="tcp-down">0 B/s</td>
+            <td id="tcp-packets">0</td>
+            <td id="tcp-open">0</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
 
-    <!-- Navigation / Action Buttons -->
+    <!-- Active connection -->
+    <section class="panel connection">
+      <div class="panel-head">
+        <span class="panel-title">Active connection</span>
+        <span class="pill pill-idle" id="conn-pill">None</span>
+      </div>
+
+      <div class="conn-summary" id="conn-summary">
+        <div class="conn-title" id="conn-title">No PortfoliOS tab open</div>
+        <div class="conn-detail" id="conn-detail">Open the desktop to start a session.</div>
+      </div>
+
+      <ul class="socket-list" id="socket-list"></ul>
+    </section>
+
+    <!-- Actions -->
     <section class="actions-section">
       <button id="btn-desktop" class="btn btn-primary" type="button">
         <span class="btn-icon">🖥️</span>
         <div class="btn-text">
-          <strong>Open Desktop Workspace</strong>
-          <small>Enter private profile / desktop</small>
-        </div>
-        <span class="btn-arrow">→</span>
-      </button>
-
-      <button id="btn-mobile" class="btn btn-secondary" type="button">
-        <span class="btn-icon">📱</span>
-        <div class="btn-text">
-          <strong>Open Mobile Workspace</strong>
-          <small>Switch to mobile experience</small>
+          <strong id="btn-desktop-label">Open Desktop Experience</strong>
+          <small id="btn-desktop-sub">os.bl4ut0.dev · private profile</small>
         </div>
         <span class="btn-arrow">→</span>
       </button>
@@ -76,8 +119,12 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <span id="footer-note">WebExtensions Native Messaging</span>
-      <button id="btn-recheck" class="btn-text-link" type="button" title="Refresh connection status">Recheck</button>
+      <span id="footer-note">Native Messaging</span>
+      <span class="footer-links">
+        <button id="btn-mobile" class="btn-text-link" type="button" title="Open the mobile experience">Mobile</button>
+        <span aria-hidden="true">·</span>
+        <button id="btn-recheck" class="btn-text-link" type="button" title="Refresh connection status">Recheck</button>
+      </span>
     </footer>
   </div>
 

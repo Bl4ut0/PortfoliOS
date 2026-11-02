@@ -16,6 +16,7 @@ if (process.stdout._handle && process.stdout._handle.setRawMode) {
   process.stdout._handle.setRawMode(true);
 }
 
+const HOST_VERSION = '1.1.0';
 const udpSockets = new Map();
 const tcpSockets = new Map();
 
@@ -46,7 +47,15 @@ function handleMessage(msg) {
 
   switch (type) {
     case 'ping': {
-      sendNativeMessage({ type: 'pong', id, timestamp: Date.now() });
+      sendNativeMessage({
+        type: 'pong',
+        id,
+        timestamp: Date.now(),
+        version: HOST_VERSION,
+        platform: `${process.platform}-${process.arch}`,
+        runtime: `node ${process.versions.node}`,
+        sockets: { udp: udpSockets.size, tcp: tcpSockets.size }
+      });
       break;
     }
 
