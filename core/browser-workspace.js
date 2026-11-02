@@ -2,7 +2,7 @@
 (function () {
     const home = 'https://www.google.com/';
     const providers = [
-        { id: 'browserjs', name: 'Browser.js', embed: '/apps/browser/browserjs.php', icon: 'fa-solid fa-window-maximize', detail: 'In-window browser · tabs, address bar and search · external relay' },
+        { id: 'browserjs', name: 'Browser.js', embed: '/apps/browser/browserjs.php', icon: 'fa-solid fa-window-maximize', detail: 'In-window browser · tabs, address bar and search · PortfoliOS relay' },
         { id: 'browserjs-hosted', name: 'Hosted Browser.js', embed: 'https://browser.puter.com/', partition: 'browserjs', icon: 'fa-solid fa-window-maximize', detail: 'Upstream hosted browser · opens its own New Tab page' },
         { id: 'scramjet', name: 'Scramjet', embed: 'https://scramjet.mercurywork.shop/', icon: 'fa-solid fa-globe', detail: 'In-window Google start page · community relay · desktop-oriented controls' },
         { id: 'proxysite', name: 'ProxySite', url: 'https://www.proxysite.com/', icon: 'fa-solid fa-globe', detail: 'Free web proxy · opens in a separate tab' },
@@ -41,11 +41,33 @@
             const config = JSON.parse(localStorage.getItem(connectionKey(id)));
             if (config?.mode === 'automatic') return { mode: 'automatic', endpoint: '', remember: true };
             if (config?.mode === 'custom' && normalizeProxyEndpoint(config.endpoint)) return { mode: 'custom', endpoint: normalizeProxyEndpoint(config.endpoint), remember: true };
+            if (config?.mode === 'relay') return { mode: 'relay', endpoint: 'wss://relay.os.bl4ut0.dev/', remember: true };
         } catch {}
-        return { mode: 'automatic', endpoint: '', remember: false };
+        return { mode: 'relay', endpoint: 'wss://relay.os.bl4ut0.dev/', remember: false };
     }
     function render() {
         return `<section class="web-browser" data-web-browser>
+
+            <aside class="browser-addon-banner is-hidden" data-web-addon-banner aria-label="PortfoliOS Native Relay prompt">
+                <div class="addon-banner-icon">
+                    <i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i>
+                </div>
+                <div class="addon-banner-content">
+                    <div class="addon-banner-title">
+                        <strong>PortfoliOS Native Relay</strong>
+                        <span class="addon-banner-tag">Default Route</span>
+                    </div>
+                    <p class="addon-banner-desc">Traffic routes through the Native Relay addon by default. Get the addon on the Chrome Web Store for direct low-latency connections.</p>
+                </div>
+                <div class="addon-banner-actions">
+                    <a href="https://chromewebstore.google.com/detail/portfolios-native-relay/geabloiejcoihaoeepacmkfkamfflijp" target="_blank" rel="noopener noreferrer" class="addon-btn addon-btn-primary" title="Open Chrome Web Store">
+                        <i class="fa-brands fa-chrome" aria-hidden="true"></i> Chrome Web Store ↗
+                    </a>
+                    <button type="button" class="addon-btn addon-btn-dismiss" data-web-addon-dismiss title="Dismiss prompt" aria-label="Dismiss prompt">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </aside>
 
             <header class="web-browser-heading"><span aria-hidden="true">◎</span><div><p>Your window to the web</p><h2>Browser</h2></div></header>
             <form class="web-browser-address" data-web-address-form><input data-web-address aria-label="Website address" autocomplete="off" spellcheck="false" inputmode="url" placeholder="Enter a website address"><button type="submit">Go</button></form>
@@ -74,6 +96,26 @@
         const address = find('[data-web-address]'), remember = find('[data-web-remember]');
         remember.checked = stored === selected;
         address.value = home;
+        const addonBanner = find('[data-web-addon-banner]');
+        const dismissedKey = 'bl4ut0_relay_addon_dismissed';
+        function checkAddonStatus() {
+            if (!addonBanner) return;
+            if (sessionStorage.getItem(dismissedKey) === '1') {
+                addonBanner.classList.add('is-hidden');
+                return;
+            }
+            const hasAddon = !!(window.PortfoliOSNativeRelay || (window.parent && window.parent.PortfoliOSNativeRelay));
+            if (hasAddon) {
+                addonBanner.classList.add('is-hidden');
+            } else {
+                addonBanner.classList.remove('is-hidden');
+            }
+        }
+        find('[data-web-addon-dismiss]')?.addEventListener('click', () => {
+            sessionStorage.setItem(dismissedKey, '1');
+            addonBanner?.classList.add('is-hidden');
+        });
+        checkAddonStatus();
         let relayFrame = null, relayTimer = null, activeProvider = null, connection = readConnection(owner);
         const message = text => { if (!disposed) find('[data-web-message]').textContent = text || ''; };
         const validOwner = () => !disposed && profile() === owner;

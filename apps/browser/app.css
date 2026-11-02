@@ -79,3 +79,127 @@
 .desktop-window.browser-window > .web-browser:not(.is-embedded) {
     padding-top: 2.75rem;
 }
+
+/* Addon download prompt banner */
+.browser-addon-banner {
+    position: absolute;
+    top: 2.6rem;
+    left: 1rem;
+    right: 1rem;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: color-mix(in srgb, var(--surface, #1e1e2e) 95%, black);
+    border: 1px solid color-mix(in srgb, var(--theme-primary, #6366f1) 40%, var(--line, rgba(255, 255, 255, 0.15)));
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 14px 0 color-mix(in srgb, var(--theme-primary, #6366f1) 20%, transparent);
+    color: var(--text, #e2e8f0);
+    animation: bannerSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bannerSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.browser-addon-banner.is-hidden {
+    display: none !important;
+}
+
+.addon-banner-icon {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--theme-primary, #6366f1) 20%, transparent);
+    color: var(--theme-primary, #818cf8);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.addon-banner-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.addon-banner-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.addon-banner-tag {
+    font-size: 0.68rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--theme-primary, #6366f1) 25%, transparent);
+    color: var(--theme-primary, #a5b4fc);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.addon-banner-desc {
+    margin: 0.2rem 0 0;
+    font-size: 0.75rem;
+    color: var(--text-soft, #94a3b8);
+    line-height: 1.4;
+}
+
+.addon-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.addon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.addon-btn-primary {
+    background: var(--theme-primary, #6366f1);
+    color: #ffffff;
+    border: 1px solid transparent;
+}
+
+.addon-btn-primary:hover {
+    background: color-mix(in srgb, var(--theme-primary, #6366f1) 85%, white);
+    transform: translateY(-1px);
+}
+
+.addon-btn-dismiss {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+    border-radius: 0.45rem;
+    background: transparent;
+    color: var(--text-soft, #94a3b8);
+}
+
+.addon-btn-dismiss:hover {
+    color: var(--text, #ffffff);
+    background: var(--control-hover, rgba(255, 255, 255, 0.1));
+}
