@@ -7,8 +7,8 @@
     const AVAILABLE_MODELS = [
         // ── Cloud Models (Free) ────────────────────────────────────
         {
-            id: "gemini-2.5-flash",
-            label: "Gemini 2.5 Flash (Cloud - Limited)",
+            id: "gemini-3.8-flash",
+            label: "Gemini 3.8 Flash (Cloud - Limited)",
             memoryMB: 0,
             type: "cloud-gemini",
             free: true
@@ -72,7 +72,8 @@
     const LEGACY_MODEL_ALIASES = {
         "gemma3-1b-it-q4f16_1-MLC": "gemma-3-1b-it-q4f16_1-MLC",
         "SmolLM2-135M-Instruct-q4f16_1-MLC": DEFAULT_LOCAL_MODEL_ID,
-        "gemma-3-270m-it-q4f16_1-MLC": DEFAULT_LOCAL_MODEL_ID
+        "gemma-3-270m-it-q4f16_1-MLC": DEFAULT_LOCAL_MODEL_ID,
+        "gemini-2.5-flash": "gemini-3.8-flash"
     };
     const PREFERRED_MODEL = AVAILABLE_MODELS.find(m => m.id === DEFAULT_LOCAL_MODEL_ID) ||
         AVAILABLE_MODELS.find(m => m.type === "local") ||

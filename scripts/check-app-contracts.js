@@ -1068,7 +1068,7 @@ async function validateLocalAIServiceRuntimeContract() {
         fail("core/local-ai.js", "retired Gemma 3 270M selections must migrate to SmolLM2 and stay out of the catalog");
     }
 
-    const cloudModelId = "gemini-2.5-flash";
+    const cloudModelId = "gemini-3.8-flash";
     windowObject.LocalAI.setSelectedModelId(cloudModelId);
     const enabledStatus = await windowObject.LocalAI.enable("contract test");
     if (!enabledStatus.ready || enabledStatus.modelId !== cloudModelId) {
