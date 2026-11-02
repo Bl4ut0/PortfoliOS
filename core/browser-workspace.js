@@ -60,7 +60,7 @@
                     <p class="addon-banner-desc">Traffic routes through the Native Relay addon by default. Get the addon on the Chrome Web Store for direct low-latency connections.</p>
                 </div>
                 <div class="addon-banner-actions">
-                    <a href="https://chromewebstore.google.com/detail/portfolios-native-relay/geabloiejcoihaoeepacmkfkamfflijp" target="_blank" rel="noopener noreferrer" class="addon-btn addon-btn-primary" title="Open Chrome Web Store">
+                    <a href="https://chromewebstore.google.com/detail/portfolios-native-relay/jbdiopconacgbffkhpjpcafkckaapmgg" target="_blank" rel="noopener noreferrer" class="addon-btn addon-btn-primary" title="Open Chrome Web Store">
                         <i class="fa-brands fa-chrome" aria-hidden="true"></i> Chrome Web Store ↗
                     </a>
                     <button type="button" class="addon-btn addon-btn-dismiss" data-web-addon-dismiss title="Dismiss prompt" aria-label="Dismiss prompt">
