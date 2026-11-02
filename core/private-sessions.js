@@ -122,8 +122,7 @@
                             method:'PUT',
                             headers:{
                                 'Content-Type':blob.type || 'application/octet-stream',
-                                'Content-Range':'bytes '+offset+'-'+(end-1)+'/'+blob.size,
-                                'X-Upload-Content-Length':String(chunk.size)
+                                'Content-Range':'bytes '+offset+'-'+(end-1)+'/'+blob.size
                             },
                             body:chunk
                         });

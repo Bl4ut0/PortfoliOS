@@ -87,29 +87,29 @@ try {
         if ($validationError !== null) {
             lease_error(400, 'Unsupported Drive operation: ' . $validationError . '.');
         }
-        $length = (int)($getHeader('Content-Length') ?: $getHeader('X-Upload-Content-Length') ?: ($_SERVER['CONTENT_LENGTH'] ?? 0));
-        if ($length > 268435456) lease_error(413,'Drive upload exceeds the 256 MiB gateway limit.');
         $stream = fopen('php://input','rb');
         if (!$stream) lease_error(503,'Drive upload stream unavailable.');
-        if ($length <= 0 && in_array($method, ['PUT', 'POST', 'PATCH'], true)) {
-            $buffer = stream_get_contents($stream);
-            $length = strlen($buffer);
-            $stream = fopen('php://memory', 'r+b');
-            fwrite($stream, $buffer);
-            rewind($stream);
-        }
+        $body = stream_get_contents($stream);
+        fclose($stream);
+        $length = strlen($body);
+        if ($length > 268435456) lease_error(413,'Drive upload exceeds the 256 MiB gateway limit.');
         $type = $getHeader('Content-Type') ?: ($_SERVER['CONTENT_TYPE'] ?? 'application/octet-stream');
         if (strpbrk($type,"\r\n")!==false) lease_error(400,'Invalid content type.');
         $upstreamHeaders=[];
-        foreach(['Content-Range'=>'Content-Range','X-Upload-Content-Type'=>'X-Upload-Content-Type','X-Upload-Content-Length'=>'X-Upload-Content-Length'] as $hKey=>$label) {
+        $allowedHeaders = ['Content-Range'=>'Content-Range'];
+        if (in_array($method, ['POST', 'PATCH'], true)) {
+            $allowedHeaders['X-Upload-Content-Type'] = 'X-Upload-Content-Type';
+            $allowedHeaders['X-Upload-Content-Length'] = 'X-Upload-Content-Length';
+        }
+        foreach($allowedHeaders as $hKey=>$label) {
             $hVal = $getHeader($hKey);
             if ($hVal !== '') {
                 if (strpbrk($hVal,"\r\n")!==false) lease_error(400,'Invalid upload header.');
                 $upstreamHeaders[$label] = $hVal;
             }
         }
-        $result=portfolios_drive_request('https://www.googleapis.com'.$target,$method,$token,$stream,$length,$type,$upstreamHeaders);
-        fclose($stream);$response=$result['body'];$status=$result['status'];$location=$result['location'];
+        $result=portfolios_drive_request('https://www.googleapis.com'.$target,$method,$token,$body,$length,$type,$upstreamHeaders);
+        $response=$result['body'];$status=$result['status'];$location=$result['location'];
         // Ownership cannot transfer while the upstream mutation is in progress.
         $s['active']['expires']=time()+180;
         portfolios_lease_store($file,$s);
