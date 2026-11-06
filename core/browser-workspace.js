@@ -39,11 +39,11 @@
     function readConnection(id) {
         try {
             const config = JSON.parse(localStorage.getItem(connectionKey(id)));
+            if (config?.mode === 'relay') return { mode: 'relay', endpoint: '', remember: true };
             if (config?.mode === 'automatic') return { mode: 'automatic', endpoint: '', remember: true };
             if (config?.mode === 'custom' && normalizeProxyEndpoint(config.endpoint)) return { mode: 'custom', endpoint: normalizeProxyEndpoint(config.endpoint), remember: true };
-            if (config?.mode === 'relay') return { mode: 'relay', endpoint: 'wss://relay.os.bl4ut0.dev/', remember: true };
         } catch {}
-        return { mode: 'relay', endpoint: 'wss://relay.os.bl4ut0.dev/', remember: false };
+        return { mode: 'relay', endpoint: '', remember: false };
     }
     function render() {
         return `<section class="web-browser" data-web-browser>
@@ -62,6 +62,9 @@
                 <div class="addon-banner-actions">
                     <a href="https://chromewebstore.google.com/detail/portfolios-native-relay/jbdiopconacgbffkhpjpcafkckaapmgg" target="_blank" rel="noopener noreferrer" class="addon-btn addon-btn-primary" title="Open Chrome Web Store">
                         <i class="fa-brands fa-chrome" aria-hidden="true"></i> Chrome Web Store ↗
+                    </a>
+                    <a href="/dist/PortfoliOS-NativeRelay.msi" download="PortfoliOS-NativeRelay.msi" class="addon-btn addon-btn-secondary" title="Download Host Bridge (.msi)">
+                        <i class="fa-solid fa-download" aria-hidden="true"></i> Host Bridge (.msi) ⤓
                     </a>
                     <button type="button" class="addon-btn addon-btn-dismiss" data-web-addon-dismiss title="Dismiss prompt" aria-label="Dismiss prompt">
                         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
@@ -98,14 +101,23 @@
         address.value = home;
         const addonBanner = find('[data-web-addon-banner]');
         const dismissedKey = 'bl4ut0_relay_addon_dismissed';
-        function checkAddonStatus() {
+        async function checkAddonStatus() {
             if (!addonBanner) return;
             if (sessionStorage.getItem(dismissedKey) === '1') {
                 addonBanner.classList.add('is-hidden');
                 return;
             }
-            const hasAddon = !!(window.PortfoliOSNativeRelay || (window.parent && window.parent.PortfoliOSNativeRelay));
-            if (hasAddon) {
+            const relay = window.PortfoliOSNativeRelay || (window.parent && window.parent.PortfoliOSNativeRelay);
+            let hasHost = false;
+            if (relay) {
+                try {
+                    hasHost = Boolean(await Promise.race([
+                        relay.isAvailable(),
+                        new Promise(r => setTimeout(() => r(false), 2000))
+                    ]));
+                } catch (_) { hasHost = false; }
+            }
+            if (hasHost) {
                 addonBanner.classList.add('is-hidden');
             } else {
                 addonBanner.classList.remove('is-hidden');
@@ -115,7 +127,7 @@
             sessionStorage.setItem(dismissedKey, '1');
             addonBanner?.classList.add('is-hidden');
         });
-        checkAddonStatus();
+        void checkAddonStatus();
         let relayFrame = null, relayTimer = null, activeProvider = null, connection = readConnection(owner);
         const message = text => { if (!disposed) find('[data-web-message]').textContent = text || ''; };
         const validOwner = () => !disposed && profile() === owner;
@@ -178,8 +190,19 @@
             find('[data-web-relay]').hidden = true;
             find('[data-web-recover]').hidden = true;
         }
+
+        function checkPrivateWorkspaceAllowed() {
+            if (typeof window.isPrivateUser === 'function' && !window.isPrivateUser()) {
+                showChooser();
+                message('Web browsing and network bridging are excluded to private workspaces. Please switch to your private profile to browse.');
+                window.showDesktopToast?.('Browsing is restricted to private workspaces.');
+                return false;
+            }
+            return true;
+        }
+
         function openRelay() {
-            if (busy || !validOwner()) return;
+            if (busy || !validOwner() || !checkPrivateWorkspaceAllowed()) return;
             const provider = providers.find(p => p.id === selected);
             if (!provider?.embed) return;
             if (!('credentialless' in document.createElement('iframe'))) {
@@ -225,6 +248,7 @@
             if (preserve && relayFrame) find('[data-web-return]').focus({ preventScroll: true });
         }
         function handoff(provider) {
+            if (!checkPrivateWorkspaceAllowed()) return;
             saveChoice(); find('[data-web-chooser]').hidden = true; find('[data-web-handoff]').hidden = false;
             find('[data-web-handoff-title]').textContent = `Browse with ${provider.name}`;
             find('[data-web-reopen]').href = provider.url;
@@ -244,7 +268,7 @@
             if (!disposed) { showChooser(); update(); if (reason) message(reason); }
         }
         async function start() {
-            if (busy || !status?.available || !validOwner()) return;
+            if (busy || !status?.available || !validOwner() || !checkPrivateWorkspaceAllowed()) return;
             const target = address.value.trim() ? normalizeAddress(address.value) : home;
             if (!target) { message('Enter a valid HTTP or HTTPS website address.'); return; }
             if (!('credentialless' in document.createElement('iframe'))) { message('Embedded remote browsing requires a current Chrome or Edge browser. Choose a free proxy instead.'); return; }
@@ -331,9 +355,9 @@
                 if (data.type === 'configure') {
                     const value = data.config;
                     const endpoint = value?.mode === 'custom' ? normalizeProxyEndpoint(value.endpoint) : '';
-                    if (!['custom', 'automatic'].includes(value?.mode) || (value.mode === 'custom' && !endpoint)) error = 'Use a secure wss:// Wisp endpoint without credentials or query parameters.';
+                    if (!['custom', 'automatic', 'relay'].includes(value?.mode) || (value.mode === 'custom' && !endpoint)) error = 'Use a secure wss:// Wisp endpoint without credentials or query parameters.';
                     else {
-                        connection = { mode: value.mode, endpoint, remember: value.remember === true };
+                        connection = { mode: value.mode, endpoint: value.mode === 'custom' ? endpoint : '', remember: value.remember === true };
                         try {
                             if (connection.remember) localStorage.setItem(connectionKey(owner), JSON.stringify({ mode: connection.mode, endpoint }));
                             else localStorage.removeItem(connectionKey(owner));
@@ -353,6 +377,7 @@
         window.addEventListener('pagehide', () => { void stop(); }, { signal });
         document.addEventListener('visibilitychange', () => { if (document.hidden && (lease || busy)) void stop('Remote browsing ended while the page was in the background.'); }, { signal });
         function navigate(value) {
+            if (!checkPrivateWorkspaceAllowed()) return;
             if (lease) { message('Use the remote browser’s address bar, or end its session before choosing another destination.'); return; }
             const target = normalizeAddress(value); if (!target) return;
             address.value = target;
