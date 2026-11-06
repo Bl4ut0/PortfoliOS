@@ -6,7 +6,7 @@ header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
 header('Cross-Origin-Embedder-Policy: unsafe-none');
 header('Referrer-Policy: no-referrer');
 header('X-Content-Type-Options: nosniff');
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https: wss: data:; frame-src https://*.puter.zone; worker-src 'self' blob:; img-src 'self' data: blob: https:; font-src 'self' data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https: wss: data: https://cloudflareinsights.com; frame-src https://*.puter.zone; worker-src 'self' blob:; img-src 'self' data: blob: https:; font-src 'self' data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'");
 $entry = file_get_contents(__DIR__ . '/browserjs/index.html');
 $entry = str_replace('href="/icon.png"', 'href="/apps/browser/browserjs/icon.png"', $entry);
 $entry = str_replace('src="./window-drag.js"', 'src="/apps/browser/browserjs/window-drag.js"', $entry);
