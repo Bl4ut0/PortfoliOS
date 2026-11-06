@@ -42,7 +42,7 @@ const server = http.createServer((req, res) => {
         assert.equal(await p.locator('[data-view-panel], [data-window]').count(), 0);
         assert.equal(await p.evaluate(() => !!window.SystemFS || !!window.LocalAI || !!window.MobileOS), false);
         const bootScripts = await scripts(p);
-        assert.equal(bootScripts.length, 5);
+        assert.equal(bootScripts.length, 6);
         assert(!bootScripts.some(s => s.startsWith('/desktop/') || s.startsWith('/quick/')));
     }
     async function enter(p, view) {
@@ -70,7 +70,7 @@ const server = http.createServer((req, res) => {
             const p = await page(ctx); await selector(p); await enter(p, view);
             const loaded = await scripts(p);
             assert.equal(await p.locator('[data-view-panel]').count(), 1);
-            assert(!loaded.includes('/core/local-ai.js') && !loaded.includes('/core/media-service.js'));
+            assert(!loaded.includes('/core/local-ai.js') && !loaded.includes('/core/media-service.js') && !loaded.includes('/core/system-info.js'));
             if (view !== 'desktop') assert(!loaded.includes('/desktop/shell.js') && !loaded.includes('/core/window-manager.js'));
             if (view !== 'mobile') assert(!loaded.includes('/mobile/shell.js'));
             if (view === 'mobile') {

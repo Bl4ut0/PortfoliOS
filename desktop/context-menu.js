@@ -181,6 +181,9 @@ window.getContextMenuItems = (event) => {
         { label: "Task Manager", icon: "fa-solid fa-microchip", action: () => {
             if (window.openDesktopWindow) window.openDesktopWindow("taskmgr");
         } },
+        { label: "About This Computer", icon: "fa-solid fa-circle-info", action: () => {
+            if (window.openDesktopWindow) window.openDesktopWindow("about");
+        } },
         { type: "separator" },
         { label: "Paste", icon: "fa-regular fa-clipboard", action: () => window.pasteIntoInput(document.activeElement) },
         { label: "Refresh desktop", icon: "fa-solid fa-rotate-right", action: () => { 

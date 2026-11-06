@@ -11,6 +11,7 @@ window.getStartMenuLauncher = (id) => {
         const metaById = {
             store: "App catalog",
             files: "File manager",
+            about: "System & storage",
             settings: "System settings",
             browser: "Web routes",
             cli: "Terminal",

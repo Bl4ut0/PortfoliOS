@@ -5,7 +5,7 @@
 
 window.standardInstalledAppIds = [
     "devhub", "profile", "dossier", "browser", "network", "linux", "cli",
-    "settings", "store", "files", "security-center", "addons", "guildcraft", "homelab",
+    "settings", "store", "files", "about", "security-center", "addons", "guildcraft", "homelab",
     "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office", "portfolio-studio"
 ];
 
@@ -16,7 +16,7 @@ window.desktopPinnedIds = [
 ];
 
 window.startMenuPinnedIds = [
-    "store", "settings", "files", "security-center", "office", "browser",
+    "store", "settings", "files", "about", "security-center", "office", "browser",
     "cli", "local-ai", "musicmini", "profile", "dossier",
     "network", "taskmgr", "linux", "devhub"
 ];
@@ -35,7 +35,7 @@ window.startMenuGroups = [
     {
         id: "system",
         label: "System",
-        ids: ["store", "files", "security-center", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
+        ids: ["store", "files", "about", "security-center", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
     },
     {
         id: "portfolio",
@@ -110,7 +110,8 @@ window.desktopApps = [
     { id: "cli", title: "Portfolio CLI", icon: "apps/cli/icon.svg", category: "development", pinned: true, modular: true, meta: "Interactive shell" },
     { id: "local-ai", title: "Local AI", icon: "apps/local-ai/icon.svg", category: "development", pinned: false, modular: true, meta: "AI runtime control & neural models" },
     { id: "store", title: "Store", icon: "fa-solid fa-shop", category: "system", pinned: true, modular: true, meta: "Application catalog" },
-    { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", category: "system", pinned: true, modular: true, meta: "File manager" },
+    { id: "files", title: "File Explorer", icon: "fa-solid fa-folder-open", category: "system", pinned: true, modular: true, meta: "This PC & file manager" },
+    { id: "about", title: "About This Computer", icon: "apps/about/icon.svg", category: "system", pinned: false, modular: true, meta: "System & storage specifications" },
     { id: "security-center", title: "Security Center", icon: "fa-solid fa-shield-halved", category: "system", pinned: true, modular: true, meta: "Local file protection" },
     { id: "office", title: "Office Preview", icon: "fa-solid fa-file-signature", category: "productivity", pinned: true, modular: true, meta: "Local text and JSON sheets" },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", category: "system", pinned: false, modular: true, meta: "System monitor" },

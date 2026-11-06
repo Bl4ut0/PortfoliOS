@@ -4,8 +4,8 @@
  */
 (function() {
     const STORAGE_KEY = "bl4ut0_bios_settings";
-    const BIOS_VERSION = "2026.11.02.04";
-    const BUILD_DATE = "11/02/2026";
+    const BIOS_VERSION = "2026.11.05.01";
+    const BUILD_DATE = "11/05/2026";
 
     const DEFAULT_SETTINGS = {
         ramAllocation: 1024,

@@ -42,6 +42,7 @@ Paths in this document are relative to the OS repository root and do not prescri
 - **[simple-brain.js](core/simple-brain.js)**: Defines single-turn AI skill execution, prompt injection, and rule-based assistant routines.
 - **[gdrive-sync.js](core/gdrive-sync.js)**: Centralized cloud synchronization engine for user SystemFS file backups to Google Drive.
 - **[preferences.js](core/preferences.js)**: Profile-scoped user preferences, volume state propagation, and settings persistence.
+- **[system-info.js](core/system-info.js)**: Read-only storage quota, profile `SystemFS` usage, and host capability service shared by File Explorer (`This PC`) and About This Computer.
 
 ### B. Shared Data (`/data`)
 - **[systems.js](data/systems.js)**: Portfolio projects node definitions. Read by Dossier, Network Map, Mobile grid, and Quick views.
@@ -53,7 +54,8 @@ Paths in this document are relative to the OS repository root and do not prescri
 - **[office](apps/office)**: Rich document editor with IndexedDB persistence, document formatting, and cloud backup hooks.
 - **[iptv](apps/iptv)**: Live IPTV streaming player with HLS.js and mpegts.js decoders.
 - **[webamp](apps/webamp)**: Cleanly mounted Winamp/Webamp audio player in desktop window framing.
-- **[files](apps/files)**: Virtual File Explorer browsing `SystemFS` directories and `/Saved Games`.
+- **[files](apps/files)**: Virtual File Explorer with a Windows-style `This PC` storage overview, `SystemFS` directory browser, and `/Saved Games`.
+- **[about](apps/about)**: Core About This Computer utility showing allocated storage capacity, used/available space, workspace folder breakdown, BIOS settings, and device/OS specifications.
 - **[taskmgr](apps/taskmgr)**: System Task Manager monitoring running processes, windows, memory, and performance.
 - **[ut99](apps/ut99)**: Unreal Tournament 99 WebAssembly runtime launcher and server browser.
 - **[doomsource](apps/doomsource)** & **[openrct2](apps/openrct2)**: WebAssembly game ports integrated into the iframe game framework.

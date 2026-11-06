@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="about-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="about-screen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#about-bg)"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="13.5" fill="none" stroke="#38bdf8" stroke-opacity="0.28"/>
+  <!-- Monitor frame -->
+  <rect x="11" y="13" width="42" height="28" rx="4" fill="#111827" stroke="url(#about-screen)" stroke-width="2.2"/>
+  <!-- PortfoliOS prompt & storage meter inside screen -->
+  <path d="M17 22l4 3-4 3" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="24" y1="28" x2="29" y2="28" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"/>
+  <rect x="17" y="33" width="30" height="3.5" rx="1.75" fill="#1e293b"/>
+  <rect x="17" y="33" width="19" height="3.5" rx="1.75" fill="#22d3ee"/>
+  <!-- Monitor stand -->
+  <path d="M27 41v6M37 41v6M22 47h20" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Info badge -->
+  <circle cx="48" cy="44" r="8.5" fill="#0284c7" stroke="#0f172a" stroke-width="2"/>
+  <line x1="48" y1="43.5" x2="48" y2="48" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="48" cy="40" r="1.2" fill="#ffffff"/>
+</svg>

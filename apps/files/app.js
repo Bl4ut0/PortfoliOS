@@ -1,10 +1,28 @@
 (function() {
-    let currentPath = "/";
+    const THIS_PC_PATH = "this-pc";
+    let currentPath = THIS_PC_PATH;
     let searchQuery = "";
     let unsubscribeFs = null;
     let unsubscribeFsReady = null;
+    let unsubscribeProfile = null;
     let searchTimeout = null;
     let renderGeneration = 0;
+
+    function isThisPcView() {
+        return currentPath === THIS_PC_PATH;
+    }
+
+    function formatSize(bytes, options) {
+        if (window.SystemInfo?.formatBytes) {
+            return window.SystemInfo.formatBytes(bytes, options);
+        }
+        if (!Number.isFinite(bytes) || bytes < 0) return "Unknown";
+        if (bytes === 0) return options?.zero || "0 bytes";
+        if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+        if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+        if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${bytes} bytes`;
+    }
 
     function escapeHtml(value) {
         return String(value)
@@ -23,8 +41,9 @@
             .trim();
     }
 
-    function childPath(name) {
-        return currentPath === "/" ? `/${name}` : `${currentPath}/${name}`;
+    function childPath(name, overrideParent = null) {
+        const base = overrideParent || (isThisPcView() ? "/Downloads" : currentPath);
+        return base === "/" ? `/${name}` : `${base}/${name}`;
     }
 
     function isOfficeFile(name = "") {
@@ -91,6 +110,46 @@
         return /\.(?:docx?|xlsx?|pptx?|odt|ods|odp|rtf|csv|tsv|md|markdown|html?|pdf)$/i.test(name);
     }
 
+    function clearSearchInput(windowEl) {
+        const searchInput = windowEl.querySelector(".files-search-input");
+        if (searchInput) searchInput.value = "";
+        searchQuery = "";
+    }
+
+    async function navigateToFolder(targetPath, windowEl) {
+        const owner = state.currentUserId;
+        if (targetPath && targetPath !== THIS_PC_PATH && targetPath !== "/" && targetPath !== "/Recycle Bin") {
+            const existing = await window.SystemFS.readFile(targetPath);
+            if (owner !== state.currentUserId) return;
+            if (!existing) {
+                await window.SystemFS.ensureDirectory(targetPath, { silent: true });
+                if (owner !== state.currentUserId) return;
+            }
+        }
+        currentPath = targetPath || THIS_PC_PATH;
+        clearSearchInput(windowEl);
+        return renderFilesGrid(windowEl);
+    }
+
+    function updateToolbarState(windowEl) {
+        const inOverview = isThisPcView() && searchQuery.trim() === "";
+        const newFolderBtn = windowEl.querySelector(".btn-new-folder");
+        const newFileBtn = windowEl.querySelector(".btn-new-file");
+        const uploadBtn = windowEl.querySelector(".btn-upload");
+
+        if (newFolderBtn) {
+            newFolderBtn.disabled = inOverview;
+            newFolderBtn.title = inOverview ? "Open a drive or folder to create a folder" : "New Folder";
+        }
+        if (newFileBtn) {
+            newFileBtn.disabled = inOverview;
+            newFileBtn.title = inOverview ? "Open a drive or folder to create a file" : "New Text File";
+        }
+        if (uploadBtn) {
+            uploadBtn.disabled = inOverview;
+            uploadBtn.title = inOverview ? "Open a drive or folder to upload files" : "Upload File";
+        }
+    }
 
     function renderBreadcrumbs(windowEl) {
         const breadcrumbsContainer = windowEl.querySelector(".files-breadcrumbs");
@@ -98,43 +157,54 @@
 
         breadcrumbsContainer.innerHTML = "";
 
-        // Root segment
-        const rootBtn = document.createElement("button");
-        rootBtn.className = "breadcrumb-segment";
-        rootBtn.innerHTML = '<i class="fa-solid fa-computer"></i> Root';
-        rootBtn.addEventListener("click", () => {
-            currentPath = "/";
-            const searchInput = windowEl.querySelector(".files-search-input");
-            if (searchInput) {
-                searchInput.value = "";
-                searchQuery = "";
-            }
+        // This PC (My Computer) segment
+        const thisPcBtn = document.createElement("button");
+        thisPcBtn.type = "button";
+        thisPcBtn.className = "breadcrumb-segment";
+        thisPcBtn.innerHTML = '<i class="fa-solid fa-computer"></i> This PC';
+        thisPcBtn.addEventListener("click", () => {
+            currentPath = THIS_PC_PATH;
+            clearSearchInput(windowEl);
             renderFilesGrid(windowEl);
         });
-        breadcrumbsContainer.appendChild(rootBtn);
+        breadcrumbsContainer.appendChild(thisPcBtn);
+
+        if (isThisPcView()) return;
+
+        const addSeparator = () => {
+            const separator = document.createElement("span");
+            separator.className = "breadcrumb-separator";
+            separator.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+            breadcrumbsContainer.appendChild(separator);
+        };
+
+        addSeparator();
+        const diskBtn = document.createElement("button");
+        diskBtn.type = "button";
+        diskBtn.className = "breadcrumb-segment";
+        diskBtn.innerHTML = '<i class="fa-solid fa-hard-drive"></i> Local Disk (C:)';
+        diskBtn.addEventListener("click", () => {
+            currentPath = "/";
+            clearSearchInput(windowEl);
+            renderFilesGrid(windowEl);
+        });
+        breadcrumbsContainer.appendChild(diskBtn);
 
         if (currentPath !== "/") {
             const parts = currentPath.split("/").filter(Boolean);
             let accumulatedPath = "";
             parts.forEach((part) => {
                 accumulatedPath += "/" + part;
-                
-                const separator = document.createElement("span");
-                separator.className = "breadcrumb-separator";
-                separator.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
-                breadcrumbsContainer.appendChild(separator);
+                addSeparator();
 
                 const segmentBtn = document.createElement("button");
+                segmentBtn.type = "button";
                 segmentBtn.className = "breadcrumb-segment";
                 segmentBtn.textContent = window.SystemFS.getDisplayName({ path: accumulatedPath, name: part, isDirectory: true });
                 const pathForSegment = accumulatedPath;
                 segmentBtn.addEventListener("click", () => {
                     currentPath = pathForSegment;
-                    const searchInput = windowEl.querySelector(".files-search-input");
-                    if (searchInput) {
-                        searchInput.value = "";
-                        searchQuery = "";
-                    }
+                    clearSearchInput(windowEl);
                     renderFilesGrid(windowEl);
                 });
                 breadcrumbsContainer.appendChild(segmentBtn);
@@ -146,19 +216,249 @@
         const shortcuts = windowEl.querySelectorAll(".sidebar-shortcut");
         shortcuts.forEach(btn => {
             const btnPath = btn.dataset.path;
-            if (btnPath === "/") {
-                if (currentPath === "/") {
-                    btn.classList.add("active");
-                } else {
-                    btn.classList.remove("active");
-                }
+            if (btnPath === THIS_PC_PATH) {
+                btn.classList.toggle("active", isThisPcView());
+            } else if (btnPath === "/") {
+                btn.classList.toggle("active", currentPath === "/");
             } else {
-                if (currentPath === btnPath || currentPath.startsWith(btnPath + "/")) {
-                    btn.classList.add("active");
-                } else {
-                    btn.classList.remove("active");
-                }
+                btn.classList.toggle("active", currentPath === btnPath || currentPath.startsWith(btnPath + "/"));
             }
+        });
+    }
+
+    async function getThisPcData() {
+        if (window.SystemInfo) {
+            const [estimate, profile] = await Promise.all([
+                window.SystemInfo.getStorageEstimate(),
+                window.SystemInfo.getProfileUsage()
+            ]);
+            return { estimate, profile };
+        }
+
+        // Fallback if SystemInfo has not loaded yet
+        let estimate = { supported: false, usage: null, quota: null, free: null, percent: null, persisted: null };
+        try {
+            if (navigator.storage?.estimate) {
+                const est = await navigator.storage.estimate();
+                const usage = Number(est.usage) || 0;
+                const quota = Number(est.quota) || 0;
+                estimate = {
+                    supported: quota > 0,
+                    usage,
+                    quota: quota || null,
+                    free: quota ? Math.max(0, quota - usage) : null,
+                    percent: quota ? Math.min(100, (usage / quota) * 100) : null,
+                    persisted: navigator.storage?.persisted ? await navigator.storage.persisted() : null
+                };
+            }
+        } catch (_) {}
+
+        const all = await window.SystemFS.getAllFiles();
+        const defaultFolders = [
+            { path: "/Desktop", label: "Desktop", icon: "fa-solid fa-desktop", bytes: 0, files: 0 },
+            { path: "/documents", label: "Documents", icon: "fa-solid fa-file-lines", bytes: 0, files: 0 },
+            { path: "/Pictures", label: "Pictures", icon: "fa-solid fa-image", bytes: 0, files: 0 },
+            { path: "/music", label: "Music", icon: "fa-solid fa-music", bytes: 0, files: 0 },
+            { path: "/Downloads", label: "Downloads", icon: "fa-solid fa-download", bytes: 0, files: 0 },
+            { path: "/ROMs", label: "ROMs", icon: "fa-solid fa-gamepad", bytes: 0, files: 0 },
+            { path: "/Saved Games", label: "Saved Games", icon: "fa-solid fa-floppy-disk", bytes: 0, files: 0 }
+        ];
+        const map = new Map(defaultFolders.map(f => [f.path, f]));
+        let totalBytes = 0, fileCount = 0, folderCount = 0, trashBytes = 0, trashCount = 0;
+        for (const rec of all) {
+            if (rec.isDirectory) { folderCount++; continue; }
+            const sz = Number(rec.size) || 0;
+            totalBytes += sz;
+            fileCount++;
+            const top = "/" + (String(rec.path || "").split("/")[1] || "");
+            if (map.has(top)) {
+                map.get(top).bytes += sz;
+                map.get(top).files++;
+            } else if (top === "/Recycle Bin") {
+                trashBytes += sz;
+                trashCount++;
+            }
+        }
+        return {
+            estimate,
+            profile: { totalBytes, fileCount, folderCount, trashBytes, trashCount, folders: defaultFolders }
+        };
+    }
+
+    async function renderThisPcView(windowEl, generation) {
+        const grid = windowEl.querySelector(".files-grid");
+        if (!grid) return;
+
+        const owner = state.currentUserId;
+        const { estimate, profile } = await getThisPcData();
+        if (owner !== state.currentUserId || generation !== renderGeneration || !windowEl.isConnected) return;
+
+        const pct = estimate.supported ? Math.min(100, Math.max(0, estimate.percent || 0)) : 0;
+        const barStateClass = pct >= 90 ? "is-critical" : (pct >= 75 ? "is-warning" : "");
+        const freeLabel = estimate.supported
+            ? `${formatSize(estimate.free, { zero: "0 MB" })} free of ${formatSize(estimate.quota)}`
+            : `${formatSize(profile.totalBytes, { zero: "0 bytes" })} in workspace (dynamic browser quota)`;
+        const takenLabel = estimate.supported
+            ? `${formatSize(estimate.usage, { zero: "0 MB" })} taken (${pct.toFixed(1)}%) · Workspace files: ${formatSize(profile.totalBytes, { zero: "0 B" })}`
+            : `${profile.fileCount} file(s) across ${profile.folderCount} folder(s)`;
+        const nonProfileBytes = estimate.supported ? Math.max(0, (estimate.usage || 0) - profile.totalBytes) : null;
+        const user = window.getCurrentUser?.();
+
+        const foldersWithTrash = [
+            ...profile.folders,
+            {
+                path: "/Recycle Bin",
+                label: "Recycle Bin",
+                icon: "fa-solid fa-trash-can",
+                svgKey: "trash",
+                bytes: profile.trashBytes,
+                files: profile.trashCount,
+                isTrash: true
+            }
+        ];
+
+        const folderCardsHtml = foldersWithTrash.map((folder) => {
+            const metaText = folder.isTrash
+                ? (folder.files === 0 ? "Empty" : `${folder.files} ${folder.files === 1 ? "item" : "items"} · ${formatSize(folder.bytes, { zero: "0 B" })}`)
+                : (folder.files === 0 ? "Empty folder" : `${folder.files} ${folder.files === 1 ? "file" : "files"} · ${formatSize(folder.bytes, { zero: "0 B" })}`);
+            const svgGlyph = window.SystemInfo?.getIconSvg?.(folder.svgKey) || `<i class="${escapeHtml(folder.icon)}" aria-hidden="true"></i>`;
+            return `
+                <div class="thispc-folder-card ${folder.isTrash ? "is-trash" : ""}"
+                     tabindex="0"
+                     role="button"
+                     data-thispc-folder="${escapeHtml(folder.path)}"
+                     data-path="${escapeHtml(folder.path)}"
+                     data-file-name="${escapeHtml(folder.label)}"
+                     data-is-directory="true"
+                     data-app-context="thispc-folder"
+                     aria-label="Open ${escapeHtml(folder.label)} (${escapeHtml(metaText)})">
+                    <div class="thispc-folder-icon">
+                        ${svgGlyph}
+                    </div>
+                    <div class="thispc-folder-meta">
+                        <span class="thispc-folder-title">${escapeHtml(folder.label)}</span>
+                        <span class="thispc-folder-sub">${escapeHtml(metaText)}</span>
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+        const driveGlyph = window.SystemInfo?.getIconSvg?.("drive") || '<i class="fa-solid fa-hard-drive" aria-hidden="true"></i>';
+
+        grid.classList.add("is-this-pc");
+        grid.innerHTML = `
+            <section class="thispc-section" aria-label="Devices and drives">
+                <div class="thispc-section-header">
+                    <h3 class="thispc-section-title"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> Devices and drives (1)</h3>
+                    <div class="thispc-section-actions">
+                        <button type="button" class="btn-toolbar" data-thispc-refresh title="Refresh storage state">
+                            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Refresh
+                        </button>
+                        <button type="button" class="btn-toolbar" data-thispc-about title="Open About This Computer">
+                            <i class="fa-solid fa-circle-info" aria-hidden="true"></i> About Computer
+                        </button>
+                    </div>
+                </div>
+
+                <div class="thispc-drives-row">
+                    <div class="thispc-drive-card"
+                         tabindex="0"
+                         role="button"
+                         data-thispc-drive="/"
+                         data-path="/"
+                         data-file-name="Local Disk (C:)"
+                         data-is-directory="true"
+                         data-app-context="thispc-drive"
+                         aria-label="Local Disk (C:), ${escapeHtml(freeLabel)}">
+                        <div class="thispc-drive-icon">
+                            ${driveGlyph}
+                        </div>
+                        <div class="thispc-drive-body">
+                            <div class="thispc-drive-top">
+                                <strong>Local Disk (C:)</strong>
+                                <span class="thispc-drive-badge">${estimate.persisted === true ? "Persistent" : "SystemFS"}</span>
+                            </div>
+                            <div class="thispc-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-label="Local Disk C usage">
+                                <div class="thispc-meter-fill ${barStateClass}" style="width: ${estimate.supported ? Math.max(pct, estimate.usage > 0 ? 1.5 : 0).toFixed(2) : 0}%"></div>
+                            </div>
+                            <div class="thispc-drive-free">${escapeHtml(freeLabel)}</div>
+                            <div class="thispc-drive-used">${escapeHtml(takenLabel)}</div>
+                        </div>
+                    </div>
+
+                    <div class="thispc-state-card" aria-label="Allocation breakdown">
+                        <div class="thispc-state-row">
+                            <span>Active Profile</span>
+                            <strong>${escapeHtml(user?.displayName || state.currentUserId || "Guest")}</strong>
+                        </div>
+                        <div class="thispc-state-row">
+                            <span>Allocated Quota</span>
+                            <strong>${escapeHtml(estimate.supported ? formatSize(estimate.quota) : "Browser Dynamic")}</strong>
+                        </div>
+                        <div class="thispc-state-row">
+                            <span>Space Taken</span>
+                            <strong>${escapeHtml(estimate.supported ? formatSize(estimate.usage, { zero: "0 MB" }) : formatSize(profile.totalBytes, { zero: "0 B" }))}</strong>
+                        </div>
+                        <div class="thispc-state-row">
+                            <span>Space Available</span>
+                            <strong class="is-accent">${escapeHtml(estimate.supported ? formatSize(estimate.free, { zero: "0 MB" }) : "Available")}</strong>
+                        </div>
+                        ${nonProfileBytes !== null ? `
+                        <div class="thispc-state-row">
+                            <span>Engines &amp; Cache</span>
+                            <strong>${escapeHtml(formatSize(nonProfileBytes, { zero: "0 B" }))}</strong>
+                        </div>` : ""}
+                    </div>
+                </div>
+            </section>
+
+            <section class="thispc-section" aria-label="Folders">
+                <div class="thispc-section-header">
+                    <h3 class="thispc-section-title"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> Folders (${foldersWithTrash.length})</h3>
+                    <span class="thispc-hint">Double-click a drive or folder to browse</span>
+                </div>
+                <div class="thispc-folders-grid">
+                    ${folderCardsHtml}
+                </div>
+            </section>
+        `;
+
+        // Bind interactions for This PC cards
+        const driveCard = grid.querySelector("[data-thispc-drive]");
+        if (driveCard) {
+            driveCard.addEventListener("click", () => {
+                grid.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
+                driveCard.classList.add("selected");
+            });
+            driveCard.addEventListener("dblclick", () => navigateToFolder("/", windowEl));
+            driveCard.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    navigateToFolder("/", windowEl);
+                }
+            });
+        }
+
+        grid.querySelectorAll("[data-thispc-folder]").forEach((card) => {
+            const folderPath = card.dataset.thispcFolder;
+            card.addEventListener("click", () => {
+                grid.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
+                card.classList.add("selected");
+            });
+            card.addEventListener("dblclick", () => navigateToFolder(folderPath, windowEl));
+            card.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    navigateToFolder(folderPath, windowEl);
+                }
+            });
+        });
+
+        grid.querySelector("[data-thispc-refresh]")?.addEventListener("click", () => {
+            renderFilesGrid(windowEl);
+        });
+        grid.querySelector("[data-thispc-about]")?.addEventListener("click", () => {
+            window.openDesktopWindow?.("about");
         });
     }
 
@@ -167,48 +467,59 @@
         const grid = windowEl.querySelector(".files-grid");
         if (!grid) return;
 
-        // Render breadcrumbs and update sidebar highlights
         renderBreadcrumbs(windowEl);
         updateSidebarActiveState(windowEl);
+        updateToolbarState(windowEl);
 
         try {
+            if (isThisPcView() && searchQuery.trim() === "") {
+                await renderThisPcView(windowEl, generation);
+                return;
+            }
+
+            grid.classList.remove("is-this-pc");
             const owner = state.currentUserId;
-            let items = await window.SystemFS.readDir(currentPath);
-            await Promise.all(items.map(async item => {item.desktopShortcut = await window.resolveDesktopShortcut?.(item);}));
+            let items = isThisPcView()
+                ? await window.SystemFS.getAllFiles()
+                : await window.SystemFS.readDir(currentPath);
+            await Promise.all(items.map(async item => { item.desktopShortcut = await window.resolveDesktopShortcut?.(item); }));
             if (owner !== state.currentUserId) return;
             if (generation !== renderGeneration || !windowEl.isConnected) return;
-            
-            // Build the new grid items off-screen using a fragment
+
             const fragment = document.createDocumentFragment();
 
-            if (currentPath !== "/" && searchQuery.trim() === "") {
+            if (!isThisPcView() && searchQuery.trim() === "") {
                 const upItem = document.createElement("div");
                 upItem.className = "file-item up-item";
+                const goingToThisPc = currentPath === "/";
                 upItem.innerHTML = `
-                    <div class="file-icon"><i class="fa-solid fa-arrow-turn-up"></i></div>
-                    <div class="file-name">.. (Up)</div>
+                    <div class="file-icon"><i class="fa-solid ${goingToThisPc ? "fa-computer" : "fa-arrow-turn-up"}"></i></div>
+                    <div class="file-name">${goingToThisPc ? ".. (This PC)" : ".. (Up)"}</div>
                 `;
                 upItem.addEventListener("dblclick", () => {
-                    const parts = currentPath.split("/");
-                    parts.pop();
-                    currentPath = parts.join("/") || "/";
-                    const searchInput = windowEl.querySelector(".files-search-input");
-                    if (searchInput) {
-                        searchInput.value = "";
-                        searchQuery = "";
+                    if (currentPath === "/") {
+                        currentPath = THIS_PC_PATH;
+                    } else {
+                        const parts = currentPath.split("/");
+                        parts.pop();
+                        currentPath = parts.join("/") || "/";
                     }
+                    clearSearchInput(windowEl);
                     renderFilesGrid(windowEl);
                 });
                 fragment.appendChild(upItem);
             }
 
             // Filter out hidden files/folders (starting with dot)
-            items = items.filter(item => !item.name.startsWith("."));
-            
+            items = items.filter(item => !item.name.startsWith(".") && !String(item.path || "").split("/").some(seg => seg.startsWith(".")));
+
             // Apply search filter if active
             if (searchQuery.trim() !== "") {
                 const query = searchQuery.toLowerCase().trim();
-                items = items.filter(item => item.name.toLowerCase().includes(query));
+                items = items.filter(item => {
+                    const display = window.SystemFS.getDisplayName(item).toLowerCase();
+                    return item.name.toLowerCase().includes(query) || display.includes(query);
+                });
             }
 
             if (items.length === 0) {
@@ -217,7 +528,7 @@
                 if (searchQuery.trim() !== "") {
                     emptyEl.innerHTML = `<div class="empty-state">No matching files found.</div>`;
                 } else if (currentPath === "/") {
-                    emptyEl.innerHTML = `<div class="empty-state">No files or folders here. Drag & drop files to upload!</div>`;
+                    emptyEl.innerHTML = `<div class="empty-state">No files or folders here. Drag &amp; drop files to upload!</div>`;
                 } else {
                     emptyEl.innerHTML = `<div class="empty-state">This directory is empty.</div>`;
                 }
@@ -276,11 +587,7 @@
                 el.addEventListener("dblclick", () => {
                     if (item.isDirectory) {
                         currentPath = item.path;
-                        const searchInput = windowEl.querySelector(".files-search-input");
-                        if (searchInput) {
-                            searchInput.value = "";
-                            searchQuery = "";
-                        }
+                        clearSearchInput(windowEl);
                         renderFilesGrid(windowEl);
                     } else {
                         openFile(item, windowEl);
@@ -299,12 +606,12 @@
                 fragment.appendChild(el);
             });
 
-            // Perform single DOM update to swap the items without flicker
             grid.innerHTML = "";
             grid.appendChild(fragment);
         } catch (err) {
             if (generation !== renderGeneration || !windowEl.isConnected) return;
             console.error("Failed to render files grid:", err);
+            grid.classList.remove("is-this-pc");
             grid.innerHTML = `<div class="empty-state-container"><div class="empty-state">Filesystem unavailable. Try reopening File Explorer.</div></div>`;
         }
     }
@@ -626,7 +933,60 @@
     }
 
     function getFileContextMenuItems(target, windowEl) {
+        if (target.dataset.appContext === "thispc-drive") {
+            return [
+                { label: "Open", icon: "fa-solid fa-folder-open", action: () => navigateToFolder("/", windowEl) },
+                { label: "Refresh storage", icon: "fa-solid fa-rotate-right", action: () => renderFilesGrid(windowEl) },
+                { type: "separator" },
+                { label: "Properties", icon: "fa-solid fa-circle-info", action: () => window.openDesktopWindow?.("about") }
+            ];
+        }
+
+        if (target.dataset.appContext === "thispc-folder") {
+            const folderPath = target.dataset.path;
+            if (folderPath === "/Recycle Bin") {
+                return [
+                    { label: "Open", icon: "fa-solid fa-folder-open", action: () => navigateToFolder("/Recycle Bin", windowEl) },
+                    {
+                        label: "Empty Recycle Bin",
+                        icon: "fa-solid fa-trash-can",
+                        action: async () => {
+                            if (confirm("Are you sure you want to permanently delete all items in the Recycle Bin?")) {
+                                await window.SystemFS.emptyTrash();
+                                renderFilesGrid(windowEl);
+                                window.showDesktopToast?.("Recycle Bin emptied.");
+                            }
+                        }
+                    },
+                    { type: "separator" },
+                    { label: "Properties", icon: "fa-solid fa-circle-info", action: () => showPropertiesModal({ path: "/Recycle Bin", name: "Recycle Bin", isDirectory: true }, windowEl) }
+                ];
+            }
+            return [
+                { label: "Open folder", icon: "fa-solid fa-folder-open", action: () => navigateToFolder(folderPath, windowEl) },
+                { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(folderPath) },
+                { type: "separator" },
+                {
+                    label: "Properties",
+                    icon: "fa-solid fa-circle-info",
+                    action: async () => {
+                        await window.SystemFS.ensureDirectory(folderPath, { silent: true });
+                        const rec = await window.SystemFS.readFile(folderPath);
+                        showPropertiesModal(rec || { path: folderPath, name: target.dataset.fileName, isDirectory: true }, windowEl);
+                    }
+                }
+            ];
+        }
+
         if (target.dataset.appContext === 'folder-background') {
+            if (isThisPcView() && searchQuery.trim() === "") {
+                return [
+                    { label: "Refresh", icon: "fa-solid fa-rotate-right", action: () => renderFilesGrid(windowEl) },
+                    { label: "Open Local Disk (C:)", icon: "fa-solid fa-hard-drive", action: () => navigateToFolder("/", windowEl) },
+                    { type: "separator" },
+                    { label: "Properties", icon: "fa-solid fa-circle-info", action: () => window.openDesktopWindow?.("about") }
+                ];
+            }
             if (currentPath === "/Recycle Bin") {
                 return [
                     { label: "Empty Recycle Bin", icon: "fa-solid fa-trash-can", action: async () => {
@@ -672,9 +1032,7 @@
                     icon: "fa-solid fa-folder-open",
                     action: () => {
                         currentPath = path;
-                        searchQuery = "";
-                        const searchInput = windowEl.querySelector(".files-search-input");
-                        if (searchInput) searchInput.value = "";
+                        clearSearchInput(windowEl);
                         renderFilesGrid(windowEl);
                     }
                 },
@@ -886,20 +1244,30 @@
             const files = dt.files;
             if (!files.length) return;
 
+            const folderCard = e.target.closest?.("[data-thispc-folder]");
+            const dropFolder = folderCard && folderCard.dataset.thispcFolder !== "/Recycle Bin"
+                ? folderCard.dataset.thispcFolder
+                : (isThisPcView() ? "/Downloads" : currentPath);
+
+            if (dropFolder !== "/") {
+                await window.SystemFS.ensureDirectory(dropFolder, { silent: true });
+            }
+
             let accepted = 0;
             let quarantined = 0;
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const cleanName = sanitizeName(file.name);
                 if (!cleanName) continue;
-                const path = childPath(cleanName);
+                const path = childPath(cleanName, dropFolder);
                 if (!window.SecurityKernel?.importFile) throw new Error("Security Center is unavailable; import was blocked.");
-                const outcome = await window.SecurityKernel.importFile({ path, name: cleanName, parent: currentPath, data: file, size: file.size, type: file.type, source: "desktop-file-drop" });
+                const outcome = await window.SecurityKernel.importFile({ path, name: cleanName, parent: dropFolder, data: file, size: file.size, type: file.type, source: "desktop-file-drop" });
                 if (outcome.status === "accepted") accepted++;
                 else quarantined++;
             }
             renderFilesGrid(windowEl);
-            window.showDesktopToast?.(`${accepted} file(s) saved; ${quarantined} moved to Security Center.`);
+            const where = isThisPcView() ? ` to ${dropFolder}` : "";
+            window.showDesktopToast?.(`${accepted} file(s) saved${where}; ${quarantined} moved to Security Center.`);
         });
     }
 
@@ -910,14 +1278,14 @@
         renderBody: () => `
             <div class="files-shell">
                 <div class="files-toolbar">
-                    <button class="btn-toolbar btn-new-folder" title="New Folder"><i class="fa-solid fa-folder-plus"></i> New Folder</button>
-                    <button class="btn-toolbar btn-new-file" title="New Text File"><i class="fa-solid fa-file-circle-plus"></i> New File</button>
-                    <button class="btn-toolbar btn-upload" title="Upload File"><i class="fa-solid fa-file-arrow-up"></i> Upload</button>
+                    <button type="button" class="btn-toolbar btn-new-folder" title="New Folder"><i class="fa-solid fa-folder-plus"></i> New Folder</button>
+                    <button type="button" class="btn-toolbar btn-new-file" title="New Text File"><i class="fa-solid fa-file-circle-plus"></i> New File</button>
+                    <button type="button" class="btn-toolbar btn-upload" title="Upload File"><i class="fa-solid fa-file-arrow-up"></i> Upload</button>
                     <input type="file" class="files-file-input" multiple style="display: none;" />
                     
                     <div class="files-search-wrapper">
                         <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                        <input type="text" class="files-search-input" placeholder="Search files..." spellcheck="false" />
+                        <input type="text" class="files-search-input" placeholder="Search This PC..." spellcheck="false" />
                     </div>
 
                     <div class="files-path-bar">
@@ -926,17 +1294,20 @@
                 </div>
                 <div class="files-main">
                     <aside class="files-sidebar">
-                        <button class="sidebar-shortcut" data-path="/"><i class="fa-solid fa-computer"></i> Root (/)</button>
-                        <button class="sidebar-shortcut" data-path="/Desktop"><i class="fa-solid fa-desktop"></i> Desktop</button>
-                        <button class="sidebar-shortcut" data-path="/documents"><i class="fa-solid fa-file-lines"></i> Documents</button>
-                        <button class="sidebar-shortcut" data-path="/Pictures"><i class="fa-solid fa-image"></i> Pictures</button>
-                        <button class="sidebar-shortcut" data-path="/music"><i class="fa-solid fa-music"></i> Music</button>
-                        <button class="sidebar-shortcut" data-path="/Downloads"><i class="fa-solid fa-download"></i> Downloads</button>
-                        <button class="sidebar-shortcut" data-path="/ROMs"><i class="fa-solid fa-gamepad"></i> ROMs</button>
-                        <button class="sidebar-shortcut" data-path="/Saved Games"><i class="fa-solid fa-gamepad"></i> Saved Games</button>
-                        <button class="sidebar-shortcut" data-path="/Recycle Bin"><i class="fa-solid fa-trash-can"></i> Recycle Bin</button>
+                        <button type="button" class="sidebar-shortcut" data-path="this-pc"><i class="fa-solid fa-computer"></i> This PC</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/Desktop"><i class="fa-solid fa-desktop"></i> Desktop</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/documents"><i class="fa-solid fa-file-lines"></i> Documents</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/Pictures"><i class="fa-solid fa-image"></i> Pictures</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/music"><i class="fa-solid fa-music"></i> Music</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/Downloads"><i class="fa-solid fa-download"></i> Downloads</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/ROMs"><i class="fa-solid fa-gamepad"></i> ROMs</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/Saved Games"><i class="fa-solid fa-gamepad"></i> Saved Games</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/Recycle Bin"><i class="fa-solid fa-trash-can"></i> Recycle Bin</button>
+                        <button type="button" class="sidebar-shortcut" data-path="/"><i class="fa-solid fa-hard-drive"></i> Local Disk (C:)</button>
                         <div class="files-storage-status">
-                            <span><i class="fa-solid fa-hard-drive"></i> Saved locally</span>
+                            <button type="button" data-open-app="about" title="Open About This Computer">
+                                <i class="fa-solid fa-circle-info"></i> About Computer
+                            </button>
                             <button type="button" data-open-settings-panel="cloud-sync" title="Open Cloud Sync settings">
                                 <i class="fa-solid fa-cloud-arrow-up"></i> Cloud settings
                             </button>
@@ -952,21 +1323,37 @@
             </div>
         `,
         openPath: async (path, windowEl) => {
+            if (!path || path === THIS_PC_PATH) {
+                currentPath = THIS_PC_PATH;
+                clearSearchInput(windowEl);
+                return renderFilesGrid(windowEl);
+            }
+            if (path === "/") {
+                currentPath = "/";
+                clearSearchInput(windowEl);
+                return renderFilesGrid(windowEl);
+            }
             const owner = state.currentUserId;
             const item = await SystemFS.readFile(path);
             SystemFS.assertProfile(owner);
             if (!item) throw new Error('That file or folder is no longer available.');
             if (!item.isDirectory) return openFile(item, windowEl);
             currentPath = item.path;
-            searchQuery = '';
-            const search = windowEl.querySelector('.files-search-input');
-            if (search) search.value = '';
+            clearSearchInput(windowEl);
             return renderFilesGrid(windowEl);
         },
         getContextMenuItems: (target, event, windowEl) => getFileContextMenuItems(target, windowEl),
         onOpen: (windowEl) => {
-            if (!currentPath) currentPath = "/";
-            const initialRender = renderFilesGrid(windowEl);
+            const requestedPath = windowEl.launchParams?.path;
+            if (requestedPath) {
+                windowEl.launchParams = null;
+            } else if (!currentPath) {
+                currentPath = THIS_PC_PATH;
+            }
+
+            const initialRender = requestedPath
+                ? window.appRegistry.files.openPath(requestedPath, windowEl)
+                : renderFilesGrid(windowEl);
 
             if (windowEl.dataset.filesInitialized === "1") {
                 return initialRender;
@@ -975,13 +1362,28 @@
             windowEl.dataset.filesInitialized = "1";
             setupDragAndDrop(windowEl);
 
+            windowEl.addEventListener("launch-params", (e) => {
+                const targetPath = e.detail?.path;
+                if (targetPath) {
+                    windowEl.launchParams = null;
+                    window.appRegistry.files.openPath(targetPath, windowEl).catch((err) => {
+                        window.showDesktopToast?.(err.message || "Could not open path.");
+                    });
+                }
+            });
+
             if (window.EventBus && !unsubscribeFs) {
                 unsubscribeFs = window.EventBus.on("fs:changed", (event) => {
-                    if (event.parent === currentPath || event.path === currentPath || event.action === "sync") {
+                    if (isThisPcView() || event.parent === currentPath || event.path === currentPath || event.action === "sync" || event.action === "empty-trash") {
                         renderFilesGrid(windowEl);
                     }
                 });
                 unsubscribeFsReady = window.EventBus.on("fs:ready", () => renderFilesGrid(windowEl));
+                unsubscribeProfile = window.EventBus.on("state:changed:currentUserId", () => {
+                    currentPath = THIS_PC_PATH;
+                    clearSearchInput(windowEl);
+                    renderFilesGrid(windowEl);
+                });
             }
 
             // Hook search input handler with debounce
@@ -999,12 +1401,14 @@
             // Hook sidebar click handlers
             windowEl.querySelectorAll(".sidebar-shortcut").forEach(el => {
                 el.addEventListener("click", () => {
-                    currentPath = el.dataset.path;
-                    if (searchInput) {
-                        searchInput.value = "";
-                        searchQuery = "";
+                    const targetPath = el.dataset.path;
+                    if (targetPath === THIS_PC_PATH || targetPath === "/" || targetPath === "/Recycle Bin") {
+                        currentPath = targetPath;
+                        clearSearchInput(windowEl);
+                        renderFilesGrid(windowEl);
+                    } else {
+                        navigateToFolder(targetPath, windowEl);
                     }
-                    renderFilesGrid(windowEl);
                 });
             });
 
@@ -1012,6 +1416,7 @@
             const newFolderBtn = windowEl.querySelector(".btn-new-folder");
             if (newFolderBtn) {
                 newFolderBtn.addEventListener("click", async () => {
+                    if (isThisPcView()) return;
                     const name = prompt("Enter folder name:");
                     if (!name) return;
                     const cleanName = sanitizeName(name);
@@ -1025,6 +1430,7 @@
             const newFileBtn = windowEl.querySelector(".btn-new-file");
             if (newFileBtn) {
                 newFileBtn.addEventListener("click", async () => {
+                    if (isThisPcView()) return;
                     const name = prompt("Enter text file name:", "new-file.txt");
                     if (!name) return;
                     let cleanName = sanitizeName(name);
@@ -1042,19 +1448,24 @@
             const uploadBtn = windowEl.querySelector(".btn-upload");
             const fileInput = windowEl.querySelector(".files-file-input");
             if (uploadBtn && fileInput) {
-                uploadBtn.addEventListener("click", () => fileInput.click());
+                uploadBtn.addEventListener("click", () => {
+                    if (isThisPcView()) return;
+                    fileInput.click();
+                });
                 fileInput.addEventListener("change", async () => {
                     const files = fileInput.files;
                     if (!files.length) return;
+                    const targetParent = isThisPcView() ? "/Downloads" : currentPath;
+                    if (targetParent !== "/") await window.SystemFS.ensureDirectory(targetParent, { silent: true });
                     let accepted = 0;
                     let quarantined = 0;
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
                         const cleanName = sanitizeName(file.name);
                         if (!cleanName) continue;
-                        const path = childPath(cleanName);
+                        const path = childPath(cleanName, targetParent);
                         if (!window.SecurityKernel?.importFile) throw new Error("Security Center is unavailable; import was blocked.");
-                        const outcome = await window.SecurityKernel.importFile({ path, name: cleanName, parent: currentPath, data: file, size: file.size, type: file.type, source: "desktop-file-upload" });
+                        const outcome = await window.SecurityKernel.importFile({ path, name: cleanName, parent: targetParent, data: file, size: file.size, type: file.type, source: "desktop-file-upload" });
                         if (outcome.status === "accepted") accepted++;
                         else quarantined++;
                     }
@@ -1067,6 +1478,8 @@
         },
         onClose: (windowEl) => {
             renderGeneration++;
+            currentPath = THIS_PC_PATH;
+            searchQuery = "";
             if (searchTimeout) {
                 clearTimeout(searchTimeout);
                 searchTimeout = null;
@@ -1078,6 +1491,10 @@
             if (unsubscribeFsReady) {
                 unsubscribeFsReady();
                 unsubscribeFsReady = null;
+            }
+            if (unsubscribeProfile) {
+                unsubscribeProfile();
+                unsubscribeProfile = null;
             }
             windowEl.dataset.filesInitialized = "";
         }

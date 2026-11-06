@@ -5,7 +5,7 @@
     const idPattern = /^[a-z0-9][a-z0-9-]{0,63}$/;
     let icons = Object.create(null), owner = null, revision = 0, queue = Promise.resolve();
     const esc = value => window.escapeHtml(String(value));
-    const builtinIds = new Set('codex profile dossier browser network linux cli local-ai store files security-center office taskmgr webamp musicmini iptv settings romplayer openrct2 ut99 documents music calculator devhub status homelab automation addons guildcraft survival-ai wardenit media flappybird pki'.split(' '));
+    const builtinIds = new Set('codex profile dossier browser network linux cli local-ai store files about security-center office taskmgr webamp musicmini iptv settings romplayer openrct2 ut99 documents music calculator devhub status homelab automation addons guildcraft survival-ai wardenit media flappybird pki'.split(' '));
     const catalogs = () => [...(window.desktopApps || []), ...(window.mobileAppCatalog || []), ...(window.storeApps || []), ...(window.systems || [])];
     function refresh() {
         document.querySelectorAll('[data-app-icon]').forEach(el => {

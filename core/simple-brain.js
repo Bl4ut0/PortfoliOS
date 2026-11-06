@@ -7,7 +7,8 @@
  */
 (function() {
     const APP_ALIASES = {
-        files: ["files", "file explorer", "explorer", "file manager", "finder", "documents folder", "recycle bin", "trash"],
+        files: ["files", "file explorer", "explorer", "file manager", "finder", "this pc", "my computer", "documents folder", "recycle bin", "trash"],
+        about: ["about computer", "about this computer", "system info", "system information", "system properties", "computer specs"],
         cli: ["cli", "terminal", "console", "shell", "bash", "command prompt", "cmd"],
         browser: ["browser", "web browser", "chrome", "internet", "web"],
         settings: ["settings", "preferences", "config", "configuration", "control panel"],

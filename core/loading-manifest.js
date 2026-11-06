@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.11.02.04";
+    const release = "2026.11.05.01";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "core/app-icons.js", "data/systems.js", "data/apps.js",
@@ -33,7 +33,8 @@
             ai: ["core/local-ai.js", "core/simple-brain.js"],
             media: ["core/file-intents.js", "core/media-service.js"],
             games: ["apps/_shared/iframe-game.js"],
-            browser: ["data/bookmarks.js", "core/browser-workspace.js"]
+            browser: ["data/bookmarks.js", "core/browser-workspace.js"],
+            sysinfo: ["core/system-info.js"]
         },
         desktopApps: {
             plex: ["@plex"],
@@ -56,7 +57,7 @@
             settings: ["@ai", "desktop/settings.js", "desktop/brain-helper.js"],
             dossier: ["desktop/dossier.js"], network: ["desktop/network-map.js"],
             linux: ["desktop/linux.js"], browser: ["@browser", "desktop/browser.js"], store: ["desktop/store.js"],
-            files: ["@media"], musicmini: ["@media"],
+            files: ["@media", "@sysinfo"], about: ["@sysinfo"], musicmini: ["@media"],
             "portfolio-studio": [],
             doomsource: ["@games", "desktop/wad-inspector.js"],
             duke32: ["@games"], diablo: ["@games"], quake: ["@games"],
