@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/Bl4ut0/M3-Prism",
+  "version": "1.1.0",
+  "revision": "4ddb1735b34f72c027d42f969839cc224532eb80",
+  "dirty": false,
+  "files": {
+    "assets/index-1YxeJTGg.js": "37224ffa164d0dbdf88fcd179b04544c1d3c95c104e53210e889b61606ce180c",
+    "assets/index-C99lUPIy.css": "7f3f1c183e71426c2e0500d872db3a16da74539f6bad20bf28673ea6d468cbd8",
+    "assets/vendor-engines-kVR1GC1y.js": "3920e5bb290892296558f39c5c1d762c55ba315ccb2db863128adb7d90ddedb3",
+    "assets/vendor-react-BTUbEt8n.js": "f71e132034d322fce666bbf38a6e608aa7946a62d47beed487921e06be6d4a0f",
+    "assets/vendor-ui-Dy9nB9tn.js": "509266dbd237cc3d818cc165ae51be8a41f16250300578fe663b22240f7a8726",
+    "assets/vendor-utils-CM6ZUbYd.js": "401af78d279b907d8714184747f7a4eb4d080fc5e41273af77bd260929474cb9",
+    "hamburger.png": "7747a26cb20a7d6bd5ea6cba9c5260237f58597ac8552fb436459122f4f7b313",
+    "index.html": "467b08e136c28ecd9b06083e345bd5f8e9bcc4aab1c155fa5764ae17bb16f1f0",
+    "vite.svg": "4a748afd443918bb16591c834c401dae33e87861ab5dbad0811c3a3b4a9214fb"
+  }
+}

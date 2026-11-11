@@ -23,6 +23,7 @@
     const MPEGTS_SCRIPT = "apps/iptv/vendor/mpegts.js?v=1.8.0";
 
     const appState = {
+        uiEngine: "m3prism",
         sourceMode: "xtream",
         sourceType: "",
         sourceLabel: "No source",
@@ -113,8 +114,13 @@
         if (url.protocol !== "https:" && url.protocol !== "http:") {
             throw new Error(`${label} must use HTTP or HTTPS.`);
         }
-        if (window.location.protocol === "https:" && url.protocol !== "https:") {
-            throw new Error(`${label} must use HTTPS when PortfoliOS is running on HTTPS.`);
+        const hasNativeRelay = Boolean(
+            window.PortfoliOSNativeRelay
+            && typeof window.PortfoliOSNativeRelay.isAvailable === "function"
+            && window.PortfoliOSNativeRelay.isAvailable()
+        );
+        if (window.location.protocol === "https:" && url.protocol !== "https:" && !hasNativeRelay) {
+            throw new Error(`${label} must use HTTPS when PortfoliOS is running on HTTPS (or enable the PortfoliOS Native Relay addon).`);
         }
         return url.href;
     }
@@ -615,6 +621,22 @@
     }
 
     async function fetchResource(url, responseType = "json", timeoutMs = 20000) {
+        if (url.startsWith("http://") && typeof window.PortfoliOSNativeRelay?.fetch === "function") {
+            try {
+                const isAvail = await window.PortfoliOSNativeRelay.isAvailable();
+                if (isAvail) {
+                    const relayRes = await window.PortfoliOSNativeRelay.fetch(url, { responseType, timeoutMs });
+                    if (!relayRes.ok) throw new Error(`The provider returned HTTP ${relayRes.status}.`);
+                    if (responseType === "arrayBuffer") return await relayRes.arrayBuffer();
+                    if (responseType === "text") return await relayRes.text();
+                    return await relayRes.json();
+                }
+            } catch (err) {
+                console.warn("[IPTV] Relay fetch error:", err);
+                throw err;
+            }
+        }
+
         const controller = new AbortController();
         pendingControllers.add(controller);
         let timedOut = false;
@@ -641,8 +663,21 @@
                 cancelled.name = "AbortError";
                 throw cancelled;
             }
+            if (typeof window.PortfoliOSNativeRelay?.fetch === "function") {
+                try {
+                    const isAvail = await window.PortfoliOSNativeRelay.isAvailable();
+                    if (isAvail) {
+                        const relayRes = await window.PortfoliOSNativeRelay.fetch(url, { responseType, timeoutMs });
+                        if (relayRes.ok) {
+                            if (responseType === "arrayBuffer") return await relayRes.arrayBuffer();
+                            if (responseType === "text") return await relayRes.text();
+                            return await relayRes.json();
+                        }
+                    }
+                } catch (_) {}
+            }
             if (error instanceof TypeError || /failed to fetch|networkerror/i.test(error?.message || "")) {
-                throw new Error("Direct browser access was blocked. The provider must support HTTPS and CORS; PortfoliOS does not proxy account credentials.");
+                throw new Error("Direct browser access was blocked (CORS or Mixed Content). The provider must support HTTPS, or install the PortfoliOS Native Relay extension to bridge HTTP streams.");
             }
             throw error;
         } finally {
@@ -652,6 +687,21 @@
     }
 
     async function fetchGuideCache(url, sourceFingerprint) {
+        if (url.startsWith("http://") && typeof window.PortfoliOSNativeRelay?.fetch === "function") {
+            try {
+                const isAvail = await window.PortfoliOSNativeRelay.isAvailable();
+                if (isAvail) {
+                    const relayRes = await window.PortfoliOSNativeRelay.fetch(url, { responseType: "arraybuffer", timeoutMs: 5 * 60 * 1000 });
+                    if (!relayRes.ok) throw new Error(`The guide provider returned HTTP ${relayRes.status}.`);
+                    const ab = await relayRes.arrayBuffer();
+                    const stream = new Blob([ab]).stream();
+                    return await parseXmltvStream(stream, sourceFingerprint);
+                }
+            } catch (err) {
+                console.warn("[IPTV] Relay guide fetch error:", err);
+            }
+        }
+
         const controller = new AbortController();
         pendingControllers.add(controller);
         let timedOut = false;
@@ -677,8 +727,21 @@
                 cancelled.name = "AbortError";
                 throw cancelled;
             }
+            if (typeof window.PortfoliOSNativeRelay?.fetch === "function") {
+                try {
+                    const isAvail = await window.PortfoliOSNativeRelay.isAvailable();
+                    if (isAvail) {
+                        const relayRes = await window.PortfoliOSNativeRelay.fetch(url, { responseType: "arraybuffer", timeoutMs: 5 * 60 * 1000 });
+                        if (relayRes.ok) {
+                            const ab = await relayRes.arrayBuffer();
+                            const stream = new Blob([ab]).stream();
+                            return await parseXmltvStream(stream, sourceFingerprint);
+                        }
+                    }
+                } catch (_) {}
+            }
             if (error instanceof TypeError || /failed to fetch|networkerror/i.test(error?.message || "")) {
-                throw new Error("Direct guide access was blocked. The provider must support HTTPS and CORS; PortfoliOS does not proxy account credentials.");
+                throw new Error("Direct guide access was blocked (CORS or Mixed Content). The provider must support HTTPS, or install the PortfoliOS Native Relay extension to bridge HTTP streams.");
             }
             throw error;
         } finally {
@@ -937,7 +1000,13 @@
 
     function updateProtocolAlert() {
         if (!rootEl) return;
+        const hasNativeRelay = Boolean(
+            window.PortfoliOSNativeRelay
+            && typeof window.PortfoliOSNativeRelay.isAvailable === "function"
+            && window.PortfoliOSNativeRelay.isAvailable()
+        );
         const hostedOnHttps = window.location.protocol === "https:";
+        const enforceHttps = hostedOnHttps && !hasNativeRelay;
         const alert = rootEl.querySelector("[data-iptv-protocol-alert]");
         const detail = rootEl.querySelector("[data-iptv-protocol-alert-detail]");
         const urlFields = rootEl.querySelectorAll("[data-iptv-xtream-server], [data-iptv-m3u-url], [data-iptv-m3u-epg-url]");
@@ -945,11 +1014,11 @@
 
         urlFields.forEach((field) => {
             const fieldMode = field.closest("[data-iptv-source-panel]")?.dataset.iptvSourcePanel;
-            const blocked = hostedOnHttps
+            const blocked = enforceHttps
                 && fieldMode === appState.sourceMode
                 && /^http:\/\//i.test(field.value.trim());
             field.setCustomValidity(blocked
-                ? "HTTP sources are blocked because PortfoliOS is running on HTTPS. Use an HTTPS provider endpoint."
+                ? "HTTP sources are blocked because PortfoliOS is running on HTTPS. Enable the PortfoliOS Native Relay addon or use an HTTPS provider endpoint."
                 : "");
             field.classList.toggle("is-http-blocked", blocked);
             hasBlockedHttpUrl = hasBlockedHttpUrl || blocked;
@@ -959,18 +1028,32 @@
         alert.hidden = !hostedOnHttps;
         alert.classList.toggle("is-blocked", hasBlockedHttpUrl);
         if (detail) {
-            detail.textContent = hasBlockedHttpUrl
-                ? "The entered HTTP address cannot be submitted or played from this HTTPS site. Use the provider's HTTPS endpoint."
-                : "Provider, playlist, guide, and stream addresses must use HTTPS. Browsers block HTTP media inside this hosted app.";
+            if (hasNativeRelay) {
+                detail.textContent = "PortfoliOS Native Relay active — HTTP and HTTPS provider, playlist, guide, and stream addresses are supported.";
+            } else {
+                detail.textContent = hasBlockedHttpUrl
+                    ? "The entered HTTP address cannot be submitted or played without the PortfoliOS Native Relay addon. Enable the addon or use an HTTPS endpoint."
+                    : "Provider, playlist, guide, and stream addresses must use HTTPS unless the PortfoliOS Native Relay addon is connected.";
+            }
         }
     }
 
     function renderShellState() {
         if (!rootEl) return;
         rootEl.dataset.mobileView = appState.mobileView;
+        rootEl.dataset.engineMode = appState.uiEngine;
+        const m3Stage = rootEl.querySelector("[data-iptv-m3prism-stage]");
+        if (m3Stage) {
+            m3Stage.hidden = appState.uiEngine !== "m3prism";
+        }
+        rootEl.querySelectorAll("[data-iptv-engine]").forEach((button) => {
+            const active = button.dataset.iptvEngine === appState.uiEngine;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
         const source = rootEl.querySelector("[data-iptv-source-label]");
         const search = rootEl.querySelector("[data-iptv-search]");
-        if (source) source.textContent = appState.sourceLabel;
+        if (source) source.textContent = appState.uiEngine === "m3prism" ? "M3 Prism Engine" : appState.sourceLabel;
         if (search) {
             search.value = appState.search;
             search.disabled = !appState.channels.length;
@@ -1293,7 +1376,7 @@
     }
 
     async function startHls(url, generation) {
-        if (videoEl?.canPlayType("application/vnd.apple.mpegurl")) {
+        if (videoEl?.canPlayType("application/vnd.apple.mpegurl") && !url.startsWith("http://")) {
             videoEl.src = url;
             await videoEl.play();
             return;
@@ -1305,7 +1388,61 @@
 
         hlsNetworkRetries = 0;
         hlsMediaRetries = 0;
+
+        let loaderClass = Hls.DefaultConfig.loader;
+        if (typeof window.PortfoliOSNativeRelay?.fetch === "function") {
+            class RelayHlsLoader extends Hls.DefaultConfig.loader {
+                constructor(config) {
+                    super(config);
+                    this._aborted = false;
+                }
+                abort() {
+                    this._aborted = true;
+                    super.abort();
+                }
+                load(context, config, callbacks) {
+                    const targetUrl = context.url;
+                    const isHttp = targetUrl.startsWith("http://");
+
+                    if (isHttp) {
+                        const isBinary = context.responseType === "arraybuffer";
+                        const timeoutMs = config.timeout || 30000;
+                        window.PortfoliOSNativeRelay.fetch(targetUrl, {
+                            responseType: isBinary ? "arraybuffer" : "text",
+                            timeoutMs
+                        }).then(async (res) => {
+                            if (this._aborted) return;
+                            if (!res.ok) {
+                                callbacks.onError({ code: res.status || 0, text: `HTTP ${res.status}` }, context);
+                                return;
+                            }
+                            const data = isBinary ? await res.arrayBuffer() : await res.text();
+                            const byteLen = isBinary ? data.byteLength : data.length;
+                            const stats = {
+                                trequest: performance.now(),
+                                tfirst: performance.now(),
+                                tload: performance.now(),
+                                loaded: byteLen,
+                                total: byteLen
+                            };
+                            callbacks.onSuccess({
+                                url: res.url || targetUrl,
+                                data: data
+                            }, stats, context);
+                        }).catch((err) => {
+                            if (this._aborted) return;
+                            callbacks.onError({ code: 0, text: err.message }, context);
+                        });
+                        return;
+                    }
+                    super.load(context, config, callbacks);
+                }
+            }
+            loaderClass = RelayHlsLoader;
+        }
+
         hlsPlayer = new Hls({
+            loader: loaderClass,
             enableWorker: true,
             lowLatencyMode: true,
             backBufferLength: 90,
@@ -1517,7 +1654,32 @@
         }
     }
 
+    function pauseM3PrismMedia() {
+        try {
+            const frame = rootEl?.querySelector("[data-iptv-m3prism-frame]");
+            const doc = frame?.contentDocument;
+            doc?.querySelectorAll("video, audio").forEach((el) => {
+                try { el.pause(); } catch {}
+            });
+        } catch {}
+    }
+
     async function handleClick(event) {
+        const engineButton = event.target.closest("[data-iptv-engine]");
+        if (engineButton) {
+            const nextEngine = engineButton.dataset.iptvEngine || "m3prism";
+            if (nextEngine !== appState.uiEngine) {
+                if (nextEngine === "compact") {
+                    pauseM3PrismMedia();
+                } else {
+                    stopPlayback();
+                }
+                appState.uiEngine = nextEngine;
+                renderShellState();
+            }
+            return;
+        }
+
         const modeButton = event.target.closest("[data-iptv-source-mode]");
         if (modeButton) {
             appState.sourceMode = modeButton.dataset.iptvSourceMode;
@@ -1543,9 +1705,10 @@
         const action = event.target.closest("[data-iptv-action]")?.dataset.iptvAction;
         if (!action) return;
         if (action === "open-source") {
+            appState.uiEngine = "compact";
             appState.setupOpen = true;
             applyProfileToForm();
-            renderSetupState();
+            renderShellState();
         } else if (action === "close-source") {
             appState.setupOpen = false;
             renderSetupState();
@@ -1619,20 +1782,37 @@
     }
 
     function setVolume(volume) {
-        if (!videoEl) return;
-        videoEl.volume = Math.max(0, Math.min(100, Number(volume) || 0)) / 100;
+        const normalized = Math.max(0, Math.min(100, Number(volume) || 0)) / 100;
+        if (videoEl) {
+            videoEl.volume = normalized;
+        }
+        try {
+            const frame = rootEl?.querySelector("[data-iptv-m3prism-frame]");
+            const doc = frame?.contentDocument;
+            doc?.querySelectorAll("video, audio").forEach((el) => {
+                try { el.volume = normalized; } catch {}
+            });
+        } catch {}
     }
 
     function renderBody() {
         return `
-            <div class="iptv-shell" data-iptv-root data-mobile-view="channels">
+            <div class="iptv-shell" data-iptv-root data-mobile-view="channels" data-engine-mode="m3prism">
                 <header class="iptv-toolbar">
                     <button type="button" class="iptv-icon-button" data-iptv-action="open-source" title="Source settings" aria-label="Source settings">
                         <i class="fa-solid fa-plug"></i>
                     </button>
                     <div class="iptv-source-summary">
                         <strong>IPTV Stream</strong>
-                        <span data-iptv-source-label>No source</span>
+                        <span data-iptv-source-label>M3 Prism Engine</span>
+                    </div>
+                    <div class="iptv-engine-switch" role="group" aria-label="Player interface">
+                        <button type="button" class="iptv-engine-button is-active" data-iptv-engine="m3prism" aria-pressed="true" title="Full M3 Prism experience">
+                            <i class="fa-solid fa-gem"></i><span>M3 Prism</span>
+                        </button>
+                        <button type="button" class="iptv-engine-button" data-iptv-engine="compact" aria-pressed="false" title="Compact workspace player">
+                            <i class="fa-solid fa-table-columns"></i><span>Compact</span>
+                        </button>
                     </div>
                     <label class="iptv-search-control">
                         <i class="fa-solid fa-magnifying-glass"></i>
@@ -1648,6 +1828,10 @@
                         <i class="fa-regular fa-trash-can"></i>
                     </button>
                 </header>
+
+                <section class="iptv-m3prism-stage" data-iptv-m3prism-stage>
+                    <iframe class="iptv-m3prism-frame" data-iptv-m3prism-frame src="apps/iptv/m3prism/index.html?portfolios=1" title="M3 Prism IPTV" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                </section>
 
                 <nav class="iptv-mobile-tabs" aria-label="IPTV views">
                     <button type="button" data-iptv-mobile-view="channels" class="is-active"><i class="fa-solid fa-list"></i><span>Channels</span></button>
@@ -1796,6 +1980,7 @@
             rootEl?.addEventListener("submit", handleSubmit);
             rootEl?.addEventListener("input", handleInput);
             rootEl?.addEventListener("change", handleChange);
+            window.addEventListener("portfolios-native-relay-status", updateProtocolAlert);
             videoEl?.addEventListener("loadeddata", handleVideoReady);
             videoEl?.addEventListener("playing", handleVideoReady);
             videoEl?.addEventListener("error", handleVideoError);
@@ -1829,14 +2014,21 @@
         onFocus: () => {},
         onMinimize: () => {
             videoEl?.pause();
+            pauseM3PrismMedia();
         },
         onMaximize: () => {},
         onClose: () => {
             mountGeneration++;
             abortPendingRequests();
             stopPlayback();
+            pauseM3PrismMedia();
+            const frame = rootEl?.querySelector("[data-iptv-m3prism-frame]");
+            if (frame) {
+                try { frame.src = "about:blank"; } catch {}
+            }
             busyOperations = 0;
             appState.busy = false;
+            window.removeEventListener("portfolios-native-relay-status", updateProtocolAlert);
             rootEl?.removeEventListener("click", handleClick);
             rootEl?.removeEventListener("submit", handleSubmit);
             rootEl?.removeEventListener("input", handleInput);

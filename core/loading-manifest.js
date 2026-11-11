@@ -1,10 +1,10 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.11.05.01";
+    const release = "2026.11.06.06";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "core/app-icons.js", "data/systems.js", "data/apps.js",
-        "data/config.js", "data/users.js", "core/preferences.js", "core/bios.js", "core/gdrive-sync.js",
+        "data/config.js", "data/users.js", "core/preferences.js", "core/bios.js", "core/cloud-auth.js", "core/cloud-sync.js", "core/gdrive-sync.js",
         "core/private-sessions.js", "core/workspace-recovery.js", "core/background-services.js", "core/session-context.js", "core/profile-switch.js", "core/session-chooser.js"
     ];
     root.PortfolioLoadingManifest = {
@@ -51,13 +51,13 @@
             filmcraft: ["@craft"],
             effectcraft: ["@craft"],
 
-            codex: ["core/codex-preview.js"],
+            codex: ["@ai", "desktop/terminal.js", "core/codex-preview.js"],
             cli: ["@ai", "desktop/terminal.js", "desktop/brain-helper.js"],
             "local-ai": ["@ai", "desktop/brain-helper.js"],
             settings: ["@ai", "desktop/settings.js", "desktop/brain-helper.js"],
             dossier: ["desktop/dossier.js"], network: ["desktop/network-map.js"],
             linux: ["desktop/linux.js"], browser: ["@browser", "desktop/browser.js"], store: ["desktop/store.js"],
-            files: ["@media", "@sysinfo"], about: ["@sysinfo"], musicmini: ["@media"],
+            files: ["@media", "@sysinfo"], about: ["@sysinfo"], musicmini: ["@media"], imageviewer: ["@media"],
             "portfolio-studio": [],
             doomsource: ["@games", "desktop/wad-inspector.js"],
             duke32: ["@games"], diablo: ["@games"], quake: ["@games"],
