@@ -6,7 +6,7 @@
 window.standardInstalledAppIds = [
     "devhub", "profile", "dossier", "browser", "network", "linux", "cli",
     "settings", "store", "files", "about", "security-center", "addons", "guildcraft", "homelab",
-    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office", "portfolio-studio"
+    "survival-ai", "status", "taskmgr", "local-ai", "musicmini", "office", "imageviewer", "portfolio-studio"
 ];
 
 window.desktopPinnedIds = [
@@ -35,7 +35,7 @@ window.startMenuGroups = [
     {
         id: "system",
         label: "System",
-        ids: ["store", "files", "about", "security-center", "office", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
+        ids: ["store", "files", "about", "security-center", "office", "imageviewer", "settings", "browser", "cli", "local-ai", "musicmini", "taskmgr", "linux"]
     },
     {
         id: "portfolio",
@@ -114,6 +114,7 @@ window.desktopApps = [
     { id: "about", title: "About This Computer", icon: "apps/about/icon.svg", category: "system", pinned: false, modular: true, meta: "System & storage specifications" },
     { id: "security-center", title: "Security Center", icon: "fa-solid fa-shield-halved", category: "system", pinned: true, modular: true, meta: "Local file protection" },
     { id: "office", title: "Office Preview", icon: "fa-solid fa-file-signature", category: "productivity", pinned: true, modular: true, meta: "Local text and JSON sheets" },
+    { id: "imageviewer", title: "Image Viewer", icon: "apps/imageviewer/icon.svg", category: "media", pinned: false, modular: true, meta: "Photo and illustration viewer" },
     { id: "taskmgr", title: "Task Manager", icon: "fa-solid fa-microchip", category: "system", pinned: false, modular: true, meta: "System monitor" },
     { id: "webamp", title: "Webamp", icon: "fa-solid fa-music", category: "media", pinned: false, modular: true, meta: "Classic media player" },
     { id: "musicmini", title: "Music Mini", icon: "fa-solid fa-record-vinyl", category: "media", pinned: true, modular: true, meta: "Local music player" },
@@ -149,7 +150,17 @@ window.storeApps = [
     { id: "designcraft", title: "DesignCraft", icon: "apps/designcraft/icon.svg", category: "Productivity", description: "Multi-page publication layout, typography, brochure composition, and print preparation.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
     { id: "filmcraft", title: "FilmCraft", icon: "apps/filmcraft/icon.svg", category: "Media", description: "Nonlinear video editing, audio tracks, timeline cuts, and Premiere-style media workflows.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
     { id: "effectcraft", title: "EffectCraft", icon: "apps/effectcraft/icon.svg", category: "Media", description: "Motion graphics, keyframe animation, visual effects, and compositing studio.", size: "ArtCraft Suite", publisher: "ArtCraft / PortfoliOS adapter" },
-    { id: "codex", title: "Codex CLI", icon: "apps/codex/icon.svg", category: "Productivity", description: "Native AI CLI environment running in a 64-bit Linux WASM container. Official CLI setup for OpenAI Codex, Google Antigravity, Claude Code, and xAI with full SystemFS workspace access.", size: "Linux WASM runtime", publisher: "PortfoliOS / OpenAI / Google / Anthropic" },
+    {
+        id: "codex",
+        title: "Codex CLI",
+        icon: "apps/codex/icon.svg",
+        category: "Productivity",
+        description: "Native AI CLI environment for Antigravity CLI (agy), OpenAI Codex, and Claude Code. Windows Release host execution requires a Private Profile, the PortfoliOS Chrome Relay Extension, and the Windows MSI Host Installer (uninstallable anytime via Windows Settings to disable cmd/CLI access).",
+        size: "Linux WASM + Windows MSI Host",
+        publisher: "PortfoliOS / OpenAI / Google / Anthropic",
+        requiresWindowsHost: true,
+        windowsHostNote: "Windows Release side requires Private Profile + Chrome Relay + MSI Host (uninstall MSI anytime to disable cmd/CLI)."
+    },
     {
         id: "romplayer",
         title: "ROM Player",
@@ -164,54 +175,66 @@ window.storeApps = [
         title: "Doom",
         icon: "doom-icon.png",
         category: "Games",
-        description: "Classic 1993 first-person shooter running on a compiled WebAssembly engine.",
+        description: "Classic 1993 first-person shooter running on a compiled WebAssembly engine. Multiplayer networking requires the PortfoliOS Native Relay Proxy.",
         size: "11.8 MB",
-        publisher: "id Software / emscripten port"
+        publisher: "id Software / emscripten port",
+        multiplayerRelay: true,
+        multiplayerNote: "Multiplayer requires PortfoliOS Native Relay Proxy (UDP/WebSocket)"
     },
     {
         id: "openrct2",
         title: "OpenRCT2",
         icon: "fa-solid fa-train",
         category: "Games",
-        description: "Open-source RollerCoaster Tycoon 2 WebAssembly runtime with staged engine, support data, and game assets.",
+        description: "Open-source RollerCoaster Tycoon 2 WebAssembly runtime with staged engine, support data, and game assets. Multiplayer servers require the PortfoliOS Native Relay Proxy.",
         size: "608.8 MiB runtime",
-        publisher: "OpenRCT2 project"
+        publisher: "OpenRCT2 project",
+        multiplayerRelay: true,
+        multiplayerNote: "Multiplayer requires PortfoliOS Native Relay Proxy (TCP/WebSocket)"
     },
     {
         id: "duke32",
         title: "Duke Nukem 3D",
         icon: "duke3d-icon.png",
         category: "Games",
-        description: "Shareware version of Duke Nukem 3D running in a browser port.",
+        description: "Shareware version of Duke Nukem 3D running in a browser port. Multiplayer networking requires the PortfoliOS Native Relay Proxy.",
         size: "26.4 MB",
-        publisher: "3D Realms / emscripten port"
+        publisher: "3D Realms / emscripten port",
+        multiplayerRelay: true,
+        multiplayerNote: "Multiplayer requires PortfoliOS Native Relay Proxy (UDP)"
     },
     {
         id: "diablo",
         title: "Diablo",
         icon: "diablo-icon.png",
         category: "Games",
-        description: "DevilutionX web port of the original 1996 action RPG.",
+        description: "DevilutionX web port of the original 1996 action RPG. Battle.net / LAN multiplayer requires the PortfoliOS Native Relay Proxy.",
         size: "50.1 MB",
-        publisher: "Blizzard North / DevilutionX team"
+        publisher: "Blizzard North / DevilutionX team",
+        multiplayerRelay: true,
+        multiplayerNote: "Multiplayer requires PortfoliOS Native Relay Proxy (UDP/TCP)"
     },
     {
         id: "quake",
         title: "Quake",
         icon: "quake-icon.png",
         category: "Games",
-        description: "WebQuake engine. Choose pak0.pak from your own local Quake or shareware installation when launched.",
+        description: "WebQuake engine. Choose pak0.pak from your own local Quake or shareware installation when launched. Multiplayer servers require the PortfoliOS Native Relay Proxy.",
         size: "Engine + your PAK",
-        publisher: "id Software / WebQuake"
+        publisher: "id Software / WebQuake",
+        multiplayerRelay: true,
+        multiplayerNote: "Multiplayer requires PortfoliOS Native Relay Proxy (UDP/WebSocket)"
     },
     {
         id: "ut99",
         title: "Unreal Tournament 99",
         icon: "fa-solid fa-crosshairs",
         category: "Games",
-        description: "Browser-hosted Unreal Tournament 99 flyby runtime with OldUnreal multiplayer links and relay prep.",
+        description: "Browser-hosted Unreal Tournament 99 runtime with OldUnreal multiplayer server browser and PortfoliOS Native Relay UDP proxy integration.",
         size: "Remote WASM",
-        publisher: "OldUnreal / icculus.org"
+        publisher: "OldUnreal / icculus.org",
+        multiplayerRelay: true,
+        multiplayerNote: "Multiplayer requires PortfoliOS Native Relay Proxy (UDP)"
     },
     {
         id: "webamp",
@@ -227,9 +250,11 @@ window.storeApps = [
         title: "IPTV Stream",
         icon: "fa-solid fa-tv",
         category: "Media",
-        description: "Play authorized Xtream and M3U live TV sources with a local XMLTV guide cache.",
-        size: "0.8 MB + guide cache",
-        publisher: "PortfoliOS"
+        description: "M3-Prism & PortfoliOS live TV studio for Xtream and M3U playlists with XMLTV guide cache and Native Relay HTTP stream tunneling.",
+        size: "M3-Prism + Relay Bridge",
+        publisher: "PortfoliOS / M3-Prism",
+        multiplayerRelay: true,
+        multiplayerNote: "Non-HTTPS IPTV streams use PortfoliOS Native Relay HTTP Tunnel"
     },
     {
         id: "pki",

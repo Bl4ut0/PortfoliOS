@@ -586,7 +586,8 @@
 
 .desktop-wallpaper,
 .desktop-experience[data-wallpaper="aurora"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="aurora"] {
+.wallpaper-preview[data-preview-wallpaper="aurora"],
+.wallpaper-review-screen[data-preview-wallpaper="aurora"] {
     background:
         linear-gradient(135deg, rgba(34, 211, 238, 0.12), transparent 34%),
         linear-gradient(225deg, rgba(245, 158, 11, 0.09), transparent 42%),
@@ -596,7 +597,8 @@
 }
 
 .desktop-experience[data-wallpaper="grid"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="grid"] {
+.wallpaper-preview[data-preview-wallpaper="grid"],
+.wallpaper-review-screen[data-preview-wallpaper="grid"] {
     background:
         linear-gradient(135deg, rgba(34, 211, 238, 0.1), transparent 34%),
         repeating-linear-gradient(0deg, rgba(34, 211, 238, 0.08) 0 1px, transparent 1px 38px),
@@ -605,7 +607,8 @@
 }
 
 .desktop-experience[data-wallpaper="ember"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="ember"] {
+.wallpaper-preview[data-preview-wallpaper="ember"],
+.wallpaper-review-screen[data-preview-wallpaper="ember"] {
     background:
         radial-gradient(circle at 20% 24%, rgba(239, 68, 68, 0.22), transparent 30%),
         radial-gradient(circle at 78% 68%, rgba(245, 158, 11, 0.16), transparent 34%),
@@ -614,7 +617,8 @@
 }
 
 .desktop-experience[data-wallpaper="mono"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="mono"] {
+.wallpaper-preview[data-preview-wallpaper="mono"],
+.wallpaper-review-screen[data-preview-wallpaper="mono"] {
     background:
         linear-gradient(145deg, rgba(148, 163, 184, 0.08), transparent 42%),
         repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 82px),
@@ -623,7 +627,8 @@
 
 /* Cosmos */
 .desktop-experience[data-wallpaper="cosmos"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="cosmos"] {
+.wallpaper-preview[data-preview-wallpaper="cosmos"],
+.wallpaper-review-screen[data-preview-wallpaper="cosmos"] {
     background:
         radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.25), transparent 45%),
         radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.18), transparent 40%),
@@ -633,7 +638,8 @@
 
 /* Sunset */
 .desktop-experience[data-wallpaper="sunset"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="sunset"] {
+.wallpaper-preview[data-preview-wallpaper="sunset"],
+.wallpaper-review-screen[data-preview-wallpaper="sunset"] {
     background:
         radial-gradient(circle at 50% 30%, rgba(244, 63, 94, 0.25), transparent 50%),
         radial-gradient(circle at 80% 70%, rgba(249, 115, 22, 0.2), transparent 40%),
@@ -643,7 +649,8 @@
 
 /* Matrix */
 .desktop-experience[data-wallpaper="matrix"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="matrix"] {
+.wallpaper-preview[data-preview-wallpaper="matrix"],
+.wallpaper-review-screen[data-preview-wallpaper="matrix"] {
     background:
         radial-gradient(circle at 18% 20%, rgba(44, 255, 130, 0.12), transparent 26%),
         linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%),
@@ -681,7 +688,8 @@
 
 /* Cyberpunk */
 .desktop-experience[data-wallpaper="cyberpunk"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="cyberpunk"] {
+.wallpaper-preview[data-preview-wallpaper="cyberpunk"],
+.wallpaper-review-screen[data-preview-wallpaper="cyberpunk"] {
     background:
         radial-gradient(circle at 10% 20%, rgba(236, 72, 153, 0.25), transparent 35%),
         radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.25), transparent 35%),
@@ -691,7 +699,8 @@
 
 /* Forest */
 .desktop-experience[data-wallpaper="forest"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="forest"] {
+.wallpaper-preview[data-preview-wallpaper="forest"],
+.wallpaper-review-screen[data-preview-wallpaper="forest"] {
     background:
         radial-gradient(circle at 75% 30%, rgba(52, 211, 153, 0.18), transparent 40%),
         radial-gradient(circle at 25% 70%, rgba(16, 185, 129, 0.12), transparent 45%),
@@ -701,7 +710,8 @@
 
 /* Ocean */
 .desktop-experience[data-wallpaper="ocean"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="ocean"] {
+.wallpaper-preview[data-preview-wallpaper="ocean"],
+.wallpaper-review-screen[data-preview-wallpaper="ocean"] {
     background:
         radial-gradient(circle at 30% 20%, rgba(6, 182, 212, 0.22), transparent 45%),
         radial-gradient(circle at 70% 80%, rgba(29, 78, 216, 0.18), transparent 40%),
@@ -711,7 +721,8 @@
 
 /* Sakura */
 .desktop-experience[data-wallpaper="sakura"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="sakura"] {
+.wallpaper-preview[data-preview-wallpaper="sakura"],
+.wallpaper-review-screen[data-preview-wallpaper="sakura"] {
     background:
         radial-gradient(circle at 80% 30%, rgba(244, 114, 182, 0.2), transparent 40%),
         radial-gradient(circle at 20% 70%, rgba(251, 207, 232, 0.12), transparent 35%),
@@ -721,7 +732,8 @@
 
 /* Glacier */
 .desktop-experience[data-wallpaper="glacier"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="glacier"] {
+.wallpaper-preview[data-preview-wallpaper="glacier"],
+.wallpaper-review-screen[data-preview-wallpaper="glacier"] {
     background:
         radial-gradient(circle at 15% 15%, rgba(186, 230, 253, 0.22), transparent 35%),
         radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.12), transparent 40%),
@@ -731,7 +743,8 @@
 
 /* Solar */
 .desktop-experience[data-wallpaper="solar"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="solar"] {
+.wallpaper-preview[data-preview-wallpaper="solar"],
+.wallpaper-review-screen[data-preview-wallpaper="solar"] {
     background:
         radial-gradient(circle at 50% 50%, rgba(234, 179, 8, 0.14), transparent 45%),
         radial-gradient(circle at 10% 90%, rgba(249, 115, 22, 0.1), transparent 40%),
@@ -741,7 +754,8 @@
 
 /* Retrowave */
 .desktop-experience[data-wallpaper="retrowave"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="retrowave"] {
+.wallpaper-preview[data-preview-wallpaper="retrowave"],
+.wallpaper-review-screen[data-preview-wallpaper="retrowave"] {
     background:
         radial-gradient(circle at 50% 40%, rgba(219, 39, 119, 0.24), transparent 45%),
         linear-gradient(180deg, rgba(49, 46, 129, 0.4) 0%, rgba(15, 23, 42, 0.9) 100%),
@@ -750,12 +764,300 @@
 }
 
 .desktop-experience[data-wallpaper="custom"] .desktop-wallpaper,
-.wallpaper-preview[data-preview-wallpaper="custom"] {
+.wallpaper-preview[data-preview-wallpaper="custom"],
+.wallpaper-review-screen[data-preview-wallpaper="custom"],
+.wallpaper-review-screen.has-custom-wallpaper {
     background-image: var(--custom-wallpaper-url, none);
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
     background-color: #070914;
+}
+
+/* =========================================================================
+   Wallpaper Review Mockup & Custom Wallpapers
+   ========================================================================= */
+.wallpaper-review-container {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    background: var(--panel-soft, rgba(255, 255, 255, 0.03));
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 8px);
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.wallpaper-review-mockup {
+    position: relative;
+    width: 220px;
+    height: 130px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    background: #070914;
+}
+
+.wallpaper-review-screen {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px 8px 4px 8px;
+    transition: background 0.25s ease, background-image 0.25s ease;
+}
+
+.wallpaper-review-window-mock {
+    width: 110px;
+    height: 65px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.wallpaper-review-window-header {
+    height: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0 4px;
+}
+
+.wallpaper-review-window-header span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.wallpaper-review-window-body {
+    flex: 1;
+}
+
+.wallpaper-review-taskbar-mock {
+    height: 14px;
+    background: rgba(10, 15, 25, 0.85);
+    backdrop-filter: blur(4px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+}
+
+.mock-start-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--theme-primary, #22d3ee);
+}
+
+.mock-taskbar-item {
+    width: 14px;
+    height: 6px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.mock-taskbar-time {
+    margin-left: auto;
+    font-size: 7px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: monospace;
+}
+
+.wallpaper-review-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    flex: 1;
+}
+
+.wallpaper-review-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.wallpaper-review-label {
+    font-size: 0.7rem;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wallpaper-review-name {
+    font-size: 1.05rem;
+    color: var(--text, #f8fafc);
+}
+
+.wallpaper-review-status {
+    font-size: 0.72rem;
+    color: var(--theme-primary, #22d3ee);
+}
+
+.wallpaper-review-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.wallpaper-group-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-soft, #94a3b8);
+    margin: 1.25rem 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.custom-wallpaper-card {
+    position: relative;
+}
+
+.custom-wallpaper-delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: none;
+    background: rgba(239, 68, 68, 0.85);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease;
+    z-index: 2;
+}
+
+.wallpaper-card:hover .custom-wallpaper-delete-btn {
+    opacity: 1;
+}
+
+.custom-wallpaper-delete-btn:hover {
+    background: #dc2626;
+}
+
+/* =========================================================================
+   Default Applications & File Associations Styles
+   ========================================================================= */
+.file-associations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.file-assoc-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--panel-soft, rgba(255, 255, 255, 0.03));
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-sm, 6px);
+}
+
+.file-assoc-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.file-assoc-icon {
+    font-size: 1.25rem;
+    color: var(--theme-primary, #22d3ee);
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.file-assoc-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.file-assoc-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text, #f8fafc);
+}
+
+.file-assoc-extensions {
+    font-size: 0.72rem;
+    color: var(--text-muted, #94a3b8);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.ext-badge {
+    display: inline-block;
+    padding: 1px 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    font-family: var(--mono, monospace);
+    font-size: 0.7rem;
+    color: var(--theme-primary, #22d3ee);
+}
+
+.custom-associations-form {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.custom-assoc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+}
+
+.custom-assoc-table th {
+    text-align: left;
+    padding: 6px 10px;
+    color: var(--text-muted, #94a3b8);
+    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-assoc-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.04));
+    color: var(--text, #f8fafc);
+    vertical-align: middle;
 }
 
 .cli-window .terminal-window {
@@ -2842,6 +3144,84 @@
     }
 }
 
+/* Cloud Storage Providers */
+.cloud-provider-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+}
+
+.cloud-provider-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    position: relative;
+}
+
+.cloud-provider-card:hover {
+    border-color: var(--accent);
+    background: var(--surface-hover, var(--surface-inset));
+}
+
+.cloud-provider-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+    background: var(--accent-surface, var(--surface-inset));
+}
+
+.cloud-provider-card > i {
+    font-size: 1.4rem;
+    color: var(--accent);
+    width: 1.75rem;
+    text-align: center;
+}
+
+.cloud-provider-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.cloud-provider-meta strong {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cloud-provider-meta small {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.provider-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--panel-soft);
+    color: var(--text-muted);
+}
+
+.provider-badge.active {
+    background: var(--theme-primary);
+    color: var(--on-primary);
+}
+
 /* Google Drive Cards and Forms */
 .gdrive-status-card, .sync-actions-card {
     background: var(--surface-inset);
@@ -3119,6 +3499,261 @@
 .volume-panel input[type="range"] {
     width: 100%;
     accent-color: var(--theme-primary);
+}
+
+
+.tray-service-button.relay-tray-button {
+    color: var(--text-soft);
+}
+
+.tray-service-button.relay-tray-button.is-connected {
+    color: #4ade80;
+}
+
+.tray-service-button.relay-tray-button.is-partial {
+    color: #fbbf24;
+}
+
+.tray-service-button.relay-tray-button.is-disconnected {
+    color: #94a3b8;
+}
+
+.tray-service-button #relay-tray-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #64748b;
+    pointer-events: none;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.tray-service-button.relay-tray-button.is-connected #relay-tray-dot {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
+}
+
+.tray-service-button.relay-tray-button.is-partial #relay-tray-dot {
+    background: #f59e0b;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+}
+
+.tray-service-button.relay-tray-button.is-disconnected #relay-tray-dot {
+    background: #64748b;
+}
+
+.relay-tray-panel {
+    position: absolute;
+    z-index: 80;
+    right: 8.8rem;
+    bottom: var(--panel-bottom);
+    width: min(22rem, calc(100% - 1.8rem));
+    padding: 0.95rem;
+    color: var(--text-soft);
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(26px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.relay-tray-panel[hidden] {
+    display: none !important;
+}
+
+.relay-tray-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.relay-tray-header span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.relay-tray-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.relay-tray-badge.is-online {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.35);
+}
+
+.relay-tray-badge.is-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+.relay-tray-badge.is-offline {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.relay-tray-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.relay-service-card {
+    padding: 0.75rem;
+    border-radius: 9px;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.relay-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.relay-card-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+.relay-status-pill {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+.relay-status-pill.is-online {
+    background: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+}
+
+.relay-status-pill.is-warning {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+}
+
+.relay-status-pill.is-offline {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+}
+
+.relay-card-desc {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--text-soft);
+    line-height: 1.35;
+}
+
+.relay-card-actions {
+    margin-top: 0.2rem;
+}
+
+.relay-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.relay-btn-primary {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.relay-btn-primary:hover {
+    background: rgba(59, 130, 246, 0.35);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.relay-btn-secondary {
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+}
+
+.relay-btn-secondary:hover {
+    background: var(--control-hover);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.relay-tray-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.7rem;
+}
+
+.relay-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--text-soft);
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+
+.relay-refresh-btn:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.relay-workspace-tag {
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .local-ai-tray-panel {
@@ -3752,7 +4387,8 @@
         bottom: var(--panel-bottom);
     }
 
-    .local-ai-tray-panel {
+    .local-ai-tray-panel,
+    .relay-tray-panel {
         right: 0.45rem;
         bottom: var(--panel-bottom);
     }
@@ -4486,6 +5122,185 @@ body.desktop-scaled[data-view="desktop"] .desktop-experience {
     color: var(--text-soft);
     cursor: not-allowed;
     border-color: var(--line);
+}
+
+.store-btn.locked {
+    color: var(--text-soft);
+    background: color-mix(in srgb, var(--rose-ink, #f43f5e) 12%, var(--panel-soft));
+    border-color: color-mix(in srgb, var(--rose-ink, #f43f5e) 32%, var(--line));
+}
+
+.store-btn.locked:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--rose-ink, #f43f5e) 20%, var(--panel-soft));
+}
+
+.store-btn.host-setup {
+    color: var(--text);
+    background: color-mix(in srgb, var(--theme-primary) 14%, var(--panel-soft));
+    border-color: color-mix(in srgb, var(--theme-primary) 35%, var(--line));
+}
+
+.store-btn.host-setup:hover {
+    background: color-mix(in srgb, var(--theme-primary) 24%, var(--panel-soft));
+}
+
+.store-relay-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem 1rem;
+    padding: 0.55rem 0.95rem;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--theme-primary) 7%, var(--panel-soft));
+    flex: 0 0 auto;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.store-relay-banner.is-highlighted {
+    box-shadow: inset 0 0 0 2px var(--theme-primary);
+}
+
+.store-relay-banner-main {
+    flex: 1 1 22rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.store-relay-banner-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: var(--text);
+}
+
+.store-relay-banner-title > i {
+    color: var(--theme-primary-ink);
+}
+
+.store-relay-pills {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.store-relay-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.12rem 0.48rem;
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    border: 1px solid var(--line);
+    background: var(--panel-soft);
+    color: var(--text-soft);
+}
+
+.store-relay-pill.is-ok {
+    color: var(--emerald-ink, #10b981);
+    border-color: color-mix(in srgb, var(--emerald-ink, #10b981) 35%, var(--line));
+    background: color-mix(in srgb, var(--emerald-ink, #10b981) 10%, var(--panel-soft));
+}
+
+.store-relay-pill.is-warn {
+    color: var(--amber-ink, #f59e0b);
+    border-color: color-mix(in srgb, var(--amber-ink, #f59e0b) 35%, var(--line));
+    background: color-mix(in srgb, var(--amber-ink, #f59e0b) 10%, var(--panel-soft));
+}
+
+.store-relay-banner-desc {
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--text-soft);
+}
+
+.store-relay-banner-desc code {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 0.05rem 0.28rem;
+    border-radius: 4px;
+    background: var(--panel);
+    color: var(--text);
+}
+
+.store-relay-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+}
+
+.store-relay-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 1.85rem;
+    padding: 0.28rem 0.62rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.store-relay-action-btn:hover {
+    border-color: var(--theme-primary);
+    color: var(--text);
+}
+
+.store-relay-action-btn.primary {
+    color: var(--on-primary);
+    background: var(--theme-primary);
+    border-color: transparent;
+}
+
+.store-card-relay-badge {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.34rem 0.52rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text-soft);
+}
+
+.store-card-relay-badge i {
+    margin-top: 0.12rem;
+    flex: 0 0 auto;
+}
+
+.store-card-relay-badge.is-ready {
+    color: var(--emerald-ink, #10b981);
+    border-color: color-mix(in srgb, var(--emerald-ink, #10b981) 32%, var(--line));
+    background: color-mix(in srgb, var(--emerald-ink, #10b981) 8%, var(--panel));
+}
+
+.store-card-relay-badge.is-locked {
+    color: var(--amber-ink, #f59e0b);
+    border-color: color-mix(in srgb, var(--amber-ink, #f59e0b) 35%, var(--line));
+    background: color-mix(in srgb, var(--amber-ink, #f59e0b) 9%, var(--panel));
+}
+
+.store-card-relay-badge.is-proxy {
+    color: var(--theme-primary-ink);
+    border-color: color-mix(in srgb, var(--theme-primary) 28%, var(--line));
+    background: color-mix(in srgb, var(--theme-primary) 7%, var(--panel));
 }
 
 .store-progress-container {

@@ -1,0 +1,51 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="PortfoliOS Native Relay Bridge"
+           Manufacturer="Bl4ut0"
+           Version="1.2.0"
+           UpgradeCode="7E4B283A-1B8C-4C78-9B2F-9E0466A81084"
+           Scope="perUser">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of PortfoliOS Native Relay Bridge is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="PortfoliOSFolder" Name="PortfoliOS">
+        <Directory Id="INSTALLFOLDER" Name="NativeRelay" />
+      </Directory>
+    </StandardDirectory>
+
+    <ComponentGroup Id="RelayComponents" Directory="INSTALLFOLDER">
+      <Component Id="RelayHostFiles" Guid="C1D2E3F4-A5B6-4C7D-8E9F-0123456789AB">
+        <File Id="HostRunnerBat" Source="..\host\host-runner.bat" KeyPath="yes" />
+        <File Id="HostMjs" Source="..\host\host.mjs" />
+        <File Id="HostPackageJson" Source="..\host\package.json" />
+        <File Id="ChromeManifest" Source="manifests\com.bl4ut0.portfolios.relay.chrome.json" />
+        <File Id="FirefoxManifest" Source="manifests\com.bl4ut0.portfolios.relay.firefox.json" />
+
+        <!-- Chrome Native Messaging registry key -->
+        <RegistryValue Root="HKCU" Key="Software\Google\Chrome\NativeMessagingHosts\com.bl4ut0.portfolios.relay"
+                       Value="[INSTALLFOLDER]com.bl4ut0.portfolios.relay.chrome.json" Type="string" />
+
+        <!-- Microsoft Edge Native Messaging registry key -->
+        <RegistryValue Root="HKCU" Key="Software\Microsoft\Edge\NativeMessagingHosts\com.bl4ut0.portfolios.relay"
+                       Value="[INSTALLFOLDER]com.bl4ut0.portfolios.relay.chrome.json" Type="string" />
+
+        <!-- Brave Browser Native Messaging registry key -->
+        <RegistryValue Root="HKCU" Key="Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.bl4ut0.portfolios.relay"
+                       Value="[INSTALLFOLDER]com.bl4ut0.portfolios.relay.chrome.json" Type="string" />
+
+        <!-- Mozilla Firefox Native Messaging registry key -->
+        <RegistryValue Root="HKCU" Key="Software\Mozilla\NativeMessagingHosts\com.bl4ut0.portfolios.relay"
+                       Value="[INSTALLFOLDER]com.bl4ut0.portfolios.relay.firefox.json" Type="string" />
+
+        <!-- Folder cleanup on uninstall -->
+        <RemoveFolder Id="RemoveINSTALLFOLDER" Directory="INSTALLFOLDER" On="uninstall" />
+        <RemoveFolder Id="RemovePortfoliOSFolder" Directory="PortfoliOSFolder" On="uninstall" />
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="MainFeature" Title="PortfoliOS Native Relay Host" Level="1">
+      <ComponentGroupRef Id="RelayComponents" />
+    </Feature>
+  </Package>
+</Wix>

@@ -6,6 +6,32 @@
  * Tier 2: Cloud WebSocket Relay Fallback (ut99-relay / central server proxy).
  */
 
+function getRelayBridge() {
+  if (typeof window === 'undefined') return null;
+  try {
+    if (window.PortfoliOSNativeRelay) return window.PortfoliOSNativeRelay;
+    if (window.parent && window.parent !== window && window.parent.PortfoliOSNativeRelay) {
+      return window.parent.PortfoliOSNativeRelay;
+    }
+    if (window.top && window.top !== window && window.top.PortfoliOSNativeRelay) {
+      return window.top.PortfoliOSNativeRelay;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function isPrivateSessionActive() {
+  if (typeof window === 'undefined') return true;
+  try {
+    const fn = window.isPrivateUser || window.parent?.isPrivateUser || window.top?.isPrivateUser;
+    if (typeof fn === 'function') {
+      const uid = window.state?.currentUserId || window.parent?.state?.currentUserId || window.top?.state?.currentUserId;
+      return Boolean(fn(uid));
+    }
+  } catch (_) {}
+  return true;
+}
+
 export class GameNetworkClient {
   constructor(options = {}) {
     this.options = {
@@ -21,8 +47,15 @@ export class GameNetworkClient {
    * Initialize and detect best available network tier
    */
   async init() {
-    if (this.options.preferNative && typeof window !== 'undefined' && window.PortfoliOSNativeRelay) {
-      const isAvailable = await window.PortfoliOSNativeRelay.isAvailable();
+    if (!isPrivateSessionActive()) {
+      this.backend = 'none';
+      console.warn('[GameNetworkClient] Network bridge features are excluded to private workspaces only.');
+      throw new Error('Network bridge features are restricted to private workspaces.');
+    }
+
+    const relayBridge = getRelayBridge();
+    if (this.options.preferNative && relayBridge) {
+      const isAvailable = await relayBridge.isAvailable();
       if (isAvailable) {
         this.backend = 'native';
         console.log('[GameNetworkClient] Using Tier 1: Local Native Relay (Direct UDP/TCP)');
@@ -60,8 +93,9 @@ export class GameNetworkClient {
    * @param {number} port
    */
   async createTcpSocket(host, port) {
-    if (this.backend === 'native') {
-      return await window.PortfoliOSNativeRelay.createTcpSocket(host, port);
+    const relayBridge = getRelayBridge();
+    if (this.backend === 'native' && relayBridge) {
+      return await relayBridge.createTcpSocket(host, port);
     } else {
       throw new Error('Raw TCP socket requires the PortfoliOS Native Extension.');
     }
@@ -69,7 +103,8 @@ export class GameNetworkClient {
 
   // --- Internal Native Implementation ---
   async _createNativeUdpSocket(socketOpts) {
-    const socket = await window.PortfoliOSNativeRelay.createUdpSocket(socketOpts.port || 0, socketOpts.address || '0.0.0.0');
+    const relayBridge = getRelayBridge();
+    const socket = await relayBridge.createUdpSocket(socketOpts.port || 0, socketOpts.address || '0.0.0.0');
     return {
       type: 'native-udp',
       boundAddress: socket.boundAddress,

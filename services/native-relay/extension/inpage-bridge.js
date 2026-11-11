@@ -12,6 +12,7 @@
   let requestIdCounter = 0;
   const pendingRequests = new Map();
   const activeSockets = new Map();
+  const streamCallbacks = new Map();
 
   function nextId() {
     return `req_${++requestIdCounter}_${Date.now()}`;
@@ -37,25 +38,30 @@
     return btoa(binary);
   }
 
-  function sendToExtension(payload) {
+  function sendToExtension(payload, onChunk = null) {
     return new Promise((resolve, reject) => {
       const id = payload.id || nextId();
       payload.id = id;
 
       pendingRequests.set(id, { resolve, reject });
+      if (typeof onChunk === 'function') {
+        streamCallbacks.set(id, onChunk);
+      }
 
       window.postMessage({
         source: 'portfolios-relay-inpage',
         payload
       }, '*');
 
-      // 5 second default timeout for control commands
+      const defaultTimeout = payload.type === 'cli.exec' ? 180000 : (payload.type === 'http.fetch' ? 45000 : 7000);
+      const timeoutMs = Number(payload.timeoutMs) || defaultTimeout;
       setTimeout(() => {
+        streamCallbacks.delete(id);
         if (pendingRequests.has(id)) {
           pendingRequests.delete(id);
           reject(new Error(`Relay request timeout (${payload.type})`));
         }
-      }, 7000);
+      }, timeoutMs);
     });
   }
 
@@ -67,10 +73,18 @@
     const msg = event.data.payload;
     if (!msg) return;
 
+    // 0. Stream chunk callback for CLI interpolation
+    if (msg.type === 'cli.chunk' && msg.streamId && streamCallbacks.has(msg.streamId)) {
+      const cb = streamCallbacks.get(msg.streamId);
+      try { cb(msg); } catch (err) { console.error(err); }
+      return;
+    }
+
     // 1. Resolve pending promise by request id
     if (msg.id && pendingRequests.has(msg.id)) {
       const { resolve, reject } = pendingRequests.get(msg.id);
       pendingRequests.delete(msg.id);
+      streamCallbacks.delete(msg.id);
 
       if (msg.error) {
         reject(new Error(msg.error));
@@ -247,7 +261,8 @@
   // Public Relay API
   // ==========================================
   window.PortfoliOSNativeRelay = {
-    version: '1.0.0',
+    version: '1.2.0',
+    extensionInstalled: true,
 
     /**
      * Test if the native messaging relay host is installed and active
@@ -255,10 +270,58 @@
     async isAvailable() {
       try {
         const res = await sendToExtension({ type: 'ping' });
-        return res && res.type === 'pong';
+        return Boolean(res && res.type === 'pong');
       } catch (_) {
         return false;
       }
+    },
+
+    /**
+     * Inspect host capabilities, version, and MSI installation status
+     */
+    async getHostCapabilities() {
+      try {
+        const res = await sendToExtension({ type: 'ping' });
+        if (!res || res.type !== 'pong') {
+          return { extensionInstalled: true, hostConnected: false, msiInstalled: false };
+        }
+        return {
+          extensionInstalled: true,
+          hostConnected: true,
+          msiInstalled: true,
+          version: res.version || '1.1.0',
+          platform: res.platform || 'win32-x64',
+          runtime: res.runtime || '',
+          capabilities: res.capabilities || { udp: true, tcp: true, http: true, cli: true, msiHost: true }
+        };
+      } catch (err) {
+        return { extensionInstalled: true, hostConnected: false, msiInstalled: false, error: err.message };
+      }
+    },
+
+    /**
+     * Query installed Windows CLI binaries (agy, claude, codex) on the host
+     */
+    async getCliStatus(cwd = '') {
+      return await sendToExtension({ type: 'cli.status', cwd });
+    },
+
+    /**
+     * Execute a prompt or subcommand against the native Windows CLI (agy, claude, codex)
+     */
+    async runCliPrompt(options = {}, onChunk = null) {
+      return await sendToExtension({
+        type: 'cli.exec',
+        bin: options.bin || 'agy',
+        prompt: options.prompt || '',
+        subcommand: options.subcommand || '',
+        conversationId: options.conversationId || null,
+        continueSession: Boolean(options.continueSession),
+        model: options.model || null,
+        effort: options.effort || 'high',
+        cwd: options.cwd || '',
+        timeoutMs: options.timeoutMs || 180000
+      }, onChunk);
     },
 
     /**
@@ -283,6 +346,64 @@
         await socket.connect(host, port);
       }
       return socket;
+    },
+
+    /**
+     * Fetch HTTP/HTTPS resources through the native relay (bypasses browser CORS & mixed content)
+     * @param {string} url
+     * @param {Object} options { method, headers, body, responseType, timeoutMs }
+     */
+    async fetch(url, options = {}) {
+      const res = await sendToExtension({
+        type: 'http.fetch',
+        url,
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        body: options.body || null,
+        responseType: options.responseType || 'text',
+        timeoutMs: options.timeoutMs || 30000
+      });
+
+      if (!res) {
+        throw new Error('No response from native relay');
+      }
+      if (res.error) {
+        throw new Error(res.error);
+      }
+
+      const isBase64 = res.isBase64 || options.responseType === 'arraybuffer';
+      const rawData = res.data;
+
+      return {
+        ok: res.ok !== false && res.status >= 200 && res.status < 300,
+        status: res.status || 200,
+        statusText: res.statusText || 'OK',
+        url: res.url || url,
+        contentType: res.contentType || '',
+        headers: {
+          get: (name) => {
+            const lower = String(name || '').toLowerCase();
+            for (const [k, v] of Object.entries(res.headers || {})) {
+              if (k.toLowerCase() === lower) return v;
+            }
+            return null;
+          }
+        },
+        text: async () => {
+          if (!isBase64) return typeof rawData === 'string' ? rawData : '';
+          const bytes = base64ToUint8Array(rawData);
+          return new TextDecoder().decode(bytes);
+        },
+        json: async () => {
+          const txt = !isBase64 ? rawData : new TextDecoder().decode(base64ToUint8Array(rawData));
+          return JSON.parse(txt);
+        },
+        arrayBuffer: async () => {
+          if (isBase64) return base64ToUint8Array(rawData).buffer;
+          return new TextEncoder().encode(String(rawData || '')).buffer;
+        },
+        data: isBase64 ? base64ToUint8Array(rawData).buffer : rawData
+      };
     }
   };
 

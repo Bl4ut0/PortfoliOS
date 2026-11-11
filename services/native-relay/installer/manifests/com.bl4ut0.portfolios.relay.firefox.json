@@ -1,0 +1,10 @@
+{
+  "name": "com.bl4ut0.portfolios.relay",
+  "description": "PortfoliOS Native Relay Host (UDP/TCP Bridge)",
+  "path": "host-runner.bat",
+  "type": "stdio",
+  "allowed_extensions": [
+    "relay@os.bl4ut0.dev",
+    "relay@os.bl4ut0.com"
+  ]
+}

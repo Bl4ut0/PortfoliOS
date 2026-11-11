@@ -53,6 +53,76 @@ const setupStoreTooltips = (contentEl) => {
     });
 
     window.addEventListener("scroll", hideTooltip, { passive: true, capture: true });
+
+    contentEl.addEventListener("click", (event) => {
+        const verifyBtn = event.target.closest("[data-store-verify-relay]");
+        if (verifyBtn) {
+            event.preventDefault();
+            window.verifyStoreRelayHost?.({ manual: true });
+            return;
+        }
+        const setupHostBtn = event.target.closest("[data-store-setup-host]");
+        if (setupHostBtn) {
+            event.preventDefault();
+            const isPrivate = Boolean(window.isPrivateUser?.(state.currentUserId));
+            const bannerEl = contentEl.querySelector(".store-relay-banner");
+            if (bannerEl) {
+                bannerEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                bannerEl.classList.remove("is-highlighted");
+                void bannerEl.offsetWidth;
+                bannerEl.classList.add("is-highlighted");
+            }
+            if (!isPrivate) {
+                window.showDesktopToast?.("Switch to your Private profile and install the Chrome Relay Addon + Windows MSI Host to activate the Windows release side.");
+            } else {
+                window.showDesktopToast?.("Install the Chrome Relay Addon (.zip) and Windows MSI Host (.msi) above to unlock the Windows release CLI & Multiplayer Proxy.");
+            }
+        }
+    });
+};
+
+let storeRelayProbeInFlight = false;
+
+window.verifyStoreRelayHost = async (options = {}) => {
+    if (storeRelayProbeInFlight) return;
+    storeRelayProbeInFlight = true;
+    const manual = Boolean(options && options.manual);
+    try {
+        const hasExtension = Boolean(window.PortfoliOSNativeRelay);
+        let hostConnected = false;
+        let hostVersion = state.nativeRelayHostVersion || "";
+        if (hasExtension && typeof window.PortfoliOSNativeRelay.isAvailable === "function") {
+            hostConnected = Boolean(await window.PortfoliOSNativeRelay.isAvailable());
+        }
+        if (hostConnected && typeof window.PortfoliOSNativeRelay.getCliStatus === "function") {
+            try {
+                const status = await window.PortfoliOSNativeRelay.getCliStatus();
+                if (status && status.ok) {
+                    hostVersion = status.hostVersion || "1.2.0";
+                    state.nativeRelayCliBinaries = status.binaries || null;
+                }
+            } catch (_) {}
+        }
+        const prevConnected = Boolean(state.nativeRelayHostConnected);
+        state.nativeRelayExtensionDetected = hasExtension;
+        state.nativeRelayHostConnected = hostConnected;
+        state.nativeRelayHostVersion = hostVersion;
+        state.nativeRelayCheckedAt = Date.now();
+        if (manual || prevConnected !== hostConnected) {
+            window.renderStore?.();
+        }
+        if (manual) {
+            if (hostConnected) {
+                window.showDesktopToast?.(`Windows Native Relay Host connected (v${hostVersion || "1.2.0"}) — Native CLI & Multiplayer Proxy active.`);
+            } else if (hasExtension) {
+                window.showDesktopToast?.("Chrome Relay Addon detected, but Windows MSI Host is not responding. Install PortfoliOS-NativeRelay.msi.");
+            } else {
+                window.showDesktopToast?.("Native Relay not detected. Install the Chrome Relay Addon (.zip) and Windows MSI Host (.msi).");
+            }
+        }
+    } finally {
+        storeRelayProbeInFlight = false;
+    }
 };
 
 /**
@@ -65,6 +135,17 @@ window.renderStore = () => {
     if (!contentEl) return;
 
     if (!state.installingApps) state.installingApps = {};
+    const isPrivate = Boolean(window.isPrivateUser?.(state.currentUserId));
+    const hasExtension = Boolean(window.PortfoliOSNativeRelay || state.nativeRelayExtensionDetected);
+    const hasMsiHost = Boolean(state.nativeRelayHostConnected);
+    const windowsReleaseReady = isPrivate && hasExtension && hasMsiHost;
+    const relayProxyReady = hasExtension && hasMsiHost;
+
+    if (!state.nativeRelayCheckedAt || Date.now() - state.nativeRelayCheckedAt > 15000) {
+        state.nativeRelayCheckedAt = Date.now();
+        setTimeout(() => { window.verifyStoreRelayHost?.({ manual: false }); }, 30);
+    }
+
     const activeCategory = state.storeCategory || "all";
     const activeInstallFilter = state.storeInstallFilter || "all";
     const storeApps = window.storeApps || [];
@@ -136,13 +217,58 @@ window.renderStore = () => {
         const installingProgress = state.installingApps[app.id];
         const isInstalling = installingProgress !== undefined;
         const installable = app.installable !== false;
-        const stateLabel = !installable ? "Hosted" : installed ? "Installed" : "Not installed";
+        const requiresWindowsHost = Boolean(app.requiresWindowsHost);
+        const multiplayerRelay = Boolean(app.multiplayerRelay);
+        const lockedPublicWindowsApp = requiresWindowsHost && !isPrivate;
+        const stateLabel = lockedPublicWindowsApp
+            ? "Locked (Private + MSI)"
+            : !installable
+                ? "Hosted"
+                : installed
+                    ? "Installed"
+                    : "Not installed";
         const appId = escapeHtml(app.id);
         const title = escapeHtml(app.title);
         const category = escapeHtml(app.category);
         const description = escapeHtml(app.description);
         const size = escapeHtml(app.size);
         const publisher = escapeHtml(app.publisher);
+
+        let relayBadgeHtml = "";
+        if (requiresWindowsHost) {
+            if (windowsReleaseReady) {
+                relayBadgeHtml = `
+                    <div class="store-card-relay-badge is-ready" title="${escapeHtml(app.windowsHostNote || "")}">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Windows Release Active · Chrome Relay + MSI Host Connected</span>
+                    </div>
+                `;
+            } else {
+                relayBadgeHtml = `
+                    <div class="store-card-relay-badge is-locked" title="${escapeHtml(app.windowsHostNote || "")}">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>Windows Release Lockout: Requires Private Profile + Chrome Relay + MSI Host (Uninstallable via Windows Apps)</span>
+                    </div>
+                `;
+            }
+        } else if (multiplayerRelay) {
+            const mpNote = app.multiplayerNote || "Multiplayer requires the PortfoliOS Native Relay Proxy.";
+            if (relayProxyReady) {
+                relayBadgeHtml = `
+                    <div class="store-card-relay-badge is-ready" title="${escapeHtml(mpNote)}">
+                        <i class="fa-solid fa-network-wired"></i>
+                        <span>Multiplayer Proxy Active · Native Relay Connected</span>
+                    </div>
+                `;
+            } else {
+                relayBadgeHtml = `
+                    <div class="store-card-relay-badge is-proxy" title="${escapeHtml(mpNote)}">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                        <span>${escapeHtml(mpNote)}</span>
+                    </div>
+                `;
+            }
+        }
 
         let actionButtonHtml = "";
         if (isInstalling) {
@@ -154,6 +280,12 @@ window.renderStore = () => {
                     </div>
                 </div>
             `;
+        } else if (lockedPublicWindowsApp) {
+            actionButtonHtml = `
+                <button type="button" class="store-btn locked" data-store-setup-host="${appId}" title="Private Profile + Chrome Relay + Windows MSI Host required">
+                    <i class="fa-solid fa-lock"></i> Locked · Host Required
+                </button>
+            `;
         } else if (!installable && app.bookmarkId) {
             actionButtonHtml = `
                 <button type="button" class="store-btn open" data-open-store-bookmark="${escapeHtml(app.bookmarkId)}">
@@ -162,6 +294,11 @@ window.renderStore = () => {
             `;
         } else if (installed) {
             actionButtonHtml = `
+                ${requiresWindowsHost && !windowsReleaseReady ? `
+                    <button type="button" class="store-btn host-setup" data-store-setup-host="${appId}" title="Activate Windows Release via Chrome Relay + MSI Host">
+                        <i class="fa-brands fa-windows"></i> Host Setup
+                    </button>
+                ` : ""}
                 <button type="button" class="store-btn launch" data-open-app="${appId}">
                     <i class="fa-solid fa-play"></i> Launch
                 </button>
@@ -171,6 +308,11 @@ window.renderStore = () => {
             `;
         } else {
             actionButtonHtml = `
+                ${requiresWindowsHost && !windowsReleaseReady ? `
+                    <button type="button" class="store-btn host-setup" data-store-setup-host="${appId}" title="Activate Windows Release via Chrome Relay + MSI Host">
+                        <i class="fa-brands fa-windows"></i> Host Setup
+                    </button>
+                ` : ""}
                 <button type="button" class="store-btn install" data-install-store-app="${appId}">
                     <i class="fa-solid fa-download"></i> Install
                 </button>
@@ -178,7 +320,7 @@ window.renderStore = () => {
         }
 
         return `
-            <div class="store-app-card" data-store-context="${appId}">
+            <div class="store-app-card ${requiresWindowsHost && !windowsReleaseReady ? "is-host-gated" : ""}" data-store-context="${appId}">
                 <div class="store-app-card-header">
                     <div class="store-app-card-icon">
                         ${window.getAppIconHtml(app.icon, "", app.id)}
@@ -190,6 +332,7 @@ window.renderStore = () => {
                     <b class="store-app-state">${escapeHtml(stateLabel)}</b>
                 </div>
                 <p class="store-app-card-desc" data-store-desc="${description}" aria-label="${description}">${description}</p>
+                ${relayBadgeHtml}
                 <div class="store-app-card-footer">
                     <div class="store-app-card-meta">
                         <div>${installable ? "Size" : "Mode"}: ${size}</div>
@@ -205,6 +348,46 @@ window.renderStore = () => {
 
     setupStoreTooltips(contentEl);
 
+    const relayBannerHtml = `
+        <div class="store-relay-banner ${windowsReleaseReady ? "is-ready" : "is-locked"}" role="region" aria-label="Windows Release and Multiplayer Proxy Requirements">
+            <div class="store-relay-banner-main">
+                <div class="store-relay-banner-title">
+                    <i class="fa-solid ${windowsReleaseReady ? "fa-shield-check" : "fa-lock"}"></i>
+                    <strong>${windowsReleaseReady ? "Windows Release & Native Relay Proxy Active" : "Windows Release Lockout & Multiplayer Proxy Advisory"}</strong>
+                    <div class="store-relay-pills">
+                        <span class="store-relay-pill ${isPrivate ? "is-ok" : "is-warn"}">
+                            <i class="fa-solid ${isPrivate ? "fa-user-check" : "fa-user-lock"}"></i>
+                            ${isPrivate ? "Private Profile Active" : "Private Profile Required"}
+                        </span>
+                        <span class="store-relay-pill ${hasExtension ? "is-ok" : "is-warn"}">
+                            <i class="fa-brands fa-chrome"></i>
+                            ${hasExtension ? "Chrome Relay Installed" : "Chrome Relay Required"}
+                        </span>
+                        <span class="store-relay-pill ${hasMsiHost ? "is-ok" : "is-warn"}">
+                            <i class="fa-brands fa-windows"></i>
+                            ${hasMsiHost ? `Windows MSI Host Connected${state.nativeRelayHostVersion ? ` (v${escapeHtml(state.nativeRelayHostVersion)})` : ""}` : "Windows MSI Host Required"}
+                        </span>
+                    </div>
+                </div>
+                <p class="store-relay-banner-desc">
+                    <strong>Windows Release Side (Native CLI):</strong> Private users must install both the <strong>PortfoliOS Chrome Relay Addon</strong> and the <strong>Windows MSI Installer Host (<code>PortfoliOS-NativeRelay.msi</code>)</strong> to unlock native Windows CLI interpolation (<code>agy</code>, <code>claude</code>, <code>codex</code>). The host is packaged as a standard Windows <code>.msi</code> so you can uninstall it anytime via <em>Windows Installed Apps</em> to disable local <code>cmd</code>/CLI access.
+                    <strong>Multiplayer Game Proxy:</strong> Single-player games run in-browser; multiplayer on game files (<code>UT99</code>, <code>Quake</code>, <code>Diablo</code>, <code>OpenRCT2</code>, <code>Doom</code>, <code>Duke3D</code>) and HTTP IPTV streams require the Native Relay Proxy.
+                </p>
+            </div>
+            <div class="store-relay-banner-actions">
+                <a class="store-relay-action-btn" href="/dist/portfolios-native-relay.zip" download="portfolios-native-relay.zip">
+                    <i class="fa-brands fa-chrome"></i> Chrome Relay (.zip)
+                </a>
+                <a class="store-relay-action-btn primary" href="/dist/PortfoliOS-NativeRelay.msi" download="PortfoliOS-NativeRelay.msi">
+                    <i class="fa-brands fa-windows"></i> Windows Host (.msi)
+                </a>
+                <button type="button" class="store-relay-action-btn" data-store-verify-relay="true">
+                    <i class="fa-solid fa-rotate"></i> Verify Host
+                </button>
+            </div>
+        </div>
+    `;
+
     contentEl.innerHTML = `
         <div class="store-hero">
             <i class="fa-solid fa-shop store-hero-icon"></i>
@@ -213,6 +396,7 @@ window.renderStore = () => {
                 <p>Install games, launch hosted services, and stage future productivity apps.</p>
             </div>
         </div>
+        ${relayBannerHtml}
         <div class="store-toolbar" aria-label="Store install filters">
             ${installFilterHtml}
         </div>

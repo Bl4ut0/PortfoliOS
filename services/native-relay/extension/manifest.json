@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "PortfoliOS Native Relay",
-  "version": "1.1.0",
-  "description": "Native UDP & TCP network bridge for PortfoliOS apps. Scoped to os.bl4ut0.dev.",
+  "version": "1.2.0",
+  "description": "Native UDP/TCP/HTTP & Windows CLI bridge for PortfoliOS apps. Scoped to os.bl4ut0.dev.",
   "permissions": [
     "nativeMessaging",
     "tabs"

@@ -1,8 +1,23 @@
 WEBS = {};
 
+WEBS.GetNativeRelay = function()
+{
+	try
+	{
+		if (window.PortfoliOSNativeRelay)
+			return window.PortfoliOSNativeRelay;
+		if (window.parent && window.parent !== window && window.parent.PortfoliOSNativeRelay)
+			return window.parent.PortfoliOSNativeRelay;
+		if (window.top && window.top !== window && window.top.PortfoliOSNativeRelay)
+			return window.top.PortfoliOSNativeRelay;
+	}
+	catch (e) {}
+	return null;
+};
+
 WEBS.Init = function()
 {
-	if ((window.WebSocket == null) || (document.location.protocol === 'https:'))
+	if ((window.WebSocket == null) && (WEBS.GetNativeRelay() == null))
 		return;
 	WEBS.available = true;
 	return true;
@@ -10,13 +25,68 @@ WEBS.Init = function()
 
 WEBS.Connect = function(host)
 {
+	if (!host || host.length <= 3)
+		return;
+	var relay = WEBS.GetNativeRelay();
+	var isUdpRelay = (host.substring(0, 6) === 'udp://') || (relay != null && document.location.protocol === 'https:' && host.substring(0, 5) === 'ws://');
+	if (isUdpRelay && relay != null && typeof relay.createUdpSocket === 'function')
+	{
+		var rawTarget = host.replace(/^(udp|ws|wss):\/\//i, '').split('/')[0];
+		var parts = rawTarget.split(':');
+		var targetHost = parts[0] || '127.0.0.1';
+		var targetPort = parseInt(parts[1] || '26000', 10) || 26000;
+		var sock = NET.NewQSocket();
+		sock.disconnected = true;
+		sock.receiveMessage = [];
+		sock.address = 'udp://' + targetHost + ':' + targetPort;
+		var driver = {
+			readyState: 0,
+			data_socket: sock,
+			udpSocket: null,
+			send: function(buf)
+			{
+				if (this.udpSocket)
+					this.udpSocket.send(new Uint8Array(buf), targetPort, targetHost);
+			},
+			close: function()
+			{
+				this.readyState = 3;
+				if (this.udpSocket)
+					this.udpSocket.close();
+			}
+		};
+		sock.driverdata = driver;
+		relay.createUdpSocket(0, '0.0.0.0').then(function(udpSock)
+		{
+			driver.udpSocket = udpSock;
+			driver.readyState = 1;
+			udpSock.on('message', function(bytes)
+			{
+				if (bytes && bytes.byteLength <= 8000)
+					sock.receiveMessage.push(new Uint8Array(bytes));
+			});
+			udpSock.on('error', function()
+			{
+				NET.Close(sock);
+			});
+		}).catch(function()
+		{
+			driver.readyState = 3;
+			NET.Close(sock);
+		});
+		NET.newsocket = sock;
+		return 0;
+	}
 	if (host.length <= 5)
 		return;
-	if (host.charCodeAt(5) === 47)
+	if (host.charCodeAt(5) === 47 && host.substring(0, 6) !== 'wss://')
 		return;
-	if (host.substring(0, 5) !== 'ws://')
+	var isWss = host.substring(0, 6) === 'wss://';
+	var isWs = host.substring(0, 5) === 'ws://';
+	if (!isWs && !isWss)
 		return;
-	host = 'ws://' + host.split('/')[2];
+	var scheme = isWss ? 'wss://' : (document.location.protocol === 'https:' ? 'wss://' : 'ws://');
+	host = scheme + host.split('/')[2];
 	var sock = NET.NewQSocket();
 	sock.disconnected = true;
 	sock.receiveMessage = [];
