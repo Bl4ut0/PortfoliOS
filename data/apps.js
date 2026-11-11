@@ -155,11 +155,9 @@ window.storeApps = [
         title: "Codex CLI",
         icon: "apps/codex/icon.svg",
         category: "Productivity",
-        description: "Native AI CLI environment for Antigravity CLI (agy), OpenAI Codex, and Claude Code. Windows Release host execution requires a Private Profile, the PortfoliOS Chrome Relay Extension, and the Windows MSI Host Installer (uninstallable anytime via Windows Settings to disable cmd/CLI access).",
-        size: "Linux WASM + Windows MSI Host",
-        publisher: "PortfoliOS / OpenAI / Google / Anthropic",
-        requiresWindowsHost: true,
-        windowsHostNote: "Windows Release side requires Private Profile + Chrome Relay + MSI Host (uninstall MSI anytime to disable cmd/CLI)."
+        description: "In-browser Linux/WASM virtual terminal & Cloud Remote Agent environment for Antigravity CLI (agy), Claude Code (claude), OpenAI Codex (codex), and Gemini CLI—supporting live upstream version updates and persistent detached cloud sessions.",
+        size: "Linux WASM + Cloud Remote",
+        publisher: "PortfoliOS / OpenAI / Google / Anthropic"
     },
     {
         id: "romplayer",

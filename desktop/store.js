@@ -73,9 +73,9 @@ const setupStoreTooltips = (contentEl) => {
                 bannerEl.classList.add("is-highlighted");
             }
             if (!isPrivate) {
-                window.showDesktopToast?.("Switch to your Private profile and install the Chrome Relay Addon + Windows MSI Host to activate the Windows release side.");
+                window.showDesktopToast?.("Switch to your Private profile and install the Chrome Relay Addon + Windows MSI Host to activate the Windows Native Relay.");
             } else {
-                window.showDesktopToast?.("Install the Chrome Relay Addon (.zip) and Windows MSI Host (.msi) above to unlock the Windows release CLI & Multiplayer Proxy.");
+                window.showDesktopToast?.("Install the Chrome Relay Addon (.zip) and Windows MSI Host (.msi) above to activate the Windows Native Relay & Multiplayer Proxy.");
             }
         }
     });
@@ -91,17 +91,12 @@ window.verifyStoreRelayHost = async (options = {}) => {
         const hasExtension = Boolean(window.PortfoliOSNativeRelay);
         let hostConnected = false;
         let hostVersion = state.nativeRelayHostVersion || "";
-        if (hasExtension && typeof window.PortfoliOSNativeRelay.isAvailable === "function") {
+        if (hasExtension && typeof window.PortfoliOSNativeRelay.getHostCapabilities === "function") {
+            const caps = await window.PortfoliOSNativeRelay.getHostCapabilities();
+            hostConnected = Boolean(caps && caps.hostConnected);
+            if (caps && caps.version) hostVersion = caps.version;
+        } else if (hasExtension && typeof window.PortfoliOSNativeRelay.isAvailable === "function") {
             hostConnected = Boolean(await window.PortfoliOSNativeRelay.isAvailable());
-        }
-        if (hostConnected && typeof window.PortfoliOSNativeRelay.getCliStatus === "function") {
-            try {
-                const status = await window.PortfoliOSNativeRelay.getCliStatus();
-                if (status && status.ok) {
-                    hostVersion = status.hostVersion || "1.2.0";
-                    state.nativeRelayCliBinaries = status.binaries || null;
-                }
-            } catch (_) {}
         }
         const prevConnected = Boolean(state.nativeRelayHostConnected);
         state.nativeRelayExtensionDetected = hasExtension;
@@ -113,7 +108,7 @@ window.verifyStoreRelayHost = async (options = {}) => {
         }
         if (manual) {
             if (hostConnected) {
-                window.showDesktopToast?.(`Windows Native Relay Host connected (v${hostVersion || "1.2.0"}) — Native CLI & Multiplayer Proxy active.`);
+                window.showDesktopToast?.(`Windows Native Relay Host connected (v${hostVersion || "1.2.0"}) — Multiplayer UDP/TCP & Stream Proxy active.`);
             } else if (hasExtension) {
                 window.showDesktopToast?.("Chrome Relay Addon detected, but Windows MSI Host is not responding. Install PortfoliOS-NativeRelay.msi.");
             } else {
@@ -370,7 +365,7 @@ window.renderStore = () => {
                     </div>
                 </div>
                 <p class="store-relay-banner-desc">
-                    <strong>Windows Release Side (Native CLI):</strong> Private users must install both the <strong>PortfoliOS Chrome Relay Addon</strong> and the <strong>Windows MSI Installer Host (<code>PortfoliOS-NativeRelay.msi</code>)</strong> to unlock native Windows CLI interpolation (<code>agy</code>, <code>claude</code>, <code>codex</code>). The host is packaged as a standard Windows <code>.msi</code> so you can uninstall it anytime via <em>Windows Installed Apps</em> to disable local <code>cmd</code>/CLI access.
+                    <strong>Windows Release Relay Lockout:</strong> Private users need both the <strong>PortfoliOS Chrome Relay Addon</strong> and the <strong>Windows MSI Installer Host (<code>PortfoliOS-NativeRelay.msi</code>)</strong> to activate the Windows native relay side. The host is packaged as a standard Windows <code>.msi</code> so you can uninstall it anytime via <em>Windows Installed Apps</em> if you want to disable the host <code>cmd</code>/relay bridge.
                     <strong>Multiplayer Game Proxy:</strong> Single-player games run in-browser; multiplayer on game files (<code>UT99</code>, <code>Quake</code>, <code>Diablo</code>, <code>OpenRCT2</code>, <code>Doom</code>, <code>Duke3D</code>) and HTTP IPTV streams require the Native Relay Proxy.
                 </p>
             </div>

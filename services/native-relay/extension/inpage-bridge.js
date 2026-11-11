@@ -289,39 +289,14 @@
           extensionInstalled: true,
           hostConnected: true,
           msiInstalled: true,
-          version: res.version || '1.1.0',
+          version: res.version || '1.2.0',
           platform: res.platform || 'win32-x64',
           runtime: res.runtime || '',
-          capabilities: res.capabilities || { udp: true, tcp: true, http: true, cli: true, msiHost: true }
+          capabilities: res.capabilities || { udp: true, tcp: true, http: true, msiHost: true }
         };
       } catch (err) {
         return { extensionInstalled: true, hostConnected: false, msiInstalled: false, error: err.message };
       }
-    },
-
-    /**
-     * Query installed Windows CLI binaries (agy, claude, codex) on the host
-     */
-    async getCliStatus(cwd = '') {
-      return await sendToExtension({ type: 'cli.status', cwd });
-    },
-
-    /**
-     * Execute a prompt or subcommand against the native Windows CLI (agy, claude, codex)
-     */
-    async runCliPrompt(options = {}, onChunk = null) {
-      return await sendToExtension({
-        type: 'cli.exec',
-        bin: options.bin || 'agy',
-        prompt: options.prompt || '',
-        subcommand: options.subcommand || '',
-        conversationId: options.conversationId || null,
-        continueSession: Boolean(options.continueSession),
-        model: options.model || null,
-        effort: options.effort || 'high',
-        cwd: options.cwd || '',
-        timeoutMs: options.timeoutMs || 180000
-      }, onChunk);
     },
 
     /**
