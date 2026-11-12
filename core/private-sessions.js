@@ -7,24 +7,34 @@
             if(this.tabIdentity)return this.tabIdentity;
             if(!navigator.locks)throw new Error('This browser needs Web Locks for a safe private workspace.');
             this.tabIdentity=(async()=>{
-                const saved=sessionStorage.getItem('portfolios:session-id');
-                if(/^[a-f0-9-]{36}$/.test(saved || ''))this.id=saved;
-                const acquire=()=>new Promise((resolve,reject)=>{
-                    this.tabLock=navigator.locks.request('portfolios:session-tab:'+this.id,{ifAvailable:true},lock=>{
+                const savedSession = sessionStorage.getItem('portfolios:session-id');
+                const savedDevice = localStorage.getItem('portfolios:device-session-id');
+                const saved = (/^[a-f0-9-]{36}$/.test(savedSession || ''))
+                    ? savedSession
+                    : (/^[a-f0-9-]{36}$/.test(savedDevice || '') ? savedDevice : null);
+                if (saved) this.id = saved;
+                const acquire = () => new Promise((resolve, reject) => {
+                    this.tabLock = navigator.locks.request('portfolios:session-tab:' + this.id, { ifAvailable: true }, lock => {
                         resolve(!!lock);
-                        return lock ? new Promise(done=>{this.releaseTabLock=done;}) : undefined;
+                        return lock ? new Promise(done => { this.releaseTabLock = done; }) : undefined;
                     }).catch(reject);
                 });
-                for(let attempt=0;attempt<2;attempt++) {
-                    let acquired=await acquire();
-                    // A refreshing document can briefly retain its Web Lock. Give that
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    let acquired = await acquire();
+                    // A refreshing or relaunching document can briefly retain its Web Lock. Give that
                     // same saved identity time to settle before treating it as a clone.
-                    for(let wait=0;!acquired && saved===this.id && wait<24;wait++){
-                        await new Promise(resolve=>setTimeout(resolve,50));
-                        acquired=await acquire();
+                    for (let wait = 0; !acquired && saved === this.id && wait < 24; wait++) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                        acquired = await acquire();
                     }
-                    if(acquired){sessionStorage.setItem('portfolios:session-id',this.id);return;}
-                    this.id=crypto.randomUUID();
+                    if (acquired) {
+                        sessionStorage.setItem('portfolios:session-id', this.id);
+                        if (saved === this.id) {
+                            try { localStorage.setItem('portfolios:device-session-id', this.id); } catch (_) {}
+                        }
+                        return;
+                    }
+                    this.id = crypto.randomUUID();
                 }
                 throw new Error('A unique workspace tab could not be opened.');
             })();
@@ -70,7 +80,15 @@
             }
             const title=document.createElement('h1'); title.textContent='Private workspace'; panel.append(title);
             const text=document.createElement('p'); text.textContent=message; text.setAttribute('role','status'); panel.append(text);
-            for(const [label,callback] of actions) {const button=document.createElement('button');button.type='button';button.className='session-public-action';button.textContent=label;button.onclick=()=>callback().catch(error=>{text.textContent=error.message;});panel.append(button);}
+            for(const [label,callback,options] of actions) {
+                const button=document.createElement('button');
+                button.type='button';
+                button.className='session-public-action';
+                if(options?.primary) button.classList.add('primary');
+                button.textContent=label;
+                button.onclick=()=>callback(button,text).catch(error=>{text.textContent=error.message;});
+                panel.append(button);
+            }
             node.append(panel);
             const host=node.dataset.experience==='mobile' ? document.getElementById('mobile-device') || document.body : document.body;
             this.inerted=Array.from(host.children).map(child=>[child,child.inert]);this.inerted.forEach(([child])=>child.inert=true);
@@ -78,7 +96,18 @@
             return text;
         },
         hide() { document.getElementById('session-transfer-overlay')?.remove();this.inerted?.forEach(([node,value])=>node.inert=value);this.inerted=null; },
-        adopt(value) {this.epoch=value.epoch;this.owner=window.state.currentUserId;this.owned=true;this.ready=false;this.verifiedAt=Date.now();this.start();},
+        adopt(value) {
+            this.epoch = value.epoch;
+            this.owner = window.state.currentUserId;
+            this.owned = true;
+            this.ready = false;
+            this.verifiedAt = Date.now();
+            try {
+                sessionStorage.setItem('portfolios:session-id', this.id);
+                localStorage.setItem('portfolios:device-session-id', this.id);
+            } catch (_) {}
+            this.start();
+        },
         start() {clearInterval(this.timer);this.timer=setInterval(()=>this.tick(),15000);},
         async assert() {
             if(!this.required())return;
@@ -182,17 +211,59 @@
             }, 100);
         },
         chooseTakeover() {
-            return new Promise((resolve,reject)=>{
-                let polling=null, settled=false;
-                const finish=(value,error)=>{if(settled)return;settled=true;clearInterval(polling);this.hide();error?reject(error):resolve(value);};
-                const poll=async()=>{try{const value=await this.request('request');if(value.owned)finish(value);}catch(error){text.textContent=error.message;}};
-                const text=this.show('This account is active in another session. Request a handoff to save and sync that workspace first.',[
-                    ['Save other session & take over',async()=>{await poll();if(!settled){text.textContent='Waiting for the other session to save and finish Drive sync. Keep this screen open.';polling ||= setInterval(poll,3000);}}],
-                    ['Other device unavailable…',async()=>{this.show('Force takeover cannot save unreachable work. Its local changes remain on that device and will be recovered when it next connects and acquires a session.',[
-                        ['Force takeover and preserve recovery',async()=>finish(await this.request('force'))],
-                        ['Cancel',async()=>{const value=await this.request('cancel');if(value.owned){this.epoch=value.epoch;await this.request('release');}finish(null,new Error('Takeover cancelled.'));}]
-                    ]);}],
-                    ['Cancel',async()=>{const value=await this.request('cancel');if(value.owned){this.epoch=value.epoch;await this.request('release');}finish(null,new Error('Takeover cancelled.'));}]
+            return new Promise((resolve, reject) => {
+                let polling = null, settled = false;
+                const finish = (value, error) => { if (settled) return; settled = true; clearInterval(polling); this.hide(); error ? reject(error) : resolve(value); };
+                const poll = async () => {
+                    try {
+                        const value = await this.request('request');
+                        if (value.owned) finish(value);
+                    } catch (error) {
+                        text.textContent = error.message;
+                    }
+                };
+                const renderWaitingHandoff = () => {
+                    this.show('Waiting for the other session to save and finish Drive sync. Keep this screen open.', [
+                        ['Force takeover now (other window closed)', async () => finish(await this.request('force')), { primary: true }],
+                        ['Cancel', async () => {
+                            const value = await this.request('cancel');
+                            if (value.owned) {
+                                this.epoch = value.epoch;
+                                await this.request('release');
+                            }
+                            finish(null, new Error('Takeover cancelled.'));
+                        }]
+                    ]);
+                };
+                const text = this.show('This account is active in another session. Request a handoff to save and sync that workspace first.', [
+                    ['Save other session & take over', async () => {
+                        await poll();
+                        if (!settled) {
+                            renderWaitingHandoff();
+                            polling ||= setInterval(poll, 3000);
+                        }
+                    }],
+                    ['Other device unavailable…', () => {
+                        this.show('Force takeover cannot save unreachable work. Its local changes remain on that device and will be recovered when it next connects and acquires a session.', [
+                            ['Force takeover and preserve recovery', async () => finish(await this.request('force')), { primary: true }],
+                            ['Cancel', async () => {
+                                const value = await this.request('cancel');
+                                if (value.owned) {
+                                    this.epoch = value.epoch;
+                                    await this.request('release');
+                                }
+                                finish(null, new Error('Takeover cancelled.'));
+                            }]
+                        ]);
+                    }],
+                    ['Cancel', async () => {
+                        const value = await this.request('cancel');
+                        if (value.owned) {
+                            this.epoch = value.epoch;
+                            await this.request('release');
+                        }
+                        finish(null, new Error('Takeover cancelled.'));
+                    }]
                 ]);
             });
         },
@@ -201,9 +272,28 @@
             this.busy=true;
             try {
                 const value=await this.request('renew');this.verifiedAt=Date.now();
-                if(!value.owned || value.epoch!==this.epoch){this.owned=false;this.lock('This private workspace moved to another session. Local changes are retained for recovery.');return;}
+                if(!value.owned || value.epoch!==this.epoch){
+                    if (!value.occupied) {
+                        try {
+                            const claimed = await this.request('claim');
+                            if (claimed.owned) {
+                                this.adopt(claimed);
+                                return;
+                            }
+                        } catch (_) {}
+                    }
+                    this.owned=false;this.lock('This private workspace moved to another session. Local changes are retained for recovery.');return;
+                }
                 if(value.handoffRequested && !this.handoffPaused && !GDriveSync.syncInProgress)await this.handoff();
-            } catch(error) {this.owned=false;this.lock(error.message);}
+            } catch(error) {
+                const isAuthOrTakeover = error.status === 401 || error.status === 409 || !window.GDriveSync?.getToken();
+                const leaseGraceExpired = Date.now() - (this.verifiedAt || 0) > 180_000;
+                if (isAuthOrTakeover || leaseGraceExpired) {
+                    this.owned=false;this.lock(error.message);
+                } else {
+                    console.warn('[PrivateSessions] Heartbeat retry scheduled:', error.message);
+                }
+            }
             finally {this.busy=false;}
         },
         async handoff() {
@@ -238,15 +328,102 @@
             await window.savePreferencesToFilesystem?.({strict:true});
         },
         lock(message) {
-            clearInterval(this.timer);clearTimeout(window.GDriveSync?.pendingSyncTimer);
+            clearInterval(this.timer);
+            if (window.GDriveSync?.pendingSyncTimer !== null) {
+                clearTimeout(window.GDriveSync?.pendingSyncTimer);
+                if (window.GDriveSync) window.GDriveSync.pendingSyncTimer = null;
+            }
             window.state.sessionChosen=false;this.owned=false;this.ready=false;
-            const save=async()=>{this.pendingLocalSave=this.flushLocal();await this.pendingLocalSave;};
-            const text=this.show(message,[
-                ['Retry local save',save],
-                ['Choose account',async()=>{this.hide();window.closeSessionChooser?.();window.openSessionChooser?.();}]
+
+            const isGoogleAuth = !window.GDriveSync?.getToken() ||
+                /reconnect|invalid|401|403|unauthorized|session coordination/i.test(String(message || ''));
+
+            const actions = [];
+            if (isGoogleAuth && window.GDriveSync) {
+                actions.push([
+                    'Reconnect Google',
+                    async (btn, textEl) => {
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Reconnecting…';
+                        }
+                        try {
+                            const expectedSub = window.getSavedPrivateProfile?.(session.owner || window.state?.currentUserId)?.sub || null;
+                            await window.GDriveSync.loadGsiLibrary?.();
+                            await window.GDriveSync.login(window.GDriveSync.defaultClientId, {
+                                expectedSub,
+                                selectAccount: false
+                            });
+                            if (textEl) textEl.textContent = 'Google workspace reconnected. Opening…';
+                            if (window.GDriveSync) window.GDriveSync.syncInProgress = false;
+                            session.hide();
+                            await session.enter();
+                            window.showDesktopToast?.('Google workspace reconnected.');
+                        } catch (err) {
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.textContent = 'Reconnect Google';
+                            }
+                            if (textEl) textEl.textContent = 'Reconnection failed: ' + (err.message || err);
+                        }
+                    },
+                    { primary: true }
+                ]);
+            }
+
+            const save = async (btn, textEl) => {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving locally…';
+                }
+                try {
+                    this.pendingLocalSave = this.flushLocal();
+                    await this.pendingLocalSave;
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '✓ Local changes saved';
+                    }
+                    if (textEl) textEl.textContent = 'All open apps and local changes are saved safely to this device.';
+                } catch (err) {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = 'Retry local save';
+                    }
+                    if (textEl) textEl.textContent = 'Local save failed: ' + (err.message || err);
+                }
+            };
+
+            actions.push(['Retry local save', save]);
+
+            actions.push([
+                'Choose account',
+                async (btn, textEl) => {
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Opening…';
+                    }
+                    try {
+                        if (window.GDriveSync) {
+                            clearTimeout(window.GDriveSync.pendingSyncTimer);
+                            window.GDriveSync.pendingSyncTimer = null;
+                            window.GDriveSync.syncInProgress = false;
+                        }
+                        this.hide();
+                        window.closeSessionChooser?.();
+                        window.openSessionChooser?.({ force: true });
+                    } catch (err) {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.textContent = 'Choose account';
+                        }
+                        if (textEl) textEl.textContent = 'Could not open account list: ' + (err.message || err);
+                    }
+                }
             ]);
-            this.pendingLocalSave=this.flushLocal();
-            this.pendingLocalSave.catch(error=>{text.textContent=message+' Local save needs attention: '+error.message;});
+
+            const text = this.show(message, actions);
+            this.pendingLocalSave = this.flushLocal();
+            this.pendingLocalSave.catch(error => { text.textContent = message + ' Local save needs attention: ' + error.message; });
         },
         async release({synced=false,allowOffline=false}={}) {
             if(this.owned){try{await this.request('release',{snapshot:window.WorkspaceRecovery?.lastSnapshot || null,synced});}catch(error){if(!allowOffline || synced || error.status===409)throw error;}}
@@ -255,5 +432,25 @@
     };
     window.PrivateSessions=session;
     window.EventBus?.on('user:changed',()=>{if(session.owner && session.owner!==window.state.currentUserId){session.owned=false;session.ready=false;session.pendingLocalSave=null;session.handoffPaused=false;clearInterval(session.timer);}});
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden)session.tick();});
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) session.tick(); });
+    window.addEventListener('pagehide', () => {
+        if (session.owned && session.owner === window.state?.currentUserId && window.PrivateSessions?.required()) {
+            const token = window.GDriveSync?.getToken();
+            if (token) {
+                try {
+                    fetch('/core/private-session.php?action=release', {
+                        method: 'POST',
+                        keepalive: true,
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json',
+                            'X-PortfoliOS-Session': session.id,
+                            'X-PortfoliOS-Epoch': String(session.epoch)
+                        },
+                        body: JSON.stringify({ synced: true, allowOffline: true })
+                    }).catch(() => {});
+                } catch (_) {}
+            }
+        }
+    });
 })();

@@ -182,7 +182,8 @@
         const diskBtn = document.createElement("button");
         diskBtn.type = "button";
         diskBtn.className = "breadcrumb-segment";
-        diskBtn.innerHTML = '<i class="fa-solid fa-hard-drive"></i> Local Disk (C:)';
+        diskBtn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Workspace';
+        diskBtn.title = "Workspace root (/)";
         diskBtn.addEventListener("click", () => {
             currentPath = "/";
             clearSearchInput(windowEl);
@@ -212,8 +213,180 @@
         }
     }
 
+    const BASE_SIDEBAR_SHORTCUTS = [
+        { path: THIS_PC_PATH, label: "This PC", icon: "fa-solid fa-computer" },
+        { path: "/Desktop", label: "Desktop", icon: "fa-solid fa-desktop" },
+        { path: "/documents", label: "Documents", icon: "fa-solid fa-file-lines" },
+        { path: "/Pictures", label: "Pictures", icon: "fa-solid fa-image" },
+        { path: "/music", label: "Music", icon: "fa-solid fa-music" },
+        { path: "/Downloads", label: "Downloads", icon: "fa-solid fa-download" },
+        { path: "/ROMs", label: "ROMs", icon: "fa-solid fa-gamepad" },
+        { path: "/Saved Games", label: "Saved Games", icon: "fa-solid fa-gamepad" },
+        { path: "/Recycle Bin", label: "Recycle Bin", icon: "fa-solid fa-trash-can" }
+    ];
+
+    function getPinnedShortcuts() {
+        try {
+            const key = window.getPreferencesKey ? window.getPreferencesKey("FilesPinnedShortcuts") : "FilesPinnedShortcuts";
+            const raw = window.Storage ? window.Storage.local.get(key) : localStorage.getItem(key);
+            if (raw) {
+                const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed;
+                }
+            }
+        } catch (_) {}
+        return [...BASE_SIDEBAR_SHORTCUTS];
+    }
+
+    function savePinnedShortcuts(shortcuts) {
+        try {
+            const key = window.getPreferencesKey ? window.getPreferencesKey("FilesPinnedShortcuts") : "FilesPinnedShortcuts";
+            const str = JSON.stringify(shortcuts);
+            if (window.Storage) {
+                window.Storage.local.set(key, str);
+            } else {
+                localStorage.setItem(key, str);
+            }
+            if (window.savePreferencesToFilesystem) {
+                window.savePreferencesToFilesystem();
+            }
+        } catch (_) {}
+    }
+
+    function isPathPinned(path) {
+        if (!path) return false;
+        const norm = path === THIS_PC_PATH ? THIS_PC_PATH : (window.SystemFS ? window.SystemFS.normalizePath(path) : path);
+        const list = getPinnedShortcuts();
+        return list.some(item => {
+            const itemNorm = item.path === THIS_PC_PATH ? THIS_PC_PATH : (window.SystemFS ? window.SystemFS.normalizePath(item.path) : item.path);
+            return itemNorm === norm;
+        });
+    }
+
+    function pinToSidebar(path, label, windowEl) {
+        if (!path || isPathPinned(path)) return;
+        const normPath = path === THIS_PC_PATH ? THIS_PC_PATH : (window.SystemFS ? window.SystemFS.normalizePath(path) : path);
+        let finalLabel = label;
+        if (!finalLabel) {
+            if (normPath === "/") {
+                finalLabel = "Workspace";
+            } else if (normPath === THIS_PC_PATH) {
+                finalLabel = "This PC";
+            } else {
+                finalLabel = window.SystemFS ? window.SystemFS.getDisplayName({ path: normPath, name: window.SystemFS.getName(normPath), isDirectory: true }) : normPath;
+            }
+        }
+        let icon = "fa-solid fa-folder";
+        if (normPath === "/") icon = "fa-solid fa-layer-group";
+        else if (normPath === THIS_PC_PATH) icon = "fa-solid fa-computer";
+        else if (normPath === "/Desktop") icon = "fa-solid fa-desktop";
+        else if (normPath === "/documents") icon = "fa-solid fa-file-lines";
+        else if (normPath === "/Pictures") icon = "fa-solid fa-image";
+        else if (normPath === "/music") icon = "fa-solid fa-music";
+        else if (normPath === "/Downloads") icon = "fa-solid fa-download";
+        else if (normPath === "/ROMs" || normPath === "/Saved Games") icon = "fa-solid fa-gamepad";
+        else if (normPath === "/Recycle Bin") icon = "fa-solid fa-trash-can";
+
+        const list = getPinnedShortcuts();
+        list.push({ path: normPath, label: finalLabel, icon });
+        savePinnedShortcuts(list);
+        if (windowEl) {
+            renderSidebarShortcuts(windowEl);
+            updateSidebarActiveState(windowEl);
+        }
+        window.showDesktopToast?.(`Pinned "${finalLabel}" to sidebar`);
+    }
+
+    function unpinFromSidebar(path, windowEl) {
+        if (!path) return;
+        const normPath = path === THIS_PC_PATH ? THIS_PC_PATH : (window.SystemFS ? window.SystemFS.normalizePath(path) : path);
+        const list = getPinnedShortcuts();
+        const updated = list.filter(item => {
+            const itemNorm = item.path === THIS_PC_PATH ? THIS_PC_PATH : (window.SystemFS ? window.SystemFS.normalizePath(item.path) : item.path);
+            return itemNorm !== normPath;
+        });
+        savePinnedShortcuts(updated);
+        if (windowEl) {
+            renderSidebarShortcuts(windowEl);
+            updateSidebarActiveState(windowEl);
+        }
+        window.showDesktopToast?.("Unpinned from sidebar");
+    }
+
+    function resetSidebarToDefaults(windowEl) {
+        savePinnedShortcuts([...BASE_SIDEBAR_SHORTCUTS]);
+        if (windowEl) {
+            renderSidebarShortcuts(windowEl);
+            updateSidebarActiveState(windowEl);
+        }
+        window.showDesktopToast?.("Sidebar reset to default navigation");
+    }
+
+    function renderSidebarShortcuts(windowEl) {
+        const container = windowEl.querySelector(".files-sidebar-shortcuts");
+        if (!container) return;
+        const list = getPinnedShortcuts();
+        container.innerHTML = "";
+
+        list.forEach(item => {
+            const row = document.createElement("div");
+            row.className = "sidebar-item-row";
+            row.dataset.path = item.path;
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "sidebar-shortcut";
+            btn.dataset.path = item.path;
+            btn.dataset.appContext = "sidebar-shortcut";
+            btn.dataset.fileName = item.label;
+            btn.title = item.label;
+
+            const iconEl = document.createElement("i");
+            iconEl.className = item.icon || "fa-solid fa-folder";
+            btn.appendChild(iconEl);
+
+            const labelEl = document.createElement("span");
+            labelEl.className = "sidebar-label";
+            labelEl.textContent = " " + item.label;
+            btn.appendChild(labelEl);
+
+            btn.addEventListener("click", () => {
+                const targetPath = item.path;
+                if (targetPath === THIS_PC_PATH || targetPath === "/" || targetPath === "/Recycle Bin") {
+                    currentPath = targetPath;
+                    clearSearchInput(windowEl);
+                    renderFilesGrid(windowEl);
+                } else {
+                    navigateToFolder(targetPath, windowEl);
+                }
+            });
+
+            row.appendChild(btn);
+
+            if (item.path !== THIS_PC_PATH) {
+                const unpinBtn = document.createElement("button");
+                unpinBtn.type = "button";
+                unpinBtn.className = "sidebar-unpin-btn";
+                unpinBtn.title = `Unpin ${item.label} from sidebar`;
+                unpinBtn.setAttribute("aria-label", `Unpin ${item.label} from sidebar`);
+                unpinBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                unpinBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    unpinFromSidebar(item.path, windowEl);
+                });
+                row.appendChild(unpinBtn);
+            }
+
+            container.appendChild(row);
+        });
+
+        updateSidebarActiveState(windowEl);
+    }
+
     function updateSidebarActiveState(windowEl) {
         const shortcuts = windowEl.querySelectorAll(".sidebar-shortcut");
+        const normCurrent = currentPath ? (window.SystemFS ? window.SystemFS.normalizePath(currentPath) : currentPath) : "";
         shortcuts.forEach(btn => {
             const btnPath = btn.dataset.path;
             if (btnPath === THIS_PC_PATH) {
@@ -221,7 +394,8 @@
             } else if (btnPath === "/") {
                 btn.classList.toggle("active", currentPath === "/");
             } else {
-                btn.classList.toggle("active", currentPath === btnPath || currentPath.startsWith(btnPath + "/"));
+                const normBtn = window.SystemFS ? window.SystemFS.normalizePath(btnPath) : btnPath;
+                btn.classList.toggle("active", normCurrent === normBtn || normCurrent.startsWith(normBtn + "/"));
             }
         });
     }
@@ -347,9 +521,9 @@
 
         grid.classList.add("is-this-pc");
         grid.innerHTML = `
-            <section class="thispc-section" aria-label="Devices and drives">
+            <section class="thispc-section" aria-label="Storage and drives">
                 <div class="thispc-section-header">
-                    <h3 class="thispc-section-title"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> Devices and drives (1)</h3>
+                    <h3 class="thispc-section-title"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> Storage and drives (1)</h3>
                     <div class="thispc-section-actions">
                         <button type="button" class="btn-toolbar" data-thispc-refresh title="Refresh storage state">
                             <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Refresh
@@ -366,19 +540,19 @@
                          role="button"
                          data-thispc-drive="/"
                          data-path="/"
-                         data-file-name="Local Disk (C:)"
+                         data-file-name="Workspace Storage"
                          data-is-directory="true"
                          data-app-context="thispc-drive"
-                         aria-label="Local Disk (C:), ${escapeHtml(freeLabel)}">
+                         aria-label="Workspace Storage, ${escapeHtml(freeLabel)}">
                         <div class="thispc-drive-icon">
                             ${driveGlyph}
                         </div>
                         <div class="thispc-drive-body">
                             <div class="thispc-drive-top">
-                                <strong>Local Disk (C:)</strong>
+                                <strong>Workspace Storage</strong>
                                 <span class="thispc-drive-badge">${estimate.persisted === true ? "Persistent" : "SystemFS"}</span>
                             </div>
-                            <div class="thispc-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-label="Local Disk C usage">
+                            <div class="thispc-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-label="Workspace storage usage">
                                 <div class="thispc-meter-fill ${barStateClass}" style="width: ${estimate.supported ? Math.max(pct, estimate.usage > 0 ? 1.5 : 0).toFixed(2) : 0}%"></div>
                             </div>
                             <div class="thispc-drive-free">${escapeHtml(freeLabel)}</div>
@@ -522,6 +696,18 @@
                 });
             }
 
+            // Case-insensitive natural directory-first sort
+            items.sort((a, b) => {
+                const aIsDir = !!a.isDirectory;
+                const bIsDir = !!b.isDirectory;
+                if (aIsDir !== bIsDir) {
+                    return aIsDir ? -1 : 1;
+                }
+                const aName = window.SystemFS.getDisplayName(a) || a.name || "";
+                const bName = window.SystemFS.getDisplayName(b) || b.name || "";
+                return aName.localeCompare(bName, undefined, { sensitivity: "base", numeric: true });
+            });
+
             if (items.length === 0) {
                 const emptyEl = document.createElement("div");
                 emptyEl.className = "empty-state-container";
@@ -630,6 +816,28 @@
             return window.openDesktopWindow(shortcut.appId);
         }
         const lowerName = item.name.toLowerCase();
+
+        // 1. Check user-configured and system default file associations
+        const associatedApp = window.getFileAssociation ? window.getFileAssociation(lowerName) : null;
+        if (associatedApp && (!window.isAppInstalled || window.isAppInstalled(associatedApp))) {
+            if (associatedApp === "imageviewer") {
+                return window.openDesktopWindow("imageviewer", { path: item.path, record: item });
+            } else if (["photocraft", "pdfcraft", "solidcraft", "vectorcraft", "lightcraft", "designcraft", "effectcraft", "filmcraft"].includes(associatedApp)) {
+                return window.openDesktopWindow(associatedApp, { path: item.path });
+            } else if (associatedApp === "vscode") {
+                return window.openDesktopWindow("vscode", { path: item.path });
+            } else if (associatedApp.startsWith("genoffice")) {
+                return window.openDesktopWindow(associatedApp, item);
+            } else if (associatedApp === "musicmini") {
+                return playAudioInMusicMini(item);
+            } else if (associatedApp === "office") {
+                return window.openDesktopWindow("office", item);
+            } else {
+                return window.openDesktopWindow(associatedApp, { path: item.path, record: item });
+            }
+        }
+
+        // 2. Fallbacks by file category
         if (isPdfFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("pdfcraft"))) {
             window.openDesktopWindow("pdfcraft", { path: item.path });
         } else if (isCadFile(lowerName) && (!window.isAppInstalled || window.isAppInstalled("solidcraft"))) {
@@ -644,8 +852,12 @@
             window.openDesktopWindow("effectcraft", { path: item.path });
         } else if (isVideoFile(lowerName, item.type) && (!window.isAppInstalled || window.isAppInstalled("filmcraft"))) {
             window.openDesktopWindow("filmcraft", { path: item.path });
-        } else if (isRasterImage(lowerName, item.type) && (!window.isAppInstalled || window.isAppInstalled("photocraft"))) {
-            window.openDesktopWindow("photocraft", { path: item.path });
+        } else if (isRasterImage(lowerName, item.type)) {
+            if (!window.isAppInstalled || window.isAppInstalled("imageviewer")) {
+                window.openDesktopWindow("imageviewer", { path: item.path, record: item });
+            } else if (window.isAppInstalled("photocraft")) {
+                window.openDesktopWindow("photocraft", { path: item.path });
+            }
         } else if (isWordDocument(lowerName) && (!window.isAppInstalled || window.isAppInstalled("genoffice-docs"))) {
             window.openDesktopWindow("genoffice-docs", item);
         } else if (isSpreadsheet(lowerName) && (!window.isAppInstalled || window.isAppInstalled("genoffice-sheets"))) {
@@ -933,9 +1145,63 @@
     }
 
     function getFileContextMenuItems(target, windowEl) {
-        if (target.dataset.appContext === "thispc-drive") {
+        if (target.dataset.appContext === "sidebar-shortcut" || target.closest?.('[data-app-context="sidebar-shortcut"]')) {
+            const shortcutBtn = target.dataset.appContext === "sidebar-shortcut" ? target : target.closest('[data-app-context="sidebar-shortcut"]');
+            const shortcutPath = shortcutBtn?.dataset.path;
+            const shortcutLabel = shortcutBtn?.dataset.fileName || shortcutPath;
+            const items = [
+                {
+                    label: `Open ${shortcutLabel}`,
+                    icon: "fa-solid fa-folder-open",
+                    action: () => {
+                        if (shortcutPath === THIS_PC_PATH || shortcutPath === "/" || shortcutPath === "/Recycle Bin") {
+                            currentPath = shortcutPath;
+                            clearSearchInput(windowEl);
+                            renderFilesGrid(windowEl);
+                        } else {
+                            navigateToFolder(shortcutPath, windowEl);
+                        }
+                    }
+                }
+            ];
+            if (shortcutPath && shortcutPath !== THIS_PC_PATH) {
+                items.push({
+                    label: "Unpin from sidebar",
+                    icon: "fa-solid fa-thumbtack",
+                    action: () => unpinFromSidebar(shortcutPath, windowEl)
+                });
+            }
+            items.push({ type: "separator" });
+            items.push({
+                label: "Reset sidebar to defaults",
+                icon: "fa-solid fa-rotate-left",
+                action: () => resetSidebarToDefaults(windowEl)
+            });
+            return items;
+        }
+
+        if (target.closest?.(".files-sidebar") && !target.closest?.(".files-storage-status")) {
             return [
-                { label: "Open", icon: "fa-solid fa-folder-open", action: () => navigateToFolder("/", windowEl) },
+                {
+                    label: "Reset sidebar to defaults",
+                    icon: "fa-solid fa-rotate-left",
+                    action: () => resetSidebarToDefaults(windowEl)
+                }
+            ];
+        }
+
+        if (target.dataset.appContext === "thispc-drive") {
+            const pinned = isPathPinned("/");
+            return [
+                { label: "Open Workspace", icon: "fa-solid fa-folder-open", action: () => navigateToFolder("/", windowEl) },
+                {
+                    label: pinned ? "Unpin from sidebar" : "Pin to sidebar",
+                    icon: "fa-solid fa-thumbtack",
+                    action: () => {
+                        if (pinned) unpinFromSidebar("/", windowEl);
+                        else pinToSidebar("/", "Workspace", windowEl);
+                    }
+                },
                 { label: "Refresh storage", icon: "fa-solid fa-rotate-right", action: () => renderFilesGrid(windowEl) },
                 { type: "separator" },
                 { label: "Properties", icon: "fa-solid fa-circle-info", action: () => window.openDesktopWindow?.("about") }
@@ -944,9 +1210,18 @@
 
         if (target.dataset.appContext === "thispc-folder") {
             const folderPath = target.dataset.path;
+            const pinned = isPathPinned(folderPath);
             if (folderPath === "/Recycle Bin") {
                 return [
                     { label: "Open", icon: "fa-solid fa-folder-open", action: () => navigateToFolder("/Recycle Bin", windowEl) },
+                    {
+                        label: pinned ? "Unpin from sidebar" : "Pin to sidebar",
+                        icon: "fa-solid fa-thumbtack",
+                        action: () => {
+                            if (pinned) unpinFromSidebar(folderPath, windowEl);
+                            else pinToSidebar(folderPath, "Recycle Bin", windowEl);
+                        }
+                    },
                     {
                         label: "Empty Recycle Bin",
                         icon: "fa-solid fa-trash-can",
@@ -964,6 +1239,14 @@
             }
             return [
                 { label: "Open folder", icon: "fa-solid fa-folder-open", action: () => navigateToFolder(folderPath, windowEl) },
+                {
+                    label: pinned ? "Unpin from sidebar" : "Pin to sidebar",
+                    icon: "fa-solid fa-thumbtack",
+                    action: () => {
+                        if (pinned) unpinFromSidebar(folderPath, windowEl);
+                        else pinToSidebar(folderPath, target.dataset.fileName, windowEl);
+                    }
+                },
                 { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(folderPath) },
                 { type: "separator" },
                 {
@@ -982,7 +1265,7 @@
             if (isThisPcView() && searchQuery.trim() === "") {
                 return [
                     { label: "Refresh", icon: "fa-solid fa-rotate-right", action: () => renderFilesGrid(windowEl) },
-                    { label: "Open Local Disk (C:)", icon: "fa-solid fa-hard-drive", action: () => navigateToFolder("/", windowEl) },
+                    { label: "Open Workspace", icon: "fa-solid fa-layer-group", action: () => navigateToFolder("/", windowEl) },
                     { type: "separator" },
                     { label: "Properties", icon: "fa-solid fa-circle-info", action: () => window.openDesktopWindow?.("about") }
                 ];
@@ -1026,6 +1309,7 @@
                     { label: "Properties", icon: "fa-solid fa-circle-info", action: () => readFileForAction(path, (rec) => showPropertiesModal(rec, windowEl)) }
                 ];
             }
+            const pinned = isPathPinned(path);
             return [
                 {
                     label: "Open folder",
@@ -1034,6 +1318,17 @@
                         currentPath = path;
                         clearSearchInput(windowEl);
                         renderFilesGrid(windowEl);
+                    }
+                },
+                {
+                    label: pinned ? "Unpin from sidebar" : "Pin to sidebar",
+                    icon: "fa-solid fa-thumbtack",
+                    action: () => {
+                        if (pinned) {
+                            unpinFromSidebar(path, windowEl);
+                        } else {
+                            pinToSidebar(path, name, windowEl);
+                        }
                     }
                 },
                 { label: "Copy path", icon: "fa-regular fa-copy", action: () => window.copyText?.(path) },
@@ -1093,6 +1388,13 @@
                 label: "PDFCraft",
                 icon: "fa-solid fa-file-pdf",
                 action: () => readFileForAction(path, (item) => window.openDesktopWindow("pdfcraft", { path: item.path }))
+            });
+        }
+        if ((isRasterImage(name, type) || isVectorImage(name, type)) && (!window.isAppInstalled || window.isAppInstalled("imageviewer"))) {
+            openWith.push({
+                label: "Image Viewer",
+                icon: "fa-regular fa-image",
+                action: () => readFileForAction(path, (item) => window.openDesktopWindow("imageviewer", { path: item.path, record: item }))
             });
         }
         if (isRasterImage(name, type) && (!window.isAppInstalled || window.isAppInstalled("photocraft"))) {
@@ -1294,16 +1596,7 @@
                 </div>
                 <div class="files-main">
                     <aside class="files-sidebar">
-                        <button type="button" class="sidebar-shortcut" data-path="this-pc"><i class="fa-solid fa-computer"></i> This PC</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/Desktop"><i class="fa-solid fa-desktop"></i> Desktop</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/documents"><i class="fa-solid fa-file-lines"></i> Documents</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/Pictures"><i class="fa-solid fa-image"></i> Pictures</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/music"><i class="fa-solid fa-music"></i> Music</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/Downloads"><i class="fa-solid fa-download"></i> Downloads</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/ROMs"><i class="fa-solid fa-gamepad"></i> ROMs</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/Saved Games"><i class="fa-solid fa-gamepad"></i> Saved Games</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/Recycle Bin"><i class="fa-solid fa-trash-can"></i> Recycle Bin</button>
-                        <button type="button" class="sidebar-shortcut" data-path="/"><i class="fa-solid fa-hard-drive"></i> Local Disk (C:)</button>
+                        <div class="files-sidebar-shortcuts"></div>
                         <div class="files-storage-status">
                             <button type="button" data-open-app="about" title="Open About This Computer">
                                 <i class="fa-solid fa-circle-info"></i> About Computer
@@ -1328,13 +1621,17 @@
                 clearSearchInput(windowEl);
                 return renderFilesGrid(windowEl);
             }
-            if (path === "/") {
+            const normalized = window.SystemFS ? window.SystemFS.normalizePath(path) : path;
+            if (normalized === "/") {
                 currentPath = "/";
                 clearSearchInput(windowEl);
                 return renderFilesGrid(windowEl);
             }
             const owner = state.currentUserId;
-            const item = await SystemFS.readFile(path);
+            let item = await SystemFS.readFile(normalized);
+            if (!item && normalized !== path) {
+                item = await SystemFS.readFile(path);
+            }
             SystemFS.assertProfile(owner);
             if (!item) throw new Error('That file or folder is no longer available.');
             if (!item.isDirectory) return openFile(item, windowEl);
@@ -1382,6 +1679,7 @@
                 unsubscribeProfile = window.EventBus.on("state:changed:currentUserId", () => {
                     currentPath = THIS_PC_PATH;
                     clearSearchInput(windowEl);
+                    renderSidebarShortcuts(windowEl);
                     renderFilesGrid(windowEl);
                 });
             }
@@ -1398,19 +1696,8 @@
                 });
             }
 
-            // Hook sidebar click handlers
-            windowEl.querySelectorAll(".sidebar-shortcut").forEach(el => {
-                el.addEventListener("click", () => {
-                    const targetPath = el.dataset.path;
-                    if (targetPath === THIS_PC_PATH || targetPath === "/" || targetPath === "/Recycle Bin") {
-                        currentPath = targetPath;
-                        clearSearchInput(windowEl);
-                        renderFilesGrid(windowEl);
-                    } else {
-                        navigateToFolder(targetPath, windowEl);
-                    }
-                });
-            });
+            // Render dynamic sidebar shortcuts
+            renderSidebarShortcuts(windowEl);
 
             // New Folder button hook
             const newFolderBtn = windowEl.querySelector(".btn-new-folder");

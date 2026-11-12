@@ -128,6 +128,32 @@ window.openDesktopWindow = async (name, params = null) => {
         window.showDesktopToast?.(`Application "${name}" is unavailable.`);
         return;
     }
+    // Unify 'cli' and 'codex' into a single Core Linux Terminal window on Desktop:
+    // if one is open when the other is launched, transfer its geometry and close the counterpart.
+    let inheritedTerminalBounds = null;
+    const counterpartTerminalId = name === "codex" ? "cli" : (name === "cli" ? "codex" : null);
+    if (counterpartTerminalId && state.openApps.has(counterpartTerminalId)) {
+        const counterpartEl = window.getDesktopWindowElement(counterpartTerminalId);
+        if (counterpartEl) {
+            inheritedTerminalBounds = {
+                left: counterpartEl.style.left,
+                top: counterpartEl.style.top,
+                width: counterpartEl.style.width,
+                height: counterpartEl.style.height,
+                maximized: counterpartEl.classList.contains("is-maximized")
+            };
+        }
+        await window.closeDesktopWindow(counterpartTerminalId);
+    }
+
+    if (inheritedTerminalBounds && windowEl) {
+        if (inheritedTerminalBounds.left) windowEl.style.left = inheritedTerminalBounds.left;
+        if (inheritedTerminalBounds.top) windowEl.style.top = inheritedTerminalBounds.top;
+        if (inheritedTerminalBounds.width) windowEl.style.width = inheritedTerminalBounds.width;
+        if (inheritedTerminalBounds.height) windowEl.style.height = inheritedTerminalBounds.height;
+        windowEl.classList.toggle("is-maximized", Boolean(inheritedTerminalBounds.maximized));
+    }
+
     state.openApps.add(name);
     state.minimizedApps.delete(name);
     state.activeWindow = name;
@@ -360,6 +386,11 @@ window.setupSingleWindowManagement = (windowEl, surface, mobileQuery) => {
         handle.setAttribute("aria-hidden", "true");
         windowEl.appendChild(handle);
     }
+
+    bar.addEventListener("dblclick", (event) => {
+        if (event.target.closest("button, a")) return;
+        window.toggleMaximizeWindow(windowEl.dataset.window);
+    });
 
     bar.addEventListener("pointerdown", (event) => {
         if (mobileQuery.matches || event.button !== 0 || event.target.closest("button, a")) return;

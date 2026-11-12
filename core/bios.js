@@ -4,7 +4,7 @@
  */
 (function() {
     const STORAGE_KEY = "bl4ut0_bios_settings";
-    const BIOS_VERSION = "2026.11.05.01";
+    const BIOS_VERSION = "2026.11.06.05";
     const BUILD_DATE = "11/05/2026";
 
     const DEFAULT_SETTINGS = {

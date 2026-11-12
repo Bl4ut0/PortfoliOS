@@ -1,5 +1,5 @@
-{
-    "path":  "C:\\Dev Projects\\PortfoliOS\\PortfoliOS\\services\\native-relay\\host\\host-runner.bat",
+﻿{
+    "path":  "C:\\Dev Projects\\0-PortfoliOS\\PortfoliOS\\services\\native-relay\\host\\host-runner.bat",
     "description":  "PortfoliOS Native Relay Host (UDP/TCP Bridge)",
     "name":  "com.bl4ut0.portfolios.relay",
     "allowed_extensions":  [

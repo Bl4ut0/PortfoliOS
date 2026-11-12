@@ -109,6 +109,9 @@ window.mountDesktop = async () => {
         if (!event.target.closest("#local-ai-tray-panel") && !event.target.closest("#local-ai-tray-toggle") && window.closeLocalAITrayPanel) {
             window.closeLocalAITrayPanel();
         }
+        if (!event.target.closest("#relay-tray-panel") && !event.target.closest("#relay-tray-toggle") && window.closeRelayTrayPanel) {
+            window.closeRelayTrayPanel();
+        }
     });
 
     // Global click delegation
@@ -136,7 +139,16 @@ window.mountDesktop = async () => {
 
         const wallpaperChoice = event.target.closest("[data-wallpaper-choice]");
         if (wallpaperChoice) {
-            if (window.setWallpaper) window.setWallpaper(wallpaperChoice.dataset.wallpaperChoice);
+            const choice = wallpaperChoice.dataset.wallpaperChoice;
+            if (choice === "custom") {
+                if (window.promptCustomWallpaperSelection) {
+                    window.promptCustomWallpaperSelection();
+                } else if (window.setWallpaper) {
+                    window.setWallpaper("custom");
+                }
+            } else {
+                if (window.setWallpaper) window.setWallpaper(choice);
+            }
             return;
         }
 
@@ -406,6 +418,18 @@ window.mountDesktop = async () => {
         if (volumeToggle) {
             if (window.toggleVolumePanel) window.toggleVolumePanel();
             if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
+            return;
+        }
+
+        const relayTrayToggle = event.target.closest("#relay-tray-toggle");
+        if (relayTrayToggle) {
+            if (window.toggleRelayTrayPanel) window.toggleRelayTrayPanel();
+            return;
+        }
+
+        const relayCheckNow = event.target.closest("#relay-check-now");
+        if (relayCheckNow) {
+            if (window.checkRelayStatus) window.checkRelayStatus(true);
             return;
         }
 

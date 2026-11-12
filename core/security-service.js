@@ -214,18 +214,23 @@
     }
 
     async function scanWorkspace() {
-        const files = await window.SystemFS.getAllFiles();
-        let accepted = 0;
-        let quarantined = 0;
-        for (const record of files) {
-            if (record.isDirectory || protectedPath(record.path) || record.metadata?.sync === false) continue;
-            const outcome = await scanExisting(record, "workspace-scan");
-            if (outcome.status === "accepted") accepted++;
-            else quarantined++;
+        try {
+            const files = await window.SystemFS.getAllFiles();
+            let accepted = 0;
+            let quarantined = 0;
+            for (const record of files) {
+                if (record.isDirectory || protectedPath(record.path) || record.metadata?.sync === false) continue;
+                const outcome = await scanExisting(record, "workspace-scan");
+                if (outcome.status === "accepted") accepted++;
+                else quarantined++;
+            }
+            const summary = { accepted, quarantined, scannedAt: Date.now() };
+            window.EventBus?.emit("security:workspace-scanned", summary);
+            return summary;
+        } catch (error) {
+            if (error?.message?.includes("Profile changed")) return null;
+            throw error;
         }
-        const summary = { accepted, quarantined, scannedAt: Date.now() };
-        window.EventBus?.emit("security:workspace-scanned", summary);
-        return summary;
     }
 
     async function getSummary() {
@@ -263,7 +268,10 @@
             await ensureQuarantineRoot();
             state.initialized = true;
             window.setTimeout(() => {
-                scanWorkspace().catch((error) => console.warn("PortfoliOS: background security scan failed.", error));
+                scanWorkspace().catch((error) => {
+                    if (error?.message?.includes("Profile changed")) return;
+                    console.warn("PortfoliOS: background security scan failed.", error);
+                });
             }, 0);
         },
         inspect,

@@ -51,8 +51,8 @@
             filmcraft: ["@craft"],
             effectcraft: ["@craft"],
 
-            codex: ["@ai", "desktop/terminal.js", "core/codex-preview.js"],
-            cli: ["@ai", "desktop/terminal.js", "desktop/brain-helper.js"],
+            codex: ["@ai", "core/runtime-bridge.js", "desktop/terminal.js", "core/codex-preview.js"],
+            cli: ["@ai", "core/runtime-bridge.js", "desktop/terminal.js", "desktop/brain-helper.js"],
             "local-ai": ["@ai", "desktop/brain-helper.js"],
             settings: ["@ai", "desktop/settings.js", "desktop/brain-helper.js"],
             dossier: ["desktop/dossier.js"], network: ["desktop/network-map.js"],

@@ -1,18 +1,71 @@
 # Bl4ut0 Portfolio OS
 
-Client-first Experience OS concept: a personal operating environment that connects the dev hub, projects, homelab work, community resources, professional identity, and future public status pages through Desktop, Mobile, Quick, and CLI interfaces.
+Client-first Experience OS & browser-native developer workspace: a personal operating environment connecting dev hubs, projects, homelab infrastructure, community resources, professional identity, and cloud services through Desktop, Mobile, Quick, and CLI interfaces.
 
-The shell runs independently in each visitor's browser. Server-side pieces can be added for data, status, PHP endpoints, or hosted assets, but the desktop/mobile/quick/CLI sessions are not shared streamed machines.
+The shell executes entirely in each visitor's browser. Server-side endpoints assist with optional auth relays and storage sync, but all window management, terminal execution, virtual filesystems, and cryptographic keys run locally on the client without streamed VM machines.
 
-## Shared design and agent decisions
+---
 
-The workspace's common rules are maintained in [PortfoliOS-Orchestration](https://github.com/Bl4ut0/PortfoliOS-Orchestration). Start with its [agent instructions](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/AGENTS.md) and [core documentation index](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/README.md). This repository retains implementation contracts, runtime source, audits and its release roadmap.
+## Platform Strategy & Delivery Milestones
 
-## Repositories and portable references
+> **Desktop 1st, Mobile 2nd (Mobile Last)**
+>
+> PortfoliOS follows a strict **Desktop-First** architectural delivery model. The **Desktop platform is the primary milestone target** where the complete windowed operating environment, Root `/` POSIX virtual filesystem, user-space Linux x86_64 syscall translation, Zero-Knowledge Keyring Vault, terminal developer toolchain, and creative WASM engines are built, validated, and hardened.
+>
+> The **Mobile platform is secondary and delivered last in all milestone sequences**. Mobile remains an independent, lightweight touch companion that shares core services (SystemFS, identity, media, sync) with Desktop, but all primary feature development, runtime capabilities, and system enhancements land and stabilize on Desktop before mobile touch adaptations, mobile parity, and viewport passes are scheduled.
 
-The canonical OS source is [Bl4ut0/PortfoliOS](https://github.com/Bl4ut0/PortfoliOS). The independently maintained browser source is [Bl4ut0/PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS); see its [workspace guide](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/WORKSPACE.md) and [build instructions](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/DEVELOPMENT.md).
+---
 
-Use repository-relative links for files in this repository and full GitHub URLs for references to another repository. Link release provenance to an exact commit or tag. Documentation must not depend on a contributor's drive, username, or absolute checkout location.
+## Structured Access System
+
+PortfoliOS incorporates a browser-native **Structured Access System** that bridges POSIX system semantics with web isolation:
+
+1. **Root `/` POSIX Virtual Filesystem**:
+   - The virtual filesystem mounts full root `/`, providing standard POSIX hierarchies: `/`, `/home/<user>`, `/usr/local/bin`, `/etc`, `/tmp`, and `/documents`.
+   - Strict path normalization blocks directory traversal escapes above root `/`.
+   - Full persistence through IndexedDB (`SystemFS`) with profile isolation.
+
+2. **User-Space Linux x86_64 POSIX Syscall Translation Table**:
+   - Implemented in user-space (`posix-syscall-table.js`) without requiring heavy Linux container images, VM emulators, or secondary OS loaders.
+   - Translates raw Linux syscalls directly to browser secondary connectors:
+     - **File I/O**: `sys_open`, `sys_openat`, `sys_read`, `sys_write`, `sys_close`, `sys_stat`, `sys_fstat`, `sys_lstat`, `sys_lseek`, `sys_getdents64`, `sys_mkdir`, `sys_unlink` -> mapped to SystemFS Root `/`.
+     - **Networking**: `sys_socket`, `sys_connect`, `sys_sendto`, `sys_recvfrom` -> mapped to native TCP/UDP sockets via Native Relay.
+     - **TTY/PTY Control**: `sys_ioctl` (`TIOCGWINSZ`, `TCGETS`, `TCSETS`) -> mapped to PTY controller with ANSI stream formatting and OAuth detection.
+     - **Memory**: `sys_brk`, `sys_mmap` -> mapped to WebAssembly linear memory.
+
+3. **Zero-Knowledge Client-Side Keyring & Credentials Vault**:
+   - **Cryptographic Engine**: AES-256-GCM encryption with 128-bit authentication tags, combined with PBKDF2-HMAC-SHA512 key derivation at **600,000 iterations** (rejecting downgrades < 100,000), rotating 32-byte salts, and 12-byte IVs.
+   - **Multi-Program Unified Storage**: Protects subscriptions and API tokens for all active tools (`codex` / ChatGPT, `agy` / Antigravity, `claude` / Claude Code, `xai` / Grok, and `github` / Git Helper) under `/etc/portfolios/vault/`.
+   - **Cross-Device Recovery Envelope**: Exports client-side encrypted envelopes to `/documents/vault.enc`. Plain-text tokens remain exclusively in local IndexedDB and are **never** synced unencrypted to Google Drive or OneDrive.
+   - **Setup & Recovery (Purge & Re-Initialize)**:
+     - Because the vault is Zero-Knowledge, forgotten passwords cannot be cracked or backdoored.
+     - A safe recovery workflow (`vault purge` or `window.PortfoliOSVault.purgeAndReset()`) wipes locked keys, removes `/etc/portfolios/vault/*.json`, deletes `/documents/vault.enc`, and resets the vault so the user can re-initialize with a new Master Passphrase without breaking existing system files.
+   - **Visual Multi-Program Authentication Modal**:
+     - Global desktop overlay dialog (`#vault-modal`) with three views: **Unlock**, **Setup**, and **Purge**.
+     - Shows badges for associated programs and allows unlocking all tools simultaneously with real-time decryption and error feedback.
+
+4. **Git Credential Helper (`git-credential-portfolios`)**:
+   - Seeded in `/usr/local/bin/git-credential-portfolios`.
+   - Responds to standard Git credential protocol queries by reading the GitHub token from `/etc/portfolios/vault/github.json`, enabling `git clone` and `git push` over HTTPS without manual credential prompts.
+
+5. **Windows Native Messaging Relay (`PortfoliOS-NativeRelay`)**:
+   - Companion Chrome/Firefox extension and lightweight Windows native messaging host (`PortfoliOS-NativeRelay.msi`).
+   - Unlocks raw duplex TCP and UDP network sockets directly from browser WebAssembly runtimes, powering web multiplayer (UT99), CLI network requests, and external dev servers.
+
+---
+
+## Shared Design and Agent Decisions
+
+The workspace's common standards are maintained in [PortfoliOS-Orchestration](https://github.com/Bl4ut0/PortfoliOS-Orchestration). Start with its [agent instructions](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/AGENTS.md) and [core documentation index](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/README.md). This repository retains implementation contracts, runtime source, audits, and its release roadmap.
+
+## Repositories and Portable References
+
+- Canonical OS: [Bl4ut0/PortfoliOS](https://github.com/Bl4ut0/PortfoliOS)
+- Shared Orchestration: [Bl4ut0/PortfoliOS-Orchestration](https://github.com/Bl4ut0/PortfoliOS-Orchestration)
+- Browser Engine: [Bl4ut0/PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS)
+- Runtime Layer: [Bl4ut0/PortfoliOS-Runtime](https://github.com/Bl4ut0/PortfoliOS-Runtime)
+
+Use repository-relative links within this repository and full GitHub URLs when referencing another repository. Do not use local contributor drive letters, user-home paths, or file URLs in documentation.
 
 Clone into a directory of your choice:
 
@@ -21,181 +74,109 @@ git clone https://github.com/Bl4ut0/PortfoliOS.git
 cd PortfoliOS
 ```
 
-Unless stated otherwise, run the commands below from the repository root. Checkout folder names are examples, not repository identities.
+---
 
 ## Directory Structure
 
-* **[core/](core/)**: Core system services (Reactive State proxy, EventBus, storage fallbacks, virtual SystemFS indexedDB, SecurityKernel, Google Drive sync, preferences loader, and app-loader).
-* **[data/](data/)**: Shared static dataset arrays (portfolio project nodes, catalogs, settings, bookmarks).
-* **[desktop/](desktop/)**: Desktop UI components, workspace markup and shell initialization (start launcher, taskbar window mapping, snapping desktop icons, context menus, and custom WAD inspector).
-* **[mobile/](mobile/)**: Independent mobile OS framework, lazy loader, lifecycle, app registry, and mobile-only app modules. It shares neutral data/services with Desktop but not the desktop app catalog or window framework.
+* **[core/](core/)**: Core system services:
+  * **[runtime-bridge.js](core/runtime-bridge.js)**: Secondary connector adapter, POSIX Root `/` VFS bridge, PTY controller, process harness, Zero-Knowledge Keyring Vault, and Git credential helper.
+  * **[cloud-auth.js](core/cloud-auth.js)** & **[cloud-sync.js](core/cloud-sync.js)**: Unified cloud authentication and sync drivers (Google Drive & Microsoft OneDrive).
+  * **[filesystem.js](core/filesystem.js)**: Virtual File System (`SystemFS`) backed by IndexedDB with root `/` hierarchy.
+  * **[gdrive-sync.js](core/gdrive-sync.js)**: Google Drive sync provider enforcing client-side encrypted `/documents/vault.enc` sync and blocking unencrypted `/etc`.
+  * **[security-service.js](core/security-service.js)**: SecurityKernel local scanning, executable quarantine, and token isolation.
+  * **[event-bus.js](core/event-bus.js)**, **[state.js](core/state.js)**, **[app-framework.js](core/app-framework.js)**, **[app-loader.js](core/app-loader.js)**, **[preferences.js](core/preferences.js)**.
+* **[desktop/](desktop/)**: Desktop UI components, workspace markup, and window management:
+  * **[workspace.html](desktop/workspace.html)**: Complete desktop DOM structure, Start launcher, taskbar, settings, and Zero-Knowledge Vault modal.
+  * **[terminal.js](desktop/terminal.js)**: Linux terminal emulator, POSIX command executors (`apt`, `curl`, `wget`, `sh`, `npm`, `vault`, `codex`, `agy`, `claude`, `xai`).
+  * **[settings.js](desktop/settings.js)**: Desktop Settings app with Cloud Sync and Zero-Knowledge Keyring Vault management.
+  * **[shell.js](desktop/shell.js)**, **[taskbar.js](desktop/taskbar.js)**, **[dossier.js](desktop/dossier.js)**.
+* **[mobile/](mobile/)**: Independent mobile OS framework (Desktop 1st, Mobile 2nd). Mobile-optimized apps and launcher sharing core services.
 * **[quick/](quick/)**: Split-screen quick search index layout.
-* **[apps/](apps/)**: The complete modular desktop catalog. Every app owns its `apps/<id>/app.js` registration and `app.css` lifecycle surface. Includes Office Document Editor, IPTV Player, Webamp Player, File Explorer, Task Manager, DoomSource, OpenRCT2, and UT99.
-* **[services/](services/)**: Backend proxy services (e.g. Node.js WebSocket-to-UDP relay service for UT99 web multiplayer).
-* **[styles/](styles/)**: Critical boot CSS via `styles-v1.css`; selected shell and app styles load on demand.
-* **[main.js](main.js)**: Entry point orchestrator bootstrapping the OS shell on DOM load.
-* **`index.html`** - Boot HTML and small loading entry points. Workspace markup and inert app templates load after profile selection.
-* `DOOM.WAD` can be placed in the web root for the DOOM route.
+* **[apps/](apps/)**: Complete modular desktop catalog (Office Document Editor, Code OSS, IPTV Player, Webamp, File Explorer, Task Manager, DoomSource, OpenRCT2, UT99).
+* **[services/](services/)**:
+  * **[native-relay/](services/native-relay/)**: Windows Native Messaging Host (`.msi`) and browser extension for raw TCP/UDP duplex networking.
+* **[styles/](styles/)**: Segmented style sheets (`styles-v1.css`, `styles/components.css`, `styles/tokens.css`).
+* **[main.js](main.js)** & **`index.html`**: Entry points and staged boot loaders.
+
+---
 
 ## Test Locally
 
-Run the modular app contract and first-party syntax audit:
+Run the complete app contract audit, cloud driver tests, and runtime bridge test suites:
 
 ```powershell
-node scripts/check-app-contracts.js
+npm test
 ```
 
-Open `index.html` directly in a browser for most shell work. Use a local server when testing same-origin assets such as `DOOM.WAD`.
-
-Optional local server:
+Serve locally with Python or any HTTP server:
 
 ```powershell
 python -m http.server 4173
 ```
 
-Then open `http://localhost:4173`.
+Open `http://localhost:4173`.
+
+---
 
 ## Deployment
 
-Workspace build/import coordination and the FTP uploader live in [PortfoliOS-Orchestration](https://github.com/Bl4ut0/PortfoliOS-Orchestration). Follow its [build and deployment guide](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/BUILD_AND_DEPLOY.md) for setup, credentials, previews, uploads and verification.
+Build and deployment coordination lives in [PortfoliOS-Orchestration](https://github.com/Bl4ut0/PortfoliOS-Orchestration). Follow its [build and deployment guide](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/BUILD_AND_DEPLOY.md).
 
-This repository owns [deploy.config.json](deploy.config.json), the deployable site paths and large-asset exclusions. Its static site does not need a bundling build. Browser.JS builds in its own repository and is imported through [scripts/import-browserjs.mjs](scripts/import-browserjs.mjs) only when that engine changes. Runtime has no production adapter yet.
-
-The existing commands remain compatibility entry points when this checkout is inside the orchestration repository:
+Compatibility commands from this repository:
 
 ```sh
 npm run deploy:dry
 npm run deploy
 npm run deploy:full
-node deploy.js --dry-run --only=core,auth,index.html
 ```
 
-Install deployment dependencies with npm ci in Orchestration. Deployment previews work without credentials. Real uploads run the OS contract/session/security checks first and publish assets before HTML entry points. An existing ignored OS .env remains a fallback when no orchestration .env exists; process environment variables take precedence. Neither credentials nor orchestration tooling belong in the web root.
+---
 
-## Private experience verification and Codex Preview
+## Zero-Knowledge Keyring & Vault Shell Commands
 
-Release 2026.10.10.6 adds a native Codex CLI Preview to both Stores and strengthens profile-switch guards for filesystem reads, listings and deletes. The preview can test a local private save; browser coding and ChatGPT sign-in remain unavailable. See [the validation report](docs/PRIVATE_EXPERIENCE_VALIDATION.md) for reproducible checks, shared-storage limits and the native-versus-browser installation/update distinction.
+The terminal includes a first-party `vault` command suite to manage stored credentials:
 
-## Google Drive Sync Configuration
+* `vault init`: Interactive setup wizard to configure a strong Master Passphrase (&ge;14 chars, &ge;60-bit entropy).
+* `vault status`: Display current lock status, active provider credentials, and sync readiness.
+* `vault lock`: Flush in-memory keys from the active session.
+* `vault unlock [file]`: Decrypt `/documents/vault.enc` and authenticate active CLI sessions (opens visual modal if run interactively).
+* `vault purge` / `vault reset`: **Recovery Option** for forgotten passphrases. Safely wipes locked keys, removes `/etc/portfolios/vault/*.json`, and deletes `/documents/vault.enc` with confirmation (`Type PURGE`).
+* `vault export [file]`: Encrypt vault with AES-256-GCM + PBKDF2-SHA512 to `/documents/vault.enc` for cross-device sync.
+* `vault import [file]`: Decrypt and restore credentials from an encrypted envelope.
+* `vault list`: List configured CLI providers in `/etc/portfolios/vault/`.
 
-To allow visitors to connect their Google Drive and backup their filesystem:
-
-1. **Google Cloud Console**: Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. **OAuth Client ID**: Create an OAuth 2.0 Web Application Client ID.
-3. **Authorized Origins**: Under **Authorized JavaScript origins**, you **must** add:
-   * Local address for testing: `http://localhost:8005` (or your local port).
-   * Your production domain: `https://os.yourdomain.com`.
-   * Do not add an authorized redirect URI for the current Google Identity Services popup-token flow.
-4. **Client ID Input**: Configure this Client ID only in the **Cloud Sync** panel of the Settings app. Individual apps always save to local `SystemFS` and do not own cloud authentication or synchronization.
-5. **Security Scopes**: The sync engine requires the `drive.file` scope. This is a secure scope that restricts the app's access to only read/write files that *this specific application* created.
-
-## Local Security Center
-
-PortfoliOS includes a default-installed **Security Center** app. It is a local-only policy scanner: user imports and Google Drive restores are inspected inside the browser before they enter the normal SystemFS workspace. No files are sent to PortfoliOS, VirusTotal, or another scanning service.
-
-- Executables, scripts, WebAssembly modules, and active code are blocked from normal file imports.
-- HTML and SVG files, large archives, and files larger than 64 MiB are placed in a local `.quarantine` area for review instead of being opened, synced, or served as normal workspace files.
-- Accepted files receive a local SHA-256 integrity record and scanner metadata.
-- Cloud Sync fails closed if the SecurityKernel is unavailable, and it scans files before upload and before restore.
-- Cloud access tokens are memory-only. PortfoliOS stores connection metadata locally, never a raw Google bearer token, so users sign in again when a browser session ends.
-- Local AI file tools are restricted from hidden authentication data, quarantine, app binaries, ROMs, and system configuration paths.
-
-This is defence in depth, not a substitute for operating-system antivirus or a promise to detect every malware family. Browser code cannot protect against a compromised operating system or a browser extension/agent granted unrestricted access. The Security Center is intended to make untrusted synced content inert by default and to limit the impact of a compromised page session.
-
-### Browser hardening
-
-The document also enforces its baseline CSP and referrer policy with HTML metadata, so those protections remain active if an upstream CDN does not forward origin headers. The Apache security header policy provides MIME sniffing protection, frame restrictions, the same CSP baseline, referrer controls, and HSTS. If Cloudflare is in front of the host, configure Cloudflare's HSTS policy and response headers too; a Cloudflare setting can override an origin header. A future CSP tightening pass should externalize remaining inline scripts before adding a restrictive `script-src` directive.
+---
 
 ## Useful CLI Commands
 
-- `help`
-- `whoami`
-- `projects`
-- `inspect homelab`
-- `quick`
-- `linux`
-- `workstation`
-- `play` or `doom`
-- `links`
-- `status`
-- `open devhub`
-- `ai` / `brain` / `model`
+* **Developer & AI**: `codex`, `agy`, `claude`, `xai`, `ai`, `git-credential-portfolios`
+* **Keyring & Security**: `vault <init|status|lock|unlock|purge|export|import|list>`
+* **Package Management & System**: `apt <install|remove|update|list|search>`, `npm install -g <pkg>`
+* **Network & Tools**: `curl <url>`, `wget <url>`, `chmod +x <file>`, `./<script>`, `sh <script>`, `which <cmd>`
+* **POSIX File Navigation**: `ls`, `cd`, `pwd`, `cat`, `head`, `tail`, `grep`, `find`, `tree`, `stat`, `mkdir`, `rm`, `cp`, `mv`
+* **Diagnostics**: `uname`, `neofetch`, `ps`, `df`, `free`, `uptime`, `env`, `sys`
+
+---
 
 ## Experience Modes
 
-- Desktop is a windowed app shell with a Start launcher, running-app taskbar, minimize/maximize/close controls, calendar flyout, system tray AI assistant, mini browser, draggable/resizable windows, network map, Linux Lab, Office Document Editor, IPTV Player, Webamp player, and playable DOOM / OpenRCT2 / UT99 engines.
-- Mobile is an independent Android-leaning browser OS with retained app tasks, Home/Back/Recents navigation, a notification and quick-settings shade, lock screen, mobile Settings, local Files/Documents/PDF/Gallery apps, persistent music playback, and explicit Desktop/Quick handoff.
-- Quick is a direct searchable portfolio index for visitors who want the information without using the desktop, phone, or terminal surfaces.
-- CLI is the terminal interface for the same nodes and public routes with integrated AI commands.
+- **Desktop (Priority 1)**: Full-fidelity windowed workspace with Start launcher, taskbar, system tray, Zero-Knowledge Keyring Vault modal, native terminal CLI toolchain, local AI, File Explorer, Code OSS, Office Document Editor, IPTV Player, Webamp player, and playable WASM engines (DOOM, OpenRCT2, UT99).
+- **Mobile (Priority 2 / Last)**: Independent Android-styled browser companion with gesture navigation, notifications, quick-settings shade, lock screen, and touch-optimized apps. Prioritized after desktop milestones are verified.
+- **Quick**: High-speed searchable portfolio index for visitors seeking immediate information.
+- **CLI**: POSIX terminal shell providing the complete developer toolchain with root `/` access.
 
-Release 2026.10.10.7 removes the retired hosted PDF/Tools links, adds Browser to the default desktop, improves Browser.js connection recovery, and gives Duke/Diablo/Quake explicit isolated PHP entry points. Office Preview now describes its local editor capabilities without simulated WASM downloads. See [the application audit](docs/APPLICATION_AUDIT_2026-10-10.md) for tested workflows and remaining engine/provider limits.
+---
 
-## Browser source and releases
+## Cloud Sync & Security Isolation
 
-The OS owns the Browser app adapter and imports checksum-verified builds from [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS). Editable engine source stays in that repository. See [Browser providers](docs/BROWSER_PROVIDERS.md) for native proxy settings, build/import commands, isolation, and validation; the [fork integration guide](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/INTEGRATION.md) documents the shared host protocol.
+PortfoliOS supports dual cloud drivers: **Google Drive** and **Microsoft OneDrive**.
 
-## Store Direction
+1. **Client-Side Encryption Only**: Cloud drives sync only the client-side AES-256-GCM encrypted envelope `/documents/vault.enc`. Plain-text credentials in `/etc/portfolios/vault/` and hidden dotfiles (`.*`) are strictly blocked from cloud uploads.
+2. **Local Security Center**: User imports and cloud restores are verified inside the browser before entering the workspace. Executables, scripts, and active documents undergo quarantine inspection without uploading files to third-party scanning services.
+3. **Session Lease & Conflict Recovery**: Private profiles maintain a single active lease across devices with conflict resolution and tombstones for deleted files.
 
-The PortfoliOS Store is evolving into an app catalog with categories for games, hosted services, media, and productivity tools. The previous Tools Hub and hosted PDF Tools entries have been removed pending separate hosting. The native Mobile PDF viewer remains available for local documents.
+---
 
-## Mobile Behavior
+## Roadmap
 
-Mobile is a dedicated experience, not a responsive desktop theme. On phone-sized viewports it occupies the full dynamic viewport, respects safe-area insets, and hides the global shell chrome. The installable web manifest starts at `?view=mobile`; users can also enter browser fullscreen from Mobile Settings or the quick-settings shade. Apps use their own mobile catalog and UI modules while sharing neutral services such as SystemFS, volume, portfolio records, and the persistent media service.
-
-## DOOM Engine Loader
-
-The DOOM window runs a WebAssembly browser source port. Install `DOOM + DOOM II` or a classic Doom package from Steam for the classic data route. The large game named `DOOM` is the 2016 reboot and is not the IWAD source for this loader. Expected files are classic IWADs such as `DOOM.WAD`, `DOOM2.WAD`, `TNT.WAD`, or `PLUTONIA.WAD`.
-
-The current loader checks for `./DOOM.WAD` and `/DOOM.WAD` from the same origin and can inspect a local WAD header in-browser without uploading it. Use your game platform's installed-file browser to locate the classic IWAD in your own installation; its filesystem location is not part of the PortfoliOS configuration.
-
-## Game Data & Asset Ownership Compliance
-
-All game data files, WADs, MPQs, PAKs, audio/texture archives, and ROMs referenced during local development and testing were obtained from legitimate, legally owned user installations (e.g., Steam, GOG, or original retail media).
-
-**Self-Hosting Requirement**: This repository contains web engine runners, WebAssembly source ports, and UI shells only. Commercial game data binaries are strictly excluded from git tracking via `.gitignore`. If you wish to host your own version of these playable web applications (such as DOOM, Quake, Diablo, Unreal Tournament 99, Duke Nukem 3D, or OpenRCT2), you will need to provide your own legally acquired game source files.
-
-## WASM application library
-
-See [docs/wasm/README.md](docs/wasm/README.md) for the expandable WASM application inventory, upstream documentation index, integration guide, and evaluation roadmap. It covers all seven Craft apps, creative/development engines, and the existing browser runtimes, with explicit distinctions between candidates, integrated WASM, JavaScript/WebGPU apps, and the simulated Office shell. The catalog does not install engines during startup. Run node scripts/build-wasm-catalog.js --check to validate its metadata and generated pages.
-
-## Roadmap and review
-
-See [ROADMAP.md](ROADMAP.md) for prioritized milestones and acceptance criteria, and [docs/PROJECT_REVIEW.md](docs/PROJECT_REVIEW.md) for review evidence and remaining work.
-
-Next: reliable sync recovery/conflicts, account and backup controls, cross-device restore, WardenIT case studies, reproducible releases, and real public service health.
-
-## Private sessions
-
-Choosing Desktop or Mobile opens the shared account chooser. Continue with Bl4ut0's public profile, reconnect a remembered private Google profile, or sign in with another Google account. Google sign-in activates that account's private workspace and backs up its SystemFS files and preferences. Desktop and Mobile use the same profile registry. File and preference changes schedule automatic backup while connected.
-
-Each Google account uses a stable subject ID, a separate SystemFS home, and a separate virtual documents/downloads/music/pictures/save workspace. App engine binaries and ROM installation files are shared device resources. Legacy private data is copied during the first account migration without deleting the original files.
-
-Account identity remains remembered after reload, while cloud credentials stay in memory. Reconnect to resume Drive backup. Production uses auth/google.php as a popup endpoint with compatible COOP headers while the main game/AI shell remains isolated. The endpoint sends its own PHP response headers, with .htaccess as a fallback on Apache hosts.
-
-For filesystem changes, serve the repo and open scripts/check-profile-filesystem.html. It uses a disposable test database to verify account isolation, recursive deletes, backup paths, and pending-save races.
-
-Public Bl4ut0 sessions are disposable: each page reload clears public SystemFS documents, saves, ROM imports, installed-app selections, preferences, and desktop/mobile layout. Built-in portfolio apps and default welcome files remain. Private account files and preferences persist. Downloaded app runtime binaries remain as shared device caches; resetting public installation selections does not remove a private account’s cached apps.
-
-### One active Google workspace
-
-Google accounts use a single active Desktop or Mobile session. A second device requests a save-and-sync handoff or explicitly forces takeover when the old device is unavailable. Entry waits for lease verification and recovery reconciliation. Conflicting copies are retained; **Session recovery** in account settings restores chosen copies through SystemFS Save As. Online verification is required; previously retained local data is never cleared by losing ownership. All devices must reload this release. See [behavior, host requirements and verification limits](docs/SESSION_HANDOFF.md).
-
-### Switching back to the public profile
-
-Open **Settings → Accounts** on Desktop, or **Settings → Account & Drive backup** on Mobile. **Save to Drive & switch to public** closes apps to flush drafts, saves profile preferences, completes the current account's backup, then enters Bl4ut0's public workspace. A failed backup keeps the private account active. **Switch to Bl4ut0 public profile** keeps private changes on the device. Offline switching does not claim to release the server lease; an online waiting takeover requires a completed sync first. Switching is blocked during app installation, Google sign-in, or an existing backup. Choosing public does not forget the private account or delete its Drive backup.
-
-### Mobile App Store and app parity
-
-**Store** is available on the default Mobile Home and in All apps. Search or filter the catalog, open built-in apps, and add/remove ROM Player or Codex CLI Preview. The mobile catalog now has 24 native apps, including Lobe, Task Manager, Security Center, Identity, and Dossier. Mobile appearance and Home layout changes are included in automatic private-profile backup. Installation selections are shared between Desktop and Mobile for compatible apps.
-
-ROM Player supports NES, SNES, Game Boy/Color, GBA, Genesis, Master System, and Game Gear with EmulatorJS touch controls. Its launcher loads when added; emulator cores download on Play. ROM imports remain on-device, outside Drive backup. Home pauses the emulator and Recents resumes it. Use emulator-native save controls before stopping/closing a game. Heavy desktop games are listed with their availability.
-
-See [mobile app parity](docs/MOBILE_APP_PARITY.md) for the adaptation map and remaining work. Run the optional isolated browser smoke with Playwright installed: `node scripts/check-mobile-apps-browser.js`. Set `PORTFOLIOS_PLAYWRIGHT` to a Playwright module path when using a bundled runtime. It creates its own loopback server and disposable Chromium contexts; its ROM fixture is an original diagnostic program and it uses no real Google account.
-
-## Appearance and diagnostic review (2026-10-09)
-
-See [docs/APPEARANCE_AUDIT.md](docs/APPEARANCE_AUDIT.md) for the seven-theme Desktop/Quick and native Mobile review, corrected surface/text pairs, screenshot evidence, and browser regression command. Debug exports now identify their build, loaded asset versions, page load/export dates, and current AI state. Existing Drive file updates retry temporary server/network failures with bounded exponential backoff; file creation, conflict recovery, and paginated discovery remain separate work.
-
-## Staged loading
-
-Boot, sign-in, each experience and optional apps now load in separate stages. See [the architecture and extension rules](docs/STAGED_LOADING.md) and [measured loading results](docs/LOADING_PERFORMANCE.md). Keep new WASM engines and optional services behind their app loaders.
+Prioritized delivery order, acceptance criteria, and milestone progress are tracked in [ROADMAP.md](ROADMAP.md).

@@ -155,9 +155,9 @@ window.storeApps = [
         title: "Codex CLI",
         icon: "apps/codex/icon.svg",
         category: "Productivity",
-        description: "In-browser Linux/WASM virtual terminal & Cloud Remote Agent environment for Antigravity CLI (agy), Claude Code (claude), OpenAI Codex (codex), and Gemini CLI—supporting live upstream version updates and persistent detached cloud sessions.",
-        size: "Linux WASM + Cloud Remote",
-        publisher: "PortfoliOS / OpenAI / Google / Anthropic"
+        description: "OpenAI Codex CLI running in the PortfoliOS Linux/WASM environment with full SystemFS workspace and Native Relay network socket integration.",
+        size: "Linux WASM",
+        publisher: "PortfoliOS / OpenAI"
     },
     {
         id: "romplayer",

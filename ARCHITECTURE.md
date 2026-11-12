@@ -2,7 +2,7 @@
 
 Shared ownership and loading decisions live in [the Orchestration architecture standard](https://github.com/Bl4ut0/PortfoliOS-Orchestration/blob/main/docs/core/ARCHITECTURE.md).
 
-This document describes the modular implementation of PortfoliOS. The project is split into distinct layers to separate data (portfolio content), core services, modular applications, local AI processing, and visual presentation shells (desktop, mobile, quick access).
+This document describes the modular implementation of PortfoliOS. The project is split into distinct layers separating data (portfolio content), core services, modular applications, local AI processing, and visual presentation shells with a strict **Desktop-First (Desktop 1st, Mobile 2nd / Last)** platform strategy.
 
 ---
 
@@ -10,82 +10,90 @@ This document describes the modular implementation of PortfoliOS. The project is
 
 ```text
 PortfoliOS/
-├── core/                         # Core system services (EventBus, State, SystemFS, Local AI, App Framework, etc.)
-├── data/                         # Portfolio content data arrays (systems, bookmarks, configurations, users)
-├── desktop/                      # Desktop experience modules (shell, taskbar, start menu, brain helper, etc.)
-├── mobile/                       # Mobile experience modules (shell, app grid, nav bar, mobile apps)
+├── core/                         # Core system services
+│   ├── runtime-bridge.js         # POSIX Root / VFS bridge, PTY controller, process harness, ZK vault, git helper
+│   ├── cloud-auth.js             # Unified cloud auth driver (Google Drive & OneDrive)
+│   ├── cloud-sync.js             # Unified cloud sync driver
+│   ├── event-bus.js              # EventBus pub/sub nervous system
+│   ├── state.js                  # Global ES6 Proxy state store
+│   ├── filesystem.js             # IndexedDB Virtual File System (SystemFS) with root /
+│   ├── gdrive-sync.js            # Google Drive sync provider (vault.enc sync, plain /etc blocked)
+│   ├── security-service.js       # SecurityKernel local policy scanner and quarantine
+│   ├── local-ai.js               # Browser-local WebGPU/WebLLM inference
+│   ├── preferences.js            # Profile-scoped preferences
+│   ├── app-framework.js          # Modular app window presets and lifecycle hooks
+│   └── app-loader.js             # Dynamic on-demand script/style loader
+├── data/                         # Portfolio content data arrays (systems, bookmarks, config, users)
+├── desktop/                      # Desktop experience modules (Desktop 1st priority)
+│   ├── workspace.html            # Main desktop DOM, Start menu, taskbar, ZK vault modal
+│   ├── shell.js                  # Desktop shell orchestrator and window manager
+│   ├── terminal.js               # Linux terminal emulator and POSIX CLI runner
+│   ├── settings.js               # Desktop Settings app with ZK Vault and Cloud Sync controls
+│   └── brain-helper.js           # Desktop AI assistant panel
+├── mobile/                       # Mobile experience modules (Mobile 2nd / Last priority)
 ├── quick/                        # Quick review view (shell)
 ├── apps/                         # Modular applications (office, iptv, webamp, files, doomsource, etc.)
-├── services/                     # Backend proxy services (ut99-relay Node.js service)
-├── styles/                       # Segmented styling sheets
-└── index.html                    # Entry point HTML container
+├── services/                     # Backend and native proxy services
+│   ├── native-relay/             # Windows Native Messaging Host (.msi) & browser extension
+│   └── ut99-relay/               # Node.js WebSocket-to-UDP proxy relay server
+├── styles/                       # Segmented style sheets (styles-v1.css, components.css, tokens.css)
+└── index.html                    # Staged entry point HTML container
 ```
 
 ---
 
-## Repository boundaries
+## 2. Platform Strategy & Priority
 
-[PortfoliOS](https://github.com/Bl4ut0/PortfoliOS) owns the shells, account/storage services, app adapters, and production deployment. [PortfoliOS-Browser.JS](https://github.com/Bl4ut0/PortfoliOS-Browser.JS) owns the editable browser interface and engine build. The OS imports a pinned artifact into `apps/browser/browserjs/`; it does not maintain a second editable browser checkout. See [Browser providers](docs/BROWSER_PROVIDERS.md) and the [fork host protocol](https://github.com/Bl4ut0/PortfoliOS-Browser.JS/blob/main/portfolios/INTEGRATION.md).
+> **Desktop 1st, Mobile 2nd (Mobile Last)**
+>
+> All architecture decisions and milestones follow an explicit **Desktop-First** model. The desktop shell is the primary platform hosting the windowed workspace, terminal CLI runner, Root `/` POSIX filesystem, Zero-Knowledge Keyring Vault, and WASM application suites. The mobile shell is a lightweight companion that follows desktop milestones; mobile touch adaptations and mobile parity passes are scheduled last.
 
-Paths in this document are relative to the OS repository root and do not prescribe a machine-specific checkout location.
+---
 
-## 2. Key Components
+## 3. Key Components
 
 ### A. Core Layers (`/core`)
-- **[event-bus.js](core/event-bus.js)**: The nervous system of the OS. Publishes and subscribes to events (`app:opened`, `app:closed`, `fs:changed`, `view:changed`) to avoid direct, coupled render calls.
-- **[state.js](core/state.js)**: Global state object (`window.state`) wrapped in an ES6 Proxy. Intercepts writes and automatically fires EventBus state changed triggers.
-- **[filesystem.js](core/filesystem.js)**: Virtual File System (`SystemFS`) backed by IndexedDB. Includes an index on the `parent` field for fast directory traversal.
-- **[storage.js](core/storage.js)**: Clean unified interface for persistent (`localStorage`) and session (`sessionStorage`) storage.
-- **[app-framework.js](core/app-framework.js)**: Defines modular registration, window presets, lifecycle hooks, teardown, iframe messaging, and audio integration.
-- **[app-loader.js](core/app-loader.js)**: Lazily loads modular app scripts/styles and exposes retryable validation failures.
-- **[local-ai.js](core/local-ai.js)**: Manages browser-local WebGPU/WebLLM models, prompt templates, and fallback Gemini cloud AI routing.
-- **[simple-brain.js](core/simple-brain.js)**: Defines single-turn AI skill execution, prompt injection, and rule-based assistant routines.
-- **[gdrive-sync.js](core/gdrive-sync.js)**: Centralized cloud synchronization engine for user SystemFS file backups to Google Drive.
-- **[preferences.js](core/preferences.js)**: Profile-scoped user preferences, volume state propagation, and settings persistence.
-- **[system-info.js](core/system-info.js)**: Read-only storage quota, profile `SystemFS` usage, and host capability service shared by File Explorer (`This PC`) and About This Computer.
+- **[runtime-bridge.js](core/runtime-bridge.js)**: Secondary connector adapter integrating the Root `/` POSIX VFS bridge, PTY controller, Linux process harness, Zero-Knowledge Keyring Vault, and Git credential helper (`git-credential-portfolios`).
+- **[cloud-auth.js](core/cloud-auth.js)** & **[cloud-sync.js](core/cloud-sync.js)**: Unified cloud authentication and sync drivers supporting Google Drive and Microsoft OneDrive with client-side encrypted envelope synchronization.
+- **[event-bus.js](core/event-bus.js)**: System EventBus avoiding direct component coupling via events (`app:opened`, `app:closed`, `fs:changed`, `portfolios:vault-status-changed`).
+- **[state.js](core/state.js)**: Global state object (`window.state`) wrapped in an ES6 Proxy with automatic EventBus trigger emission.
+- **[filesystem.js](core/filesystem.js)**: Virtual File System (`SystemFS`) backed by IndexedDB with root `/` hierarchy (`/`, `/home`, `/usr/local/bin`, `/etc`, `/tmp`, `/documents`).
+- **[gdrive-sync.js](core/gdrive-sync.js)**: Google Drive sync provider permitting `/documents/vault.enc` and blocking unencrypted `/etc` and dotfiles.
+- **[security-service.js](core/security-service.js)**: SecurityKernel local policy scanner inspecting user imports and cloud restores before workspace entry.
+- **[app-framework.js](core/app-framework.js)**: Modular app window presets, lifecycle hooks, iframe messaging, and teardown.
+- **[app-loader.js](core/app-loader.js)**: Lazily loads modular app scripts and styles on demand.
+- **[local-ai.js](core/local-ai.js)**: Manages browser-local WebGPU/WebLLM models and fallback routing.
+- **[preferences.js](core/preferences.js)**: Profile-scoped user preferences and volume state propagation.
 
-### B. Shared Data (`/data`)
-- **[systems.js](data/systems.js)**: Portfolio projects node definitions. Read by Dossier, Network Map, Mobile grid, and Quick views.
-- **[apps.js](data/apps.js)**: Desktop and Store catalogs. Entries marked `modular: true` are the single source for the lazy-loader's app list.
-- **[users.js](data/users.js)**: User profiles, preference scoping, and Cloud AI authorization policies.
-- **[config.js](data/config.js)**: Static command configurations, routes, and wallpaper choices.
+### B. Desktop Interface (`/desktop`) — Priority 1
+- **[workspace.html](desktop/workspace.html)**: Complete desktop markup including window layers, Start menu, taskbar, system tray, and the **Zero-Knowledge Vault Modal** (`#vault-modal`) with **Unlock**, **Setup**, and **Purge & Reset** views.
+- **[shell.js](desktop/shell.js)**: Orchestrates window management, focus ordering, taskbar mapping, and desktop icons.
+- **[terminal.js](desktop/terminal.js)**: POSIX terminal shell with built-in CLI executors (`vault`, `codex`, `agy`, `claude`, `xai`, `apt`, `npm`, `curl`, `wget`, `sh`).
+- **[settings.js](desktop/settings.js)**: System Settings app with dedicated Zero-Knowledge Keyring Vault actions (Unlock, Setup, Export, Lock, Purge) and cloud sync configuration.
 
-### C. Modular Applications (`/apps`)
-- **[office](apps/office)**: Rich document editor with IndexedDB persistence, document formatting, and cloud backup hooks.
-- **[iptv](apps/iptv)**: Live IPTV streaming player with HLS.js and mpegts.js decoders.
-- **[webamp](apps/webamp)**: Cleanly mounted Winamp/Webamp audio player in desktop window framing.
-- **[files](apps/files)**: Virtual File Explorer with a Windows-style `This PC` storage overview, `SystemFS` directory browser, and `/Saved Games`.
-- **[about](apps/about)**: Core About This Computer utility showing allocated storage capacity, used/available space, workspace folder breakdown, BIOS settings, and device/OS specifications.
-- **[taskmgr](apps/taskmgr)**: System Task Manager monitoring running processes, windows, memory, and performance.
-- **[ut99](apps/ut99)**: Unreal Tournament 99 WebAssembly runtime launcher and server browser.
-- **[doomsource](apps/doomsource)** & **[openrct2](apps/openrct2)**: WebAssembly game ports integrated into the iframe game framework.
-
-### D. Interface Shells
-- **[desktop/shell.js](desktop/shell.js)**: Orchestrates the Desktop view, event delegation, start menu launcher, and system bootstrap.
-- **[desktop/brain-helper.js](desktop/brain-helper.js)**: System tray AI assistant panel, model selector, and streaming response UI.
-- **[mobile/shell.js](mobile/shell.js)**: Orchestrates the touch-friendly mobile layout, swipe gestures, status shade, and lock screen.
-- **[mobile/apps/](mobile/apps)**: Mobile-optimized apps (Music, Settings, Survival AI, Warden IT, Status).
-- **[quick/shell.js](quick/shell.js)**: Orchestrates the rapid category list review layout.
-
-### E. Backend Services (`/services`)
+### C. Services & Native Relay (`/services`)
+- **[native-relay](services/native-relay)**: Windows Native Messaging Host installer (`PortfoliOS-NativeRelay.msi`) and browser extension unlocking raw duplex TCP and UDP sockets for guest runtimes.
 - **[ut99-relay](services/ut99-relay)**: Standalone Node.js WebSocket-to-UDP proxy relay server for web multiplayer sessions.
 
 ---
 
-## 3. Communication Patterns
+## 4. Communication Architecture
 
 ```mermaid
 graph TD
-    FS[SystemFS] -->|fs:changed| EB[EventBus]
-    State[state Proxy] -->|state:changed| EB
-    EB -->|update view| Taskbar[Taskbar]
-    EB -->|update view| DesktopIcons[DesktopIcons]
-    EB -->|update view| StartMenu[StartMenu]
-    EB -->|update view| FilesApp[File Explorer App]
-    EB -->|update view| BrainTray[Brain Helper AI Tray]
+    User[User / Developer] -->|Interacts| Terminal[Desktop Terminal / Apps]
+    Terminal -->|POSIX Syscalls| SyscallTable[Linux POSIX Syscall Table]
+    SyscallTable -->|sys_open / sys_read / sys_write| RootVFS[Root / SystemFS Bridge]
+    SyscallTable -->|sys_socket / sys_connect| Relay[Windows Native Relay TCP/UDP]
+    SyscallTable -->|sys_ioctl| PTY[PTY Controller Stream]
+    Terminal -->|Token Queries| Vault[Zero-Knowledge Keyring Vault]
+    Vault -->|In-Memory AES Keys| Memory[(Session Memory)]
+    Vault -->|Write-Through| LocalVault["/etc/portfolios/vault/*.json (Local IndexedDB)"]
+    Vault -->|AES-256-GCM Export| EncFile["/documents/vault.enc (Cloud Sync Ready)"]
+    EncFile -->|Sync Allowed| CloudSync[Google Drive / OneDrive Sync]
+    LocalVault -.->|Sync Blocked| CloudSync
 ```
 
-- **Reactivity**: Change properties on `window.state` directly (e.g. `state.wallpaper = 'matrix'`). The Proxy in `state.js` intercepts this, updates the storage (if preference), and triggers EventBus event `state:changed:wallpaper`. Settings or shell scripts listen to this event and repaint elements.
-- **Event-Driven File Updates**: Apps modifying virtual files call `SystemFS.writeFile(...)`. SystemFS emits `fs:changed` event. The File Explorer app listens to `fs:changed` and redraws the folder grid without visual flicker.
-- **Local AI & Skills Engine**: User requests target `core/local-ai.js` or `core/simple-brain.js`. WebGPU execution streams tokens to `desktop/brain-helper.js` or `desktop/terminal.js` UI components.
-
+- **POSIX Syscall Mapping**: User-space translation layer maps Linux binary syscalls directly to browser secondary connectors.
+- **Zero-Knowledge Keyring**: Master Passphrase derives 256-bit AES key via PBKDF2 (600,000 rounds). Only encrypted `/documents/vault.enc` leaves the device.
+- **Event-Driven Reactivity**: SystemFS file changes emit `fs:changed`, and vault transitions emit `portfolios:vault-status-changed`, keeping the UI in sync without polling.

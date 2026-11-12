@@ -804,10 +804,10 @@
 /* Metadata Editor Dialog */
 .musicmini-metadata-dialog {
     padding: 0;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.18));
     border-radius: 12px;
-    background: #0f172a;
-    color: #f8fafc;
+    background: var(--surface-raised, #0f172a);
+    color: var(--text, #f8fafc);
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
     max-width: 440px;
     width: 90vw;
@@ -815,7 +815,7 @@
 }
 
 .musicmini-metadata-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.65);
+    background: var(--scrim, rgba(0, 0, 0, 0.65));
     backdrop-filter: blur(3px);
 }
 
@@ -829,7 +829,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.85rem 1.1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
 }
 
 .mm-meta-header h3 {
@@ -845,7 +845,7 @@
 .mm-meta-close {
     background: none;
     border: none;
-    color: #94a3b8;
+    color: var(--text-muted, #94a3b8);
     font-size: 1.4rem;
     line-height: 1;
     cursor: pointer;
@@ -853,7 +853,7 @@
 }
 
 .mm-meta-close:hover {
-    color: #fff;
+    color: var(--text, #fff);
 }
 
 .mm-meta-form {
@@ -872,17 +872,17 @@
 .mm-meta-field span {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #cbd5e1;
+    color: var(--text-soft, #cbd5e1);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
 
 .mm-meta-field input {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: var(--surface-inset, rgba(255, 255, 255, 0.06));
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.14));
     border-radius: 6px;
     padding: 0.45rem 0.65rem;
-    color: #fff;
+    color: var(--text, #fff);
     font-size: 0.85rem;
     outline: none;
     transition: border-color 150ms ease;
@@ -906,6 +906,6 @@
     justify-content: flex-end;
     gap: 0.5rem;
     padding-top: 0.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08));
     margin-top: 0.4rem;
 }

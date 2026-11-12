@@ -89,17 +89,153 @@ body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
 #mobile-device .session-account > .session-action-symbol { color:var(--mobile-accent-ink); }
 
 /* Desktop sign-in uses OS surfaces and typography; Mobile retains its own palette. */
-.session-chooser[data-experience=desktop] { background:radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--theme-primary) 9%,transparent),transparent 55%),var(--bg); color:var(--text); font-family:var(--body); }
-.session-chooser[data-experience=desktop] .session-lock-header,.session-chooser[data-experience=desktop] .session-lock-footer,.session-chooser[data-experience=desktop] [data-session-date],.session-chooser[data-experience=desktop] p,.session-chooser[data-experience=desktop] .session-account small { color:var(--text-soft); }
-.session-chooser[data-experience=desktop] .session-account { background:var(--surface-raised); color:var(--text); border-color:var(--line-strong); border-radius:var(--radius-lg); }
-.session-chooser[data-experience=desktop] .session-account:hover { background:var(--control-hover); border-color:var(--theme-primary-ink); }
-.session-chooser[data-experience=desktop] .session-chooser-eyebrow,.session-chooser[data-experience=desktop] .session-action-symbol { color:var(--theme-primary-ink); }
-.session-chooser[data-experience=desktop] .session-lock-footer button,.session-chooser[data-experience=desktop] .session-chooser-offline,.session-chooser[data-experience=desktop] .session-public-action { background:var(--surface-raised); color:var(--text); border-color:var(--line-strong); }
-.session-chooser[data-experience=desktop] .session-chooser-error { color:var(--rose-ink); }
-.session-lock-header > span:first-child { display:inline-flex; align-items:center; gap:8px; }
-.session-lock-header .portfolios-mark { width:32px; height:32px; border:1px solid var(--line-strong); border-radius:8px; background:var(--surface-inset, #090a0f); }
-.session-account-icon:has([data-session-avatar=public]) { background:#fff; }
-.session-account-icon img[data-session-avatar=public] { object-fit:contain; padding:7px; box-sizing:border-box; }
+.session-chooser[data-experience=desktop] {
+    background: radial-gradient(ellipse at 18% 12%, color-mix(in srgb, var(--theme-primary) 9%, transparent), transparent 55%), var(--bg);
+    color: var(--text);
+    font-family: var(--body, sans-serif);
+}
+.session-chooser[data-experience=desktop] .session-lock-header,
+.session-chooser[data-experience=desktop] .session-lock-footer,
+.session-chooser[data-experience=desktop] [data-session-date],
+.session-chooser[data-experience=desktop] p,
+.session-chooser[data-experience=desktop] .session-account small {
+    color: var(--text-soft);
+}
+.session-chooser[data-experience=desktop] .session-chooser-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-family: var(--mono, monospace);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--theme-primary-ink, var(--theme-primary));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    margin-bottom: 8px;
+}
+.session-chooser[data-experience=desktop] .session-account {
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg, 16px);
+    padding: 24px 18px 20px;
+    min-height: 220px;
+    box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, 0.2));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.session-chooser[data-experience=desktop] .session-account:hover {
+    background: var(--control-hover);
+    border-color: var(--theme-primary-ink, var(--theme-primary));
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25), 0 0 20px color-mix(in srgb, var(--theme-primary) 20%, transparent);
+    transform: translateY(-3px);
+}
+.session-chooser[data-experience=desktop] .session-account-icon {
+    width: 78px;
+    height: 78px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-inset);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+}
+.session-chooser[data-experience=desktop] .session-account-google .session-account-icon {
+    background: var(--surface-inset);
+    border-color: var(--line-strong);
+}
+.session-chooser[data-experience=desktop] .session-google-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.session-chooser[data-experience=desktop] .session-action-symbol {
+    color: var(--theme-primary-ink, var(--theme-primary));
+    font: 20px system-ui, sans-serif;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+.session-chooser[data-experience=desktop] .session-account:hover .session-action-symbol {
+    color: var(--theme-primary-ink, var(--theme-primary));
+    transform: translateX(3px);
+}
+.session-chooser[data-experience=desktop] .session-lock-footer button,
+.session-chooser[data-experience=desktop] .session-chooser-offline,
+.session-chooser[data-experience=desktop] .session-public-action,
+.session-chooser[data-experience=desktop] .session-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md, 10px);
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow);
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+.session-chooser[data-experience=desktop] .session-lock-footer button:hover,
+.session-chooser[data-experience=desktop] .session-chooser-offline:hover,
+.session-chooser[data-experience=desktop] .session-public-action:hover,
+.session-chooser[data-experience=desktop] .session-theme-toggle:hover {
+    background: var(--control-hover);
+    border-color: var(--theme-primary);
+    transform: translateY(-1px);
+}
+.session-chooser[data-experience=desktop] .session-lock-header .portfolios-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--surface-raised);
+    color: var(--text);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: var(--mono, monospace);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.session-chooser[data-experience=desktop] .session-lock-header .portfolios-mark .prompt-chevron {
+    color: var(--text);
+    line-height: 1;
+}
+.session-chooser[data-experience=desktop] .session-lock-header .portfolios-mark .prompt-cursor {
+    color: var(--theme-primary);
+    text-shadow: 0 0 8px var(--theme-primary-glow, rgba(34, 211, 238, 0.5));
+    line-height: 1;
+}
+.session-chooser[data-experience=desktop] .session-chooser-error {
+    color: var(--rose-ink, #fda4af);
+}
+.session-lock-header > span:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.session-account-icon:has([data-session-avatar=public]) {
+    background: #fff;
+}
+.session-account-icon img[data-session-avatar=public] {
+    object-fit: contain;
+    padding: 7px;
+    box-sizing: border-box;
+}
 
 /* Floating modal window for private session resolution on Desktop */
 #session-transfer-overlay[data-experience=desktop] {
@@ -216,7 +352,23 @@ body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
 #session-transfer-overlay[data-experience=desktop] .session-public-action:hover {
     background: var(--control-hover, rgba(56, 189, 248, 0.15));
     border-color: var(--theme-primary-ink, #38bdf8);
+    color: var(--text);
+}
+
+#session-transfer-overlay .session-public-action.primary,
+#session-transfer-overlay[data-experience=desktop] .session-public-action.primary {
+    background: linear-gradient(135deg, var(--theme-primary, #06b6d4), var(--theme-accent, #3b82f6));
+    border-color: transparent;
     color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+}
+
+#session-transfer-overlay .session-public-action.primary:hover,
+#session-transfer-overlay[data-experience=desktop] .session-public-action.primary:hover {
+    filter: brightness(1.12);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(6, 182, 212, 0.5);
 }
 
 /* Session Chooser Theme Button & Modal */
@@ -225,14 +377,17 @@ body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background: var(--surface-raised, rgba(255, 255, 255, 0.06));
-    border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.14));
+    background: var(--surface-raised);
+    border: 1px solid var(--line-strong);
     border-radius: 8px;
-    color: var(--text, #f1f5f9);
+    color: var(--text);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.18s ease;
+}
+.session-theme-toggle i {
+    color: var(--theme-primary);
 }
 .session-theme-toggle:hover {
     background: var(--control-hover, rgba(255, 255, 255, 0.12));
@@ -244,7 +399,7 @@ body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
     z-index: 100005;
     display: grid;
     place-items: center;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--scrim, rgba(0, 0, 0, 0.5));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     padding: 16px;
@@ -338,4 +493,356 @@ body[data-startup-stage=mounting] #session-chooser { visibility:visible; }
 .session-theme-card-info small {
     font-size: 11px;
     color: var(--text-soft, #94a3b8);
+}
+
+/* ==========================================================================
+   In-Place Cloud Auth Transition Card & Provider Selection
+   ========================================================================== */
+.session-stage-view {
+    width: 100%;
+    animation: desktopModalPop 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.session-stage-view[hidden],
+.session-auth-card [hidden] {
+    display: none !important;
+}
+
+/* Floating Modal Window overtop of Session Chooser */
+.session-auth-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--scrim, rgba(0, 0, 0, 0.55));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 1rem;
+    box-sizing: border-box;
+}
+.session-auth-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(100%, 480px);
+    margin: 0 auto;
+    padding: 20px 24px 22px;
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg, 16px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), var(--shadow);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+}
+.session-auth-window-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+}
+.session-auth-window-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+.session-auth-window-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-soft);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.session-auth-window-close:hover {
+    background: var(--control-hover);
+    color: var(--text);
+    border-color: var(--line);
+}
+
+.session-auth-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 4px 12px;
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-soft);
+}
+.session-auth-brand .portfolios-mark {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--mono, monospace);
+    font-weight: 800;
+}
+.session-auth-brand .prompt-chevron {
+    color: var(--text);
+}
+.session-auth-brand .prompt-cursor {
+    color: var(--theme-primary);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--theme-primary) 60%, transparent);
+}
+
+.session-auth-target {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 14px;
+}
+.session-auth-target-avatar {
+    width: 68px;
+    height: 68px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--theme-primary);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--theme-primary) 35%, transparent);
+    overflow: hidden;
+    background: var(--surface-inset);
+}
+.session-auth-target-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.session-auth-icon-wrap {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--theme-primary) 14%, var(--surface-inset));
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, var(--line));
+    display: grid;
+    place-items: center;
+    box-shadow: var(--shadow);
+}
+.session-auth-icon-wrap svg {
+    width: 26px;
+    height: 26px;
+    color: var(--theme-primary);
+}
+
+.session-auth-title {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: var(--text);
+}
+.session-auth-account {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--theme-primary-ink, var(--theme-primary));
+    margin: 0 0 6px;
+    font-family: var(--mono, monospace);
+}
+.session-auth-desc {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-soft);
+    margin: 0;
+    max-width: 360px;
+}
+
+/* Provider Selector Tabs */
+.session-provider-selector {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin: 14px 0 16px;
+}
+.session-provider-selector[hidden] {
+    display: none !important;
+}
+.session-provider-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
+    color: var(--text-soft);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+.session-provider-tab:hover {
+    background: var(--control-hover);
+    color: var(--text);
+    border-color: var(--theme-primary);
+}
+.session-provider-tab.is-active {
+    background: var(--surface);
+    border-color: var(--theme-primary);
+    color: var(--text);
+    box-shadow: 0 0 0 1px var(--theme-primary);
+}
+.session-provider-tab .session-provider-svg {
+    flex-shrink: 0;
+}
+
+/* Optional Server URL Field */
+.session-auth-server-group {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 14px;
+}
+.session-auth-server-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-soft);
+    margin-bottom: 5px;
+}
+.session-auth-server-input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.session-auth-server-input:focus {
+    outline: none;
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 0 1px var(--theme-primary);
+}
+
+/* Primary Action Button */
+.session-auth-continue-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    background: var(--theme-primary);
+    color: var(--on-primary);
+    border: 1px solid var(--theme-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+    transition: all 0.18s ease;
+}
+.session-auth-continue-btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+}
+.session-auth-continue-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+.session-auth-continue-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Trust / Security Chips */
+.session-auth-trust-chips {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    text-align: left;
+}
+.session-auth-trust-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--text-soft);
+}
+.session-auth-trust-chip svg {
+    color: var(--theme-primary);
+    flex-shrink: 0;
+}
+
+/* Back and Offline Secondary Actions */
+.session-auth-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 16px;
+}
+.session-auth-back-btn,
+.session-auth-offline-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-inset);
+    color: var(--text-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.18s ease;
+}
+.session-auth-back-btn:hover,
+.session-auth-offline-btn:hover {
+    background: var(--control-hover);
+    color: var(--text);
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
+}
+
+/* Mobile responsive adjustments */
+#mobile-device .session-auth-card {
+    padding: 22px 16px 18px;
+    border-radius: 16px;
+    background: var(--surface-raised);
+}
+#mobile-device .session-auth-title {
+    font-size: 18px;
+}
+#mobile-device .session-auth-desc {
+    font-size: 11px;
+}
+#mobile-device .session-provider-tab {
+    padding: 5px 8px;
+    font-size: 11px;
+}
+#mobile-device .session-auth-continue-btn {
+    min-height: 42px;
+    font-size: 13px;
 }

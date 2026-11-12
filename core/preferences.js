@@ -98,15 +98,15 @@ window.getPortfolioThemeOptions = () => {
         label: "Dark",
         colorScheme: "dark",
         tokens: {
-            "--bg": "#050608",
-            "--panel": "rgba(9, 11, 16, 0.62)",
-            "--panel-strong": "rgba(14, 18, 26, 0.85)",
-            "--panel-soft": "rgba(255, 255, 255, 0.04)",
-            "--line": "rgba(255, 255, 255, 0.07)",
-            "--line-strong": "rgba(255, 255, 255, 0.14)",
-            "--text": "#fafafa",
-            "--text-soft": "#a1a1aa",
-            "--text-muted": "#71717a",
+            "--bg": "#06090f",
+            "--panel": "rgba(15, 23, 42, 0.72)",
+            "--panel-strong": "rgba(15, 23, 42, 0.88)",
+            "--panel-soft": "rgba(255, 255, 255, 0.05)",
+            "--line": "rgba(255, 255, 255, 0.08)",
+            "--line-strong": "rgba(103, 232, 249, 0.22)",
+            "--text": "#f8fafc",
+            "--text-soft": "#94a3b8",
+            "--text-muted": "#64748b",
             "--theme-primary": "#22d3ee",
             "--theme-accent": "#34d399",
             "--amber": "#f59e0b",
@@ -114,8 +114,8 @@ window.getPortfolioThemeOptions = () => {
             "--violet": "#a78bfa",
             "--rose": "#f43f5e",
             "--teal": "#14b8a6",
-            "--glass-bg": "rgba(10, 12, 18, 0.62)",
-            "--glass-border": "rgba(255, 255, 255, 0.07)",
+            "--glass-bg": "rgba(15, 23, 42, 0.78)",
+            "--glass-border": "rgba(103, 232, 249, 0.18)",
             "--glass-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.12)",
             "--glass-shadow": "0 25px 50px -12px rgba(0, 0, 0, 0.75)"
         }
@@ -216,6 +216,23 @@ window.applyThemeColors = (options = {}) => {
     const currentAccent = state.themeAccent || tokens["--theme-accent"] || "#34d399";
     const background = tokens['--bg'] || '#050608';
     const foreground = tokens['--text'] || '#fafafa';
+    const isLight = (theme.colorScheme || "dark") === "light";
+
+    // Dynamically manage semantic surfaces so switching themes never leaves stale inline styles
+    const surfaceInset = tokens["--surface-inset"] || background;
+    const surface = tokens["--surface"] || (isLight ? "color-mix(in srgb, var(--bg) 96%, var(--text))" : "color-mix(in srgb, var(--bg) 97%, var(--text))");
+    const surfaceRaised = tokens["--surface-raised"] || (isLight ? "color-mix(in srgb, var(--bg) 92%, var(--text))" : "color-mix(in srgb, var(--bg) 94%, var(--text))");
+    const surfaceOverlay = tokens["--surface-overlay"] || (isLight ? "color-mix(in srgb, var(--bg) 90%, var(--text))" : "color-mix(in srgb, var(--bg) 94%, var(--text))");
+    const controlHover = tokens["--control-hover"] || (isLight ? "color-mix(in srgb, var(--text) 7%, transparent)" : "color-mix(in srgb, var(--text) 9%, transparent)");
+    const scrim = tokens["--scrim"] || (isLight ? "rgba(15, 23, 42, 0.4)" : "rgba(0, 0, 0, 0.65)");
+
+    document.documentElement.style.setProperty("--surface-inset", surfaceInset);
+    document.documentElement.style.setProperty("--surface", surface);
+    document.documentElement.style.setProperty("--surface-raised", surfaceRaised);
+    document.documentElement.style.setProperty("--surface-overlay", surfaceOverlay);
+    document.documentElement.style.setProperty("--control-hover", controlHover);
+    document.documentElement.style.setProperty("--scrim", scrim);
+
     const readable = color => window.getReadableThemeColor(color, background, foreground);
     document.documentElement.dataset.colorScheme = theme.colorScheme || 'dark';
     document.documentElement.style.setProperty('--on-primary', window.getThemeButtonText(currentPrimary));
@@ -276,19 +293,88 @@ window.applyDesktopResolution = () => {
     experience.style.transformOrigin = "center center";
 };
 
+window.getCustomWallpapers = () => {
+    try {
+        const raw = window.Storage ? window.Storage.local.get(window.getPreferencesKey("CustomWallpapers")) : null;
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === "string") {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+        }
+    } catch (_) {}
+    return [];
+};
+
+window.deleteCustomWallpaper = async (wallpaperId) => {
+    const list = window.getCustomWallpapers();
+    const item = list.find(w => w.id === wallpaperId);
+    const updated = list.filter(w => w.id !== wallpaperId);
+    if (window.Storage) {
+        window.Storage.local.set(window.getPreferencesKey("CustomWallpapers"), JSON.stringify(updated));
+    }
+    if (item?.path && window.SystemFS) {
+        try { await window.SystemFS.deleteFile(item.path); } catch (_) {}
+    }
+    if (state.wallpaper === wallpaperId || (state.wallpaper === "custom" && !updated.length)) {
+        window.setWallpaper("aurora");
+    } else if (state.wallpaper === "custom" && updated.length) {
+        window.setWallpaper(updated[0].id);
+    }
+    if (window.renderWallpaperOptions) window.renderWallpaperOptions();
+    if (window.showDesktopToast) window.showDesktopToast("Custom wallpaper removed.");
+};
+
 window.applyDesktopPreferences = () => {
     const desktop = window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience");
     if (desktop) {
-        desktop.dataset.wallpaper = state.wallpaper;
-        if (state.wallpaper === "custom") {
-            const customUrl = window.Storage ? window.Storage.local.get(window.getPreferencesKey("CustomWallpaperUrl")) : null;
-            if (customUrl) {
-                desktop.style.setProperty("--custom-wallpaper-url", `url("${customUrl}")`);
+        const isCustom = state.wallpaper === "custom" || state.wallpaper?.startsWith("custom-");
+        desktop.dataset.wallpaper = isCustom ? "custom" : state.wallpaper;
+        const wallEl = desktop.querySelector(".desktop-wallpaper");
+
+        if (isCustom) {
+            const customList = window.getCustomWallpapers();
+            const activeCustom = customList.find(w => w.id === state.wallpaper) || customList[0] || null;
+            const thumb = activeCustom?.thumb || (window.Storage ? window.Storage.local.get(window.getPreferencesKey("CustomWallpaperThumb")) : null);
+            const activeBlob = window._customWallpaperBlobUrl;
+
+            if (activeBlob && window._activeCustomWallpaperId === state.wallpaper) {
+                desktop.style.setProperty("--custom-wallpaper-url", `url("${activeBlob}")`);
+                if (wallEl) wallEl.style.backgroundImage = `url("${activeBlob}")`;
+            } else if (thumb) {
+                desktop.style.setProperty("--custom-wallpaper-url", `url("${thumb}")`);
+                if (wallEl) wallEl.style.backgroundImage = `url("${thumb}")`;
             } else {
                 desktop.style.removeProperty("--custom-wallpaper-url");
+                if (wallEl) wallEl.style.removeProperty("background-image");
+            }
+
+            // Asynchronously hydrate from SystemFS full-resolution file
+            const targetPath = activeCustom?.path || (window.Storage ? window.Storage.local.get(window.getPreferencesKey("CustomWallpaperPath")) : null);
+            if (targetPath && window.SystemFS) {
+                window.SystemFS.ensureReady().then(async () => {
+                    const record = await window.SystemFS.readFile(targetPath);
+                    if (record && record.data) {
+                        const blob = record.data instanceof Blob ? record.data : new Blob([record.data], { type: record.type || "image/jpeg" });
+                        if (window._customWallpaperBlobUrl) {
+                            try { URL.revokeObjectURL(window._customWallpaperBlobUrl); } catch (_) {}
+                        }
+                        window._customWallpaperBlobUrl = URL.createObjectURL(blob);
+                        window._activeCustomWallpaperId = state.wallpaper;
+                        if (desktop && (state.wallpaper === "custom" || state.wallpaper.startsWith("custom-"))) {
+                            desktop.style.setProperty("--custom-wallpaper-url", `url("${window._customWallpaperBlobUrl}")`);
+                            if (wallEl) wallEl.style.backgroundImage = `url("${window._customWallpaperBlobUrl}")`;
+                        }
+                        document.querySelectorAll('.wallpaper-preview[data-preview-wallpaper="custom"], .wallpaper-preview[data-preview-wallpaper="' + state.wallpaper + '"]').forEach((preview) => {
+                            preview.style.backgroundImage = `url("${window._customWallpaperBlobUrl}")`;
+                        });
+                    }
+                }).catch((err) => {
+                    console.warn("Could not load custom wallpaper from SystemFS:", err);
+                });
             }
         } else {
             desktop.style.removeProperty("--custom-wallpaper-url");
+            if (wallEl) wallEl.style.removeProperty("background-image");
         }
     }
     
@@ -303,52 +389,200 @@ window.applyDesktopPreferences = () => {
     if (resSelect) resSelect.value = state.desktopResolution;
 };
 
+function generateWallpaperThumbnail(blob) {
+    return new Promise((resolve) => {
+        try {
+            const img = new Image();
+            const url = URL.createObjectURL(blob);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                try {
+                    const canvas = document.createElement("canvas");
+                    const maxW = 240;
+                    const maxH = 150;
+                    let w = img.width || maxW;
+                    let h = img.height || maxH;
+                    if (w > maxW || h > maxH) {
+                        const ratio = Math.min(maxW / w, maxH / h);
+                        w = Math.round(w * ratio);
+                        h = Math.round(h * ratio);
+                    }
+                    canvas.width = Math.max(1, w);
+                    canvas.height = Math.max(1, h);
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL("image/jpeg", 0.72));
+                } catch (_) {
+                    resolve(null);
+                }
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve(null);
+            };
+            img.src = url;
+        } catch (_) {
+            resolve(null);
+        }
+    });
+}
+
 window.setCustomWallpaper = async (recordOrBlob, path) => {
     try {
-        let url = null;
-        if (typeof recordOrBlob === "string") {
-            url = recordOrBlob;
-        } else if (recordOrBlob instanceof Blob) {
-            url = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(recordOrBlob);
-            });
+        let blob = null;
+        let wallpaperPath = path || null;
+        let name = "wallpaper.jpg";
+
+        if (recordOrBlob instanceof Blob) {
+            blob = recordOrBlob;
+            name = recordOrBlob.name || "wallpaper.jpg";
+        } else if (recordOrBlob instanceof Uint8Array || recordOrBlob instanceof ArrayBuffer) {
+            blob = new Blob([recordOrBlob], { type: "image/png" });
+            name = path || "wallpaper.png";
         } else if (recordOrBlob?.data instanceof Blob) {
-            url = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(recordOrBlob.data);
-            });
+            blob = recordOrBlob.data;
+            name = recordOrBlob.name || "wallpaper.jpg";
+            wallpaperPath = wallpaperPath || recordOrBlob.path;
+        } else if (recordOrBlob?.data instanceof Uint8Array || recordOrBlob?.data instanceof ArrayBuffer) {
+            blob = new Blob([recordOrBlob.data], { type: recordOrBlob.type || "image/jpeg" });
+            name = recordOrBlob.name || "wallpaper.jpg";
+            wallpaperPath = wallpaperPath || recordOrBlob.path;
         } else if (typeof recordOrBlob?.data === "string") {
-            url = recordOrBlob.data;
-        } else if (path && window.SystemFS) {
-            const rec = await window.SystemFS.readFile(path);
-            if (rec?.data instanceof Blob) {
-                url = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.readAsDataURL(rec.data);
-                });
-            } else if (typeof rec?.data === "string") {
-                url = rec.data;
+            if (recordOrBlob.data.startsWith("data:") || recordOrBlob.data.startsWith("blob:")) {
+                const res = await fetch(recordOrBlob.data);
+                blob = await res.blob();
+            } else {
+                blob = new Blob([recordOrBlob.data], { type: recordOrBlob.type || "image/jpeg" });
             }
+            name = recordOrBlob.name || "wallpaper.jpg";
+            wallpaperPath = wallpaperPath || recordOrBlob.path;
+        } else if (recordOrBlob?.file instanceof Blob) {
+            blob = recordOrBlob.file;
+            name = recordOrBlob.file.name || "wallpaper.jpg";
+        } else if (recordOrBlob?.record) {
+            return await window.setCustomWallpaper(recordOrBlob.record, recordOrBlob.path || path);
+        } else if (typeof recordOrBlob === "string") {
+            if (recordOrBlob.startsWith("data:") || recordOrBlob.startsWith("blob:") || recordOrBlob.startsWith("http")) {
+                const res = await fetch(recordOrBlob);
+                blob = await res.blob();
+                if (path) name = path.includes("/") ? path.split("/").pop() : path;
+            } else if (window.SystemFS) {
+                wallpaperPath = recordOrBlob;
+                const rec = await window.SystemFS.readFile(recordOrBlob);
+                if (rec?.data instanceof Blob) blob = rec.data;
+                else if (rec?.data) blob = new Blob([rec.data], { type: rec.type || "image/jpeg" });
+                name = rec?.name || "wallpaper.jpg";
+            }
+        } else if (wallpaperPath && window.SystemFS) {
+            const rec = await window.SystemFS.readFile(wallpaperPath);
+            if (rec?.data instanceof Blob) blob = rec.data;
+            else if (rec?.data) blob = new Blob([rec.data], { type: rec.type || "image/jpeg" });
+            name = rec?.name || "wallpaper.jpg";
         }
 
-        if (url) {
-            if (window.Storage) {
-                window.Storage.local.set(window.getPreferencesKey("CustomWallpaperUrl"), url);
-            }
-            window.setWallpaper("custom");
-            if (window.Toast) {
-                window.Toast.show("Desktop wallpaper updated", { type: "success" });
-            } else if (window.showDesktopToast) {
-                window.showDesktopToast("Desktop wallpaper updated");
-            }
+        if (!blob) {
+            throw new Error("No valid image data found for custom wallpaper.");
         }
+
+        // Ensure the wallpaper is saved persistently in SystemFS
+        if (window.SystemFS) {
+            await window.SystemFS.ensureReady();
+            if (!wallpaperPath || !wallpaperPath.startsWith("/")) {
+                const ext = name.includes(".") ? name.split(".").pop().toLowerCase() : "jpg";
+                wallpaperPath = `/Pictures/wallpapers/custom-${Date.now()}.${ext}`;
+            }
+            await window.SystemFS.ensureDirectory("/Pictures/wallpapers", { silent: true });
+            await window.SystemFS.writeFile(
+                wallpaperPath,
+                name,
+                "/Pictures/wallpapers",
+                blob,
+                blob.size,
+                blob.type || "image/jpeg",
+                false,
+                { silent: true }
+            );
+        }
+
+        // Generate lightweight thumbnail for instant frame 0 rendering (never exceeds localStorage quota)
+        const thumb = await generateWallpaperThumbnail(blob);
+        const customId = `custom-${Date.now()}`;
+        const newEntry = {
+            id: customId,
+            name: name || "Custom Wallpaper",
+            path: wallpaperPath,
+            thumb: thumb,
+            dateAdded: Date.now()
+        };
+
+        const list = window.getCustomWallpapers();
+        const filtered = list.filter(item => (wallpaperPath && item.path !== wallpaperPath) && item.name !== name);
+        filtered.unshift(newEntry);
+
+        if (window.Storage) {
+            window.Storage.local.set(window.getPreferencesKey("CustomWallpapers"), JSON.stringify(filtered));
+            if (wallpaperPath) {
+                window.Storage.local.set(window.getPreferencesKey("CustomWallpaperPath"), wallpaperPath);
+            }
+            if (thumb) {
+                window.Storage.local.set(window.getPreferencesKey("CustomWallpaperThumb"), thumb);
+            }
+            window.Storage.local.set(window.getPreferencesKey("ActiveCustomWallpaperId"), customId);
+        }
+
+        // Revoke previous blob URL if any, and create clean in-memory Object URL
+        if (window._customWallpaperBlobUrl) {
+            try { URL.revokeObjectURL(window._customWallpaperBlobUrl); } catch (_) {}
+        }
+        window._customWallpaperBlobUrl = URL.createObjectURL(blob);
+        window._activeCustomWallpaperId = customId;
+
+        // Apply immediately to desktop and previews
+        const desktop = window.byId ? window.byId("desktop-experience") : document.getElementById("desktop-experience");
+        if (desktop) {
+            desktop.dataset.wallpaper = "custom";
+            desktop.style.setProperty("--custom-wallpaper-url", `url("${window._customWallpaperBlobUrl}")`);
+            const wallEl = desktop.querySelector(".desktop-wallpaper");
+            if (wallEl) wallEl.style.backgroundImage = `url("${window._customWallpaperBlobUrl}")`;
+        }
+        document.querySelectorAll('.wallpaper-preview[data-preview-wallpaper="custom"], .wallpaper-preview[data-preview-wallpaper="' + customId + '"]').forEach((preview) => {
+            preview.style.backgroundImage = `url("${window._customWallpaperBlobUrl}")`;
+        });
+
+        // Update state and notify
+        window.setWallpaper(customId);
+
+        if (window.Toast) {
+            window.Toast.show("Desktop wallpaper updated", { type: "success" });
+        } else if (window.showDesktopToast) {
+            window.showDesktopToast("Desktop wallpaper updated");
+        }
+        return newEntry;
     } catch (e) {
         console.error("Failed to set custom wallpaper:", e);
-        if (window.Toast) window.Toast.show("Failed to set wallpaper", { type: "error" });
+        if (window.Toast) window.Toast.show("Failed to set wallpaper: " + (e.message || "Unknown error"), { type: "error" });
+        else if (window.showDesktopToast) window.showDesktopToast("Failed to set wallpaper: " + (e.message || "Unknown error"));
+    }
+};
+
+window.promptCustomWallpaperSelection = async () => {
+    if (!window.SystemFS) return;
+    try {
+        const result = await window.SystemFS.showOpenDialog({
+            title: "Choose Desktop Wallpaper",
+            startPath: "/Pictures",
+            types: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".bmp"],
+            acceptLabel: "Set Wallpaper"
+        });
+        if (!result) return;
+        if (result.file) {
+            await window.setCustomWallpaper(result.file);
+        } else if (result.record || result.path) {
+            await window.setCustomWallpaper(result.record, result.path);
+        }
+    } catch (err) {
+        console.error("Failed to select custom wallpaper:", err);
+        window.showDesktopToast?.(err.message || "Failed to select wallpaper");
     }
 };
 
@@ -381,13 +615,224 @@ window.setPortfolioTheme = (themeId, options = {}) => {
 
 window.setWallpaper = (wallpaperId) => {
     const options = window.wallpaperOptions || [];
-    if (!options.some((wallpaper) => wallpaper.id === wallpaperId)) return;
+    const customList = window.getCustomWallpapers ? window.getCustomWallpapers() : [];
+    const isCustom = wallpaperId === "custom" || String(wallpaperId).startsWith("custom-") || customList.some(w => w.id === wallpaperId);
+    if (!isCustom && !options.some((wallpaper) => wallpaper.id === wallpaperId)) return;
+
     state.wallpaper = wallpaperId;
     if (window.Storage) {
         window.Storage.local.set(window.getPreferencesKey("Wallpaper"), wallpaperId);
+        if (isCustom) {
+            window.Storage.local.set(window.getPreferencesKey("ActiveCustomWallpaperId"), wallpaperId);
+        }
     }
     window.applyDesktopPreferences();
     if (window.EventBus) window.EventBus.emit("wallpaper:changed", wallpaperId);
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
+};
+
+// =========================================================================
+// Default Applications & File Associations Engine
+// =========================================================================
+const DEFAULT_FILE_ASSOCIATIONS = {
+    // Images -> defaults to imageviewer
+    ".png": "imageviewer",
+    ".jpg": "imageviewer",
+    ".jpeg": "imageviewer",
+    ".webp": "imageviewer",
+    ".gif": "imageviewer",
+    ".bmp": "imageviewer",
+    ".ico": "imageviewer",
+    ".svg": "imageviewer",
+    // Layered / RAW / Creative
+    ".psd": "photocraft",
+    ".ora": "photocraft",
+    ".cr2": "lightcraft",
+    ".nef": "lightcraft",
+    ".raw": "lightcraft",
+    ".craft": "designcraft",
+    ".fx": "effectcraft",
+    // Documents / Code
+    ".pdf": "pdfcraft",
+    ".txt": "vscode",
+    ".md": "vscode",
+    ".json": "vscode",
+    ".js": "vscode",
+    ".html": "vscode",
+    ".css": "vscode",
+    ".py": "vscode",
+    ".sh": "cli",
+    // Office Documents
+    ".docx": "genoffice-docs",
+    ".doc": "genoffice-docs",
+    ".xlsx": "genoffice-sheets",
+    ".xls": "genoffice-sheets",
+    ".pptx": "genoffice-slides",
+    ".ppt": "genoffice-slides",
+    ".gdoc": "genoffice-docs",
+    ".gsheet": "genoffice-sheets",
+    ".gslides": "genoffice-slides",
+    ".gnotes": "genoffice-notes",
+    // Audio, Video, 3D
+    ".mp3": "musicmini",
+    ".wav": "musicmini",
+    ".ogg": "musicmini",
+    ".flac": "musicmini",
+    ".m4a": "musicmini",
+    ".mp4": "filmcraft",
+    ".webm": "filmcraft",
+    ".mkv": "filmcraft",
+    ".step": "solidcraft",
+    ".stp": "solidcraft",
+    ".stl": "solidcraft",
+    ".obj": "solidcraft"
+};
+
+const COMMON_FILE_TYPE_GROUPS = [
+    {
+        id: "images",
+        label: "Photos & Images",
+        icon: "fa-regular fa-image",
+        extensions: [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".ico", ".svg"],
+        defaultApp: "imageviewer",
+        compatibleApps: ["imageviewer", "photocraft", "vectorcraft", "lightcraft", "browser"]
+    },
+    {
+        id: "layered-images",
+        label: "Layered Artwork & PSD",
+        icon: "fa-solid fa-layer-group",
+        extensions: [".psd", ".ora"],
+        defaultApp: "photocraft",
+        compatibleApps: ["photocraft", "imageviewer"]
+    },
+    {
+        id: "documents-code",
+        label: "Text Documents & Code",
+        icon: "fa-solid fa-file-code",
+        extensions: [".txt", ".md", ".json", ".js", ".html", ".css", ".py"],
+        defaultApp: "vscode",
+        compatibleApps: ["vscode", "genoffice-notes", "cli"]
+    },
+    {
+        id: "pdf",
+        label: "PDF Documents",
+        icon: "fa-solid fa-file-pdf",
+        extensions: [".pdf"],
+        defaultApp: "pdfcraft",
+        compatibleApps: ["pdfcraft", "browser"]
+    },
+    {
+        id: "office-docs",
+        label: "Word Documents",
+        icon: "fa-solid fa-file-word",
+        extensions: [".docx", ".doc", ".gdoc"],
+        defaultApp: "genoffice-docs",
+        compatibleApps: ["genoffice-docs", "genoffice", "office"]
+    },
+    {
+        id: "office-sheets",
+        label: "Spreadsheets",
+        icon: "fa-solid fa-file-excel",
+        extensions: [".xlsx", ".xls", ".gsheet"],
+        defaultApp: "genoffice-sheets",
+        compatibleApps: ["genoffice-sheets", "genoffice", "office"]
+    },
+    {
+        id: "office-slides",
+        label: "Presentations",
+        icon: "fa-solid fa-file-powerpoint",
+        extensions: [".pptx", ".ppt", ".gslides"],
+        defaultApp: "genoffice-slides",
+        compatibleApps: ["genoffice-slides", "genoffice", "office"]
+    },
+    {
+        id: "audio",
+        label: "Music & Audio",
+        icon: "fa-solid fa-music",
+        extensions: [".mp3", ".wav", ".ogg", ".flac", ".m4a"],
+        defaultApp: "musicmini",
+        compatibleApps: ["musicmini"]
+    },
+    {
+        id: "video",
+        label: "Videos & Movies",
+        icon: "fa-solid fa-video",
+        extensions: [".mp4", ".webm", ".mkv"],
+        defaultApp: "filmcraft",
+        compatibleApps: ["filmcraft"]
+    },
+    {
+        id: "cad-3d",
+        label: "CAD Models & 3D",
+        icon: "fa-solid fa-cube",
+        extensions: [".step", ".stp", ".stl", ".obj"],
+        defaultApp: "solidcraft",
+        compatibleApps: ["solidcraft"]
+    }
+];
+
+window.DEFAULT_FILE_ASSOCIATIONS = DEFAULT_FILE_ASSOCIATIONS;
+window.COMMON_FILE_TYPE_GROUPS = COMMON_FILE_TYPE_GROUPS;
+
+window.getUserFileAssociations = () => {
+    try {
+        const raw = window.Storage ? window.Storage.local.get(window.getPreferencesKey("FileAssociations")) : null;
+        if (raw && typeof raw === "object") return raw;
+        if (typeof raw === "string") {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") return parsed;
+        }
+    } catch (_) {}
+    return {};
+};
+
+window.getFileAssociation = (filenameOrExt = "") => {
+    if (!filenameOrExt) return null;
+    const clean = String(filenameOrExt).trim().toLowerCase();
+    const ext = clean.startsWith(".") ? clean : (clean.includes(".") ? "." + clean.split(".").pop() : "");
+    if (!ext) return null;
+
+    const userMap = window.getUserFileAssociations();
+    const targetApp = userMap[ext] || DEFAULT_FILE_ASSOCIATIONS[ext] || null;
+
+    if (targetApp) {
+        if (!window.isAppInstalled || window.isAppInstalled(targetApp)) return targetApp;
+        if (targetApp === "photocraft" && (!window.isAppInstalled || window.isAppInstalled("imageviewer"))) return "imageviewer";
+        if (targetApp === "vscode" && (!window.isAppInstalled || window.isAppInstalled("genoffice-notes"))) return "genoffice-notes";
+        if (targetApp.startsWith("genoffice-") && (!window.isAppInstalled || window.isAppInstalled("office"))) return "office";
+    }
+    return targetApp;
+};
+
+window.setFileAssociation = (extension, appId) => {
+    if (!extension || !appId) return;
+    const cleanExt = extension.startsWith(".") ? extension.toLowerCase() : "." + extension.toLowerCase();
+    const userMap = window.getUserFileAssociations();
+    userMap[cleanExt] = appId;
+    if (window.Storage) {
+        window.Storage.local.set(window.getPreferencesKey("FileAssociations"), JSON.stringify(userMap));
+    }
+    if (window.EventBus) window.EventBus.emit("associations:changed", { extension: cleanExt, appId });
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
+};
+
+window.removeFileAssociation = (extension) => {
+    if (!extension) return;
+    const cleanExt = extension.startsWith(".") ? extension.toLowerCase() : "." + extension.toLowerCase();
+    const userMap = window.getUserFileAssociations();
+    delete userMap[cleanExt];
+    if (window.Storage) {
+        window.Storage.local.set(window.getPreferencesKey("FileAssociations"), JSON.stringify(userMap));
+    }
+    if (window.EventBus) window.EventBus.emit("associations:changed", { extension: cleanExt });
+    if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
+};
+
+window.resetFileAssociations = () => {
+    if (window.Storage) {
+        window.Storage.local.remove(window.getPreferencesKey("FileAssociations"));
+    }
+    if (window.EventBus) window.EventBus.emit("associations:changed");
     if (window.savePreferencesToFilesystem) window.savePreferencesToFilesystem();
 };
 

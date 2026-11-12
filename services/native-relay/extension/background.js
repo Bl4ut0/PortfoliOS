@@ -308,6 +308,19 @@ chrome.runtime.onConnect.addListener((port) => {
 
   if (port.name !== 'portfolios-relay-bridge') return;
 
+  const senderUrl = port.sender?.url || port.sender?.tab?.url || '';
+  let origin = port.sender?.origin || '';
+  if (!origin && senderUrl) {
+    try { origin = new URL(senderUrl).origin; } catch (_) {}
+  }
+  const allowedOrigins = ['https://os.bl4ut0.dev', 'https://os.bl4ut0.com', 'http://localhost', 'http://127.0.0.1'];
+  const isAllowed = allowedOrigins.some(ao => origin === ao || origin.startsWith(ao + ':'));
+  if (!isAllowed) {
+    console.warn('[PortfoliOS-Relay-BG] Rejected unauthorized connection from origin:', origin);
+    port.disconnect();
+    return;
+  }
+
   const tab = port.sender?.tab;
   portInfo.set(port, {
     tabId: tab?.id ?? null,

@@ -1,14 +1,88 @@
 .desktop-window.codex-window {
-  --app-window-width: min(52rem, calc(100% - 2rem));
-  --app-window-height: min(42rem, calc(100% - 4rem));
-  --app-window-left: clamp(1rem, 12vw, 10rem);
-  --app-window-top: 2.5rem;
+  --app-window-width: min(64rem, calc(100% - 2rem));
+  --app-window-height: min(38rem, calc(100% - 6rem));
+  --app-window-left: clamp(2rem, 12vw, 8rem);
+  --app-window-top: 5rem;
+  --app-window-min-height: 24rem;
 }
 
-.codex-preview {
+.codex-window .codex-preview {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.codex-window .cli-app-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.codex-window .terminal-window {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.codex-window .terminal-output {
+  min-height: 0;
+  max-height: none;
+}
+
+.codex-window .terminal-input-row {
+  grid-template-columns: minmax(0, auto) minmax(5rem, 1fr) 2rem;
+}
+
+.codex-window [data-term-prompt] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.codex-auth-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--line-strong);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.codex-auth-link-btn {
+  min-height: 1.75rem !important;
+  padding: 0.2rem 0.7rem !important;
+  background: var(--theme-primary) !important;
+  border: none !important;
+  color: var(--on-primary) !important;
+  font-weight: 500;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+}
+
+/* Mobile readiness card styling */
+.mobile-codex-app .codex-preview,
+.mobile-screen .codex-preview {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
   height: 100%;
   min-height: 0;
   min-width: 0;
@@ -17,158 +91,6 @@
   background: var(--surface);
   font-family: var(--body);
   box-sizing: border-box;
-}
-
-.codex-view-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  gap: 0.75rem;
-}
-
-.codex-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--line-strong, #30363d);
-  padding-bottom: 0.5rem;
-}
-
-.codex-nav-tabs {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.codex-tab-btn {
-  min-height: 2rem !important;
-  padding: 0.3rem 0.75rem !important;
-  font-size: 0.85rem;
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  color: var(--text-muted, #8b949e) !important;
-  border-radius: var(--radius-sm, 4px);
-  cursor: pointer;
-}
-
-.codex-tab-btn.active {
-  background: var(--surface-raised, #21262d) !important;
-  border-color: var(--line-strong, #30363d) !important;
-  color: var(--text, #f0f6fc) !important;
-  font-weight: 600;
-}
-
-.codex-tab-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.codex-quick-bar {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  padding-bottom: 0.5rem;
-}
-
-.quick-cmd-btn {
-  min-height: 1.85rem !important;
-  padding: 0.25rem 0.6rem !important;
-  font-size: 0.78rem !important;
-  background: var(--surface-raised, #21262d) !important;
-  border: 1px solid var(--line-strong, #30363d) !important;
-  color: var(--text, #c9d1d9) !important;
-  border-radius: var(--radius-sm, 4px) !important;
-  cursor: pointer;
-}
-
-.quick-cmd-btn:hover {
-  background: var(--surface-inset, #30363d) !important;
-  border-color: var(--theme-primary-ink, #58a6ff) !important;
-}
-
-.codex-auth-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  background: #1f2937;
-  border: 1px solid #3b82f6;
-  border-radius: var(--radius-sm, 4px);
-  padding: 0.5rem 0.85rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.85rem;
-  color: #f3f4f6;
-}
-
-.codex-auth-link-btn {
-  min-height: 1.85rem !important;
-  padding: 0.25rem 0.75rem !important;
-  background: #2563eb !important;
-  border: none !important;
-  color: #fff !important;
-  font-weight: 500;
-  border-radius: var(--radius-sm, 4px);
-  cursor: pointer;
-}
-
-.codex-terminal-screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: #0d1117;
-  border: 1px solid var(--line-strong, #30363d);
-  border-radius: var(--radius, 6px);
-  padding: 0.75rem;
-  font-family: var(--font-mono, "Consolas", monospace);
-  font-size: 13px;
-  overflow: hidden;
-  cursor: text;
-}
-
-.codex-term-output {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  color: #c9d1d9;
-  line-height: 1.45;
-}
-
-.codex-term-output a {
-  color: #58a6ff;
-  text-decoration: underline;
-}
-
-.codex-term-input-line {
-  display: flex;
-  align-items: center;
-  margin-top: 0.5rem;
-  padding-top: 0.25rem;
-  border-top: 1px solid #21262d;
-}
-
-.codex-term-prompt {
-  color: #7ee787;
-  font-weight: 600;
-  user-select: none;
-}
-
-.codex-term-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #f0f6fc;
-  font-family: inherit;
-  font-size: inherit;
-  padding: 0;
 }
 
 .codex-preview section {
@@ -182,17 +104,4 @@
 .codex-preview h2, .codex-preview h3 { margin: 0 0 .5rem; }
 .codex-preview p { line-height: 1.6; }
 .codex-preview-badge, .codex-preview a { color: var(--theme-primary-ink); font-weight: 600; }
-.codex-preview button {
-  min-height: 2.25rem;
-  padding: .4rem .8rem;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-inset);
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-}
-.codex-preview button:disabled { cursor: default; opacity: .6; }
-.codex-preview button:focus-visible, .codex-preview a:focus-visible { outline: 2px solid var(--theme-primary-ink); outline-offset: 3px; }
-.codex-preview pre { padding: .75rem; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface-inset); border-radius: var(--radius-sm); }
 .codex-preview [hidden] { display: none; }

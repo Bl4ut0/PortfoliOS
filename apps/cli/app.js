@@ -19,6 +19,9 @@
         renderBody: () => window.renderAppTemplate("cli"),
         onOpen: refresh,
         onRestore: refresh,
-        onFocus: refresh
+        onFocus: refresh,
+        onClose: (windowEl) => {
+            window.terminateTerminalSession?.();
+        }
     };
 })();

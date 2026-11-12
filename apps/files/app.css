@@ -156,6 +156,63 @@
     overflow-y: auto;
 }
 
+.files-sidebar-shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.sidebar-item-row {
+    display: flex;
+    align-items: center;
+    position: relative;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+}
+
+.sidebar-item-row .sidebar-shortcut {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sidebar-item-row .sidebar-shortcut .sidebar-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sidebar-item-row .sidebar-unpin-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem 0.35rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    flex: 0 0 auto;
+    margin-right: 0.25rem;
+    line-height: 1;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.sidebar-item-row:hover .sidebar-unpin-btn,
+.sidebar-item-row:focus-within .sidebar-unpin-btn {
+    display: inline-flex;
+}
+
+.sidebar-item-row .sidebar-unpin-btn:hover {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.15);
+}
+
 .sidebar-shortcut {
     background: transparent;
     border: none;
@@ -402,10 +459,10 @@
 /* File Properties Dialog */
 .file-properties-dialog {
     padding: 0;
-    border: 1px solid var(--line, #334155);
+    border: 1px solid var(--line-strong);
     border-radius: 8px;
-    background: var(--panel-strong, #0f172a);
-    color: var(--text, #f8fafc);
+    background: var(--surface-raised);
+    color: var(--text);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
     max-width: 28rem;
     width: 90vw;
@@ -413,7 +470,7 @@
 }
 
 .file-properties-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--scrim);
     backdrop-filter: blur(2px);
 }
 
@@ -427,8 +484,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.6rem 0.85rem;
-    background: var(--bg-soft, #1e293b);
-    border-bottom: 1px solid var(--line, #334155);
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
 }
 
 .properties-title {
@@ -442,7 +499,7 @@
 .properties-close {
     background: transparent;
     border: none;
-    color: var(--text-soft, #94a3b8);
+    color: var(--text-soft);
     font-size: 1.1rem;
     cursor: pointer;
     padding: 0.1rem 0.4rem;
@@ -450,8 +507,8 @@
 }
 
 .properties-close:hover {
-    color: var(--text, #ffffff);
-    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    background: var(--control-hover);
 }
 
 .properties-body {
@@ -472,14 +529,14 @@
 .properties-icon-preview {
     width: 48px;
     height: 48px;
-    background: var(--bg, #090a0f);
-    border: 1px solid var(--line, #334155);
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: var(--theme-primary, #22d3ee);
+    color: var(--theme-primary);
     flex-shrink: 0;
 }
 
@@ -497,12 +554,12 @@
 
 .properties-type-text {
     font-size: 0.75rem;
-    color: var(--text-muted, #64748b);
+    color: var(--text-muted);
 }
 
 .properties-divider {
     border: none;
-    border-top: 1px solid var(--line, #334155);
+    border-top: 1px solid var(--line);
     margin: 0.2rem 0;
 }
 
@@ -519,7 +576,7 @@
 
 .properties-table td:first-child {
     width: 7rem;
-    color: var(--text-soft, #94a3b8);
+    color: var(--text-soft);
 }
 
 .properties-table code {
@@ -537,7 +594,7 @@
 .properties-section-title {
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-soft, #94a3b8);
+    color: var(--text-soft);
 }
 
 .icon-picker-grid {
@@ -547,15 +604,15 @@
     max-height: 8rem;
     overflow-y: auto;
     padding: 0.4rem;
-    background: var(--bg, #090a0f);
-    border: 1px solid var(--line, #334155);
+    background: var(--surface-inset);
+    border: 1px solid var(--line);
     border-radius: 4px;
 }
 
 .icon-option {
     background: transparent;
     border: 1px solid transparent;
-    color: var(--text-soft, #94a3b8);
+    color: var(--text-soft);
     border-radius: 4px;
     height: 32px;
     cursor: pointer;
@@ -567,14 +624,14 @@
 }
 
 .icon-option:hover {
-    background: var(--bg-soft, #1e293b);
-    color: var(--text, #ffffff);
+    background: var(--control-hover);
+    color: var(--text);
 }
 
 .icon-option.active {
-    background: color-mix(in srgb, var(--theme-primary, #22d3ee) 25%, transparent);
-    border-color: var(--theme-primary, #22d3ee);
-    color: var(--theme-primary, #22d3ee);
+    background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+    border-color: var(--theme-primary);
+    color: var(--theme-primary);
 }
 
 .properties-icon-browse {
@@ -586,14 +643,14 @@
     justify-content: flex-end;
     gap: 0.5rem;
     padding: 0.6rem 0.85rem;
-    background: var(--bg-soft, #1e293b);
-    border-top: 1px solid var(--line, #334155);
+    background: var(--surface);
+    border-top: 1px solid var(--line);
 }
 
 .btn-toolbar.btn-primary {
-    background: var(--theme-primary, #22d3ee);
-    color: var(--theme-primary-ink, #000000);
-    border-color: var(--theme-primary, #22d3ee);
+    background: var(--theme-primary);
+    color: var(--on-primary);
+    border-color: var(--theme-primary);
     font-weight: 600;
 }
 

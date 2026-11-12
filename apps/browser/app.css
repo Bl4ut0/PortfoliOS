@@ -178,7 +178,7 @@
 
 .addon-btn-primary {
     background: var(--theme-primary, #6366f1);
-    color: #ffffff;
+    color: var(--on-primary, #ffffff);
     border: 1px solid transparent;
 }
 

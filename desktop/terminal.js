@@ -776,10 +776,7 @@ function syncAgyStatusBar() {
         }
         if (footer && activeCliSession) {
             let rightLabel = "";
-            const remoteDaemonCount = window.PortfoliOSRemoteAgentDaemon?.getRunningCount?.() || 0;
-            const remoteSuffix = (activeCliSession.remoteMode || remoteDaemonCount > 0)
-                ? ` · cloud-remote${remoteDaemonCount > 0 ? ` (${remoteDaemonCount} active)` : ""}`
-                : "";
+            const remoteSuffix = activeCliSession.remoteMode ? " · cloud-remote" : "";
             if (activeCliSession.bin === "agy" || activeCliSession.bin === "gemini") {
                 const modelInfo = formatAgyModelInfo(activeCliSession.model, activeCliSession.effort || "high");
                 rightLabel = modelInfo.footer + remoteSuffix;
@@ -1329,7 +1326,9 @@ function bindHistoryToInput(inputEl) {
         } else if (event.key === "d" && event.ctrlKey) {
             if (inputEl.value === "") {
                 event.preventDefault();
-                if (activeCliSession) {
+                if (window.PortfoliOSRuntimeBridge && typeof window.PortfoliOSRuntimeBridge.sendInput === "function" && window.PortfoliOSRuntimeBridge.getActiveSession()?.activeProcess) {
+                    window.PortfoliOSRuntimeBridge.sendInput("\x04");
+                } else if (activeCliSession) {
                     const name = activeCliSession.bin || "sub-session";
                     activeCliSession = null;
                     window.addTerminalLine?.(`logout: ${name}`, "muted");
@@ -1350,7 +1349,9 @@ function bindHistoryToInput(inputEl) {
             }
         } else if (event.key === "c" && event.ctrlKey) {
             event.preventDefault();
-            if (activePrompt) {
+            if (window.PortfoliOSRuntimeBridge && typeof window.PortfoliOSRuntimeBridge.sendInput === "function" && window.PortfoliOSRuntimeBridge.getActiveSession()?.activeProcess) {
+                window.PortfoliOSRuntimeBridge.sendInput("\x03");
+            } else if (activePrompt) {
                 window.addTerminalLine("^C", "muted");
                 activePrompt = null;
                 window.hideTerminalAuthBanner?.();
@@ -2755,263 +2756,116 @@ function normalizeCliAccountName(rawAccount, bin = "agy") {
 }
 
 // ============================================================================
-// PortfoliOS Cloud Remote Agent Daemon & Persistent Detached Session Manager
-// Supports agy (--remote-agent, remote-control), codex (cloud, --remote, resume),
-// claude (--continue, --resume), and detached background tasks that continue
-// running in the cloud even when the terminal session or window is closed.
+// PortfoliOS Git / GitHub Web Bridge & Git-Backed Cloud Remote Agent Manager
+// Browser SystemFS (IndexedDB) and client-side Google Drive only exist while
+// the browser session is active. External Cloud Remote Agents (agy --remote-agent,
+// codex cloud, claude --remote) therefore operate against a connected Git/GitHub
+// repository (or require an active host/server running `remote-control`).
 // ============================================================================
-const remoteDaemonProcesses = new Map();
-const remoteAgentTasks = new Map();
+window.PortfoliOSGitBridge = {
+    parseGitHubRepoSpec(raw) {
+        const clean = String(raw || "").trim().replace(/\.git$/i, "").replace(/\/+$/, "");
+        if (!clean) return null;
+        const urlMatch = clean.match(/github\.com[:/]([^/\s]+)\/([^/\s]+)/i);
+        if (urlMatch) {
+            const owner = urlMatch[1];
+            const repo = urlMatch[2];
+            return {
+                owner,
+                repo,
+                slug: `${owner}/${repo}`,
+                remoteUrl: `https://github.com/${owner}/${repo}.git`,
+                htmlUrl: `https://github.com/${owner}/${repo}`
+            };
+        }
+        const slugMatch = clean.match(/^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/);
+        if (slugMatch) {
+            const owner = slugMatch[1];
+            const repo = slugMatch[2];
+            return {
+                owner,
+                repo,
+                slug: `${owner}/${repo}`,
+                remoteUrl: `https://github.com/${owner}/${repo}.git`,
+                htmlUrl: `https://github.com/${owner}/${repo}`
+            };
+        }
+        return null;
+    },
 
-function loadPersistedRemoteTasks() {
-    if (remoteAgentTasks.size > 0) return;
-    try {
-        if (typeof localStorage !== "undefined") {
-            const raw = localStorage.getItem("bl4ut0_remote_agent_sessions");
-            if (raw) {
-                const list = JSON.parse(raw);
-                if (Array.isArray(list)) {
-                    for (const item of list) {
-                        if (item && item.id) remoteAgentTasks.set(item.id, item);
-                    }
-                }
+    async getGitHubToken() {
+        if (shellEnv.GITHUB_TOKEN) return shellEnv.GITHUB_TOKEN;
+        if (shellEnv.GH_TOKEN) return shellEnv.GH_TOKEN;
+        try {
+            const rec = await window.SystemFS?.readFile?.("/etc/portfolios/vault/github.json");
+            if (rec?.data) {
+                const parsed = typeof rec.data === "string" ? JSON.parse(rec.data) : rec.data;
+                if (parsed?.accessToken) return parsed.accessToken;
             }
-        }
-    } catch (_) {}
-}
-
-async function persistRemoteTask(task) {
-    if (!task || !task.id) return;
-    remoteAgentTasks.set(task.id, task);
-    try {
-        if (typeof localStorage !== "undefined") {
-            const serialized = Array.from(remoteAgentTasks.values()).slice(-30);
-            localStorage.setItem("bl4ut0_remote_agent_sessions", JSON.stringify(serialized));
-        }
-    } catch (_) {}
-    try {
-        await window.SystemFS?.ensureDirectory?.("/var", { silent: true });
-        await window.SystemFS?.ensureDirectory?.("/var/run", { silent: true });
-        await window.SystemFS?.ensureDirectory?.("/var/run/agent-sessions", { silent: true });
-        await writeTerminalFile(
-            `/var/run/agent-sessions/${task.id}.json`,
-            JSON.stringify(task, null, 2),
-            "application/json"
-        );
-    } catch (_) {}
-}
-
-window.PortfoliOSRemoteAgentDaemon = {
-    getRunningCount() {
-        loadPersistedRemoteTasks();
-        let count = 0;
-        for (const t of remoteAgentTasks.values()) {
-            if (t.status === "running") count++;
-        }
-        return count;
+        } catch (_) {}
+        return null;
     },
 
-    async startDaemon(bin = "agy") {
-        const cleanBin = String(bin || "agy").toLowerCase();
-        const pid = 4100 + Math.floor(Math.random() * 800);
-        const info = {
-            bin: cleanBin,
-            pid,
-            status: "running",
-            endpoint: `wss://cloud-agent.os.bl4ut0.dev/v1/${cleanBin}`,
-            startedAt: new Date().toISOString(),
-            cwd: currentDir
-        };
-        remoteDaemonProcesses.set(cleanBin, info);
+    async setGitHubToken(token, account = null) {
+        const cleanToken = String(token || "").trim();
+        if (!cleanToken) return false;
+        shellEnv.GITHUB_TOKEN = cleanToken;
         try {
-            await window.SystemFS?.ensureDirectory?.("/var/run/agent-sessions", { silent: true });
-            await writeTerminalFile(`/var/run/agent-sessions/${cleanBin}-daemon.json`, JSON.stringify(info, null, 2), "application/json");
+            await window.SystemFS?.ensureDirectory?.("/etc", { silent: true });
+            await window.SystemFS?.ensureDirectory?.("/etc/portfolios", { silent: true });
+            await window.SystemFS?.ensureDirectory?.("/etc/portfolios/vault", { silent: true });
+            await writeTerminalFile(
+                "/etc/portfolios/vault/github.json",
+                JSON.stringify({
+                    provider: "github",
+                    accessToken: cleanToken,
+                    account: account || resolveActiveUserEmail("git"),
+                    updatedAt: new Date().toISOString()
+                }, null, 2),
+                "application/json"
+            );
         } catch (_) {}
-        syncAgyStatusBar();
-        return info;
-    },
-
-    async stopDaemon(bin = "agy") {
-        const cleanBin = String(bin || "agy").toLowerCase();
-        remoteDaemonProcesses.delete(cleanBin);
-        try {
-            await window.SystemFS?.deleteFile?.(`/var/run/agent-sessions/${cleanBin}-daemon.json`);
-        } catch (_) {}
-        syncAgyStatusBar();
         return true;
     },
 
-    getDaemonStatus(bin = "agy") {
-        loadPersistedRemoteTasks();
-        const cleanBin = String(bin || "agy").toLowerCase();
-        const daemon = remoteDaemonProcesses.get(cleanBin);
-        const tasks = this.listTasks(cleanBin);
-        const running = tasks.filter(t => t.status === "running").length;
-        return {
-            running: Boolean(daemon),
-            pid: daemon?.pid || null,
-            endpoint: daemon?.endpoint || `wss://cloud-agent.os.bl4ut0.dev/v1/${cleanBin}`,
-            startedAt: daemon?.startedAt || null,
-            activeTasks: running,
-            totalTasks: tasks.length
-        };
-    },
-
-    listTasks(binFilter = null) {
-        loadPersistedRemoteTasks();
-        const all = Array.from(remoteAgentTasks.values());
-        if (!binFilter) return all.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-        return all
-            .filter(t => t.bin === binFilter)
-            .sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-    },
-
-    getTask(idOrLast = "--last", binFilter = null) {
-        const list = this.listTasks(binFilter);
-        if (!list.length) return null;
-        if (!idOrLast || idOrLast === "--last" || idOrLast === "last" || idOrLast === "latest") {
-            return list[0];
-        }
-        return list.find(t => t.id === idOrLast || t.id.startsWith(idOrLast)) || null;
-    },
-
-    async spawnRemoteTask({ bin = "agy", name = "Antigravity CLI", model = "gemini-3.8-flash-high", effort = "high", cwd = currentDir, prompt, conversationId = null }) {
-        loadPersistedRemoteTasks();
-        const id = conversationId || `conv_${bin}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-        const task = {
-            id,
-            bin,
-            name,
-            model,
-            effort,
-            cwd,
-            prompt,
-            status: "running",
-            output: "",
-            createdAt: new Date().toISOString(),
-            createdAtMs: Date.now(),
-            completedAt: null
-        };
-        await persistRemoteTask(task);
-        syncAgyStatusBar();
-
-        // Execute asynchronously in the background cloud worker even if the CLI session exits
-        (async () => {
+    async findGitRoot(startDir = currentDir) {
+        let dir = resolvePath(startDir || currentDir);
+        while (dir) {
             try {
-                const localAI = window.LocalAI || window.PortfoliOSLocalAI;
-                if (localAI && typeof localAI.chat === "function") {
-                    if (typeof localAI.isReady === "function" && !localAI.isReady()) {
-                        if (typeof localAI.setSelectedModelId === "function") {
-                            localAI.setSelectedModelId("gemini-3.8-flash");
-                        }
-                        if (typeof localAI.enable === "function") {
-                            await localAI.enable("cli");
-                        }
-                    }
-                    const modelInfo = formatAgyModelInfo(model, effort);
-                    const response = await localAI.chat(
-                        prompt,
-                        {
-                            mode: "cli",
-                            systemPrompt: `You are ${name} (${bin}) running in a detached Cloud Remote Environment on PortfoliOS Linux (x86_64-portfolios-wasm) with model ${modelInfo.header} in directory ${cwd}. Complete the user's task directly and concisely.`
-                        },
-                        (delta) => {
-                            if (delta) {
-                                task.output += delta;
-                            }
-                        }
-                    );
-                    const finalText = typeof response === "string" ? response : (response?.text || "");
-                    if (!task.output && finalText) task.output = finalText;
-                } else {
-                    task.output = `[Cloud Remote Agent · ${name}] Completed task in ${cwd}: ${prompt}`;
-                }
-                task.status = "completed";
-                task.completedAt = new Date().toISOString();
-                await persistRemoteTask(task);
-                syncAgyStatusBar();
-            } catch (err) {
-                task.status = "failed";
-                task.error = err.message;
-                task.completedAt = new Date().toISOString();
-                await persistRemoteTask(task);
-                syncAgyStatusBar();
-            }
-        })();
+                const rec = await window.SystemFS?.readFile?.(`${dir === "/" ? "" : dir}/.git/config`);
+                if (rec && rec.data) return dir;
+            } catch (_) {}
+            if (dir === "/") break;
+            const parent = window.SystemFS?.getParentPath ? window.SystemFS.getParentPath(dir) : dir.slice(0, dir.lastIndexOf("/")) || "/";
+            if (!parent || parent === dir) break;
+            dir = parent;
+        }
+        return null;
+    },
 
-        return task;
+    async readRepoConfig(dir = currentDir) {
+        const gitRoot = await this.findGitRoot(dir);
+        if (!gitRoot) return null;
+        try {
+            const rec = await window.SystemFS?.readFile?.(`${gitRoot === "/" ? "" : gitRoot}/.git/config`);
+            if (!rec?.data) return null;
+            const parsed = typeof rec.data === "string" ? JSON.parse(rec.data) : rec.data;
+            return { ...parsed, gitRoot };
+        } catch (_) {
+            return null;
+        }
+    },
+
+    async writeRepoConfig(gitRoot, configData) {
+        const base = gitRoot === "/" ? "" : gitRoot;
+        await window.SystemFS?.ensureDirectory?.(`${base}/.git`, { silent: true });
+        const payload = { ...configData };
+        delete payload.gitRoot;
+        await writeTerminalFile(`${base}/.git/config`, JSON.stringify(payload, null, 2), "application/json");
+        await writeTerminalFile(`${base}/.git/HEAD`, `ref: refs/heads/${payload.branch || "main"}\n`, "text/plain");
+        return { ...payload, gitRoot };
     }
 };
-
-function buildAgyBannerHtml({ version, account, provider, modelHeader, cwd, remoteMode = false, isSigningIn = false }) {
-    const logoRows = [
-        `      <span style="color:#ff5f56">▄▄</span><span style="color:#ff8700">██</span><span style="color:#ff5f56">▄▄</span>      `,
-        `     <span style="color:#ff8700">████</span><span style="color:#ff5f56">████</span>     `,
-        `    <span style="color:#facc15">████</span><span style="color:#fb923c">▀▀</span><span style="color:#c084fc">████</span>    `,
-        `   <span style="color:#84cc16">████</span>    <span style="color:#a855f7">████</span>   `,
-        `  <span style="color:#22c55e">████</span><span style="color:#10b981">▀▀▀</span><span style="color:#6366f1">▀▀▀</span><span style="color:#6366f1">████</span>  `,
-        ` <span style="color:#2dd4bf">████</span>        <span style="color:#3b82f6">████</span> `,
-        `<span style="color:#38bdf8">▀▀▀</span>            <span style="color:#2563eb">▀▀▀</span>`
-    ];
-
-    if (isSigningIn) {
-        const block = [
-            "",
-            ...logoRows,
-            "",
-            `Welcome to the <span style="color:#3b82f6;font-weight:700;">Antigravity CLI</span>. You are currently not signed in.`,
-            `<span style="color:#94a3b8;">⠋ Signing in...</span>`
-        ].join("\n");
-        return `<div style="font-family:var(--font-mono, monospace);line-height:1.25;padding:4px 0;">${block}</div>`;
-    }
-
-    const remoteTag = remoteMode ? ` <span style="color:#38bdf8;">[Remote Cloud Agent]</span>` : "";
-    const infoRows = [
-        `<span style="color:#3b82f6;font-weight:700;">Antigravity CLI ${escapeHtml(version || "1.5.5")}</span>${remoteTag}`,
-        `<span style="color:#94a3b8;">${escapeHtml(account || "bl4ut0@gmail.com")} (${escapeHtml(provider || "Google AI Pro")})</span>`,
-        `<span style="color:#94a3b8;">${escapeHtml(modelHeader || "Gemini 3.8 Flash (High)")}</span>`,
-        `<span style="color:#94a3b8;">${escapeHtml(cwd || currentDir)}</span>`,
-        ``,
-        ``,
-        ``
-    ];
-
-    const combinedRows = logoRows.map((logo, idx) => `${logo}   ${infoRows[idx] || ""}`).join("\n");
-    return `<div style="font-family:var(--font-mono, monospace);line-height:1.25;padding:6px 0 10px;">${combinedRows}</div>`;
-}
-
-function buildClaudeBannerHtml({ version, account, model, cwd, remoteMode = false }) {
-    const modeTag = remoteMode ? " · Remote Cloud Session" : "";
-    const lines = [
-        `<span style="color:#fb923c;font-weight:700;">╭─── Claude Code v${escapeHtml(version || "2.1.318")}${escapeHtml(modeTag)} ───────────────────────────────────────────╮</span>`,
-        `<span style="color:#fb923c;">│</span> <span style="color:#fb923c;font-weight:700;">✻</span> <strong>Welcome to Claude Code!</strong>`,
-        `<span style="color:#fb923c;">│</span>   <span style="color:#94a3b8;">cwd: ${escapeHtml(cwd || currentDir)} · model: ${escapeHtml(model || "claude-sonnet-4-6")} · ${escapeHtml(account || "bl4ut0@gmail.com")}</span>`,
-        `<span style="color:#fb923c;font-weight:700;">╰──────────────────────────────────────────────────────────────────────────────╯</span>`
-    ].join("\n");
-    return `<div style="font-family:var(--font-mono, monospace);line-height:1.35;padding:6px 0 8px;">${lines}</div>`;
-}
-
-function buildCodexBannerHtml({ version, account, model, cwd, remoteMode = false }) {
-    const modeTag = remoteMode ? " [Codex Cloud Remote]" : "";
-    const lines = [
-        `<span style="color:#34d399;font-weight:700;">╭──────────────────────────────────────────────────────────────────────────────╮</span>`,
-        `<span style="color:#34d399;">│</span> <span style="color:#34d399;font-weight:700;">&gt;_ OpenAI Codex</span> <span style="color:#94a3b8;">(v${escapeHtml(version || "0.167.0")})${escapeHtml(modeTag)}</span>`,
-        `<span style="color:#34d399;">│</span>   <span style="color:#94a3b8;">model:     ${escapeHtml(model || "o3")}   /model to change</span>`,
-        `<span style="color:#34d399;">│</span>   <span style="color:#94a3b8;">directory: ${escapeHtml(cwd || currentDir)}   account: ${escapeHtml(account || "bl4ut0@gmail.com")}</span>`,
-        `<span style="color:#34d399;">│</span>   <span style="color:#94a3b8;">approval:  never (auto-trusted)   sandbox: workspace-write</span>`,
-        `<span style="color:#34d399;font-weight:700;">╰──────────────────────────────────────────────────────────────────────────────╯</span>`
-    ].join("\n");
-    return `<div style="font-family:var(--font-mono, monospace);line-height:1.35;padding:6px 0 8px;">${lines}</div>`;
-}
-
-function buildGeminiBannerHtml({ version, account, modelHeader, cwd }) {
-    const lines = [
-        `<span style="color:#60a5fa;font-weight:700;">✦ Google Gemini CLI v${escapeHtml(version || "0.34.0")}</span>`,
-        `<span style="color:#94a3b8;">  ${escapeHtml(account || "bl4ut0@gmail.com")} (Google AI Pro) · ${escapeHtml(modelHeader || "Gemini 3.8 Flash (High)")}</span>`,
-        `<span style="color:#94a3b8;">  ${escapeHtml(cwd || currentDir)}</span>`
-    ].join("\n");
-    return `<div style="font-family:var(--font-mono, monospace);line-height:1.35;padding:6px 0 8px;">${lines}</div>`;
-}
 
 function getCliConfigInfo(bin) {
     const user = currentUser || "guest";
@@ -3191,6 +3045,32 @@ async function saveCliSession(binMeta, session) {
         );
     }
 
+    // Structured Vault Integration
+    const providerMap = { codex: "openai", agy: "google", gemini: "google", claude: "anthropic", xai: "xai", grok: "xai", gh: "github", github: "github" };
+    const vaultProvider = providerMap[binMeta.bin] || binMeta.bin;
+    const vaultTokenRec = {
+        provider: vaultProvider,
+        bin: binMeta.bin,
+        accessToken: session.apiKey || session.accessToken || `oauth-${binMeta.bin}-${Date.now()}`,
+        account: session.account,
+        authMode: session.authMode,
+        updatedAt: Date.now()
+    };
+
+    try {
+        await window.SystemFS.ensureDirectory?.("/etc/portfolios/vault", { silent: true });
+        await writeTerminalFile(`/etc/portfolios/vault/${vaultProvider}.json`, JSON.stringify(vaultTokenRec, null, 2), "application/json");
+    } catch (_) {}
+
+    if (window.PortfoliOSRuntimeBridge && typeof window.PortfoliOSRuntimeBridge.getOrCreateSession === "function") {
+        try {
+            const rtSession = await window.PortfoliOSRuntimeBridge.getOrCreateSession();
+            if (rtSession?.vault && typeof rtSession.vault.saveToken === "function") {
+                await rtSession.vault.saveToken(vaultProvider, vaultTokenRec);
+            }
+        } catch (_) {}
+    }
+
     cliAuthSessions.set(binMeta.bin, session);
     return session;
 }
@@ -3200,6 +3080,12 @@ async function removeCliSession(binMeta) {
     const config = getCliConfigInfo(binMeta.bin);
     try {
         await window.SystemFS.deleteFile(config.authFile);
+    } catch (_) {}
+
+    const providerMap = { codex: "openai", agy: "google", gemini: "google", claude: "anthropic", xai: "xai", grok: "xai", gh: "github", github: "github" };
+    const vaultProvider = providerMap[binMeta.bin] || binMeta.bin;
+    try {
+        await window.SystemFS.deleteFile(`/etc/portfolios/vault/${vaultProvider}.json`);
     } catch (_) {}
 }
 
@@ -3307,10 +3193,7 @@ async function startCliNativeAuth(meta, options = {}) {
 
     window.showTerminalAuthBanner(meta);
     if (meta.bin === "agy") {
-        window.addTerminalHtmlLine(
-            buildAgyBannerHtml({ isSigningIn: true }),
-            "Welcome to the Antigravity CLI. You are currently not signed in.\nSigning in..."
-        );
+        window.addTerminalLine("Welcome to the Antigravity CLI. You are currently not signed in.\nSigning in...", "info");
     } else {
         const boxLines = [
             `╭─ ${meta.name} (v${meta.version}) ───────────────────────────────────────╮`,
@@ -3357,194 +3240,7 @@ async function startCliNativeAuth(meta, options = {}) {
     return "";
 }
 
-async function startInteractiveCliRepl(meta, session, options = {}) {
-    const resolvedVersion = await resolveLatestUpstreamCliVersion(meta);
-    const resolvedAccount = normalizeCliAccountName(session?.account, meta.bin);
-    const resolvedModel = (meta.bin === "agy" && (!session?.model || session.model === "gemini-2.5-pro-agy"))
-        ? "gemini-3.8-flash-high"
-        : (session?.model || meta.defaultModel || "gemini-3.8-flash-high");
-    const resolvedProvider = (meta.bin === "agy" && (!session?.provider || session.provider === "Google Account OAuth"))
-        ? "Google AI Pro"
-        : (session?.provider || meta.provider || "Google AI Pro");
-    const resolvedCwd = currentDir;
-    const remoteMode = Boolean(options.remoteMode);
 
-    activeCliSession = {
-        bin: meta.bin,
-        name: meta.bin === "agy" ? "Antigravity CLI" : meta.name,
-        version: resolvedVersion,
-        provider: resolvedProvider,
-        model: resolvedModel,
-        effort: session?.effort || "high",
-        account: resolvedAccount,
-        cwd: resolvedCwd,
-        remoteMode,
-        conversationId: options.conversationId || `conv_${meta.bin}_${Date.now().toString(36)}`,
-        hasTurn: false
-    };
-    updatePrompt();
-
-    if (meta.bin === "agy") {
-        const modelInfo = formatAgyModelInfo(activeCliSession.model, activeCliSession.effort);
-        const bannerHtml = buildAgyBannerHtml({
-            version: activeCliSession.version,
-            account: activeCliSession.account,
-            provider: activeCliSession.provider,
-            modelHeader: modelInfo.header,
-            cwd: activeCliSession.cwd,
-            remoteMode
-        });
-        const fallbackText = [
-            `Antigravity CLI ${activeCliSession.version}`,
-            `${activeCliSession.account} (${activeCliSession.provider})`,
-            modelInfo.header,
-            activeCliSession.cwd
-        ].join("\n");
-        window.addTerminalHtmlLine(bannerHtml, fallbackText);
-        return "";
-    }
-
-    if (meta.bin === "claude") {
-        const bannerHtml = buildClaudeBannerHtml({
-            version: activeCliSession.version,
-            account: activeCliSession.account,
-            model: activeCliSession.model,
-            cwd: activeCliSession.cwd,
-            remoteMode
-        });
-        const fallbackText = `Claude Code v${activeCliSession.version} (${activeCliSession.model}) — ${activeCliSession.cwd}`;
-        window.addTerminalHtmlLine(bannerHtml, fallbackText);
-        return "";
-    }
-
-    if (meta.bin === "codex") {
-        const bannerHtml = buildCodexBannerHtml({
-            version: activeCliSession.version,
-            account: activeCliSession.account,
-            model: activeCliSession.model,
-            cwd: activeCliSession.cwd,
-            remoteMode
-        });
-        const fallbackText = `OpenAI Codex (v${activeCliSession.version}) — ${activeCliSession.model} — ${activeCliSession.cwd}`;
-        window.addTerminalHtmlLine(bannerHtml, fallbackText);
-        return "";
-    }
-
-    if (meta.bin === "gemini") {
-        const modelInfo = formatAgyModelInfo(activeCliSession.model, activeCliSession.effort);
-        const bannerHtml = buildGeminiBannerHtml({
-            version: activeCliSession.version,
-            account: activeCliSession.account,
-            modelHeader: modelInfo.header,
-            cwd: activeCliSession.cwd
-        });
-        const fallbackText = `Google Gemini CLI v${activeCliSession.version} — ${activeCliSession.cwd}`;
-        window.addTerminalHtmlLine(bannerHtml, fallbackText);
-        return "";
-    }
-
-    const msg = [
-        `╭─ ${activeCliSession.name} (v${activeCliSession.version}) ───────────────────────────────────────╮`,
-        `│ Account:   ${activeCliSession.account.padEnd(51)} │`,
-        `│ Model:     ${activeCliSession.model.padEnd(51)} │`,
-        `│ Directory: ${activeCliSession.cwd.padEnd(51)} │`,
-        `│ Runtime:   ${(remoteMode ? "Cloud Remote Agent Daemon" : "PortfoliOS Virtual Linux WASM64").padEnd(51)} │`,
-        `╰────────────────────────────────────────────────────────────────────────╯`
-    ].join("\n");
-    window.addTerminalLine(msg, "highlight");
-    return "";
-}
-
-async function runCliAgentTurn(session, promptText) {
-    const trimmed = String(promptText || "").trim();
-    if (!trimmed) return "";
-
-    // Explicit file write shortcut in the virtual Linux SystemFS
-    const writeMatch = trimmed.match(/^(?:create|write|save)\s+(?:a\s+)?(?:file\s+)?([^\s]+)\s+(?:with|containing)\s+([\s\S]+)$/i);
-    if (writeMatch && trimmed.split(/\s+/).length <= 12 && writeMatch[1].includes("/")) {
-        const targetArg = writeMatch[1];
-        const contentArg = writeMatch[2].replace(/^["']|["']$/g, "");
-        const resolved = resolvePath(targetArg);
-        await writeTerminalFile(resolved, contentArg, "text/plain");
-        return `✓ Wrote ${contentArg.length} bytes to ${resolved}.`;
-    }
-
-    const localAI = window.LocalAI || window.PortfoliOSLocalAI;
-    if (localAI && typeof localAI.chat === "function") {
-        const writer = createStreamingTerminalWriter();
-        let streamedAny = false;
-        let fullOutput = "";
-        try {
-            if (typeof localAI.isReady === "function" && !localAI.isReady()) {
-                if (typeof localAI.setSelectedModelId === "function") {
-                    localAI.setSelectedModelId("gemini-3.8-flash");
-                }
-                if (typeof localAI.enable === "function") {
-                    await localAI.enable("cli");
-                }
-            }
-            const modelInfo = formatAgyModelInfo(session.model, session.effort);
-            const response = await localAI.chat(
-                trimmed,
-                {
-                    mode: "cli",
-                    systemPrompt: `You are ${session.name || "Antigravity CLI"} (${session.bin} v${session.version}) running inside the PortfoliOS Virtual Linux Environment (x86_64-portfolios-wasm) with model ${modelInfo.header} in directory ${session.cwd || currentDir}. Respond naturally, directly, and concisely like the authentic CLI assistant.`
-                },
-                (delta) => {
-                    if (delta) {
-                        streamedAny = true;
-                        fullOutput += delta;
-                        writer.append(delta);
-                    }
-                }
-            );
-            const finalText = typeof response === "string" ? response : (response?.text || "");
-            if (!streamedAny && finalText) {
-                fullOutput = finalText;
-                writer.setText(finalText);
-            } else if (!streamedAny && !finalText) {
-                writer.removeIfEmpty();
-            }
-            session.hasTurn = true;
-            await persistRemoteTask({
-                id: session.conversationId || `conv_${session.bin}_${Date.now().toString(36)}`,
-                bin: session.bin,
-                name: session.name,
-                model: session.model,
-                effort: session.effort || "high",
-                cwd: session.cwd || currentDir,
-                prompt: trimmed,
-                output: fullOutput,
-                status: "completed",
-                createdAt: new Date().toISOString(),
-                createdAtMs: Date.now(),
-                completedAt: new Date().toISOString()
-            });
-            return "";
-        } catch (err) {
-            writer.removeIfEmpty();
-        }
-    }
-
-    return `[${session.name}] Cloud model runtime is currently offline.`;
-}
-
-function formatRemoteTasksTable(tasks, title = "Cloud Remote Agent Sessions") {
-    if (!tasks || !tasks.length) {
-        return `${title}: no active or saved remote sessions. Start one with '/remote <prompt>', 'agy --remote-agent "<prompt>"', or 'codex cloud exec "<prompt>"'.`;
-    }
-    const rows = [
-        `${title} (${tasks.length}):`,
-        `  ${"SESSION ID".padEnd(26)} ${"CLI".padEnd(8)} ${"STATUS".padEnd(11)} ${"DIRECTORY".padEnd(18)} PROMPT`
-    ];
-    for (const t of tasks.slice(0, 12)) {
-        const promptPreview = String(t.prompt || "").replace(/\s+/g, " ").slice(0, 42);
-        rows.push(
-            `  ${String(t.id).padEnd(26)} ${String(t.bin).padEnd(8)} ${String(t.status || "completed").toUpperCase().padEnd(11)} ${String(t.cwd || currentDir).slice(0, 17).padEnd(18)} ${promptPreview}`
-        );
-    }
-    return rows.join("\n");
-}
 
 async function handleActiveCliSessionInput(rawInput) {
     if (!activeCliSession) return null;
@@ -3552,164 +3248,16 @@ async function handleActiveCliSessionInput(rawInput) {
     if (!trimmed) return "";
 
     if (trimmed === "exit" || trimmed === "quit" || trimmed === "/exit" || trimmed === "/quit") {
-        const exitedName = activeCliSession.name;
-        const runningRemote = window.PortfoliOSRemoteAgentDaemon.getRunningCount();
+        const exitedName = activeCliSession.name || activeCliSession.bin;
         activeCliSession = null;
         updatePrompt();
-        return runningRemote > 0
-            ? `Exited ${exitedName} foreground session (${runningRemote} Cloud Remote Agent task(s) continuing in background).`
-            : `Exited ${exitedName} session.`;
+        return `Exited ${exitedName} session.`;
     }
 
-    if (trimmed === "/detach") {
-        const sessionInfo = activeCliSession;
-        await window.PortfoliOSRemoteAgentDaemon.startDaemon(sessionInfo.bin);
-        activeCliSession = null;
-        updatePrompt();
-        return [
-            `✓ Detached ${sessionInfo.name} (${sessionInfo.conversationId}) into the Cloud Remote Environment.`,
-            `  Session continues running in the cloud; resume anytime with '${sessionInfo.bin} --continue' or '${sessionInfo.bin} remote-control status'.`
-        ].join("\n");
-    }
-
-    if (trimmed.startsWith("/remote ") || trimmed.startsWith("/bg ")) {
-        const taskPrompt = trimmed.replace(/^\/(remote|bg)\s+/, "").trim();
-        if (!taskPrompt) {
-            return "Usage: /remote <prompt> — Dispatch a task to the Cloud Remote Environment so it continues running even if you close the CLI.";
-        }
-        const task = await window.PortfoliOSRemoteAgentDaemon.spawnRemoteTask({
-            bin: activeCliSession.bin,
-            name: activeCliSession.name,
-            model: activeCliSession.model,
-            effort: activeCliSession.effort || "high",
-            cwd: activeCliSession.cwd || currentDir,
-            prompt: taskPrompt
-        });
-        return [
-            `✓ Dispatched task to Cloud Remote Agent [${task.id}] (${activeCliSession.name} · ${activeCliSession.model}).`,
-            `  You can safely exit (/exit) or close the terminal; check progress with '/tasks' or '${activeCliSession.bin} --continue'.`
-        ].join("\n");
-    }
-
-    if (trimmed === "/tasks" || trimmed === "/sessions" || trimmed === "/remote") {
-        const tasks = window.PortfoliOSRemoteAgentDaemon.listTasks(activeCliSession.bin);
-        return formatRemoteTasksTable(tasks, `${activeCliSession.name} Cloud Remote Sessions`);
-    }
-
-    if (trimmed.startsWith("/resume") || trimmed.startsWith("/attach")) {
-        const targetId = trimmed.replace(/^\/(resume|attach)\s*/, "").trim() || "--last";
-        const task = window.PortfoliOSRemoteAgentDaemon.getTask(targetId, activeCliSession.bin);
-        if (!task) {
-            return `No saved Cloud Remote session found for ${activeCliSession.name}.`;
-        }
-        activeCliSession.conversationId = task.id;
-        return [
-            `✓ Resumed Cloud Remote Session [${task.id}] (${task.status.toUpperCase()} · ${task.cwd}):`,
-            `> ${task.prompt}`,
-            task.output || "(Task is still running in the Cloud Remote Environment...)"
-        ].join("\n");
-    }
-
-    if (trimmed === "?" || trimmed === "/help" || trimmed === "help") {
-        return [
-            `${activeCliSession.name} (v${activeCliSession.version}) Shortcuts & Commands:`,
-            `  <message>                      Chat directly with ${activeCliSession.name} (${activeCliSession.model})`,
-            `  /remote <prompt>               Run a task in the Cloud Remote Environment (persists if terminal closes)`,
-            `  /detach                        Detach session to the Cloud Remote Daemon and return to shell`,
-            `  /tasks                         List active and completed Cloud Remote Agent tasks`,
-            `  /resume [id]                   Attach to / view output from a Cloud Remote session`,
-            `  /models                        List available models`,
-            `  /model <id>                    Switch active model`,
-            `  /effort <level>                Set reasoning effort (low | medium | high | max)`,
-            `  /status                        Show active CLI binary, account, model, and virtual Linux workspace`,
-            `  !<command>                     Execute a Linux shell command in ${currentDir}`,
-            `  /clear                         Clear terminal output`,
-            `  /exit                          Exit ${activeCliSession.bin} back to shell`
-        ].join("\n");
-    }
-
-    if (trimmed === "/models" || trimmed === "models") {
-        if (activeCliSession.bin === "claude") {
-            return [
-                "Available Claude Code models:",
-                "  claude-opus-4-6             Claude Opus 4.6 (Max Reasoning)",
-                "  claude-sonnet-4-6           Claude Sonnet 4.6 [default]",
-                "  claude-haiku-4-5            Claude Haiku 4.5 (Fast)"
-            ].join("\n");
-        }
-        if (activeCliSession.bin === "codex") {
-            return [
-                "Available OpenAI Codex models:",
-                "  o3                          OpenAI o3 [default]",
-                "  o4-mini                     OpenAI o4-mini",
-                "  codex-mini-latest           Codex Mini Latest",
-                "  gpt-4.1                     GPT-4.1"
-            ].join("\n");
-        }
-        return [
-            "Available models:",
-            "  gemini-4-argon-high         Gemini 4 Argon (High)",
-            "  gemini-4-argon-medium       Gemini 4 Argon (Medium)",
-            "  gemini-3.8-flash-high       Gemini 3.8 Flash (High) [active]",
-            "  gemini-3.8-flash-medium     Gemini 3.8 Flash (Medium)",
-            "  gemini-3.8-flash-low        Gemini 3.8 Flash (Low)",
-            "  claude-opus-5-5-high        Claude Opus 5.5 (High)",
-            "  claude-sonnet-5-5-high      Claude Sonnet 5.5 (High)",
-            "  gpt-oss-120b-medium         GPT-OSS 120B (Medium)"
-        ].join("\n");
-    }
-
-    if (trimmed === "/status") {
-        const config = getCliConfigInfo(activeCliSession.bin);
-        const daemonStatus = window.PortfoliOSRemoteAgentDaemon.getDaemonStatus(activeCliSession.bin);
-        return [
-            `CLI:          ${activeCliSession.name} v${activeCliSession.version}`,
-            `Environment:  PortfoliOS Virtual Linux (x86_64-portfolios-wasm) + Cloud Remote Runtime`,
-            `Cloud Daemon: ${daemonStatus.running ? `Active (PID ${daemonStatus.pid} · ${daemonStatus.endpoint})` : `Ready (${daemonStatus.activeTasks} running, ${daemonStatus.totalTasks} total sessions)`}`,
-            `Account:      ${activeCliSession.account} (${activeCliSession.provider})`,
-            `Model:        ${activeCliSession.model} (effort: ${activeCliSession.effort || "high"})`,
-            `Workspace:    ${activeCliSession.cwd || currentDir} (Auto-Trusted)`,
-            `Session ID:   ${activeCliSession.conversationId}`,
-            `Config File:  ${config.configFile}`
-        ].join("\n");
-    }
-
-    if (trimmed.startsWith("/model")) {
-        const nextModel = trimmed.replace(/^\/model\s*/, "").trim();
-        if (!nextModel) return `Current model: ${activeCliSession.model}. Usage: /model <model-id>`;
-        activeCliSession.model = nextModel;
-        syncAgyStatusBar();
-        return `✓ Model switched to ${nextModel}.`;
-    }
-
-    if (trimmed.startsWith("/effort")) {
-        const nextEffort = trimmed.replace(/^\/effort\s*/, "").trim().toLowerCase();
-        if (!["low", "medium", "high", "xhigh", "max"].includes(nextEffort)) {
-            return `Current effort: ${activeCliSession.effort || "high"}. Usage: /effort <low|medium|high|xhigh|max>`;
-        }
-        activeCliSession.effort = nextEffort;
-        syncAgyStatusBar();
-        return `✓ Reasoning effort set to ${nextEffort}.`;
-    }
-
-    if (trimmed === "/clear") {
+    if (trimmed === "/clear" || trimmed === "clear") {
         for (const container of getTerminalOutputContainers()) container.innerHTML = "";
         terminalLineBuffer.length = 0;
         return "";
-    }
-
-    if (trimmed === "/logout") {
-        const meta = await getInstalledBinary(activeCliSession.bin);
-        if (meta) await removeCliSession(meta);
-        const exitedName = activeCliSession.name;
-        activeCliSession = null;
-        updatePrompt();
-        return `✓ Logged out of ${exitedName}.`;
-    }
-
-    if (trimmed === "/login") {
-        const meta = await getInstalledBinary(activeCliSession.bin);
-        if (meta) return await startCliNativeAuth(meta, { forceReauth: true });
     }
 
     if (trimmed.startsWith("!")) {
@@ -3718,10 +3266,29 @@ async function handleActiveCliSessionInput(rawInput) {
         return await runCommandLine(shellCmd);
     }
 
-    return await runCliAgentTurn(activeCliSession, trimmed);
+    if (trimmed === "?" || trimmed === "/help" || trimmed === "help") {
+        return [
+            `${activeCliSession.name || activeCliSession.bin} interactive session:`,
+            "  <input>     Send input to running PTY process",
+            "  !<command>  Execute shell command (e.g. !ls, !pwd)",
+            "  clear       Clear screen",
+            "  exit        Exit back to shell"
+        ].join("\n");
+    }
+
+    // Forward stdin to runtime bridge PTY input stream
+    const profileId = window.state?.currentUserId || (currentUser !== "guest" ? currentUser : (window.getCurrentUser?.()?.id || "guest"));
+    if (window.PortfoliOSRuntimeBridge && typeof window.PortfoliOSRuntimeBridge.sendInput === "function") {
+        window.PortfoliOSRuntimeBridge.sendInput(trimmed + "\n", profileId);
+        return "";
+    }
+
+    return "";
 }
 
-async function executeInstalledCliBinary(binMeta, args) {
+async function executeInstalledCliBinary(binMeta, args = []) {
+    const profileId = window.state?.currentUserId || (currentUser !== "guest" ? currentUser : (window.getCurrentUser?.()?.id || "guest"));
+    const cmd = binMeta.path || `/usr/local/bin/${binMeta.bin}` || binMeta.bin;
     const sub = (args[0] || "").toLowerCase();
     const config = getCliConfigInfo(binMeta.bin);
     const latestVer = await resolveLatestUpstreamCliVersion(binMeta);
@@ -3743,135 +3310,15 @@ async function executeInstalledCliBinary(binMeta, args) {
     }
 
     if (sub === "doctor") {
-        const daemonStatus = window.PortfoliOSRemoteAgentDaemon.getDaemonStatus(binMeta.bin);
+        const repoCfg = await window.PortfoliOSGitBridge.readRepoConfig(currentDir);
         return [
             `${binMeta.name} v${binMeta.version} Health Check:`,
-            `  ✓ Binary path:        /usr/local/bin/${binMeta.bin} (x86_64-portfolios-wasm)`,
+            `  ✓ Binary path:        /usr/local/bin/${binMeta.bin} (WASI container engine)`,
             `  ✓ Upstream channel:   ${binMeta.pkg}@${binMeta.version} (latest)`,
-            `  ✓ Config & trust:     ${config.configFile} (workspace ${currentDir} auto-trusted)`,
-            `  ✓ Cloud Remote Agent: ${daemonStatus.endpoint} (${daemonStatus.totalTasks} saved sessions)`
+            `  ✓ VFS mount root:     / (full SystemFS access across /, /home, /usr/local/bin, /etc, /tmp, /documents)`,
+            `  ✓ Git repository:     ${repoCfg?.slug ? `${repoCfg.slug} (${repoCfg.remoteUrl})` : "No Git remote in currentDir (use 'git clone <url>' or 'git remote add origin <url>')"}`,
+            `  ✓ PTY stream:         Live terminal input/output wired`
         ].join("\n");
-    }
-
-    if (sub === "remote-control") {
-        const rcSub = (args[1] || "status").toLowerCase();
-        if (rcSub === "start") {
-            const info = await window.PortfoliOSRemoteAgentDaemon.startDaemon(binMeta.bin);
-            return [
-                `✓ Started ${binMeta.name} remote-control background daemon (PID ${info.pid}).`,
-                `  Remote Endpoint: ${info.endpoint}`,
-                `  Workspace:       ${info.cwd}`,
-                `  Sessions will continue running in the cloud even if the terminal closes.`
-            ].join("\n");
-        }
-        if (rcSub === "stop") {
-            await window.PortfoliOSRemoteAgentDaemon.stopDaemon(binMeta.bin);
-            return `✓ Stopped ${binMeta.name} remote-control daemon.`;
-        }
-        const status = window.PortfoliOSRemoteAgentDaemon.getDaemonStatus(binMeta.bin);
-        return [
-            `${binMeta.name} remote-control status:`,
-            `  State:         ${status.running ? `RUNNING (PID ${status.pid})` : "STANDBY (on-demand cloud execution)"}`,
-            `  Endpoint:      ${status.endpoint}`,
-            `  Active Tasks:  ${status.activeTasks}`,
-            `  Saved Tasks:   ${status.totalTasks}`
-        ].join("\n");
-    }
-
-    if (sub === "cloud" && binMeta.bin === "codex") {
-        const cloudSub = (args[1] || "list").toLowerCase();
-        if (cloudSub === "exec" || cloudSub === "run") {
-            const promptText = args.slice(2).join(" ").trim();
-            if (!promptText) return "Usage: codex cloud exec \"<prompt>\"";
-            const task = await window.PortfoliOSRemoteAgentDaemon.spawnRemoteTask({
-                bin: "codex",
-                name: binMeta.name,
-                model: binMeta.defaultModel || "o3",
-                cwd: currentDir,
-                prompt: promptText
-            });
-            return `✓ Dispatched task to Codex Cloud [${task.id}]. Run 'codex cloud' or 'codex resume ${task.id}' to inspect.`;
-        }
-        const tasks = window.PortfoliOSRemoteAgentDaemon.listTasks("codex");
-        return formatRemoteTasksTable(tasks, "Codex Cloud Tasks");
-    }
-
-    if (sub === "resume" || args.includes("--continue") || args.includes("-c") || args.includes("--resume") || args.includes("-r") || args.includes("--conversation")) {
-        const convIdx = args.findIndex(a => a === "--conversation" || a === "--resume" || a === "-r" || a === "resume");
-        const targetId = (convIdx !== -1 && args[convIdx + 1] && !args[convIdx + 1].startsWith("-"))
-            ? args[convIdx + 1]
-            : "--last";
-        const task = window.PortfoliOSRemoteAgentDaemon.getTask(targetId, binMeta.bin);
-        let session = await loadCliSession(binMeta);
-        if (!session) session = await startCliNativeAuth(binMeta, { autoComplete: true });
-        await startInteractiveCliRepl(binMeta, session, {
-            conversationId: task?.id || null,
-            remoteMode: Boolean(args.includes("--remote-agent") || args.includes("--remote"))
-        });
-        if (task) {
-            return [
-                `Resumed session [${task.id}] (${task.status.toUpperCase()} · ${task.cwd}):`,
-                `> ${task.prompt}`,
-                task.output || "(Task is running in the Cloud Remote Environment...)"
-            ].join("\n");
-        }
-        return "";
-    }
-
-    if (sub === "models" && (binMeta.bin === "agy" || binMeta.bin === "gemini")) {
-        return [
-            "Fetching available models...",
-            "gemini-4-argon-medium\tGemini 4 Argon (Medium)",
-            "gemini-4-argon-high\tGemini 4 Argon (High)",
-            "gemini-4-argon-low\tGemini 4 Argon (Low)",
-            "gemini-3.8-flash-high\tGemini 3.8 Flash (High)",
-            "gemini-3.8-flash-medium\tGemini 3.8 Flash (Medium)",
-            "gemini-3.8-flash-low\tGemini 3.8 Flash (Low)",
-            "claude-opus-5-5-low\tClaude Opus 5.5 (Low)",
-            "claude-opus-5-5-medium\tClaude Opus 5.5 (Medium)",
-            "claude-opus-5-5-high\tClaude Opus 5.5 (High)",
-            "claude-sonnet-5-5-low\tClaude Sonnet 5.5 (Low)",
-            "claude-sonnet-5-5-medium\tClaude Sonnet 5.5 (Medium)",
-            "claude-sonnet-5-5-high\tClaude Sonnet 5.5 (High)",
-            "gpt-oss-120b-medium\tGPT-OSS 120B (Medium)"
-        ].join("\n");
-    }
-
-    if ((sub === "agents" || sub === "agent") && binMeta.bin === "agy") {
-        return [
-            "Available agents:",
-            "  antigravity     Primary full-capability coding & research agent (default)",
-            "  research        Read-only codebase & documentation exploration agent",
-            "  remote-cloud    Detached Cloud Remote Agent (--remote-agent)"
-        ].join("\n");
-    }
-
-    if (sub === "--help" || sub === "-h" || sub === "help") {
-        return [
-            `${binMeta.name} (${binMeta.bin}) v${binMeta.version}`,
-            `Usage: ${binMeta.bin} [options] [command] [prompt]`,
-            ``,
-            `Options:`,
-            `  -p, --print "<prompt>"          Run a prompt non-interactively and print the response`,
-            `  -c, --continue                  Continue the most recent conversation`,
-            `  --conversation <id>             Resume a previous conversation by ID`,
-            `  --remote-agent                  Execute conversations in the Cloud Remote Environment (persists on exit)`,
-            `  --remote-control                Connect session to the remote-control cloud daemon`,
-            `  --model <model>                 Model for the current CLI session`,
-            `  --effort <level>                Reasoning effort (low|medium|high|xhigh|max)`,
-            `  -v, --version                   Print binary version`,
-            ``,
-            `Subcommands:`,
-            `  ${(binMeta.bin + " remote-control").padEnd(24)} Manage the remote-control background daemon (start, status, stop)`,
-            `  ${(binMeta.bin + " models").padEnd(24)} List available AI models`,
-            `  ${(binMeta.bin + " update").padEnd(24)} Update ${binMeta.bin} to the latest upstream release`,
-            `  ${(binMeta.bin + " doctor").padEnd(24)} Check installation, workspace trust, and cloud daemon health`,
-            `  ${(binMeta.bin + " login / logout").padEnd(24)} Manage authentication credentials`
-        ].join("\n");
-    }
-
-    if (binMeta.customScript && !binMeta.provider) {
-        return await runShellScript([binMeta.path], binMeta.customScript);
     }
 
     if (sub === "logout" || (sub === "auth" && (args[1] || "").toLowerCase() === "logout")) {
@@ -3879,14 +3326,19 @@ async function executeInstalledCliBinary(binMeta, args) {
         return `✓ Logged out of ${binMeta.name}. Removed ${config.authFile}.`;
     }
 
+    if (sub === "login" || sub === "auth") {
+        const isWithKey = args.some(a => a === "--with-api-key" || a === "--with-key");
+        return await startCliNativeAuth(binMeta, { forceApiKey: isWithKey, forceReauth: true });
+    }
+
     if (sub === "status" || (sub === "auth" && (args[1] || "").toLowerCase() === "status") || (sub === "login" && (args[1] || "").toLowerCase() === "status")) {
         const session = await loadCliSession(binMeta);
         const hasAuthFile = Boolean(await window.SystemFS?.readFile?.(config.authFile));
-        const daemonStatus = window.PortfoliOSRemoteAgentDaemon.getDaemonStatus(binMeta.bin);
+        const repoCfg = await window.PortfoliOSGitBridge.readRepoConfig(currentDir);
         return [
             `${binMeta.name} (${binMeta.bin}) v${binMeta.version}`,
-            `  Runtime:      PortfoliOS Virtual Linux (x86_64-portfolios-wasm) + Cloud Remote Agent`,
-            `  Cloud Daemon: ${daemonStatus.running ? `Running (PID ${daemonStatus.pid})` : `Standby (${daemonStatus.totalTasks} saved sessions)`}`,
+            `  Runtime:      PortfoliOS Container Runtime (mount: /)`,
+            `  Git Remote:   ${repoCfg?.slug ? `${repoCfg.slug} (${repoCfg.remoteUrl})` : "None (run 'git clone <url>' or 'git remote add origin <url>')"}`,
             `  Status:       ${session ? `Authenticated (${session.provider} · ${session.account})` : "Not authenticated"}`,
             `  Workspace:    ${currentDir} (Auto-Trusted)`,
             `  Auth File:    ${config.authFile} [${hasAuthFile ? "exists" : "missing"}]`,
@@ -3894,73 +3346,62 @@ async function executeInstalledCliBinary(binMeta, args) {
         ].join("\n");
     }
 
-    if (sub === "login" || sub === "auth") {
-        const isWithKey = args.some(a => a === "--with-api-key" || a === "--with-key");
-        return await startCliNativeAuth(binMeta, { forceApiKey: isWithKey, forceReauth: true });
+    if (sub === "--help" || sub === "-h" || sub === "help") {
+        return [
+            `${binMeta.name} (${binMeta.bin}) v${binMeta.version}`,
+            `Usage: ${binMeta.bin} [options] [command] [args...]`,
+            "",
+            "Options:",
+            "  -v, --version                   Print binary version",
+            "  -h, --help                      Print help message",
+            "",
+            "Subcommands:",
+            `  ${(binMeta.bin + " doctor").padEnd(24)} Check installation, workspace, and PTY status`,
+            `  ${(binMeta.bin + " update").padEnd(24)} Update ${binMeta.bin} to latest release`,
+            `  ${(binMeta.bin + " login / logout").padEnd(24)} Manage authentication credentials`,
+            `  ${(binMeta.bin + " status").padEnd(24)} Show current auth and runtime state`
+        ].join("\n");
     }
 
-    let session = await loadCliSession(binMeta);
-    if (!session) {
-        if (args.length > 0) {
-            session = await startCliNativeAuth(binMeta, { autoComplete: true });
-        } else {
-            return await startCliNativeAuth(binMeta, {
-                onComplete: async (newSession) => {
-                    await startInteractiveCliRepl(binMeta, newSession);
-                }
-            });
-        }
+    if (binMeta.customScript && !binMeta.provider && (!window.PortfoliOSRuntimeBridge || typeof window.PortfoliOSRuntimeBridge.runProcess !== "function")) {
+        return await runShellScript([binMeta.path], binMeta.customScript);
     }
 
-    const isRemoteFlag = args.includes("--remote-agent") || args.includes("--remote-control") || args.includes("--remote");
-    if (args.includes("--remote-control")) {
-        await window.PortfoliOSRemoteAgentDaemon.startDaemon(binMeta.bin);
-    }
-
-    // Filter out flags to check if a single-shot prompt or `exec` prompt was passed
-    const ignoredFlags = new Set([
-        "-p", "--print", "--prompt", "--continue", "-c",
-        "--dangerously-skip-permissions", "--remote-agent", "--remote-control",
-        "--full-auto", "exec"
-    ]);
-    const promptArgs = [];
-    for (let i = 0; i < args.length; i++) {
-        const a = args[i];
-        if (a === "--model" || a === "-m" || a === "--effort" || a === "--remote") {
-            i++;
-            continue;
-        }
-        if (!ignoredFlags.has(a) && !a.startsWith("-")) {
-            promptArgs.push(a);
-        }
-    }
-
-    if (promptArgs.length > 0) {
-        const promptText = promptArgs.join(" ");
-        if (isRemoteFlag && (args.includes("-p") || args.includes("--print") || sub === "exec")) {
-            const task = await window.PortfoliOSRemoteAgentDaemon.spawnRemoteTask({
-                bin: binMeta.bin,
-                name: binMeta.name,
-                model: session.model || binMeta.defaultModel || config.defaultModel,
-                effort: session.effort || "high",
-                cwd: currentDir,
-                prompt: promptText
-            });
-            return `✓ Dispatched detached Cloud Remote Agent task [${task.id}] in ${currentDir}. Run '${binMeta.bin} --conversation ${task.id}' or '${binMeta.bin} remote-control status' to inspect.`;
-        }
-        return await runCliAgentTurn({
+    // Set interactive activeCliSession if starting an interactive session (no args)
+    if (!args || args.length === 0) {
+        activeCliSession = {
             bin: binMeta.bin,
             name: binMeta.name,
             version: binMeta.version,
-            provider: session.provider,
-            model: session.model || binMeta.defaultModel || config.defaultModel,
-            effort: session.effort || "high",
-            account: session.account,
             cwd: currentDir
-        }, promptText);
+        };
+        updatePrompt();
     }
 
-    return await startInteractiveCliRepl(binMeta, session, { remoteMode: isRemoteFlag });
+    // Route execution to PortfoliOSRuntimeBridge.runProcess with real PTY input/output streams and root /
+    if (window.PortfoliOSRuntimeBridge && typeof window.PortfoliOSRuntimeBridge.runProcess === "function") {
+        try {
+            await window.PortfoliOSRuntimeBridge.runProcess({
+                profileId,
+                cmd: binMeta.bin || cmd,
+                args: args || [],
+                onOutput: (chunk) => {}
+            });
+            return "";
+        } catch (err) {
+            if (activeCliSession && (!args || args.length === 0)) {
+                activeCliSession = null;
+                updatePrompt();
+            }
+            return `runtime-bridge: ${err.message}`;
+        }
+    }
+
+    if (binMeta.customScript) {
+        return await runShellScript([cmd, ...(args || [])], binMeta.customScript);
+    }
+
+    return `bash: ${binMeta.bin}: PortfoliOS Runtime Bridge unavailable.`;
 }
 
 // Linux Core Utilities
@@ -4485,6 +3926,280 @@ async function launchDesktopAppFromCli(appKey, label) {
 }
 
 // Core command executor (supports piping via `stdin`)
+// Zero-Knowledge Keyring & Vault Shell Manager
+async function runVaultCommand(args = []) {
+    const sub = (args[0] || "").toLowerCase();
+
+    if (!sub || sub === "help" || sub === "--help" || sub === "-h") {
+        return [
+            "PortfoliOS Zero-Knowledge Keyring & Vault Manager",
+            "Usage: vault <command> [options]",
+            "",
+            "Commands:",
+            "  init                Initialize master passphrase and setup zero-knowledge vault",
+            "  status              Display current vault lock status and configured providers",
+            "  lock                Purge in-memory credentials from the active browser session",
+            "  unlock [file]       Decrypt credentials envelope and authenticate active sessions",
+            "  purge | reset       Erase all stored credentials and reset vault (Recovery option)",
+            "  export [file]       Encrypt vault to /documents/vault.enc (AES-256-GCM + PBKDF2)",
+            "  import [file]       Decrypt specified envelope (default: /documents/vault.enc)",
+            "  list                List authenticated CLI tool providers in /etc/portfolios/vault",
+            "",
+            "Security: Plain-text tokens are stored exclusively in local IndexedDB. Cloud sync",
+            "transfers only client-side AES-256-GCM encrypted envelopes with rotating 256-bit salts."
+        ].join("\n");
+    }
+
+    if (sub === "init") {
+        if (typeof window.PortfoliOSVault?.showSetupModal === "function" && document.getElementById("vault-modal-backdrop")) {
+            window.PortfoliOSVault.showSetupModal();
+            return "Opening visual Vault Setup wizard...";
+        }
+        promptUser("Enter New Master Passphrase (min 14 chars): ", true, async (pass1) => {
+            const validation = window.PortfoliOSVault?.validatePassword
+                ? window.PortfoliOSVault.validatePassword(pass1)
+                : { valid: Boolean(pass1 && pass1.length >= 14), errors: [] };
+            if (!validation.valid) {
+                window.addTerminalLine("vault init error: Password does not meet security requirements:", "error");
+                for (const err of (validation.errors || [])) {
+                    window.addTerminalLine(`  • ${err}`, "error");
+                }
+                return;
+            }
+            promptUser("Confirm Master Passphrase: ", true, async (pass2) => {
+                if (pass1 !== pass2) {
+                    window.addTerminalLine("vault init error: Passphrases do not match.", "error");
+                    return;
+                }
+                try {
+                    await window.PortfoliOSVault.initWithPassphrase(pass1);
+                    window.addTerminalLine("✓ Zero-Knowledge Vault initialized successfully with AES-256-GCM + PBKDF2-SHA512.", "success");
+                    window.addTerminalLine("  Encrypted envelope saved to /documents/vault.enc (Cloud sync ready).", "muted");
+                } catch (err) {
+                    window.addTerminalLine(`vault init error: ${err.message}`, "error");
+                }
+            });
+        });
+        return "";
+    }
+
+    if (sub === "purge" || sub === "reset") {
+        if (typeof window.PortfoliOSVault?.showPurgeModal === "function" && document.getElementById("vault-modal-backdrop")) {
+            window.PortfoliOSVault.showPurgeModal();
+            return "Opening visual Vault Purge & Reset dialog...";
+        }
+        promptUser("WARNING: This will permanently erase all saved credentials in /etc/portfolios/vault/ and /documents/vault.enc.\nType 'PURGE' to confirm: ", false, async (confirmText) => {
+            if (confirmText.trim() !== "PURGE") {
+                window.addTerminalLine("vault purge: Operation cancelled.", "muted");
+                return;
+            }
+            try {
+                if (window.PortfoliOSVault && typeof window.PortfoliOSVault.purgeAndReset === "function") {
+                    await window.PortfoliOSVault.purgeAndReset();
+                }
+                cliAuthSessions.clear();
+                window.addTerminalLine("✓ Zero-Knowledge Vault purged. All saved credentials and backups erased.", "success");
+                window.addTerminalLine("  You may now run 'vault init' to configure a new Master Passphrase.", "muted");
+            } catch (err) {
+                window.addTerminalLine(`vault purge error: ${err.message}`, "error");
+            }
+        });
+        return "";
+    }
+
+    if (sub === "status") {
+        let providers = [];
+        if (window.SystemFS && typeof window.SystemFS.readDir === "function") {
+            try {
+                const files = (await window.SystemFS.readDir("/etc/portfolios/vault")) || [];
+                providers = files.filter(f => f.name?.endsWith(".json")).map(f => f.name.replace(".json", ""));
+            } catch (_) {}
+        }
+        let hasEncrypted = false;
+        try {
+            const enc = await window.SystemFS?.readFile?.("/documents/vault.enc");
+            hasEncrypted = Boolean(enc && !enc.isDirectory);
+        } catch (_) {}
+
+        const session = window.PortfoliOSRuntimeBridge?.getActiveSession();
+        const inMemoryCount = session?.vaultTokens ? session.vaultTokens.size : 0;
+        const isLocked = inMemoryCount === 0 && providers.length > 0;
+
+        return [
+            "PortfoliOS Zero-Knowledge Keyring Status:",
+            `  Vault State:        ${isLocked ? "\x1b[33mLocked (Memory keys cleared)\x1b[0m" : "\x1b[32mActive (Keys in memory)\x1b[0m"}`,
+            `  Local Providers:    ${providers.length ? providers.join(", ") : "None configured"}`,
+            `  Encrypted Backup:   ${hasEncrypted ? "\x1b[32m/documents/vault.enc (Sync Ready)\x1b[0m" : "\x1b[33mNot exported yet\x1b[0m"}`,
+            `  Root VFS Mount:     / (SystemFS mounted)`,
+            `  Native Relay:       ${window.PortfoliOSNativeRelay ? "Connected" : "In-browser mode"}`
+        ].join("\n");
+    }
+
+    if (sub === "lock") {
+        if (window.PortfoliOSVault && typeof window.PortfoliOSVault.lock === "function") {
+            window.PortfoliOSVault.lock();
+        }
+        const session = window.PortfoliOSRuntimeBridge?.getActiveSession();
+        if (session?.vault) session.vault.lock();
+        return "✓ Zero-Knowledge Vault locked. In-memory keys purged from this session.";
+    }
+
+    if (sub === "list") {
+        let providers = [];
+        if (window.SystemFS && typeof window.SystemFS.readDir === "function") {
+            try {
+                const files = (await window.SystemFS.readDir("/etc/portfolios/vault")) || [];
+                providers = files.filter(f => f.name?.endsWith(".json")).map(f => f.name.replace(".json", ""));
+            } catch (_) {}
+        }
+        if (!providers.length) return "No CLI credentials currently saved in /etc/portfolios/vault.";
+        return "Configured Providers in Vault:\n" + providers.map(p => `  - ${p}`).join("\n");
+    }
+
+    if (sub === "export") {
+        const targetPath = args[1] || "/documents/vault.enc";
+        let tokens = {};
+        if (window.SystemFS && typeof window.SystemFS.readDir === "function") {
+            try {
+                const files = (await window.SystemFS.readDir("/etc/portfolios/vault")) || [];
+                for (const f of files) {
+                    if (f.name?.endsWith(".json")) {
+                        const rec = await window.SystemFS.readFile(f.path);
+                        if (rec?.data) {
+                            const pName = f.name.replace(".json", "");
+                            tokens[pName] = JSON.parse(String(rec.data));
+                        }
+                    }
+                }
+            } catch (_) {}
+        }
+
+        if (Object.keys(tokens).length === 0) {
+            return "vault export: No credentials in /etc/portfolios/vault to export. Sign in via 'codex login', 'agy login', etc. first.";
+        }
+
+        promptUser("Enter Master Passphrase for Vault Export: ", true, async (password) => {
+            if (!password || password.length < 12) {
+                window.addTerminalLine("vault export: Password must be at least 12 characters long.", "error");
+                return;
+            }
+            try {
+                // Cryptographic export using PBKDF2-SHA512 (600,000 rounds) + AES-256-GCM
+                const salt = crypto.getRandomValues(new Uint8Array(32));
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const encoder = new TextEncoder();
+                const baseKey = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+                const key = await crypto.subtle.deriveKey(
+                    { name: "PBKDF2", salt, iterations: 600000, hash: "SHA-512" },
+                    baseKey,
+                    { name: "AES-GCM", length: 256 },
+                    false,
+                    ["encrypt"]
+                );
+
+                const payload = {
+                    version: 1,
+                    profileId: window.state?.currentUserId || "guest",
+                    tokens,
+                    exportedAt: Date.now()
+                };
+                const plaintext = encoder.encode(JSON.stringify(payload));
+                const cipherBuf = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+                const cipherBytes = new Uint8Array(cipherBuf);
+
+                const toB64 = (bytes) => btoa(Array.from(bytes).map(b => String.fromCharCode(b)).join(""));
+                const digest = await crypto.subtle.digest("SHA-256", cipherBytes);
+                const checksum = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+                const envelope = {
+                    version: 1,
+                    format: "portfolios-zk-vault",
+                    kdf: { algorithm: "PBKDF2", hash: "SHA-512", iterations: 600000, salt: toB64(salt) },
+                    cipher: { algorithm: "AES-256-GCM", iv: toB64(iv), tagLength: 128 },
+                    ciphertext: toB64(cipherBytes),
+                    checksum,
+                    exportedAt: Date.now()
+                };
+
+                const parent = window.SystemFS.getParentPath(targetPath);
+                await window.SystemFS.ensureDirectory?.(parent, { silent: true });
+                await writeTerminalFile(targetPath, JSON.stringify(envelope, null, 2), "application/json");
+
+                window.addTerminalLine(`✓ Zero-Knowledge Vault exported to ${targetPath} (AES-256-GCM + PBKDF2-SHA512).`, "success");
+                window.addTerminalLine("  Encrypted envelope is ready for cross-device Google Drive / OneDrive sync.", "muted");
+            } catch (err) {
+                window.addTerminalLine(`vault export error: ${err.message}`, "error");
+            }
+        });
+        return "";
+    }
+
+    if (sub === "unlock" && !args[1] && typeof window.PortfoliOSVault?.showUnlockModal === "function" && document.getElementById("vault-modal-backdrop")) {
+        window.PortfoliOSVault.showUnlockModal({
+            onUnlock: (res) => {
+                window.addTerminalLine(`✓ Zero-Knowledge Vault unlocked via authentication dialog. Restored: ${res.restored?.join(", ") || "keys"}.`, "success");
+            }
+        });
+        return "Opening visual Vault Authentication dialog...";
+    }
+
+    if (sub === "import" || sub === "unlock") {
+        const sourcePath = args[1] || "/documents/vault.enc";
+        const fileRec = await window.SystemFS?.readFile?.(sourcePath);
+        if (!fileRec || !fileRec.data) {
+            return `vault ${sub}: File '${sourcePath}' not found in SystemFS.`;
+        }
+
+        promptUser("Enter Master Passphrase to Unlock Vault: ", true, async (password) => {
+            try {
+                const envelope = JSON.parse(String(fileRec.data));
+                if (!envelope || envelope.format !== "portfolios-zk-vault") {
+                    throw new Error("Invalid envelope format. Expected portfolios-zk-vault.");
+                }
+
+                const fromB64 = (str) => new Uint8Array(atob(str).split("").map(c => c.charCodeAt(0)));
+                const salt = fromB64(envelope.kdf.salt);
+                const iv = fromB64(envelope.cipher.iv);
+                const ciphertext = fromB64(envelope.ciphertext);
+
+                const encoder = new TextEncoder();
+                const baseKey = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+                const key = await crypto.subtle.deriveKey(
+                    { name: "PBKDF2", salt, iterations: envelope.kdf.iterations, hash: "SHA-512" },
+                    baseKey,
+                    { name: "AES-GCM", length: 256 },
+                    false,
+                    ["decrypt"]
+                );
+
+                let decryptedBuf;
+                try {
+                    decryptedBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+                } catch (_) {
+                    throw new Error("Incorrect master passphrase or corrupted authentication tag.");
+                }
+
+                const data = JSON.parse(new TextDecoder("utf-8").decode(decryptedBuf));
+                const restored = [];
+                if (data && data.tokens) {
+                    await window.SystemFS.ensureDirectory?.("/etc/portfolios/vault", { silent: true });
+                    for (const [provider, tokenRec] of Object.entries(data.tokens)) {
+                        await writeTerminalFile(`/etc/portfolios/vault/${provider}.json`, JSON.stringify(tokenRec, null, 2), "application/json");
+                        restored.push(provider);
+                    }
+                }
+
+                window.addTerminalLine(`✓ Zero-Knowledge Vault decrypted successfully. Restored ${restored.length} provider(s): ${restored.join(", ")}.`, "success");
+            } catch (err) {
+                window.addTerminalLine(`vault unlock error: ${err.message}`, "error");
+            }
+        });
+        return "";
+    }
+
+    return `vault: Unknown subcommand '${sub}'. Run 'vault help' for usage.`;
+}
+
 async function executeCommand(command, args, commandPart, stdin) {
     if (shellAliases[command] && stdin === undefined) {
         const expanded = `${shellAliases[command]} ${args.join(" ")}`.trim();
@@ -4520,6 +4235,7 @@ async function executeCommand(command, args, commandPart, stdin) {
         return "";
     }
 
+    if (command === "vault") return await runVaultCommand(args);
     if (command === "help") {
         return [
             "PortfoliOS Core Linux Terminal (GNU/Linux x86_64-portfolios-wasm):",
@@ -4891,8 +4607,22 @@ async function executeCommand(command, args, commandPart, stdin) {
             return `bash: ${command}: Is a directory`;
         }
         const installedMeta = await getInstalledBinary(command);
-        if (installedMeta && installedMeta.provider) {
+        if (installedMeta) {
             return await executeInstalledCliBinary(installedMeta, args);
+        }
+        if (window.PortfoliOSRuntimeBridge && typeof window.PortfoliOSRuntimeBridge.runProcess === "function") {
+            const profileId = window.state?.currentUserId || (currentUser !== "guest" ? currentUser : (window.getCurrentUser?.()?.id || "guest"));
+            try {
+                await window.PortfoliOSRuntimeBridge.runProcess({
+                    profileId,
+                    cmd: resolved,
+                    args,
+                    onOutput: (chunk) => {}
+                });
+                return "";
+            } catch (err) {
+                return `bash: ${command}: ${err.message}`;
+            }
         }
         return await runShellScript([command, ...args]);
     }
@@ -5012,6 +4742,7 @@ window.handleCommand = async function(rawInput) {
 };
 
 window.runCommandLine = runCommandLine;
+window.runShellScript = runShellScript;
 
 window.submitTerminalInput = async function(rawValue) {
     const val = String(rawValue ?? "");

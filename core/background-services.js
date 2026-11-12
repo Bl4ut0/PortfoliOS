@@ -38,7 +38,11 @@ async function triggerGDriveSync({ silent = false, ...options } = {}) {
         console.error("GDrive Sync error:", err);
         if (/\b(401|403)\b/.test(String(err?.message || err))) {
             await window.GDriveSync.invalidateSession("Google Drive rejected the saved session.");
-            window.GDriveSync.showReconnectPrompt("Google Drive needs you to sign in again.");
+            if (window.PrivateSessions?.required() && window.state?.sessionChosen) {
+                window.PrivateSessions.lock("Reconnect Google to verify your active workspace. Local files are retained.");
+            } else {
+                window.GDriveSync.showReconnectPrompt("Google Drive needs you to sign in again.");
+            }
         }
         if (progressText) progressText.textContent = "Sync failed.";
         if (progressBar) progressBar.style.width = "0%";

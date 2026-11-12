@@ -196,6 +196,11 @@ window.GDriveSync = {
     },
 
     async invalidateSession(reason = "Google Drive needs you to sign in again.") {
+        if (this.pendingSyncTimer !== null) {
+            window.clearTimeout(this.pendingSyncTimer);
+            this.pendingSyncTimer = null;
+        }
+        this.dirtyLivePaths = new Set();
         const profile = this.googleProfile || this.getSavedGoogleProfile();
         this.clearBrowserSession();
         this.googleProfile = profile;
@@ -372,6 +377,23 @@ window.GDriveSync = {
     async fetchGoogleProfile() {
         const token = this.getToken();
         if (!token) return null;
+
+        if (window.CloudAuth && typeof window.CloudAuth.get === "function" && window.CloudAuth.get("google")) {
+            const profile = await window.CloudAuth.get("google").fetchProfile(token);
+            this.googleProfile = {
+                name: profile.name || "",
+                email: profile.email || "",
+                picture: profile.picture || "",
+                sub: profile.sub || profile.id || ""
+            };
+            if (window.Storage) {
+                window.Storage.local.set("bl4ut0_gdrive_profile", JSON.stringify(this.googleProfile));
+            } else {
+                window.localStorage.setItem("bl4ut0_gdrive_profile", JSON.stringify(this.googleProfile));
+            }
+            this.emitAuthChanged("profile-updated");
+            return this.googleProfile;
+        }
 
         const response = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
             headers: { "Authorization": `Bearer ${token}` }
@@ -589,24 +611,31 @@ window.GDriveSync = {
             const nonce = window.crypto.randomUUID();
             const channel = new window.BroadcastChannel("portfolios-google-" + nonce);
             let settled = false;
+            let accepting = false;
             const timeout = window.setTimeout(() => finish(reject, new Error("Google sign-in timed out. Close the sign-in window and try again.")), timeoutMs);
             const finish = (handler, value) => {
                 if (settled) return;
                 settled = true;
                 window.clearTimeout(timeout);
-                channel.close();
+                try { channel.close(); } catch (_) {}
                 handler(value);
             };
             channel.onmessage = async event => {
                 const message = event.data;
-                if (settled || message?.nonce !== nonce || message.type !== "google-auth-result") return;
-                if (message.error) { finish(reject, this.getLoginError(message.error)); return; }
-                try {
-                    await this.acceptLoginResponse(message.response, clientId, { expectedSub });
-                    finish(resolve, this.token);
-                } catch (error) {
-                    this.clearBrowserSession();
-                    finish(reject, error);
+                if (settled || accepting || message?.nonce !== nonce || message.type !== "google-auth-result") return;
+                if (message.error) {
+                    finish(reject, this.getLoginError(message.error));
+                    return;
+                }
+                if (message.response?.access_token) {
+                    accepting = true;
+                    try {
+                        await this.acceptLoginResponse(message.response, clientId, { expectedSub });
+                        finish(resolve, this.token);
+                    } catch (error) {
+                        this.clearBrowserSession();
+                        finish(reject, error);
+                    }
                 }
             };
             const currentTheme = window.state?.themeId || (window.Storage ? window.Storage.local.get("bl4ut0_last_theme") : "dark") || "dark";
@@ -618,6 +647,7 @@ window.GDriveSync = {
                 scope: this.scopes,
                 prompt: selectAccount ? "select_account" : "",
                 hint: selectAccount ? "" : (this.getSavedGoogleProfile()?.email || ""),
+                auto: "1",
                 theme: currentTheme,
                 ...(currentPrimary ? { primary: currentPrimary } : {}),
                 ...(currentAccent ? { accent: currentAccent } : {})
@@ -637,6 +667,7 @@ window.GDriveSync = {
             }
 
             let settled = false;
+            let accepting = false;
             let timeoutId = null;
             const finish = (handler, value) => {
                 if (settled) return;
@@ -644,7 +675,10 @@ window.GDriveSync = {
                 if (timeoutId !== null) window.clearTimeout(timeoutId);
                 handler(value);
             };
-            const fail = (error) => finish(reject, this.getLoginError(error));
+            const fail = (error) => {
+                if (settled || accepting) return;
+                finish(reject, this.getLoginError(error));
+            };
 
             try {
                 const client = window.google.accounts.oauth2.initTokenClient({
@@ -652,22 +686,35 @@ window.GDriveSync = {
                     scope: this.scopes,
                     include_granted_scopes: true,
                     callback: async (response) => {
-                        if (settled) return;
+                        if (settled || accepting) return;
                         if (response?.error) {
                             fail(response);
                             return;
                         }
-                        try {
-                            await this.acceptLoginResponse(response, clientId, { expectedSub });
-                            finish(resolve, this.token);
-                        } catch (error) {
-                            const profile = this.googleProfile;
-                            this.clearBrowserSession();
-                            this.googleProfile = profile;
-                            fail(new Error(`Google signed in, but the session could not be saved: ${error?.message || error}`));
+                        if (response?.access_token) {
+                            accepting = true;
+                            try {
+                                await this.acceptLoginResponse(response, clientId, { expectedSub });
+                                finish(resolve, this.token);
+                            } catch (error) {
+                                const profile = this.googleProfile;
+                                this.clearBrowserSession();
+                                this.googleProfile = profile;
+                                fail(new Error(`Google signed in, but the session could not be saved: ${error?.message || error}`));
+                            }
                         }
                     },
-                    error_callback: (error) => fail(error)
+                    error_callback: (error) => {
+                        if (settled || accepting) return;
+                        if (error?.type === "popup_closed") {
+                            const graceMs = Math.min(500, Math.max(10, Math.floor((Number(timeoutMs) || 60_000) / 4)));
+                            window.setTimeout(() => {
+                                if (!settled && !accepting) fail(error);
+                            }, graceMs);
+                            return;
+                        }
+                        fail(error);
+                    }
                 });
                 timeoutId = window.setTimeout(() => {
                     fail(new Error("Google sign-in timed out. Close any open sign-in window and try again."));
@@ -691,9 +738,13 @@ window.GDriveSync = {
         // Fast responsive live sync: 350ms debounce keeps Drive continuously up to date as files are edited
         this.pendingSyncTimer = window.setTimeout(async () => {
             this.pendingSyncTimer = null;
+            const currentUserId = window.state?.currentUserId;
             if (!window.state?.sessionChosen || !window.state?.workspaceStarted) return;
-            if (this.profileSwitchInProgress || window.state?.currentUserId !== userId || !this.getToken()) return;
-            if (this.syncInProgress || this.authInProgress) { this.scheduleAutomaticSync(); return; }
+            if (this.profileSwitchInProgress || currentUserId !== userId || !this.getToken() || (window.PrivateSessions?.required() && !window.PrivateSessions.owned)) return;
+            if (this.syncInProgress || this.authInProgress) {
+                // An active sync is already in flight. Queued dirtyLivePaths will be processed when it finishes.
+                return;
+            }
             const paths = this.dirtyLivePaths && this.dirtyLivePaths.size ? Array.from(this.dirtyLivePaths) : null;
             this.dirtyLivePaths = new Set();
             try {
@@ -983,6 +1034,8 @@ window.GDriveSync = {
         const isPathSyncable = (p) => {
             const local = localMap.get(p);
             if (local?.metadata?.sync === false) return false;
+            // Allow client-side AES-256-GCM encrypted Zero-Knowledge Vault envelope to sync across devices
+            if (p === "/documents/vault.enc" || p === "/vault.enc") return true;
             if (["/apps", "/ROMs", "/etc"].some(root => p === root || p.startsWith(`${root}/`))) return false;
             const parts = p.split("/");
             if (parts.some(part => part.startsWith("."))) return false;
@@ -1142,7 +1195,12 @@ window.GDriveSync = {
             window.EventBus.emit("fs:changed", { action: "sync", paths: finalPaths });
         }
         });
-        } finally { this.syncInProgress = false; }
+        } finally {
+            this.syncInProgress = false;
+            if (this.dirtyLivePaths && this.dirtyLivePaths.size > 0 && this.getToken() && window.state?.sessionChosen && (!window.PrivateSessions?.required() || window.PrivateSessions.owned)) {
+                this.scheduleAutomaticSync();
+            }
+        }
     }
 };
 

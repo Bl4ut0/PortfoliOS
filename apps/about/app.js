@@ -45,7 +45,7 @@
             `BIOS Version: ${device.os.biosVersion ? `v${device.os.biosVersion}` : "Unknown"}${device.os.biosDate ? ` (${device.os.biosDate})` : ""}`,
             `Active Profile: ${device.profile.name || device.profile.id || "Guest"} (${device.profile.type || "Standard session"})`,
             "",
-            "Storage (Local Disk C:)",
+            "Storage (Workspace)",
             "-----------------------",
             estimate.supported
                 ? `Allocated Capacity: ${formatSize(estimate.quota)}`
@@ -169,7 +169,7 @@
                 <section class="about-card" aria-label="Storage allocation and usage">
                     <div class="about-card-header">
                         <div>
-                            <h3><i class="fa-solid fa-hard-drive" aria-hidden="true"></i> Storage — Local Disk (C:)</h3>
+                            <h3><i class="fa-solid fa-hard-drive" aria-hidden="true"></i> Storage — Workspace</h3>
                             <p>Allocated browser storage quota, active SystemFS workspace files, and cached runtimes.</p>
                         </div>
                         ${persistenceBadge}

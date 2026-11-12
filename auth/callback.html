@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connecting to Cloud Account…</title>
+    <style>
+        body {
+            margin: 0; min-height: 100vh; display: grid; place-items: center;
+            background: #06090f; color: #f8fafc; font-family: system-ui, sans-serif;
+            text-align: center; padding: 24px;
+        }
+        .card {
+            background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(103, 232, 249, 0.25);
+            border-radius: 20px; padding: 32px 28px; max-width: 420px; width: 100%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+        h1 { font-size: 18px; margin: 0 0 8px; font-weight: 600; color: #22d3ee; }
+        p { font-size: 13px; color: #94a3b8; margin: 0; line-height: 1.5; }
+        .error { color: #fda4af; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 id="title">Connecting to PortfoliOS…</h1>
+        <p id="desc">Exchanging authentication tokens. This window will close automatically.</p>
+        <p id="error" class="error" hidden></p>
+    </div>
+    <script>
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const hashParams = new URLSearchParams(window.location.hash.slice(1));
+            const code = params.get("code") || hashParams.get("code");
+            const state = params.get("state") || hashParams.get("state");
+            const error = params.get("error") || hashParams.get("error");
+            const errorDesc = params.get("error_description") || hashParams.get("error_description");
+
+            if (!state) {
+                document.getElementById("title").textContent = "Authentication Error";
+                document.getElementById("error").textContent = "Missing OAuth state. Please close this window and try again.";
+                document.getElementById("error").hidden = false;
+                return;
+            }
+
+            const channel = new BroadcastChannel("portfolios-oauth-" + state);
+            if (error) {
+                channel.postMessage({ type: "oauth-callback", nonce: state, error: errorDesc || error });
+                document.getElementById("title").textContent = "Sign-in Cancelled";
+                document.getElementById("error").textContent = errorDesc || error;
+                document.getElementById("error").hidden = false;
+                setTimeout(() => window.close(), 1500);
+            } else if (code) {
+                channel.postMessage({ type: "oauth-callback", nonce: state, code });
+                document.getElementById("title").textContent = "Connected!";
+                document.getElementById("desc").textContent = "Return to PortfoliOS to continue.";
+                setTimeout(() => window.close(), 600);
+            } else {
+                document.getElementById("title").textContent = "Incomplete Sign-In";
+                document.getElementById("error").textContent = "No authorization code was received.";
+                document.getElementById("error").hidden = false;
+            }
+        })();
+    </script>
+</body>
+</html>

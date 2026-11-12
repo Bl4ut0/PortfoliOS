@@ -478,6 +478,10 @@
                                         <i class="fa-solid fa-palette"></i>
                                         <span>Appearance</span>
                                     </button>
+                                    <button type="button" class="settings-tab-btn" data-tab="apps" aria-selected="false">
+                                        <i class="fa-solid fa-shapes"></i>
+                                        <span>Default Apps</span>
+                                    </button>
                                     <button type="button" class="settings-tab-btn" data-tab="mobile" aria-selected="false">
                                         <i class="fa-solid fa-mobile-screen-button"></i>
                                         <span>Mobile</span>
@@ -554,7 +558,55 @@
                                         </section>
 
                                         <section class="settings-section">
-                                            <h3>Wallpapers</h3>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                                <h3 style="margin: 0;">Wallpaper &amp; Background</h3>
+                                            </div>
+
+                                            <!-- Wallpaper Live Review Mockup -->
+                                            <div class="wallpaper-review-container" id="wallpaper-review-container">
+                                                <div class="wallpaper-review-mockup">
+                                                    <div class="wallpaper-review-screen" id="wallpaper-review-screen" data-preview-wallpaper="aurora">
+                                                        <div class="wallpaper-review-window-mock">
+                                                            <div class="wallpaper-review-window-header">
+                                                                <span></span><span></span><span></span>
+                                                            </div>
+                                                            <div class="wallpaper-review-window-body"></div>
+                                                        </div>
+                                                        <div class="wallpaper-review-taskbar-mock">
+                                                            <span class="mock-start-dot"></span>
+                                                            <span class="mock-taskbar-item"></span>
+                                                            <span class="mock-taskbar-item"></span>
+                                                            <span class="mock-taskbar-time">12:00</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="wallpaper-review-details">
+                                                    <div class="wallpaper-review-meta">
+                                                        <span class="wallpaper-review-label">Previewing</span>
+                                                        <strong class="wallpaper-review-name" id="wallpaper-review-name">Aurora</strong>
+                                                        <span class="wallpaper-review-status" id="wallpaper-review-status">Active Desktop Wallpaper</span>
+                                                    </div>
+                                                    <div class="wallpaper-review-actions">
+                                                        <button type="button" class="settings-btn btn-primary" id="btn-apply-reviewed-wallpaper">
+                                                            <i class="fa-solid fa-check"></i> Set as Wallpaper
+                                                        </button>
+                                                        <button type="button" class="settings-btn" id="btn-browse-custom-wallpaper">
+                                                            <i class="fa-solid fa-folder-open"></i> Browse Custom Image...
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Custom Wallpapers Section -->
+                                            <div class="wallpaper-group-title">
+                                                <span><i class="fa-solid fa-images"></i> Custom Wallpapers</span>
+                                            </div>
+                                            <div class="wallpaper-options-grid" id="custom-wallpapers-grid" aria-label="Custom wallpaper choices"></div>
+
+                                            <!-- Built-in Wallpapers Section -->
+                                            <div class="wallpaper-group-title">
+                                                <span><i class="fa-solid fa-palette"></i> Built-in Wallpapers</span>
+                                            </div>
                                             <div class="wallpaper-options-grid" id="wallpaper-options" aria-label="Wallpaper choices"></div>
                                         </section>
 
@@ -616,6 +668,36 @@
                                         </section>
                                     </div>
 
+                                    <!-- DEFAULT APPS PANEL -->
+                                    <div class="settings-panel" data-panel="apps">
+                                        <h2>Default Applications</h2>
+
+                                        <section class="settings-section">
+                                            <h3>Standard File Types</h3>
+                                            <p class="settings-info-text">Choose default applications for common file categories.</p>
+                                            <div class="file-associations-list" id="default-file-associations-list"></div>
+                                        </section>
+
+                                        <section class="settings-section">
+                                            <h3>Custom File Associations</h3>
+                                            <p class="settings-info-text">Link custom file extensions with specific installed applications.</p>
+                                            <div class="custom-associations-form">
+                                                <input type="text" id="input-custom-ext" class="settings-text-input" placeholder=".xyz (e.g. .log)" style="width: 140px;" aria-label="Custom file extension">
+                                                <select id="select-custom-app" class="settings-select" style="min-width: 180px;" aria-label="Associated application"></select>
+                                                <button type="button" id="btn-add-custom-association" class="settings-btn btn-primary">
+                                                    <i class="fa-solid fa-plus"></i> Associate Extension
+                                                </button>
+                                            </div>
+                                            <div id="custom-associations-container"></div>
+                                        </section>
+
+                                        <section class="settings-section">
+                                            <button type="button" id="btn-reset-associations" class="settings-btn">
+                                                <i class="fa-solid fa-rotate-left"></i> Reset File Associations to Defaults
+                                            </button>
+                                        </section>
+                                    </div>
+
                                     <!-- MOBILE PANEL -->
                                     <div class="settings-panel" data-panel="mobile">
                                         <h2>Mobile</h2>
@@ -651,7 +733,45 @@
                                         <h2>Cloud Sync</h2>
 
                                         <section class="settings-section">
-                                            <h3>Google Drive Connection</h3>
+                                            <h3>Cloud Storage Provider</h3>
+                                            <div class="cloud-provider-grid" id="settings-cloud-providers">
+                                                <div class="cloud-provider-card active" data-provider="google-drive" role="button" tabindex="0">
+                                                    <i class="fa-brands fa-google-drive"></i>
+                                                    <div class="cloud-provider-meta">
+                                                        <strong>Google Drive</strong>
+                                                        <small>Google Identity &amp; Drive AppData</small>
+                                                    </div>
+                                                    <span class="provider-badge active">Active</span>
+                                                </div>
+                                                <div class="cloud-provider-card" data-provider="onedrive" role="button" tabindex="0">
+                                                    <i class="fa-brands fa-microsoft"></i>
+                                                    <div class="cloud-provider-meta">
+                                                        <strong>OneDrive</strong>
+                                                        <small>Microsoft Graph AppFolder</small>
+                                                    </div>
+                                                    <span class="provider-badge">Available</span>
+                                                </div>
+                                                <div class="cloud-provider-card" data-provider="dropbox" role="button" tabindex="0">
+                                                    <i class="fa-brands fa-dropbox"></i>
+                                                    <div class="cloud-provider-meta">
+                                                        <strong>Dropbox</strong>
+                                                        <small>Dropbox API v2 App Sandbox</small>
+                                                    </div>
+                                                    <span class="provider-badge">Available</span>
+                                                </div>
+                                                <div class="cloud-provider-card" data-provider="nextcloud-webdav" role="button" tabindex="0">
+                                                    <i class="fa-solid fa-server"></i>
+                                                    <div class="cloud-provider-meta">
+                                                        <strong>Nextcloud (Homelab)</strong>
+                                                        <small>Self-Hosted WebDAV Storage</small>
+                                                    </div>
+                                                    <span class="provider-badge">Available</span>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <section class="settings-section">
+                                            <h3 id="settings-cloud-provider-title">Google Drive Connection</h3>
                                             <div class="gdrive-status-card">
                                                 <div class="gdrive-status-header">
                                                     <span class="status-indicator-dot disconnected" id="settings-gdrive-indicator"></span>
@@ -695,6 +815,38 @@
                                                     </div>
                                                     <span id="settings-gdrive-progress-text" class="progress-status-text">Ready</span>
                                                 </div>
+                                            </div>
+                                        </section>
+
+                                        <section class="settings-section" id="settings-vault-section">
+                                            <h3>Zero-Knowledge Credentials Keyring</h3>
+                                            <div class="sync-actions-card">
+                                                <p class="settings-info-text">Client-side AES-256-GCM encrypted vault protecting your CLI subscriptions (ChatGPT, Antigravity, Claude, xAI, GitHub) across devices without storing plain-text keys on cloud drives.</p>
+                                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                                                    <span class="status-indicator-dot connected" id="settings-vault-indicator"></span>
+                                                    <strong id="settings-vault-status-text">Vault Ready (IndexedDB)</strong>
+                                                </div>
+                                                <div class="gdrive-actions-row" style="display:flex;gap:8px;flex-wrap:wrap;">
+                                                    <button type="button" id="settings-vault-unlock-btn" class="settings-btn btn-primary">
+                                                        <i class="fa-solid fa-unlock"></i> Unlock Vault
+                                                    </button>
+                                                    <button type="button" id="settings-vault-setup-btn" class="settings-btn btn-secondary">
+                                                        <i class="fa-solid fa-key"></i> Setup Passphrase
+                                                    </button>
+                                                    <button type="button" id="settings-vault-export-btn" class="settings-btn btn-secondary">
+                                                        <i class="fa-solid fa-file-shield"></i> Export Encrypted (.enc)
+                                                    </button>
+                                                    <button type="button" id="settings-vault-import-btn" class="settings-btn btn-secondary" style="display:none;">
+                                                        <i class="fa-solid fa-key"></i> Import &amp; Decrypt Vault
+                                                    </button>
+                                                    <button type="button" id="settings-vault-lock-btn" class="settings-btn btn-secondary">
+                                                        <i class="fa-solid fa-lock"></i> Lock Vault
+                                                    </button>
+                                                    <button type="button" id="settings-vault-purge-btn" class="settings-btn btn-danger" style="color: #ef4444; border-color: rgba(239,68,68,0.3);">
+                                                        <i class="fa-solid fa-triangle-exclamation"></i> Purge &amp; Reset
+                                                    </button>
+                                                </div>
+                                                <p id="settings-vault-msg" class="settings-info-text" style="margin-top:8px;color:#22c55e;" hidden></p>
                                             </div>
                                         </section>
                                     </div>
@@ -904,6 +1056,131 @@
                         </section>
                         </template>
 
+                        <!-- ZERO-KNOWLEDGE VAULT AUTHENTICATION & RECOVERY MODAL -->
+                        <div class="vault-modal-backdrop" id="vault-modal-backdrop" style="display: none;">
+                            <div class="vault-modal" id="vault-modal" role="dialog" aria-modal="true" aria-labelledby="vault-modal-title">
+                                
+                                <!-- VIEW: UNLOCK VAULT -->
+                                <div class="vault-view" id="vault-view-unlock">
+                                    <div class="vault-header">
+                                        <div class="vault-header-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                                        <div>
+                                            <h3 id="vault-modal-title">Unlock PortfoliOS Keyring</h3>
+                                            <p class="vault-subtitle">Enter your Master Passphrase to authenticate active CLI sessions.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="vault-programs-list" id="vault-programs-list">
+                                        <span class="vault-program-chip" data-provider="openai"><i class="fa-solid fa-robot"></i> ChatGPT / Codex</span>
+                                        <span class="vault-program-chip" data-provider="google"><i class="fa-brands fa-google"></i> Antigravity</span>
+                                        <span class="vault-program-chip" data-provider="anthropic"><i class="fa-solid fa-brain"></i> Claude Code</span>
+                                        <span class="vault-program-chip" data-provider="xai"><i class="fa-solid fa-bolt"></i> xAI Grok</span>
+                                        <span class="vault-program-chip" data-provider="github"><i class="fa-brands fa-github"></i> GitHub Git Helper</span>
+                                    </div>
+
+                                    <div class="vault-input-group">
+                                        <label for="vault-unlock-passphrase" class="settings-input-label">Master Passphrase</label>
+                                        <div class="vault-password-field">
+                                            <input type="password" id="vault-unlock-passphrase" class="settings-text-input" placeholder="Enter master passphrase..." autocomplete="current-password">
+                                            <button type="button" class="vault-toggle-visibility" id="vault-unlock-toggle-eye" title="Show/Hide passphrase" aria-label="Toggle password visibility">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="vault-error-msg" id="vault-unlock-error" hidden></div>
+
+                                    <div class="vault-actions">
+                                        <button type="button" class="settings-btn" id="vault-unlock-cancel">Cancel</button>
+                                        <button type="button" class="settings-btn btn-primary" id="vault-unlock-submit">
+                                            <i class="fa-solid fa-unlock"></i> Unlock Vault
+                                        </button>
+                                    </div>
+
+                                    <div class="vault-footer-links">
+                                        <button type="button" class="vault-link-btn" id="vault-goto-purge-btn">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Forgot Passphrase? Purge &amp; Reset
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- VIEW: SETUP VAULT -->
+                                <div class="vault-view" id="vault-view-setup" style="display: none;">
+                                    <div class="vault-header">
+                                        <div class="vault-header-icon"><i class="fa-solid fa-key"></i></div>
+                                        <div>
+                                            <h3>Setup Zero-Knowledge Vault</h3>
+                                            <p class="vault-subtitle">Configure a strong Master Passphrase for AES-256-GCM encryption.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="vault-input-group">
+                                        <label for="vault-setup-passphrase" class="settings-input-label">New Master Passphrase (min 14 chars)</label>
+                                        <div class="vault-password-field">
+                                            <input type="password" id="vault-setup-passphrase" class="settings-text-input" placeholder="Enter new passphrase..." autocomplete="new-password">
+                                            <button type="button" class="vault-toggle-visibility" id="vault-setup-toggle-eye" title="Show/Hide passphrase" aria-label="Toggle password visibility">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="vault-input-group">
+                                        <label for="vault-setup-confirm" class="settings-input-label">Confirm Master Passphrase</label>
+                                        <div class="vault-password-field">
+                                            <input type="password" id="vault-setup-confirm" class="settings-text-input" placeholder="Re-enter passphrase..." autocomplete="new-password">
+                                        </div>
+                                    </div>
+
+                                    <div class="vault-requirements-list">
+                                        <small class="vault-req" id="vreq-len"><i class="fa-regular fa-circle"></i> At least 14 characters</small>
+                                        <small class="vault-req" id="vreq-mix"><i class="fa-regular fa-circle"></i> Upper, lower, number, and symbol</small>
+                                        <small class="vault-req" id="vreq-ent"><i class="fa-regular fa-circle"></i> High entropy (&ge; 60 bits)</small>
+                                        <small class="vault-req" id="vreq-match"><i class="fa-regular fa-circle"></i> Passphrases match</small>
+                                    </div>
+
+                                    <div class="vault-error-msg" id="vault-setup-error" hidden></div>
+
+                                    <div class="vault-actions">
+                                        <button type="button" class="settings-btn" id="vault-setup-cancel">Cancel</button>
+                                        <button type="button" class="settings-btn btn-primary" id="vault-setup-submit" disabled>
+                                            <i class="fa-solid fa-check"></i> Initialize Vault
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- VIEW: PURGE & RESET VAULT (RECOVERY OPTION) -->
+                                <div class="vault-view" id="vault-view-purge" style="display: none;">
+                                    <div class="vault-header">
+                                        <div class="vault-header-icon warning-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                        <div>
+                                            <h3 style="color: #ef4444;">Purge &amp; Reset Vault</h3>
+                                            <p class="vault-subtitle">Zero-Knowledge Recovery Option for forgotten passphrases.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="vault-warning-box">
+                                        <p><strong><i class="fa-solid fa-circle-exclamation"></i> Irreversible Action:</strong> Because PortfoliOS uses Zero-Knowledge AES-256-GCM encryption with PBKDF2 (600,000 rounds), forgotten passphrases <em>cannot be recovered or cracked</em>.</p>
+                                        <p>Purging will permanently erase all saved CLI credentials from <code>/etc/portfolios/vault/</code>, clear session keys from memory, and delete <code>/documents/vault.enc</code> so you can configure a fresh Master Passphrase.</p>
+                                    </div>
+
+                                    <div class="vault-input-group">
+                                        <label for="vault-purge-confirm-input" class="settings-input-label">Type <strong>PURGE</strong> to confirm:</label>
+                                        <input type="text" id="vault-purge-confirm-input" class="settings-text-input" placeholder="Type PURGE">
+                                    </div>
+
+                                    <div class="vault-error-msg" id="vault-purge-error" hidden></div>
+
+                                    <div class="vault-actions">
+                                        <button type="button" class="settings-btn" id="vault-purge-cancel">Cancel / Go Back</button>
+                                        <button type="button" class="settings-btn btn-danger" id="vault-purge-submit" disabled style="background: #dc2626; color: white;">
+                                            <i class="fa-solid fa-trash-can"></i> Purge All Credentials &amp; Reset
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
                         <div class="desktop-context-menu" id="desktop-context-menu" hidden role="menu"></div>
                         <div class="desktop-toast" id="desktop-toast" hidden></div>
 
@@ -913,6 +1190,11 @@
                             </button>
                             <div class="taskbar-pins" id="taskbar-apps"></div>
                             <div class="taskbar-tray">
+                                <button class="tray-service-button relay-tray-button is-hidden" id="relay-tray-toggle" type="button"
+                                    title="Host & Relay Connection" aria-expanded="false" aria-controls="relay-tray-panel">
+                                    <i class="fa-solid fa-desktop" id="relay-tray-icon"></i>
+                                    <span class="tray-status-dot" id="relay-tray-dot" aria-hidden="true"></span>
+                                </button>
                                 <button class="tray-service-button local-ai-tray-button" id="local-ai-tray-toggle" type="button"
                                     title="Local AI" aria-expanded="false" aria-controls="local-ai-tray-panel">
                                     <i class="fa-solid fa-brain"></i>
@@ -926,6 +1208,53 @@
                                 </button>
                             </div>
                         </footer>
+                        <aside class="relay-tray-panel" id="relay-tray-panel" hidden aria-label="Host and Extension connection status">
+                            <div class="relay-tray-header">
+                                <span><i class="fa-solid fa-desktop"></i> Host & Relay Bridge</span>
+                                <span class="relay-tray-badge" id="relay-overall-badge">Checking…</span>
+                            </div>
+                            <div class="relay-tray-body">
+                                <div class="relay-service-card" id="relay-card-extension">
+                                    <div class="relay-card-header">
+                                        <div class="relay-card-title">
+                                            <i class="fa-brands fa-chrome"></i>
+                                            <strong>Chrome Extension</strong>
+                                        </div>
+                                        <span class="relay-status-pill" id="relay-ext-status">Checking…</span>
+                                    </div>
+                                    <p class="relay-card-desc" id="relay-ext-desc">PortfoliOS Native Relay companion extension.</p>
+                                    <div class="relay-card-actions">
+                                        <a href="https://chromewebstore.google.com/detail/portfolios-native-relay/jbdiopconacgbffkhpjpcafkckaapmgg"
+                                            target="_blank" rel="noopener noreferrer" class="relay-btn relay-btn-primary" id="relay-ext-link">
+                                            <i class="fa-solid fa-arrow-down"></i> Get Extension (Chrome Web Store)
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="relay-service-card" id="relay-card-host">
+                                    <div class="relay-card-header">
+                                        <div class="relay-card-title">
+                                            <i class="fa-solid fa-server"></i>
+                                            <strong>Host Bridge (Windows Installer)</strong>
+                                        </div>
+                                        <span class="relay-status-pill" id="relay-host-status">Checking…</span>
+                                    </div>
+                                    <p class="relay-card-desc" id="relay-host-desc">Native messaging host for raw UDP & TCP sockets. Clean 1-click uninstall via Windows Settings.</p>
+                                    <div class="relay-card-actions">
+                                        <a href="/dist/PortfoliOS-NativeRelay.msi" download="PortfoliOS-NativeRelay.msi"
+                                            class="relay-btn relay-btn-secondary" id="relay-host-link">
+                                            <i class="fa-solid fa-download"></i> Download Host Bridge (.msi)
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relay-tray-footer">
+                                <button type="button" class="relay-refresh-btn" id="relay-check-now">
+                                    <i class="fa-solid fa-rotate-right"></i> Refresh Status
+                                </button>
+                                <span class="relay-workspace-tag"><i class="fa-solid fa-lock"></i> Private Workspace</span>
+                            </div>
+                        </aside>
                         <aside class="volume-panel" id="volume-panel" hidden aria-label="Volume controls">
                             <div class="volume-panel-header">
                                 <span><i class="fa-solid fa-volume-high"></i> sound</span>

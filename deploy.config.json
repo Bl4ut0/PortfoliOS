@@ -36,9 +36,14 @@
     "volume-hook.js",
     "diablo",
     "quake",
-    "duke32"
+    "duke32",
+    "apps/openrct2/runtime/RCT.zip",
+    "apps/openrct2/runtime/assets.zip",
+    "apps/openrct2/runtime/openrct2.zip"
   ],
   "optionalPaths": [
-    "docs/wasm"
+    "docs/wasm",
+    "dist",
+    "services/native-relay/sdk"
   ]
 }

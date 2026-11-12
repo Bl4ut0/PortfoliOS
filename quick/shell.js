@@ -42,25 +42,37 @@ window.renderQuickOverview = () => {
     const quickRoutes = window.quickRoutes || [];
     const liveCount = systems.filter(window.isQuickLiveStatus).length;
     const plannedCount = systems.length - liveCount;
-    
-    const featured = ["devhub", "addons", "guildcraft", "homelab", "wardenit"]
-        .map((id) => window.systemById ? window.systemById(id) : systems.find(s => s.id === id))
+    const isPrivate = window.isPrivateUser ? window.isPrivateUser() : (window.state?.currentUserId !== "bl4ut0");
+
+    const featuredIds = isPrivate
+        ? ["systemfs-arch", "wasm-engine", "security-kernel", "solidcraft-wiki", "codex-wiki", "creator-dossier"]
+        : ["wardenit", "devhub", "addons", "guildcraft", "homelab", "doomsource"];
+
+    const featured = featuredIds
+        .map((id) => window.systemById ? window.systemById(id) : systems.find((s) => s.id === id))
         .filter(Boolean)
         .filter((item) => !window.isVisibleForCurrentUser || window.isVisibleForCurrentUser(item.id));
 
+    const title = isPrivate ? "PortfoliOS Architecture Wiki" : "Bl4ut0 Engineering & Projects";
+    const subtitle = isPrivate
+        ? "Subsystem architecture, virtual file system, application runtimes, and engineering specifications."
+        : "Software platforms, professional services, infrastructure nodes, and interactive engines by Alex \"Bl4ut0\" Mammen.";
+    const indexPill = isPrivate ? "Architecture Index" : "Portfolio Index";
+    const sectionTitle = isPrivate ? "Core Subsystems & Dossiers" : "Featured Projects & Nodes";
+
     return `
-        <div class="quick-detail-heading">
+        <div class="quick-detail-heading wiki-overview-hero">
             <span class="project-icon-large">
-                <i class="fa-solid fa-table-cells-large"></i>
+                <i class="${isPrivate ? "fa-solid fa-book-bookmark" : "fa-solid fa-table-cells-large"}"></i>
             </span>
             <div>
-                <span class="status-pill" data-status="Online">Index</span>
-                <h2>Bl4ut0 Network</h2>
-                <p>Projects, infrastructure, community routes, and professional nodes.</p>
+                <span class="status-pill" data-status="Online">${indexPill}</span>
+                <h2>${title}</h2>
+                <p>${subtitle}</p>
             </div>
         </div>
-        <div class="quick-metrics" aria-label="Portfolio summary">
-            <span><strong>${systems.length}</strong><small>nodes</small></span>
+        <div class="quick-metrics" aria-label="Systems summary">
+            <span><strong>${systems.length}</strong><small>${isPrivate ? "modules" : "nodes"}</small></span>
             <span><strong>${liveCount}</strong><small>live/dev</small></span>
             <span><strong>${plannedCount}</strong><small>staged</small></span>
         </div>
@@ -73,11 +85,11 @@ window.renderQuickOverview = () => {
             `).join("")}
         </div>
         <div class="detail-block">
-            <h3>Featured Nodes</h3>
+            <h3>${sectionTitle}</h3>
             <div class="quick-node-grid">
                 ${featured.map((item) => `
                     <button type="button" data-quick-select="${item.id}" style="--tile-color:${item.color}">
-                        <i class="${item.icon}"></i>
+                        ${window.getAppIconHtml ? window.getAppIconHtml(item.icon, "", item.id) : `<i class="${item.icon}"></i>`}
                         <span>${item.title}</span>
                     </button>
                 `).join("")}
@@ -90,6 +102,10 @@ window.renderQuick = () => {
     const quickRoutes = window.quickRoutes || [];
     const quickFilters = window.quickFilters || [];
     
+    if (quickRoutes.length && !quickRoutes.some((r) => r.id === state.quickRoute)) {
+        state.quickRoute = quickRoutes[0].id;
+    }
+
     const route = (window.quickRouteById ? window.quickRouteById(state.quickRoute) : null) || quickRoutes[0];
     if (!route) return;
 
@@ -191,6 +207,23 @@ window.mountQuick = () => {
             state.quickActiveId = quickSelectButton.dataset.quickSelect;
             state.activeId = state.quickActiveId;
             if (window.renderQuick) window.renderQuick();
+            return;
+        }
+
+        const launchButton = event.target.closest("[data-launch-app]");
+        if (launchButton) {
+            const appId = launchButton.dataset.launchApp;
+            if (appId) {
+                if (typeof window.switchView === "function") {
+                    void window.switchView("desktop").then(() => {
+                        if (typeof window.openDesktopWindow === "function") {
+                            void window.openDesktopWindow(appId);
+                        }
+                    });
+                } else if (typeof window.openDesktopWindow === "function") {
+                    void window.openDesktopWindow(appId);
+                }
+            }
             return;
         }
 

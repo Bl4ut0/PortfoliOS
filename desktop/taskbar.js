@@ -32,6 +32,151 @@ window.renderTaskbar = () => {
     }
 
     window.renderLocalAITray?.();
+    window.renderRelayTray?.();
+};
+
+
+window.closeRelayTrayPanel = () => {
+    const panel = window.byId ? window.byId("relay-tray-panel") : document.getElementById("relay-tray-panel");
+    const toggle = window.byId ? window.byId("relay-tray-toggle") : document.getElementById("relay-tray-toggle");
+    if (panel) panel.hidden = true;
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
+};
+
+window.toggleRelayTrayPanel = () => {
+    const panel = window.byId ? window.byId("relay-tray-panel") : document.getElementById("relay-tray-panel");
+    const toggle = window.byId ? window.byId("relay-tray-toggle") : document.getElementById("relay-tray-toggle");
+    if (!panel || !toggle || toggle.hidden || toggle.style.display === "none") return;
+    const nextOpen = panel.hidden;
+    panel.hidden = !nextOpen;
+    toggle.setAttribute("aria-expanded", String(nextOpen));
+    if (nextOpen) {
+        const startMenu = window.byId ? window.byId("start-menu") : document.getElementById("start-menu");
+        const calPanel = window.byId ? window.byId("calendar-panel") : document.getElementById("calendar-panel");
+        if (startMenu) startMenu.hidden = true;
+        if (calPanel) calPanel.hidden = true;
+        if (window.closeVolumePanel) window.closeVolumePanel();
+        if (window.closeLocalAITrayPanel) window.closeLocalAITrayPanel();
+        window.BrainHelper?.closeBubble?.();
+        window.checkRelayStatus?.(true);
+    }
+};
+
+let relayCheckInProgress = false;
+let lastRelayCheck = 0;
+window.checkRelayStatus = async (force = false) => {
+    const now = Date.now();
+    if (!force && now - lastRelayCheck < 5000) return;
+    if (relayCheckInProgress) return;
+    relayCheckInProgress = true;
+    lastRelayCheck = now;
+
+    const toggle = window.byId ? window.byId("relay-tray-toggle") : document.getElementById("relay-tray-toggle");
+    const panel = window.byId ? window.byId("relay-tray-panel") : document.getElementById("relay-tray-panel");
+
+    const hasExtension = Boolean(window.PortfoliOSNativeRelay);
+    let hasHost = false;
+
+    if (hasExtension) {
+        try {
+            hasHost = Boolean(await Promise.race([
+                window.PortfoliOSNativeRelay.isAvailable(),
+                new Promise(resolve => setTimeout(() => resolve(false), 2500))
+            ]));
+        } catch (_) {
+            hasHost = false;
+        }
+    }
+
+    if (toggle) {
+        toggle.classList.remove("is-connected", "is-partial", "is-disconnected");
+        if (hasExtension && hasHost) {
+            toggle.classList.add("is-connected");
+            toggle.title = "Native Relay: Connected (Extension + Host active)";
+        } else if (hasExtension) {
+            toggle.classList.add("is-partial");
+            toggle.title = "Native Relay: Extension active, Host runner disconnected";
+        } else {
+            toggle.classList.add("is-disconnected");
+            toggle.title = "Native Relay: Disconnected (Extension not detected)";
+        }
+    }
+
+    if (panel) {
+        const overallBadge = panel.querySelector("#relay-overall-badge");
+        const extStatus = panel.querySelector("#relay-ext-status");
+        const extDesc = panel.querySelector("#relay-ext-desc");
+        const extLink = panel.querySelector("#relay-ext-link");
+        const hostStatus = panel.querySelector("#relay-host-status");
+        const hostDesc = panel.querySelector("#relay-host-desc");
+        const hostLink = panel.querySelector("#relay-host-link");
+
+        if (overallBadge) {
+            overallBadge.className = "relay-tray-badge";
+            if (hasExtension && hasHost) {
+                overallBadge.classList.add("is-online");
+                overallBadge.textContent = "Connected";
+            } else if (hasExtension) {
+                overallBadge.classList.add("is-warning");
+                overallBadge.textContent = "Host Offline";
+            } else {
+                overallBadge.classList.add("is-offline");
+                overallBadge.textContent = "Disconnected";
+            }
+        }
+
+        if (extStatus) {
+            extStatus.className = "relay-status-pill";
+            if (hasExtension) {
+                extStatus.classList.add("is-online");
+                extStatus.textContent = "Active";
+                if (extDesc) extDesc.textContent = "Chrome extension bridge detected and responding.";
+                if (extLink) extLink.style.display = "none";
+            } else {
+                extStatus.classList.add("is-offline");
+                extStatus.textContent = "Not Installed";
+                if (extDesc) extDesc.textContent = "Requires the PortfoliOS Native Relay Chrome extension.";
+                if (extLink) extLink.style.display = "inline-flex";
+            }
+        }
+
+        if (hostStatus) {
+            hostStatus.className = "relay-status-pill";
+            if (hasHost) {
+                hostStatus.classList.add("is-online");
+                hostStatus.textContent = "Connected";
+                if (hostDesc) hostDesc.textContent = "Native Messaging runner (com.bl4ut0.portfolios.relay) active.";
+                if (hostLink) hostLink.style.display = "none";
+            } else {
+                hostStatus.classList.add(hasExtension ? "is-warning" : "is-offline");
+                hostStatus.textContent = hasExtension ? "Host Offline" : "Unavailable";
+                if (hostDesc) hostDesc.textContent = hasExtension
+                    ? "Host bridge not detected. Install the PortfoliOS Native Relay MSI (uninstalls cleanly from Windows Settings)."
+                    : "Download and install the PortfoliOS Native Relay MSI on your machine.";
+                if (hostLink) hostLink.style.display = "inline-flex";
+            }
+        }
+    }
+
+    relayCheckInProgress = false;
+};
+
+window.renderRelayTray = () => {
+    const isPrivate = window.isPrivateUser ? window.isPrivateUser() : false;
+    const toggle = window.byId ? window.byId("relay-tray-toggle") : document.getElementById("relay-tray-toggle");
+    const panel = window.byId ? window.byId("relay-tray-panel") : document.getElementById("relay-tray-panel");
+    if (!toggle) return;
+
+    if (!isPrivate) {
+        toggle.classList.add("is-hidden");
+        toggle.style.display = "none";
+        if (panel) panel.hidden = true;
+        return;
+    }
+
+    toggle.classList.remove("is-hidden");
+    toggle.style.display = "";
+    void window.checkRelayStatus?.();
 };
 
 window.closeLocalAITrayPanel = () => {
@@ -229,4 +374,14 @@ if (window.EventBus) {
     window.EventBus.on("local-ai:status", () => window.renderLocalAITray());
     window.EventBus.on("local-ai:model-changed", () => window.renderLocalAITray());
     window.EventBus.on("local-ai:mirror-changed", () => window.renderLocalAITray());
+
+    window.EventBus.on("user:changed", () => {
+        window.renderTaskbar();
+        window.renderRelayTray?.();
+    });
+    window.EventBus.on("state:changed:currentUserId", () => {
+        window.renderTaskbar();
+        window.renderRelayTray?.();
+    });
+
 }

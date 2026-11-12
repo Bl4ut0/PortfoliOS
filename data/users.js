@@ -45,8 +45,8 @@ window.userAccounts = [
         privateProfile: true,
         hiddenIds: [
             "profile", "dossier", "network", "devhub", "linux",
-            "addons", "guildcraft", "homelab", "survival-ai", "status",
-            "wardenit", "automation", "media"
+            "addons", "guildcraft", "homelab", "survival-ai",
+            "wardenit", "automation"
         ],
         desktopIconLayout: {
             store: { col: 0, row: 0 },
@@ -168,7 +168,14 @@ window.getCurrentUserHiddenIds = () => {
 window.isVisibleForCurrentUser = (id) => {
     if (!id) return false;
     if (id === "portfolio-studio") return Boolean(window.AdminSession?.isAuthenticated());
-    return !window.getCurrentUserHiddenIds().has(id);
+    if (window.getCurrentUserHiddenIds().has(id)) return false;
+    const system = window.systemById ? window.systemById(id) : (window.systems?.find((s) => s.id === id));
+    if (system && system.audience) {
+        const isPrivate = window.isPrivateUser ? window.isPrivateUser() : (window.state?.currentUserId !== "bl4ut0");
+        if (system.audience === "public" && isPrivate) return false;
+        if (system.audience === "private" && !isPrivate) return false;
+    }
+    return true;
 };
 
 window.applyPortfolioConfigOverrides = (config) => {
@@ -351,6 +358,40 @@ window.activateGooglePrivateProfile = async (googleProfile) => {
     await window.savePreferencesToFilesystem?.();
     return profile;
 };
+
+window.activateCloudPrivateProfile = async (result) => {
+    if (!result) throw new Error("No cloud authentication result provided.");
+    const provider = String(result.provider || "google").toLowerCase();
+    const cloudProfile = result.profile || {};
+    if (provider === "google") {
+        return await window.activateGooglePrivateProfile(cloudProfile);
+    }
+    const rawSub = String(cloudProfile.sub || cloudProfile.id || cloudProfile.email || "user");
+    const sub = rawSub.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const profiles = window.getPrivateProfiles();
+    const id = "private_" + provider + "_" + sub;
+    const existingId = Object.keys(profiles).find(pid => pid === id || (profiles[pid]?.email === cloudProfile.email && profiles[pid]?.cloudProvider === provider));
+    const profile = {
+        name: cloudProfile.name || cloudProfile.email || (provider.charAt(0).toUpperCase() + provider.slice(1) + " User"),
+        email: cloudProfile.email || "",
+        sub: sub,
+        picture: cloudProfile.picture || "",
+        avatar: /^https:\/\//i.test(cloudProfile.picture || "") ? cloudProfile.picture : DEFAULT_PRIVATE_AVATAR,
+        source: "cloud",
+        cloudProvider: provider,
+        serverUrl: cloudProfile.serverUrl || ""
+    };
+    if (existingId && existingId !== id) delete profiles[existingId];
+    profiles[id] = profile;
+    localStorage.setItem("bl4ut0_private_profiles", JSON.stringify(profiles));
+    await window.prepareProfileSwitch();
+    window.refreshPrivateAccounts();
+    window.setCurrentUser(id, { preserveGoogleSession: true });
+    await window.SystemFS?.ensureDefaultFiles?.();
+    await window.savePreferencesToFilesystem?.();
+    return profile;
+};
+
 
 window.readFilesystemRecordText = async (record) => {
     if (!record || record.data === null || record.data === undefined) return "";

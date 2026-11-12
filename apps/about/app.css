@@ -72,11 +72,11 @@
 }
 
 .about-mark-chevron {
-    color: #ffffff;
+    color: var(--text);
 }
 
 .about-mark-cursor {
-    color: #22d3ee;
+    color: var(--theme-primary);
 }
 
 .about-hero-titles {

@@ -28,7 +28,9 @@ function portfolios_lease_step(array $s, string $action, string $id, int $epoch,
     } elseif ($action === 'cancel') {
         if (($s['pending']['id'] ?? null) === $id) $s['pending'] = null;
     } elseif ($action === 'renew' || $action === 'assert') {
-        if ($mine) $s['active']['expires'] = $now+180;
+        if ($mine || ($active && $active['id'] === $id && $active['epoch'] === $epoch && !$s['pending'])) {
+            $s['active']['expires'] = $now + 300;
+        }
     } elseif ($action === 'release') {
         if (!$mine) throw new RuntimeException('Session ownership was lost.');
         if ($snapshot !== null) $s['lastSnapshot'] = $snapshot;

@@ -18,6 +18,12 @@ function initSettingsTabs() {
         panels.forEach(panel => {
             panel.classList.toggle("active", panel.dataset.panel === targetTab);
         });
+
+        if (targetTab === "apps") {
+            window.renderDefaultAppsSettings?.();
+        } else if (targetTab === "desktop") {
+            window.renderWallpaperOptions?.();
+        }
     };
 
     tabs.forEach(tab => {
@@ -244,6 +250,37 @@ function initGDriveSettings() {
     window.GDriveSync?.loadGsiLibrary().catch((error) => {
         console.warn("PortfoliOS: Google sign-in could not be prepared.", error);
     });
+
+    const providerCards = document.querySelectorAll("#settings-cloud-providers .cloud-provider-card");
+    if (providerCards.length) {
+        providerCards.forEach((card) => {
+            card.addEventListener("click", () => {
+                const providerId = card.dataset.provider;
+                if (!providerId) return;
+                providerCards.forEach((c) => {
+                    const isActive = c === card;
+                    c.classList.toggle("active", isActive);
+                    const badge = c.querySelector(".provider-badge");
+                    if (badge) {
+                        badge.classList.toggle("active", isActive);
+                        badge.textContent = isActive ? "Active" : "Available";
+                    }
+                });
+                if (window.CloudSync?.get(providerId)) {
+                    window.CloudSync.setActiveDriver(providerId);
+                    const syncDriver = window.CloudSync.get(providerId);
+                    if (syncDriver?.authDriver && window.CloudAuth?.get(syncDriver.authDriver)) {
+                        window.CloudAuth.setActiveDriver(syncDriver.authDriver);
+                    }
+                    const titleEl = document.getElementById("settings-cloud-provider-title");
+                    if (titleEl) titleEl.textContent = `${syncDriver.name} Connection`;
+                    if (window.showDesktopToast) {
+                        window.showDesktopToast(`Cloud provider set to ${syncDriver.name}`);
+                    }
+                }
+            });
+        });
+    }
     
     if (connectBtn) {
         connectBtn.addEventListener("click", async () => {
@@ -297,27 +334,459 @@ function initGDriveSettings() {
         });
     }
 
+    // Zero-Knowledge Keyring Vault Actions
+    const unlockVaultBtn = document.getElementById("settings-vault-unlock-btn");
+    const setupVaultBtn = document.getElementById("settings-vault-setup-btn");
+    const exportVaultBtn = document.getElementById("settings-vault-export-btn");
+    const importVaultBtn = document.getElementById("settings-vault-import-btn");
+    const lockVaultBtn = document.getElementById("settings-vault-lock-btn");
+    const purgeVaultBtn = document.getElementById("settings-vault-purge-btn");
+    const vaultMsg = document.getElementById("settings-vault-msg");
+    const vaultIndicator = document.getElementById("settings-vault-indicator");
+    const vaultStatusText = document.getElementById("settings-vault-status-text");
+
+    const showVaultMsg = (text, isError = false) => {
+        if (!vaultMsg) return;
+        vaultMsg.textContent = text;
+        vaultMsg.style.color = isError ? "#ef4444" : "#22c55e";
+        vaultMsg.hidden = false;
+        setTimeout(() => { if (vaultMsg) vaultMsg.hidden = true; }, 5000);
+    };
+
+    const updateVaultStatusUI = async () => {
+        if (!vaultIndicator || !vaultStatusText || !window.PortfoliOSVault?.getStatus) return;
+        try {
+            const status = await window.PortfoliOSVault.getStatus();
+            vaultIndicator.className = "status-indicator-dot";
+            if (status.isLocked) {
+                vaultIndicator.classList.add("loading");
+                vaultStatusText.textContent = `Vault Locked (${status.providers.length} provider(s) encrypted)`;
+            } else if (!status.providers.length && !status.hasEncryptedBackup) {
+                vaultIndicator.classList.add("idle");
+                vaultStatusText.textContent = "Vault Unconfigured (Ready for setup)";
+            } else {
+                vaultIndicator.classList.add("connected");
+                vaultStatusText.textContent = `Vault Active (${status.tokenCount || status.providers.length} provider(s) in memory)`;
+            }
+        } catch (_) {}
+    };
+
+    if (unlockVaultBtn) {
+        unlockVaultBtn.addEventListener("click", () => {
+            if (window.PortfoliOSVault?.showUnlockModal) {
+                window.PortfoliOSVault.showUnlockModal({
+                    onUnlock: () => {
+                        showVaultMsg("✓ Zero-Knowledge Vault unlocked successfully.");
+                        updateVaultStatusUI();
+                    }
+                });
+            } else if (window.handleCommand) {
+                window.handleCommand("vault unlock");
+            }
+        });
+    }
+
+    if (setupVaultBtn) {
+        setupVaultBtn.addEventListener("click", () => {
+            if (window.PortfoliOSVault?.showSetupModal) {
+                window.PortfoliOSVault.showSetupModal({
+                    onComplete: () => {
+                        showVaultMsg("✓ Vault Master Passphrase initialized.");
+                        updateVaultStatusUI();
+                    }
+                });
+            } else if (window.handleCommand) {
+                window.handleCommand("vault init");
+            }
+        });
+    }
+
+    if (purgeVaultBtn) {
+        purgeVaultBtn.addEventListener("click", () => {
+            if (window.PortfoliOSVault?.showPurgeModal) {
+                window.PortfoliOSVault.showPurgeModal({
+                    onPurged: () => {
+                        showVaultMsg("✓ Zero-Knowledge Vault purged and reset.");
+                        updateVaultStatusUI();
+                    }
+                });
+            } else if (window.handleCommand) {
+                window.handleCommand("vault purge");
+            }
+        });
+    }
+
+    if (exportVaultBtn) {
+        exportVaultBtn.addEventListener("click", async () => {
+            if (window.handleCommand) {
+                await window.handleCommand("vault export");
+                showVaultMsg("✓ Vault export initiated. Check terminal output.");
+            }
+        });
+    }
+
+    if (importVaultBtn) {
+        importVaultBtn.addEventListener("click", async () => {
+            if (window.PortfoliOSVault?.showUnlockModal) {
+                window.PortfoliOSVault.showUnlockModal({
+                    onUnlock: () => {
+                        showVaultMsg("✓ Vault unlocked.");
+                        updateVaultStatusUI();
+                    }
+                });
+            } else if (window.handleCommand) {
+                await window.handleCommand("vault import");
+            }
+        });
+    }
+
+    if (lockVaultBtn) {
+        lockVaultBtn.addEventListener("click", () => {
+            if (window.PortfoliOSVault && typeof window.PortfoliOSVault.lock === "function") {
+                window.PortfoliOSVault.lock();
+            }
+            const session = window.PortfoliOSRuntimeBridge?.getActiveSession();
+            if (session?.vault) session.vault.lock();
+            showVaultMsg("✓ Zero-Knowledge Vault locked.");
+            updateVaultStatusUI();
+        });
+    }
+
+    window.addEventListener("portfolios:vault-status-changed", () => {
+        updateVaultStatusUI();
+    });
+    updateVaultStatusUI();
+
     // Initial load
     updateGDriveUI();
 }
 
-// Wallpaper Picker
+// Wallpaper Review and Selection
+let currentReviewedWallpaper = null;
+
 window.renderWallpaperOptions = () => {
-    const container = window.byId ? window.byId("wallpaper-options") : document.getElementById("wallpaper-options");
-    if (!container) return;
+    const container = document.getElementById("wallpaper-options");
+    const customContainer = document.getElementById("custom-wallpapers-grid");
+    const reviewScreen = document.getElementById("wallpaper-review-screen");
+    const reviewName = document.getElementById("wallpaper-review-name");
+    const reviewStatus = document.getElementById("wallpaper-review-status");
+    const applyBtn = document.getElementById("btn-apply-reviewed-wallpaper");
+    const browseBtn = document.getElementById("btn-browse-custom-wallpaper");
 
     const wallpaperOptions = window.wallpaperOptions || [];
+    const customList = window.getCustomWallpapers ? window.getCustomWallpapers() : [];
+    const activeWallpaperId = window.state?.wallpaper || "aurora";
 
-    container.innerHTML = wallpaperOptions.map((wallpaper) => `
-        <button type="button" class="wallpaper-card ${window.state && window.state.wallpaper === wallpaper.id ? "active" : ""}"
-            data-wallpaper-choice="${wallpaper.id}" title="Use ${wallpaper.label} wallpaper">
-            <div class="wallpaper-preview" data-preview-wallpaper="${wallpaper.id}"></div>
-            <div class="wallpaper-card-info">
-                <i class="${wallpaper.icon}"></i>
-                <span>${wallpaper.label}</span>
-            </div>
-        </button>
-    `).join("");
+    const updateReviewPane = (id, isCustom, label, previewUrl) => {
+        if (!reviewScreen) return;
+        currentReviewedWallpaper = { id, isCustom, label, previewUrl };
+
+        if (isCustom) {
+            reviewScreen.removeAttribute("data-preview-wallpaper");
+            reviewScreen.classList.add("has-custom-wallpaper");
+            const bgUrl = previewUrl || (window._customWallpaperBlobUrl || (window.Storage ? window.Storage.local.get(window.getPreferencesKey("CustomWallpaperThumb")) : null));
+            if (bgUrl) {
+                reviewScreen.style.backgroundImage = `url("${bgUrl}")`;
+            } else {
+                reviewScreen.style.backgroundImage = "var(--custom-wallpaper-url, none)";
+            }
+        } else {
+            reviewScreen.classList.remove("has-custom-wallpaper");
+            reviewScreen.style.backgroundImage = "";
+            reviewScreen.dataset.previewWallpaper = id;
+        }
+
+        if (reviewName) reviewName.textContent = label || id;
+        const isActive = (id === window.state?.wallpaper);
+        if (reviewStatus) {
+            reviewStatus.textContent = isActive ? "Active Desktop Wallpaper" : "Selected Preview (Not Applied)";
+            reviewStatus.style.color = isActive ? "var(--theme-primary, #22d3ee)" : "var(--text-muted, #94a3b8)";
+        }
+        if (applyBtn) {
+            applyBtn.disabled = isActive;
+            applyBtn.innerHTML = isActive ? '<i class="fa-solid fa-check-double"></i> Applied' : '<i class="fa-solid fa-check"></i> Set as Wallpaper';
+        }
+    };
+
+    // Determine initial active wallpaper info for review pane
+    const activeCustom = customList.find(c => c.id === activeWallpaperId);
+    if (activeCustom) {
+        updateReviewPane(activeCustom.id, true, activeCustom.name, activeCustom.thumb || activeCustom.thumbDataUrl || activeCustom.url);
+    } else {
+        const activeBuiltIn = wallpaperOptions.find(w => w.id === activeWallpaperId) || wallpaperOptions[0] || { id: "aurora", label: "Aurora" };
+        updateReviewPane(activeBuiltIn.id, false, activeBuiltIn.label);
+    }
+
+    // Apply button click
+    if (applyBtn && !applyBtn._hasApplyListener) {
+        applyBtn._hasApplyListener = true;
+        applyBtn.addEventListener("click", () => {
+            if (currentReviewedWallpaper?.id) {
+                window.setWallpaper(currentReviewedWallpaper.id);
+                updateReviewPane(currentReviewedWallpaper.id, currentReviewedWallpaper.isCustom, currentReviewedWallpaper.label, currentReviewedWallpaper.previewUrl);
+                if (window.showDesktopToast) window.showDesktopToast(`Wallpaper set to ${currentReviewedWallpaper.label}`);
+            }
+        });
+    }
+
+    // Browse button click
+    if (browseBtn && !browseBtn._hasWallpaperListener) {
+        browseBtn._hasWallpaperListener = true;
+        browseBtn.addEventListener("click", () => {
+            window.promptCustomWallpaperSelection?.();
+        });
+    }
+
+    // 1. Render Custom Wallpapers Grid
+    if (customContainer) {
+        if (!customList.length) {
+            customContainer.innerHTML = `
+                <div class="wallpaper-empty-state" style="grid-column: 1 / -1; padding: 1rem; text-align: center; font-size: 0.75rem; color: var(--text-muted); background: var(--panel-soft); border-radius: var(--radius-sm); border: 1px dashed var(--line);">
+                    <i class="fa-regular fa-image" style="margin-right: 6px;"></i> No custom wallpapers saved yet. Click "Browse Custom Image" to upload one.
+                </div>
+            `;
+        } else {
+            customContainer.innerHTML = customList.map((wallpaper) => {
+                const isActive = (window.state?.wallpaper === wallpaper.id);
+                const thumb = wallpaper.thumb || wallpaper.thumbDataUrl || wallpaper.url || "";
+                return `
+                    <div class="wallpaper-card custom-wallpaper-card ${isActive ? "active" : ""}"
+                        data-wallpaper-choice="${wallpaper.id}" title="${wallpaper.name}">
+                        <div class="wallpaper-preview" style="background-image: url('${thumb}'); background-size: cover; background-position: center;">
+                            <button type="button" class="custom-wallpaper-delete-btn" data-delete-custom-wallpaper="${wallpaper.id}" title="Delete ${wallpaper.name}">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <div class="wallpaper-card-info">
+                            <i class="fa-solid fa-image"></i>
+                            <span style="max-width: 82px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${wallpaper.name}</span>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            // Add delete event listeners
+            customContainer.querySelectorAll("[data-delete-custom-wallpaper]").forEach((btn) => {
+                btn.addEventListener("click", async (e) => {
+                    e.stopPropagation();
+                    const wallId = btn.dataset.deleteCustomWallpaper;
+                    if (!wallId) return;
+                    await window.deleteCustomWallpaper(wallId);
+                    if (window.showDesktopToast) window.showDesktopToast("Custom wallpaper removed");
+                    window.renderWallpaperOptions();
+                });
+            });
+
+            // Add hover review updates
+            customContainer.querySelectorAll(".custom-wallpaper-card").forEach((card) => {
+                const wallId = card.dataset.wallpaperChoice;
+                const item = customList.find(c => c.id === wallId);
+                if (item) {
+                    card.addEventListener("mouseenter", () => {
+                        updateReviewPane(item.id, true, item.name, item.thumb || item.thumbDataUrl || item.url);
+                    });
+                }
+            });
+        }
+    }
+
+    // 2. Render Built-in Wallpapers Grid
+    if (container) {
+        const builtIns = wallpaperOptions.filter(w => w.id !== "custom");
+        container.innerHTML = builtIns.map((wallpaper) => `
+            <button type="button" class="wallpaper-card ${window.state && window.state.wallpaper === wallpaper.id ? "active" : ""}"
+                data-wallpaper-choice="${wallpaper.id}" title="Use ${wallpaper.label} wallpaper">
+                <div class="wallpaper-preview" data-preview-wallpaper="${wallpaper.id}"></div>
+                <div class="wallpaper-card-info">
+                    <i class="${wallpaper.icon}"></i>
+                    <span>${wallpaper.label}</span>
+                </div>
+            </button>
+        `).join("");
+
+        container.querySelectorAll(".wallpaper-card").forEach((card) => {
+            const wallId = card.dataset.wallpaperChoice;
+            const item = builtIns.find(w => w.id === wallId);
+            if (item) {
+                card.addEventListener("mouseenter", () => {
+                    updateReviewPane(item.id, false, item.label);
+                });
+            }
+        });
+    }
+};
+
+// Default Applications and File Associations
+window.renderDefaultAppsSettings = () => {
+    const listContainer = document.getElementById("default-file-associations-list");
+    const customAppSelect = document.getElementById("select-custom-app");
+    const customContainer = document.getElementById("custom-associations-container");
+    const addBtn = document.getElementById("btn-add-custom-association");
+    const resetBtn = document.getElementById("btn-reset-associations");
+
+    if (!listContainer && !customContainer) return;
+
+    const installedApps = (window.desktopApps || []).filter(app => !window.isAppInstalled || window.isAppInstalled(app.id));
+    const sortedApps = [...installedApps].sort((a, b) => a.title.localeCompare(b.title));
+    const appMap = new Map(sortedApps.map(a => [a.id, a]));
+
+    // 1. Populate standard file type categories
+    if (listContainer) {
+        const groups = window.COMMON_FILE_TYPE_GROUPS || [];
+        listContainer.innerHTML = groups.map((group) => {
+            const currentAppId = window.getFileAssociation(group.extensions[0]) || group.defaultApp;
+
+            const compatibleList = (group.compatibleApps || []).filter(appId => !window.isAppInstalled || window.isAppInstalled(appId));
+            const otherApps = sortedApps.filter(a => !compatibleList.includes(a.id));
+
+            let optionsHtml = compatibleList.map(appId => {
+                const app = appMap.get(appId);
+                const title = app ? app.title : appId;
+                return `<option value="${appId}" ${appId === currentAppId ? "selected" : ""}>${title}</option>`;
+            }).join("");
+
+            if (otherApps.length) {
+                optionsHtml += `<optgroup label="Other Applications">` + otherApps.map(app => {
+                    return `<option value="${app.id}" ${app.id === currentAppId ? "selected" : ""}>${app.title}</option>`;
+                }).join("") + `</optgroup>`;
+            }
+
+            const extPills = group.extensions.map(ext => `<span class="ext-badge">${ext}</span>`).join(" ");
+
+            return `
+                <div class="file-assoc-row" data-group-id="${group.id}">
+                    <div class="file-assoc-info">
+                        <div class="file-assoc-icon"><i class="${group.icon}"></i></div>
+                        <div class="file-assoc-meta">
+                            <span class="file-assoc-title">${group.label}</span>
+                            <div class="file-assoc-extensions">${extPills}</div>
+                        </div>
+                    </div>
+                    <div class="file-assoc-control">
+                        <select class="settings-select file-group-select" data-group-id="${group.id}" aria-label="Default app for ${group.label}">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+        // Bind change listeners
+        listContainer.querySelectorAll(".file-group-select").forEach((select) => {
+            select.addEventListener("change", () => {
+                const groupId = select.dataset.groupId;
+                const newApp = select.value;
+                const group = groups.find(g => g.id === groupId);
+                if (group && newApp) {
+                    group.extensions.forEach(ext => window.setFileAssociation(ext, newApp));
+                    const appTitle = appMap.get(newApp)?.title || newApp;
+                    if (window.showDesktopToast) window.showDesktopToast(`Default app for ${group.label} set to ${appTitle}`);
+                    window.renderDefaultAppsSettings();
+                }
+            });
+        });
+    }
+
+    // 2. Populate custom app selector dropdown
+    if (customAppSelect) {
+        customAppSelect.innerHTML = sortedApps.map(app => `<option value="${app.id}">${app.title}</option>`).join("");
+    }
+
+    // 3. Add Custom Association Button
+    if (addBtn && !addBtn._hasAddListener) {
+        addBtn._hasAddListener = true;
+        addBtn.addEventListener("click", () => {
+            const input = document.getElementById("input-custom-ext");
+            const select = document.getElementById("select-custom-app");
+            let ext = (input?.value || "").trim().toLowerCase();
+            if (!ext) {
+                if (window.showDesktopToast) window.showDesktopToast("Please enter a file extension (e.g. .log)");
+                return;
+            }
+            if (!ext.startsWith(".")) ext = "." + ext;
+            if (ext.length < 2) {
+                if (window.showDesktopToast) window.showDesktopToast("Invalid file extension");
+                return;
+            }
+            const appId = select?.value;
+            if (!appId) return;
+
+            window.setFileAssociation(ext, appId);
+            const appTitle = appMap.get(appId)?.title || appId;
+            if (window.showDesktopToast) window.showDesktopToast(`Associated ${ext} with ${appTitle}`);
+            if (input) input.value = "";
+            window.renderDefaultAppsSettings();
+        });
+    }
+
+    // 4. Render user-defined associations in custom table
+    if (customContainer) {
+        const userAssocs = window.getUserFileAssociations ? window.getUserFileAssociations() : {};
+        const entries = Object.entries(userAssocs);
+
+        if (!entries.length) {
+            customContainer.innerHTML = `
+                <div style="padding: 0.8rem; font-size: 0.75rem; color: var(--text-muted); background: var(--panel-soft); border-radius: var(--radius-sm); border: 1px dashed var(--line); text-align: center;">
+                    No custom file type associations added yet. Enter an extension above to bind it.
+                </div>
+            `;
+        } else {
+            customContainer.innerHTML = `
+                <table class="custom-assoc-table">
+                    <thead>
+                        <tr>
+                            <th>Extension</th>
+                            <th>Associated Application</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${entries.map(([ext, appId]) => {
+                            const app = appMap.get(appId);
+                            const appName = app ? app.title : appId;
+                            const appIcon = app?.icon || "fa-solid fa-window-maximize";
+                            const iconHtml = appIcon.includes("/") 
+                                ? `<img src="${appIcon}" alt="" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;">`
+                                : `<i class="${appIcon}" style="color: var(--theme-primary); margin-right: 6px;"></i>`;
+                            return `
+                                <tr>
+                                    <td><span class="ext-badge">${ext}</span></td>
+                                    <td>${iconHtml}<strong>${appName}</strong></td>
+                                    <td style="text-align: right;">
+                                        <button type="button" class="settings-btn btn-danger btn-compact" data-remove-ext="${ext}" title="Remove association for ${ext}">
+                                            <i class="fa-solid fa-trash-can"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join("")}
+                    </tbody>
+                </table>
+            `;
+
+            customContainer.querySelectorAll("[data-remove-ext]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const ext = btn.dataset.removeExt;
+                    if (!ext) return;
+                    window.removeFileAssociation(ext);
+                    if (window.showDesktopToast) window.showDesktopToast(`Removed association for ${ext}`);
+                    window.renderDefaultAppsSettings();
+                });
+            });
+        }
+    }
+
+    // 5. Reset button
+    if (resetBtn && !resetBtn._hasResetListener) {
+        resetBtn._hasResetListener = true;
+        resetBtn.addEventListener("click", () => {
+            if (confirm("Reset all file associations back to PortfoliOS defaults?")) {
+                window.resetFileAssociations();
+                if (window.showDesktopToast) window.showDesktopToast("File associations reset to defaults");
+                window.renderDefaultAppsSettings();
+            }
+        });
+    }
 };
 
 window.renderThemeOptions = () => {
@@ -900,6 +1369,7 @@ function initSettingsApp() {
     window.renderWallpaperOptions();
     window.renderThemeOptions();
     window.renderScreensaverOptions();
+    window.renderDefaultAppsSettings?.();
 
     // Initialize custom dropdowns on load
     const resSelect = document.getElementById("desktop-resolution-select");
@@ -943,6 +1413,7 @@ function refreshSettingsOnActivation(name) {
     window.renderWallpaperOptions();
     window.renderThemeOptions();
     window.renderScreensaverOptions();
+    window.renderDefaultAppsSettings?.();
 
     const activePanel = document.querySelector(".settings-panel.active");
     if (activePanel?.dataset.panel === "debug") {
@@ -953,6 +1424,7 @@ function refreshSettingsOnActivation(name) {
 // EventBus bindings
 if (window.EventBus) {
     window.EventBus.on("wallpaper:changed", () => window.renderWallpaperOptions());
+    window.EventBus.on("associations:changed", () => window.renderDefaultAppsSettings?.());
     window.EventBus.on("desktop:refresh", () => window.renderWallpaperOptions());
     window.EventBus.on("desktop:refresh", () => window.renderThemeOptions());
     window.EventBus.on("desktop:refresh", () => window.renderScreensaverOptions());

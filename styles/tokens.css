@@ -1,14 +1,14 @@
 :root {
     color-scheme: dark;
-    --bg: #050608;
-    --panel: rgba(9, 11, 16, 0.62);
-    --panel-strong: rgba(14, 18, 26, 0.85);
-    --panel-soft: rgba(255, 255, 255, 0.04);
-    --line: rgba(255, 255, 255, 0.07);
-    --line-strong: rgba(255, 255, 255, 0.14);
-    --text: #fafafa;
-    --text-soft: #a1a1aa;
-    --text-muted: #71717a;
+    --bg: #06090f;
+    --panel: rgba(15, 23, 42, 0.72);
+    --panel-strong: rgba(15, 23, 42, 0.88);
+    --panel-soft: rgba(255, 255, 255, 0.05);
+    --line: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(103, 232, 249, 0.22);
+    --text: #f8fafc;
+    --text-soft: #94a3b8;
+    --text-muted: #64748b;
     --theme-primary: #22d3ee;
     --theme-accent: #34d399;
     --amber: #f59e0b;
@@ -18,8 +18,8 @@
     --teal: #14b8a6;
     
     /* Premium Glassmorphism Specs */
-    --glass-bg: rgba(10, 12, 18, 0.62);
-    --glass-border: rgba(255, 255, 255, 0.07);
+    --glass-bg: rgba(15, 23, 42, 0.78);
+    --glass-border: rgba(103, 232, 249, 0.18);
     --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
     --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
 
@@ -48,7 +48,7 @@
     --radius-md: 10px;
     --radius-lg: 14px;
 
-    /* Layout Constants */
+/* Layout Constants */
     --taskbar-height: 2.85rem;
     --window-bottom: 5.6rem;
     --panel-bottom: calc(var(--taskbar-height) + 2.05rem);
@@ -67,4 +67,16 @@ html.theme-transitioning *::after {
     html.theme-transitioning *::after {
         transition: none !important;
     }
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+input,
+textarea,
+select {
+    color-scheme: inherit;
 }

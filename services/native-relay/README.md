@@ -51,11 +51,21 @@ This system solves all three issues using the **WebExtensions Native Messaging**
 
 ## Setup & Installation
 
-### Step 1: Register the Native Host on your OS
+### Step 1: Install the Windows Host Bridge (Recommended)
 
-#### Windows:
+Download and run **`PortfoliOS-NativeRelay.msi`**:
+- Installs to `%LOCALAPPDATA%\PortfoliOS\NativeRelay\` (no admin rights required).
+- Automatically registers Chrome, Edge, Brave, and Firefox native messaging keys.
+- Can be cleanly uninstalled at any time from Windows **Settings > Apps > Installed apps**.
+
+To build the MSI installer locally:
+```powershell
+npm run build:relay-msi
+```
+
+#### Alternative: Manual Registration via Script
+##### Windows:
 Open PowerShell in the `host/` folder and run:
-
 ```powershell
 .\register-host.ps1
 ```

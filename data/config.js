@@ -44,17 +44,17 @@ window.portfolioThemes = [
         icon: "fa-solid fa-moon",
         description: "Current PortfoliOS glass desktop.",
         colorScheme: "dark",
-        swatches: ["#050608", "#22d3ee", "#34d399"],
+        swatches: ["#06090f", "#22d3ee", "#34d399"],
         tokens: {
-            "--bg": "#050608",
-            "--panel": "rgba(9, 11, 16, 0.62)",
-            "--panel-strong": "rgba(14, 18, 26, 0.85)",
-            "--panel-soft": "rgba(255, 255, 255, 0.04)",
-            "--line": "rgba(255, 255, 255, 0.07)",
-            "--line-strong": "rgba(255, 255, 255, 0.14)",
-            "--text": "#fafafa",
-            "--text-soft": "#a1a1aa",
-            "--text-muted": "#71717a",
+            "--bg": "#06090f",
+            "--panel": "rgba(15, 23, 42, 0.72)",
+            "--panel-strong": "rgba(15, 23, 42, 0.88)",
+            "--panel-soft": "rgba(255, 255, 255, 0.05)",
+            "--line": "rgba(255, 255, 255, 0.08)",
+            "--line-strong": "rgba(103, 232, 249, 0.22)",
+            "--text": "#f8fafc",
+            "--text-soft": "#94a3b8",
+            "--text-muted": "#64748b",
             "--theme-primary": "#22d3ee",
             "--theme-accent": "#34d399",
             "--amber": "#f59e0b",
@@ -62,8 +62,8 @@ window.portfolioThemes = [
             "--violet": "#a78bfa",
             "--rose": "#f43f5e",
             "--teal": "#14b8a6",
-            "--glass-bg": "rgba(10, 12, 18, 0.62)",
-            "--glass-border": "rgba(255, 255, 255, 0.07)",
+            "--glass-bg": "rgba(15, 23, 42, 0.78)",
+            "--glass-border": "rgba(103, 232, 249, 0.18)",
             "--glass-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.12)",
             "--glass-shadow": "0 25px 50px -12px rgba(0, 0, 0, 0.75)"
         }
@@ -250,13 +250,98 @@ window.portfolioThemes = [
     }
 ];
 
-window.quickRoutes = [
-    { id: "overview", label: "Overview", icon: "fa-solid fa-table-cells-large", get ids() { return window.systems ? window.systems.map((item) => item.id) : []; } },
-    { id: "build", label: "Build", icon: "fa-solid fa-code-branch", ids: ["devhub", "addons", "guildcraft", "automation", "media", "doomsource", "openrct2", "duke32", "diablo", "quake"] },
-    { id: "operate", label: "Operate", icon: "fa-solid fa-server", ids: ["homelab", "status", "automation", "devhub"] },
-    { id: "research", label: "Research", icon: "fa-solid fa-brain", ids: ["survival-ai", "doomsource", "openrct2", "duke32", "diablo", "quake", "homelab"] },
-    { id: "connect", label: "Connect", icon: "fa-solid fa-link", ids: ["devhub", "guildcraft", "wardenit", "status", "addons"] }
+window.publicQuickRoutes = [
+    {
+        id: "overview",
+        label: "Overview",
+        icon: "fa-solid fa-table-cells-large",
+        get ids() {
+            return window.systems ? window.systems.filter((s) => s.audience !== "private").map((s) => s.id) : [];
+        }
+    },
+    {
+        id: "services",
+        label: "Services & Ops",
+        icon: "fa-solid fa-shield-halved",
+        ids: ["wardenit", "homelab", "pki", "automation"]
+    },
+    {
+        id: "software",
+        label: "Software & Web",
+        icon: "fa-solid fa-code-branch",
+        ids: ["devhub", "addons", "guildcraft", "automation", "media"]
+    },
+    {
+        id: "runtimes",
+        label: "Runtimes",
+        icon: "fa-solid fa-gamepad",
+        ids: ["doomsource", "openrct2", "duke32", "diablo", "quake", "flappybird"]
+    },
+    {
+        id: "research",
+        label: "Research",
+        icon: "fa-solid fa-brain",
+        ids: ["survival-ai", "homelab", "pki", "status"]
+    }
 ];
+
+window.privateQuickRoutes = [
+    {
+        id: "overview",
+        label: "Wiki Index",
+        icon: "fa-solid fa-book-bookmark",
+        get ids() {
+            return window.systems ? window.systems.filter((s) => s.audience !== "public").map((s) => s.id) : [];
+        }
+    },
+    {
+        id: "architecture",
+        label: "Architecture",
+        icon: "fa-solid fa-cubes-stacked",
+        ids: ["systemfs-arch", "wasm-engine", "security-kernel", "native-relay", "cloud-sync"]
+    },
+    {
+        id: "applications",
+        label: "Applications",
+        icon: "fa-solid fa-window-restore",
+        ids: ["solidcraft-wiki", "genoffice-wiki", "craft-suite"]
+    },
+    {
+        id: "devtools",
+        label: "Developer Tools",
+        icon: "fa-solid fa-terminal",
+        ids: ["terminal-wiki", "codex-wiki", "local-ai-wiki"]
+    },
+    {
+        id: "emulation",
+        label: "Emulation Core",
+        icon: "fa-solid fa-microchip",
+        ids: ["emulation-core", "doomsource", "openrct2", "duke32", "diablo", "quake"]
+    },
+    {
+        id: "creator",
+        label: "Creator Dossier",
+        icon: "fa-solid fa-user-astronaut",
+        ids: ["creator-dossier"]
+    }
+];
+
+Object.defineProperty(window, "quickRoutes", {
+    configurable: true,
+    enumerable: true,
+    get() {
+        if (window._customQuickRoutes) return window._customQuickRoutes;
+        const isPrivate = window.isPrivateUser ? window.isPrivateUser() : (window.state?.currentUserId !== "bl4ut0");
+        return isPrivate ? window.privateQuickRoutes : window.publicQuickRoutes;
+    },
+    set(val) {
+        window._customQuickRoutes = val;
+    }
+});
+
+window.quickRouteById = (id) => {
+    return (window.quickRoutes || []).find((route) => route.id === id) || null;
+};
 
 window.quickFilters = [
     { id: "all", label: "All" },
@@ -298,6 +383,7 @@ window.cliIntroLines = [
 
 window.openTargets = {
     devhub: "https://bl4ut0.dev",
+    wardenit: "https://wardenit.com",
     github: "https://github.com/Bl4ut0",
     discord: "https://discord.gg/fEwanmFR9m",
     guildcraft: "https://dev.guildcraft.io",
