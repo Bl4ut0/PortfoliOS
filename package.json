@@ -12,7 +12,7 @@
     "deploy:dry": "node deploy.js --dry-run",
     "package:extension": "node scripts/package-extension.js",
     "build:relay-msi": "powershell -ExecutionPolicy Bypass -File services/native-relay/installer/build-msi.ps1",
-    "test": "node scripts/check-app-contracts.js && node scripts/check-gdrive-session.js && node scripts/check-security-kernel.js && node scripts/check-workspace-merge.js && node scripts/check-cloud-drivers.js && node scripts/check-runtime-bridge.js"
+    "test": "node scripts/check-app-contracts.js && node scripts/check-gdrive-session.js && node scripts/check-security-kernel.js && node scripts/check-workspace-merge.js && node scripts/check-cloud-drivers.js && node scripts/check-runtime-bridge.js && node scripts/check-native-network-policy.js"
   },
   "keywords": [],
   "author": "",

@@ -1,4 +1,6 @@
-# PortfoliOS UT99 Relay
+# PortfoliOS UT99 Relay (inactive test utility)
+
+Not part of the supported PortfoliOS networking path. Do not deploy this as a public service or fallback. Games use the user-installed Native Relay; otherwise browser sandbox restrictions apply. The instructions below describe the historical controlled test harness only.
 
 Small WebSocket-to-UDP relay for controlled Unreal Tournament 99 bridge tests.
 

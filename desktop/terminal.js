@@ -2155,7 +2155,7 @@ async function runSysCommand(args) {
             "PortfoliOS Kernel & System State:",
             `  kernel.arch           = x86_64-portfolios-wasm`,
             `  kernel.interchange    = active (PortfoliOSInterchange v1.0)`,
-            `  kernel.native_relay   = ${relayReady ? "connected" : "standby (browser + interchange fallback)"}`,
+            `  kernel.native_relay   = ${relayReady ? "connected" : "sandbox networking only (Native Relay not connected)"}`,
             `  system.user           = ${currentUser} (profile: ${window.state?.currentUserId || "guest"})`,
             `  system.theme          = ${window.state?.themeId || "dark"}`,
             `  system.wallpaper      = ${window.state?.wallpaper || "aurora"}`,

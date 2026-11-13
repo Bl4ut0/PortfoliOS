@@ -498,7 +498,7 @@
                   `[Doctor] CLI: ${meta.bin} v${meta.version || '1.0.0'}`,
                   `[Doctor] Platform: PortfoliOS Linux/WASM Container`,
                   `[Doctor] VFS Mount: / (SystemFS root mounted)`,
-                  `[Doctor] Native Relay: ${relayActive ? 'Connected (Raw TCP sockets & HTTP proxy enabled)' : 'Unavailable (In-browser direct network mode)'}`,
+                  `[Doctor] Native Relay: ${relayActive ? 'Connected (Raw TCP sockets & HTTP proxy enabled)' : 'Unavailable (browser sandbox networking only; no hosted relay fallback)'}`,
                   `[Doctor] PTY Terminal: Active duplex PTY stream`,
                   `[Doctor] Status: OK`
                 ].join('\r\n') + '\r\n');

@@ -2,8 +2,8 @@
   "dirty": false,
   "schemaVersion": 1,
   "repository": "https://github.com/Bl4ut0/PortfoliOS-Browser.JS",
-  "revision": "053a9e3758470cd68a22ad02c74ae818217a2f01",
-  "source": "https://github.com/Bl4ut0/PortfoliOS-Browser.JS/tree/053a9e3758470cd68a22ad02c74ae818217a2f01",
+  "revision": "16e26c3110f9affef2600b1c0c1e54b864d10dd4",
+  "source": "https://github.com/Bl4ut0/PortfoliOS-Browser.JS/tree/16e26c3110f9affef2600b1c0c1e54b864d10dd4",
   "build": "node scripts/build-portfolios.mjs --install",
   "node": "v25.1.0",
   "inputs": {
@@ -24,10 +24,10 @@
   "files": {
     "defaultfavicon.png": "23f0e422d8692d6a2243937df8d75069e1b7806975b5350bb937b7e335329b68",
     "icon.png": "4c7d4720cefc5e7430caea53566b5d0547ebeed74b8a6a22a8adcd26d4b3a6ff",
-    "index.html": "41015caffbb5fa701f35467f99af3c1c1b169b6afcc2af337e11c25b55e6aa17",
+    "index.html": "ca8797e0e11760a0cf044ad2e25f5375881dc42874989d6f547817d1ed9e59cc",
     "LICENSE": "e0eedba615d5cd1b986afb6c5b3a4b1ae33713e7e9dc74d19daec5e3221f9d2e",
-    "assets/index-CNNeol-3.js": "89a7bc918c0a873df9517573f76bb2856de34bf8c95dc62a5190e3f6f99c1f27",
     "assets/index-DvBH7BaU.css": "8e21a9d7087b41a41b781b9916019a7236804cc5d56f1594529e19b861351c22",
+    "assets/index-tTGfQZcs.js": "7772fefeb6530a58b1a1af6af3281738b60427d31a0ad22ff04b5a81bfc45526",
     "assets/inject-BdIepyW2.js": "dc0f827a58687f3abce884b6426474e73e83868643fef3fdb8c6e5fed4a782a9",
     "assets/scramjet-t-PAjClD.wasm": "0264d8e3764d55b564edae2f4c7ac8c1707fc2fe24e14baf101b561a960558f7"
   }

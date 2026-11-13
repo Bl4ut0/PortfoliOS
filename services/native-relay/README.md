@@ -45,7 +45,7 @@ This system solves all three issues using the **WebExtensions Native Messaging**
 
 * `extension/`: Cross-browser WebExtension (Manifest V3) for Chrome, Edge, and Firefox.
 * `host/`: Native Messaging Host runner, protocol handler (`host.mjs`), and registration scripts.
-* `sdk/`: PortfoliOS game client library (`native-relay-client.js`) with automatic fallback to cloud relay.
+* `sdk/`: PortfoliOS game client library (`native-relay-client.js`) with no cloud relay fallback.
 
 ---
 
@@ -103,13 +103,10 @@ chmod +x register-host.sh host.mjs host-runner.sh
 ```javascript
 import GameNetworkClient from '/services/native-relay/sdk/native-relay-client.js';
 
-const client = new GameNetworkClient({
-  cloudRelayUrl: 'wss://relay.os.bl4ut0.dev/v1/relay',
-  preferNative: true
-});
+const client = new GameNetworkClient();
 
 const status = await client.init();
-console.log('Active Backend:', status.backend); // "native" (extension) or "cloud" (server fallback)
+console.log('Active Backend:', status.backend); // "native"; init rejects when the local bridge is unavailable.
 
 // Example: UT2004 UDP Socket
 const udp = await client.createUdpSocket({ targetHost: 'ut2004.server.net', targetPort: 7777 });
@@ -124,9 +121,11 @@ udp.send(packetUint8Array, 7777, 'ut2004.server.net');
 
 ---
 
-## Fallback Strategy for Non-Extension Browsers (Safari / Mobile)
 
-When a user visits PortfoliOS without the extension installed:
-1. `GameNetworkClient.init()` detects that `window.PortfoliOSNativeRelay` is absent.
-2. It automatically switches to **Tier 2: Cloud Relay** (`ut99-relay`), streaming packets over a secure WebSocket (`wss://relay.os.bl4ut0.dev`) to the central relay server.
-3. This ensures all users can play, while users with the extension get direct local UDP/TCP performance with LAN multiplayer support and zero server bandwidth cost.
+## Browser sandbox mode (no installed relay)
+
+PortfoliOS does not provide or automatically select a paid relay, public Wisp relay, hosted browser, or central WebSocket-to-UDP fallback. Install and enable both the extension and local Host Bridge for raw TCP/UDP and native networking. Downloading the installer alone does not enable these capabilities.
+
+Without that setup, apps remain subject to browser restrictions: normal HTTPS/CORS, allowed WebSockets and browser-supported WebRTC may work; raw sockets, incompatible website embedding and unsupported multiplayer protocols remain unavailable. CLI HTTPS requests may use browser fetch where the destination permits it. These restrictions do not block ordinary OS APIs such as Google Drive. With the relay active, destination traffic originates on the user's device and network, not PortfoliOS hosting.
+
+Legacy cloudRelayUrl/preferNative SDK constructor options no longer enable fallback. A missing relay yields a setup-required error rather than opening a remote connection. The separate external origin-isolation service used by Browser.JS is not a hosted destination-traffic relay and remains a distinct compatibility dependency.

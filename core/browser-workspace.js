@@ -2,12 +2,7 @@
 (function () {
     const home = 'https://www.google.com/';
     const providers = [
-        { id: 'browserjs', name: 'Portal', embed: '/apps/browser/browserjs.php', icon: 'fa-solid fa-window-maximize', detail: 'In-window browser · tabs, address bar and search · based on Browser.js' },
-        { id: 'browserjs-hosted', name: 'Hosted Browser.js', embed: 'https://browser.puter.com/', partition: 'browserjs', icon: 'fa-solid fa-window-maximize', detail: 'Upstream hosted browser · opens its own New Tab page' },
-        { id: 'scramjet', name: 'Scramjet', embed: 'https://scramjet.mercurywork.shop/', icon: 'fa-solid fa-globe', detail: 'In-window Google start page · community relay · desktop-oriented controls' },
-        { id: 'proxysite', name: 'ProxySite', url: 'https://www.proxysite.com/', icon: 'fa-solid fa-globe', detail: 'Free web proxy · opens in a separate tab' },
-        { id: 'hideme', name: 'hide.me', url: 'https://hide.me/en/proxy', icon: 'fa-solid fa-shield-halved', detail: 'External proxy website · opens in a separate tab' },
-        { id: 'hyperbeam', name: 'Hyperbeam', icon: 'fa-solid fa-cloud', detail: 'Remote browser · shared monthly free allowance' }
+        { id: 'browserjs', name: 'Portal', embed: '/apps/browser/browserjs.php', icon: 'fa-solid fa-window-maximize', detail: 'Native Relay on your device; sandbox limits without setup' }
     ];
     const controllers = new Set();
     // Credentialless storage lasts for the top-level document, not each iframe.
@@ -40,8 +35,8 @@
         try {
             const config = JSON.parse(localStorage.getItem(connectionKey(id)));
             if (config?.mode === 'relay') return { mode: 'relay', endpoint: '', remember: true };
-            if (config?.mode === 'automatic') return { mode: 'automatic', endpoint: '', remember: true };
-            if (config?.mode === 'custom' && normalizeProxyEndpoint(config.endpoint)) return { mode: 'custom', endpoint: normalizeProxyEndpoint(config.endpoint), remember: true };
+
+
         } catch {}
         return { mode: 'relay', endpoint: '', remember: false };
     }
@@ -57,7 +52,7 @@
                         <strong>PortfoliOS Native Relay</strong>
                         <span class="addon-banner-tag">Default Route</span>
                     </div>
-                    <p class="addon-banner-desc">Traffic routes through the Native Relay addon by default. Get the addon on the Chrome Web Store for direct low-latency connections.</p>
+                    <p class="addon-banner-desc">Install both the extension and local Host Bridge to enable connections outside the browser sandbox. Traffic originates from your device; no hosted relay fallback is provided.</p>
                 </div>
                 <div class="addon-banner-actions">
                     <a href="https://chromewebstore.google.com/detail/portfolios-native-relay/jbdiopconacgbffkhpjpcafkckaapmgg" target="_blank" rel="noopener noreferrer" class="addon-btn addon-btn-primary" title="Open Chrome Web Store">
@@ -76,13 +71,13 @@
             <form class="web-browser-address" data-web-address-form><input data-web-address aria-label="Website address" autocomplete="off" spellcheck="false" inputmode="url" placeholder="Enter a website address"><button type="submit">Go</button></form>
             <nav class="web-browser-bookmarks" data-web-bookmarks aria-label="Website bookmarks"></nav>
             <div class="web-browser-message" data-web-message role="status" aria-live="polite"></div>
-            <section class="web-browser-chooser" data-web-chooser><button type="button" data-web-return hidden>Back to browser</button><h3>Choose your browsing service</h3><p>Websites are fetched by your chosen provider. Browsing traffic stays off the PortfoliOS server.</p>
+            <section class="web-browser-chooser" data-web-chooser><button type="button" data-web-return hidden>Back to browser</button><h3>Network connection</h3><p>Install the Native Relay extension and local Host Bridge for connections outside the browser sandbox. PortfoliOS provides no hosted relay fallback.</p>
                 <div class="web-provider-list" role="group" aria-label="Browsing services">${providers.filter(p => !p.url).map(p => `<button type="button" class="web-provider" data-web-provider="${p.id}" aria-pressed="false"><i class="${p.icon}" aria-hidden="true"></i><span><strong>${p.name}</strong><small>${p.detail}</small>${p.id === 'hyperbeam' ? '<small data-web-quota>Checking availability…</small>' : ''}</span><span aria-hidden="true">›</span></button>`).join('')}</div>
-                <details class="web-browser-external"><summary>External web proxy websites</summary><p>These sites block embedding and open separately.</p><div class="web-provider-list">${providers.filter(p => p.url).map(p => `<button type="button" class="web-provider" data-web-provider="${p.id}" aria-pressed="false"><span><strong>${p.name}</strong><small>${p.detail}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></details>
+                <details class="web-browser-external" hidden><summary>External web proxy websites</summary><p>These sites block embedding and open separately.</p><div class="web-provider-list">${providers.filter(p => p.url).map(p => `<button type="button" class="web-provider" data-web-provider="${p.id}" aria-pressed="false"><span><strong>${p.name}</strong><small>${p.detail}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></details>
                 <label class="web-browser-remember"><input type="checkbox" data-web-remember> Remember my choice for this profile</label>
                 <button type="button" class="web-browser-primary" data-web-embedded-start hidden>Open browser</button><button type="button" class="web-browser-primary" data-web-fresh hidden>Reload PortfoliOS for a fresh browsing profile</button>
                 <a class="web-browser-primary" data-web-launch target="_blank" rel="noopener noreferrer" hidden>Continue</a><button type="button" class="web-browser-primary" data-web-start hidden>Start remote browser</button>
-                <p class="web-browser-note">Portal opens its search/New Tab page; Scramjet starts at Google. Community services may be unavailable or restrict websites. Browsing state is temporary and clears when PortfoliOS reloads.</p>
+                <p class="web-browser-note">Portal uses your installed Native Relay. Without it, browser sandbox restrictions apply. Browsing state is temporary and clears when PortfoliOS reloads.</p>
             </section>
             <section class="web-browser-handoff" data-web-handoff hidden><h3 data-web-handoff-title></h3><p>Enter your destination on the provider’s page. You can copy the address below before opening it.</p><div class="web-browser-destination"><code data-web-destination></code><button type="button" data-web-copy>Copy address</button></div><a class="web-browser-primary" data-web-reopen target="_blank" rel="noopener noreferrer">Open provider in new tab ↗</a><p class="web-browser-note">PortfoliOS cannot read or control that tab. Use its browser controls to navigate.</p></section>
             <button type="button" class="web-browser-recovery" data-web-recover hidden>Connection options</button><button type="button" class="web-browser-native-settings" data-web-native hidden>Browser settings</button>
@@ -174,14 +169,13 @@
             if (provider?.url) { launch.href = provider.url; launch.textContent = `Continue with ${provider.name} ↗`; }
             start.hidden = selected !== 'hyperbeam'; start.disabled = busy || !status?.available;
             start.textContent = busy ? 'Starting remote browser…' : 'Start remote browser';
-            find('[data-web-quota]').textContent = status?.available ? `${Math.floor(status.remainingSeconds / 60).toLocaleString()} min available under the shared safety cap` : status?.message || 'Checking availability…';
+            const quota = find('[data-web-quota]'); if (quota) quota.textContent = status?.message || 'Native Relay required outside sandbox limits.';
 
             address.readOnly = !!lease || busy;
             find('[data-web-address-form] button[type="submit"]').disabled = !!lease || busy;
         }
         async function refreshStatus() {
-            try { const next = await api('status'); if (validOwner()) status = next; update(); return next.monitoringOk !== false && !next.mustEnd; }
-            catch { if (!signal.aborted && validOwner()) status = { ...status, available: false, message: 'Remote browsing unavailable. Free proxies are ready.' }; }
+            status = { available: false, message: 'No hosted relay fallback. Install the Native Relay for networking outside the browser sandbox.' };
             update(); return false;
         }
         function stopRelay() {
@@ -268,42 +262,9 @@
             if (!disposed) { showChooser(); update(); if (reason) message(reason); }
         }
         async function start() {
-            if (busy || !status?.available || !validOwner() || !checkPrivateWorkspaceAllowed()) return;
-            const target = address.value.trim() ? normalizeAddress(address.value) : home;
-            if (!target) { message('Enter a valid HTTP or HTTPS website address.'); return; }
-            if (!('credentialless' in document.createElement('iframe'))) { message('Embedded remote browsing requires a current Chrome or Edge browser. Choose a free proxy instead.'); return; }
-            busy = true; message('Starting your separate remote browser…'); update();
-            const epoch = ++generation;
-            try {
-                saveChoice();
-                const result = await api('start', { url: target, mobile: !!options.mobile, requestId: crypto.randomUUID() });
-                if (!validOwner() || epoch !== generation) { await api('stop', { lease: result.lease }, true); return; }
-                lease = result;
-                root.classList.remove('is-settings');
-                const frame = document.createElement('iframe');
-                frame.className = 'web-browser-remote-frame'; frame.title = 'Hyperbeam remote browser'; frame.credentialless = true;
-                frame.allow = 'autoplay; fullscreen; clipboard-read; clipboard-write'; frame.referrerPolicy = 'no-referrer';
-                frame.src = '/apps/browser/remote.php?v=' + encodeURIComponent(window.PortfolioLoadingManifest?.release || '1');
-                frame.addEventListener('load', () => {
-                    if (lease === result && validOwner()) frame.contentWindow.postMessage({ source: 'portfolios-browser', type: 'connect', embedUrl: result.embedUrl, leaseToken: result.leaseToken, expiresAt: result.expiresAt }, location.origin);
-                }, { signal });
-                find('[data-web-viewport]').replaceChildren(frame);
-                find('[data-web-chooser]').hidden = true; find('[data-web-handoff]').hidden = true; find('[data-web-remote]').hidden = false;
-                const tick = () => {
-                    if (!lease) return;
-                    const seconds = Math.max(0, Math.ceil((lease.expiresAt * 1000 - Date.now()) / 1000));
-                    find('[data-web-countdown]').textContent = `Hyperbeam · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} remaining`;
-                    if (!seconds) void stop('Session allowance reached. Choose a service to continue.');
-                    else if (!monitoring && Date.now() - lastMonitor >= 30000) {
-                        monitoring = true; lastMonitor = Date.now();
-                        void refreshStatus().then(ok => { if (!ok && lease) void stop('Remote usage cannot be verified or has reached its safety limit. Choose a free proxy to continue.'); }).finally(() => { monitoring = false; });
-                    }
-                };
-                lastMonitor = Date.now(); tick(); timer = setInterval(tick, 1000);
-                message('Use the remote browser’s address bar and navigation controls. Ending this session clears its remote cookies.');
-            } catch (error) { if (validOwner()) { message(error.message); void refreshStatus(); } }
-            finally { busy = false; update(); }
+            message('Hosted browser sessions are disabled. Use the local Native Relay.');
         }
+
         root.addEventListener('click', event => {
             const choice = event.target.closest('[data-web-provider]');
             if (choice && !busy) { selected = choice.dataset.webProvider; message(''); update(); }
@@ -355,7 +316,7 @@
                 if (data.type === 'configure') {
                     const value = data.config;
                     const endpoint = value?.mode === 'custom' ? normalizeProxyEndpoint(value.endpoint) : '';
-                    if (!['custom', 'automatic', 'relay'].includes(value?.mode) || (value.mode === 'custom' && !endpoint)) error = 'Use a secure wss:// Wisp endpoint without credentials or query parameters.';
+                    if (value?.mode !== 'relay') error = 'Hosted and public relay connections are disabled. Install the local Native Relay.';
                     else {
                         connection = { mode: value.mode, endpoint: value.mode === 'custom' ? endpoint : '', remember: value.remember === true };
                         try {

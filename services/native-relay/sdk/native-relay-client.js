@@ -3,7 +3,7 @@
  * Unified networking client for PortfoliOS applications and WebAssembly environments.
  *
  * Tier 1: Local Native Relay via Browser Extension (Direct UDP/TCP, zero extra latency, LAN support).
- * Tier 2: Cloud WebSocket Relay Fallback (ut99-relay / central server proxy).
+ * No hosted fallback: without the local relay, raw networking stays unavailable.
  */
 
 function getRelayBridge() {
@@ -29,24 +29,19 @@ function isPrivateSessionActive() {
       return Boolean(fn(uid));
     }
   } catch (_) {}
-  return true;
+  return false;
 }
 
 export class GameNetworkClient {
-  constructor(options = {}) {
-    this.options = {
-      cloudRelayUrl: options.cloudRelayUrl || 'wss://relay.os.bl4ut0.dev/v1/relay',
-      preferNative: options.preferNative !== false,
-      ...options
-    };
-
-    this.backend = 'none'; // 'native' | 'cloud' | 'none'
+  constructor() {
+    this.backend = 'none'; // 'native' | 'none'
   }
 
   /**
    * Initialize and detect best available network tier
    */
   async init() {
+    this.backend = 'none';
     if (!isPrivateSessionActive()) {
       this.backend = 'none';
       console.warn('[GameNetworkClient] Network bridge features are excluded to private workspaces only.');
@@ -54,8 +49,8 @@ export class GameNetworkClient {
     }
 
     const relayBridge = getRelayBridge();
-    if (this.options.preferNative && relayBridge) {
-      const isAvailable = await relayBridge.isAvailable();
+    if (relayBridge) {
+      const isAvailable = await Promise.race([relayBridge.isAvailable(), new Promise(resolve => setTimeout(() => resolve(false), 2500))]);
       if (isAvailable) {
         this.backend = 'native';
         console.log('[GameNetworkClient] Using Tier 1: Local Native Relay (Direct UDP/TCP)');
@@ -63,14 +58,8 @@ export class GameNetworkClient {
       }
     }
 
-    if (this.options.cloudRelayUrl) {
-      this.backend = 'cloud';
-      console.log('[GameNetworkClient] Native relay not detected; falling back to Tier 2: Cloud Relay');
-      return { backend: 'cloud' };
-    }
-
     this.backend = 'none';
-    throw new Error('No networking backend available (neither local native relay nor cloud relay).');
+    throw new Error('Sandbox networking only. Install the Native Relay extension and local Host Bridge for raw TCP/UDP. No hosted relay fallback is provided.');
   }
 
   /**
@@ -78,10 +67,10 @@ export class GameNetworkClient {
    * @param {Object} socketOpts { port, address, targetHost, targetPort, token }
    */
   async createUdpSocket(socketOpts = {}) {
+    if (!isPrivateSessionActive()) throw new Error('A private workspace is required.');
     if (this.backend === 'native') {
       return this._createNativeUdpSocket(socketOpts);
-    } else if (this.backend === 'cloud') {
-      return this._createCloudUdpSocket(socketOpts);
+
     } else {
       throw new Error('Call init() before creating sockets.');
     }
@@ -93,6 +82,7 @@ export class GameNetworkClient {
    * @param {number} port
    */
   async createTcpSocket(host, port) {
+    if (!isPrivateSessionActive()) throw new Error('A private workspace is required.');
     const relayBridge = getRelayBridge();
     if (this.backend === 'native' && relayBridge) {
       return await relayBridge.createTcpSocket(host, port);
@@ -130,74 +120,6 @@ export class GameNetworkClient {
     };
   }
 
-  // --- Internal Cloud Relay Implementation ---
-  async _createCloudUdpSocket(socketOpts) {
-    return new Promise((resolve, reject) => {
-      const ws = new WebSocket(this.options.cloudRelayUrl);
-      ws.binaryType = 'arraybuffer';
-
-      let messageListener = null;
-      let errorListener = null;
-      let closeListener = null;
-
-      ws.onopen = () => {
-        // Send initial open handshake
-        ws.send(JSON.stringify({
-          type: 'relay.open',
-          target: socketOpts.targetHost,
-          port: socketOpts.targetPort,
-          token: socketOpts.token || ''
-        }));
-      };
-
-      ws.onmessage = (event) => {
-        if (typeof event.data === 'string') {
-          try {
-            const ctrl = JSON.parse(event.data);
-            if (ctrl.type === 'relay.ready') {
-              resolve(wrapper);
-            } else if (ctrl.type === 'error') {
-              reject(new Error(ctrl.error || 'Cloud relay handshake failed'));
-            }
-          } catch (_) {}
-        } else if (event.data instanceof ArrayBuffer) {
-          if (messageListener) {
-            messageListener(new Uint8Array(event.data), {
-              address: socketOpts.targetHost,
-              port: socketOpts.targetPort
-            });
-          }
-        }
-      };
-
-      ws.onerror = (err) => {
-        if (errorListener) errorListener(err);
-        reject(err);
-      };
-
-      ws.onclose = () => {
-        if (closeListener) closeListener();
-      };
-
-      const wrapper = {
-        type: 'cloud-udp',
-        boundAddress: 'relay',
-        boundPort: 0,
-
-        onMessage(callback) { messageListener = callback; },
-        onError(callback) { errorListener = callback; },
-        onClose(callback) { closeListener = callback; },
-        send(data) {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(data);
-          }
-        },
-        close() {
-          try { ws.close(); } catch (_) {}
-        }
-      };
-    });
-  }
 }
 
 export default GameNetworkClient;
