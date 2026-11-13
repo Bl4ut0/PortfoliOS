@@ -19,8 +19,8 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT||'playwright');
    const frame=p.frameLocator('.web-browser-relay-frame');await frame.getByLabel('Search or enter address',{exact:true}).waitFor();
    await frame.getByTitle('More Options').click();await frame.getByRole('menuitem',{name:'Settings',exact:true}).click();await frame.getByRole('button',{name:'Proxy',exact:true}).click();
    await frame.getByRole('heading',{name:'Network connection',exact:true}).waitFor();
-   assert.equal(await frame.getByLabel('Wisp endpoint').count(),0);assert.equal(await frame.getByLabel('Proxy connection',{exact:true}).count(),0);
-   await frame.getByRole('button',{name:'Reconnect Native Relay',exact:true}).click();await frame.getByRole('status').filter({hasText:'Sandbox mode:'}).waitFor();
+   assert.equal(await frame.getByLabel('Wisp endpoint').isVisible(),false);assert.equal(await frame.getByLabel('Network transport').inputValue(),'relay');
+   await frame.getByRole('button',{name:'Apply connection',exact:true}).click();await frame.getByRole('status').filter({hasText:'Sandbox mode:'}).waitFor();
    assert.equal(await p.locator('[data-web-provider]').count(),1);
    const rejected=await frame.locator('html').evaluate(()=>new Promise(resolve=>{
     const receive=e=>{if(e.data?.requestId==='forbidden-network-mode'){window.removeEventListener('message',receive);resolve(e.data)}};
@@ -28,11 +28,21 @@ const {chromium}=require(process.env.PORTFOLIOS_PLAYWRIGHT||'playwright');
     parent.postMessage({source:'portfolios-browser',type:'configure',requestId:'forbidden-network-mode',config:{mode:'automatic',endpoint:'wss://forbidden.fixture/',remember:true}},location.origin);
    }));
    assert.match(rejected.error,/disabled/);assert.equal(rejected.config.mode,'relay');
+   await frame.getByLabel('Network transport').selectOption('custom');
+   await frame.getByLabel('Wisp endpoint').fill('https://invalid.fixture/');
+   await frame.getByRole('button',{name:'Apply connection',exact:true}).click();
+   await frame.getByRole('status').filter({hasText:'secure wss://'}).waitFor();
+   await frame.getByLabel('Wisp endpoint').fill('wss://user-relay.fixture/wisp/');
+   await frame.getByText('Remember this connection for my profile',{exact:true}).click();
+   await frame.getByRole('button',{name:'Apply connection',exact:true}).click();
+   await p.waitForFunction(()=>JSON.parse(localStorage.getItem('bl4ut0_private_network_fixture_BrowserProxy'))?.mode==='custom');
+   assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('bl4ut0_private_network_fixture_BrowserProxy')).endpoint),'wss://user-relay.fixture/wisp/');
+
 
    const hosted=await p.request.post(origin+'/apps/browser/hyperbeam.php',{data:{action:'start'}});assert.equal(hosted.status(),410);
    assert(!requests.some(u=>/sensible-ship|browser\.puter|mercurywork|hyperbeam|proxysite|hide\.me/.test(u)),'No fallback services should be contacted');
    assert.deepEqual(errors,[]);await p.evaluate(()=>testBrowser.destroy());await ctx.close();
   }
-  console.log('PASS: real Desktop/Mobile browser settings, legacy preference migration, missing-relay sandbox status, no external fallback requests, disabled hosted allocation and clean teardown.');
+  console.log('PASS: Desktop/Mobile Native Relay and explicit custom Wisp settings, invalid endpoint rejection, remembered custom configuration, no automatic fallback requests and disabled hosted allocation.');
  }finally{await browser?.close();php.kill()}
 })().catch(e=>{console.error(e);process.exitCode=1});

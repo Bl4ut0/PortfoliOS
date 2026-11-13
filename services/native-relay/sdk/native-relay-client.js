@@ -33,7 +33,9 @@ function isPrivateSessionActive() {
 }
 
 export class GameNetworkClient {
-  constructor() {
+  constructor(options = {}) {
+    this.mode = options.mode === 'custom' ? 'custom' : 'native';
+    this.endpoint = options.endpoint || '';
     this.backend = 'none'; // 'native' | 'none'
   }
 
@@ -48,6 +50,13 @@ export class GameNetworkClient {
       throw new Error('Network bridge features are restricted to private workspaces.');
     }
 
+    if (this.mode === 'custom') {
+      const endpoint = new URL(this.endpoint);
+      if (endpoint.protocol !== 'wss:' || endpoint.username || endpoint.password || endpoint.search || endpoint.hash) throw new Error('Use a secure wss:// endpoint for your compatible UDP relay without credentials or query parameters.');
+      this.endpoint = endpoint.href;
+      this.backend = 'custom';
+      return { backend: 'custom' };
+    }
     const relayBridge = getRelayBridge();
     if (relayBridge) {
       const isAvailable = await Promise.race([relayBridge.isAvailable(), new Promise(resolve => setTimeout(() => resolve(false), 2500))]);
@@ -59,7 +68,7 @@ export class GameNetworkClient {
     }
 
     this.backend = 'none';
-    throw new Error('Sandbox networking only. Install the Native Relay extension and local Host Bridge for raw TCP/UDP. No hosted relay fallback is provided.');
+    throw new Error('Sandbox networking only. Install the Native Relay extension and local Host Bridge, or explicitly configure your compatible UDP relay. No hosted relay fallback is provided.');
   }
 
   /**
@@ -70,7 +79,8 @@ export class GameNetworkClient {
     if (!isPrivateSessionActive()) throw new Error('A private workspace is required.');
     if (this.backend === 'native') {
       return this._createNativeUdpSocket(socketOpts);
-
+    } else if (this.backend === 'custom') {
+      return this._createCustomUdpSocket(socketOpts);
     } else {
       throw new Error('Call init() before creating sockets.');
     }
@@ -118,6 +128,34 @@ export class GameNetworkClient {
         return socket.close();
       }
     };
+  }
+
+  // Explicit user-selected WebSocket-to-UDP bridge protocol. This is not Wisp.
+  async _createCustomUdpSocket(socketOpts) {
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(this.endpoint); ws.binaryType = 'arraybuffer';
+      let ready = false, messageListener, errorListener, closeListener;
+      const fail = () => { clearTimeout(deadline); if (!ready) reject(new Error('Your UDP relay could not establish a session.')); try { ws.close(); } catch {} };
+      const deadline = setTimeout(fail, 10000);
+      const wrapper = {
+        type: 'custom-udp', boundAddress: 'user-relay', boundPort: 0,
+        onMessage(callback) { messageListener = callback; },
+        onError(callback) { errorListener = callback; },
+        onClose(callback) { closeListener = callback; },
+        send(data) { if (ws.readyState !== WebSocket.OPEN) throw new Error('Relay socket is closed.'); ws.send(data); },
+        close() { clearTimeout(deadline); ws.close(); }
+      };
+      ws.onopen = () => ws.send(JSON.stringify({ type: 'relay.open', target: socketOpts.targetHost, port: socketOpts.targetPort, token: socketOpts.token || '' }));
+      ws.onmessage = event => {
+        if (typeof event.data === 'string') {
+          let control; try { control = JSON.parse(event.data); } catch { return; }
+          if (control.type === 'relay.ready') { ready = true; clearTimeout(deadline); resolve(wrapper); }
+          else if (control.type === 'error') { errorListener?.(new Error('Your relay rejected the request.')); fail(); }
+        } else if (ready && event.data instanceof ArrayBuffer) messageListener?.(new Uint8Array(event.data), {address: socketOpts.targetHost, port: socketOpts.targetPort});
+      };
+      ws.onerror = () => { errorListener?.(new Error('Relay connection failed.')); fail(); };
+      ws.onclose = () => { clearTimeout(deadline); if (!ready) reject(new Error('Relay closed before session setup.')); closeListener?.(); };
+    });
   }
 
 }

@@ -35,6 +35,7 @@
         try {
             const config = JSON.parse(localStorage.getItem(connectionKey(id)));
             if (config?.mode === 'relay') return { mode: 'relay', endpoint: '', remember: true };
+            if (config?.mode === 'custom' && normalizeProxyEndpoint(config.endpoint)) return { mode: 'custom', endpoint: normalizeProxyEndpoint(config.endpoint), remember: true };
 
 
         } catch {}
@@ -52,7 +53,7 @@
                         <strong>PortfoliOS Native Relay</strong>
                         <span class="addon-banner-tag">Default Route</span>
                     </div>
-                    <p class="addon-banner-desc">Install both the extension and local Host Bridge to enable connections outside the browser sandbox. Traffic originates from your device; no hosted relay fallback is provided.</p>
+                    <p class="addon-banner-desc">Install both the extension and local Host Bridge, or configure your own compatible Wisp relay in browser settings. Traffic originates from your device; no hosted relay fallback is provided.</p>
                 </div>
                 <div class="addon-banner-actions">
                     <a href="https://chromewebstore.google.com/detail/portfolios-native-relay/jbdiopconacgbffkhpjpcafkckaapmgg" target="_blank" rel="noopener noreferrer" class="addon-btn addon-btn-primary" title="Open Chrome Web Store">
@@ -71,7 +72,7 @@
             <form class="web-browser-address" data-web-address-form><input data-web-address aria-label="Website address" autocomplete="off" spellcheck="false" inputmode="url" placeholder="Enter a website address"><button type="submit">Go</button></form>
             <nav class="web-browser-bookmarks" data-web-bookmarks aria-label="Website bookmarks"></nav>
             <div class="web-browser-message" data-web-message role="status" aria-live="polite"></div>
-            <section class="web-browser-chooser" data-web-chooser><button type="button" data-web-return hidden>Back to browser</button><h3>Network connection</h3><p>Install the Native Relay extension and local Host Bridge for connections outside the browser sandbox. PortfoliOS provides no hosted relay fallback.</p>
+            <section class="web-browser-chooser" data-web-chooser><button type="button" data-web-return hidden>Back to browser</button><h3>Network connection</h3><p>Use the Native Relay extension and local Host Bridge, or configure your own Wisp proxy in browser settings. Without either, network services are limited by the browser sandbox. PortfoliOS provides no hosted fallback.</p>
                 <div class="web-provider-list" role="group" aria-label="Browsing services">${providers.filter(p => !p.url).map(p => `<button type="button" class="web-provider" data-web-provider="${p.id}" aria-pressed="false"><i class="${p.icon}" aria-hidden="true"></i><span><strong>${p.name}</strong><small>${p.detail}</small>${p.id === 'hyperbeam' ? '<small data-web-quota>Checking availability…</small>' : ''}</span><span aria-hidden="true">›</span></button>`).join('')}</div>
                 <details class="web-browser-external" hidden><summary>External web proxy websites</summary><p>These sites block embedding and open separately.</p><div class="web-provider-list">${providers.filter(p => p.url).map(p => `<button type="button" class="web-provider" data-web-provider="${p.id}" aria-pressed="false"><span><strong>${p.name}</strong><small>${p.detail}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></details>
                 <label class="web-browser-remember"><input type="checkbox" data-web-remember> Remember my choice for this profile</label>
@@ -316,7 +317,7 @@
                 if (data.type === 'configure') {
                     const value = data.config;
                     const endpoint = value?.mode === 'custom' ? normalizeProxyEndpoint(value.endpoint) : '';
-                    if (value?.mode !== 'relay') error = 'Hosted and public relay connections are disabled. Install the local Native Relay.';
+                    if (!['relay','custom'].includes(value?.mode) || (value.mode === 'custom' && !endpoint)) error = 'Automatic relay discovery is disabled. Choose Native Relay or your own secure Wisp endpoint.';
                     else {
                         connection = { mode: value.mode, endpoint: value.mode === 'custom' ? endpoint : '', remember: value.remember === true };
                         try {

@@ -124,8 +124,14 @@ udp.send(packetUint8Array, 7777, 'ut2004.server.net');
 
 ## Browser sandbox mode (no installed relay)
 
-PortfoliOS does not provide or automatically select a paid relay, public Wisp relay, hosted browser, or central WebSocket-to-UDP fallback. Install and enable both the extension and local Host Bridge for raw TCP/UDP and native networking. Downloading the installer alone does not enable these capabilities.
+PortfoliOS does not provide or automatically select a paid relay, public Wisp relay, hosted browser, or central WebSocket-to-UDP fallback. Users may explicitly select their own compatible transport. Install and enable both the extension and local Host Bridge for native TCP/UDP, or explicitly configure a compatible user-owned relay for the relevant app. Downloading the installer alone does not enable these capabilities.
 
-Without that setup, apps remain subject to browser restrictions: normal HTTPS/CORS, allowed WebSockets and browser-supported WebRTC may work; raw sockets, incompatible website embedding and unsupported multiplayer protocols remain unavailable. CLI HTTPS requests may use browser fetch where the destination permits it. These restrictions do not block ordinary OS APIs such as Google Drive. With the relay active, destination traffic originates on the user's device and network, not PortfoliOS hosting.
+Without a configured supported transport, apps remain subject to browser restrictions: normal HTTPS/CORS, allowed WebSockets and browser-supported WebRTC may work; raw sockets, incompatible website embedding and unsupported multiplayer protocols remain unavailable. CLI HTTPS requests may use browser fetch where the destination permits it. These restrictions do not block ordinary OS APIs such as Google Drive. With the relay active, destination traffic originates on the user's device and network, not PortfoliOS hosting.
 
 Legacy cloudRelayUrl/preferNative SDK constructor options no longer enable fallback. A missing relay yields a setup-required error rather than opening a remote connection. The separate external origin-isolation service used by Browser.JS is not a hosted destination-traffic relay and remains a distinct compatibility dependency.
+
+## Explicit user-owned relay options
+
+Browser settings support a user-entered secure Wisp endpoint. There is no default endpoint or public relay list. The game SDK separately accepts `{mode: 'custom', endpoint: 'wss://your-server.example/relay'}` for its existing `relay.open` / `relay.ready` WebSocket-to-UDP protocol; this is not the Wisp protocol. Authentication tokens may be passed in socket options for that user-configured service, never embedded in the endpoint. Legacy cloudRelayUrl options alone do not turn fallback on. There is no silent transition between transports.
+
+VPN configuration belongs to the user's operating system; it can route the existing Native Relay/browser traffic. Generic HTTP/SOCKS proxies are not implemented by the Browser.JS Wisp field. The CLI does not inherit Browser.JS's transport selection automatically.
