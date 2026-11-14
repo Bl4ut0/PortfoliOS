@@ -2,19 +2,67 @@
  * PortfoliOS: Core Runtime Bridge & Secondary Connector Adapter
  * Integrates the PortfoliOS-Runtime secondary connectors (VFS Bridge, PTY Controller,
  * Network Proxy, Credentials Vault, and Process Harness) into the PortfoliOS desktop shell,
- * enabling native CLI applications to run inside the browser.
+ * exposing the browser-side adapter. Native CLI process execution remains a separate capability.
  */
 
 (function () {
   const activeSessions = new Map();
   let activePtySession = null;
+  const vaultSessions = new Map();
+  const credentialConsumers = {openai:'cli.codex',google:'cli.agy',anthropic:'cli.claude',xai:'cli.xai',github:'cli.git'};
+  const vaultChannel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('portfolios:vault-change') : null;
+  const vaultSender = crypto.randomUUID();
+  function vaultChanged() {
+    if (typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('portfolios:vault-status-changed'));
+  }
+  function getVault(profileId = window.state?.currentUserId) {
+    if (!isPrivateProfile(profileId) || profileId !== window.state?.currentUserId || window.state?.sessionChosen === false) throw new Error('Open the intended private workspace to access its vault.');
+    if (!window.CredentialVault) throw new Error('The credential vault service is unavailable.');
+    if (!vaultSessions.has(profileId)) {
+      const assert = () => { if (window.state?.currentUserId !== profileId || !isPrivateProfile(profileId)) throw new Error('Profile changed during vault access.'); };
+      const state = {writing:false,broker:null};
+      const readRecord = async () => {
+        assert();const record=await window.SystemFS.readFile('/documents/vault.enc');assert();
+        if(!record)return null;
+        const text=typeof record.data==='string'?record.data:await window.readFilesystemRecordText(record);assert();return {record,text};
+      };
+      state.broker=window.CredentialVault.create({profileId,isCurrent:()=>window.state?.currentUserId===profileId&&window.state?.sessionChosen!==false,
+        readRecord,
+        writeRecord:async(text,expected)=>{
+          assert();state.writing=true;
+          try {
+            // Scanning may change record metadata/revision without changing ciphertext.
+            // Rebase only identical encrypted bytes, then keep the atomic revision check.
+            const current=expected?await readRecord():null;
+            if(expected&&current?.text!==expected.text)throw new Error('The vault changed elsewhere. Unlock its latest version before saving.');
+            const record=await window.SystemFS.writeFile('/documents/vault.enc','vault.enc','/documents',text,undefined,'application/json',false,{...(current?{expectedRecord:current.record}:{expectedAbsent:true}),metadata:{kind:'encrypted-credentials',vaultVersion:2}});
+            assert();vaultChannel?.postMessage({profileId,sender:vaultSender});vaultChanged();return {record,text};
+          } catch(error) {state.broker.lock();throw error;} finally {state.writing=false;}
+        },
+        deleteRecord:async expected=>{assert();state.writing=true;try{await window.SystemFS.deleteFile('/documents/vault.enc',{expectedRecord:expected.record});assert();vaultChannel?.postMessage({profileId,sender:vaultSender});}finally{state.writing=false;}},
+        onRevoke:consumer=>{
+          window.cliAuthSessions?.clear?.();
+          for(const session of activeSessions.values())if(session.profileId===profileId&&session.activeProcess&&(!consumer||session.activeProcess.authConsumer===consumer)){session.activeProcess.abortController?.abort();session.activeProcess.engine?.terminate?.();}
+          vaultChanged();
+        }
+      });vaultSessions.set(profileId,state);
+    }
+    return vaultSessions.get(profileId).broker;
+  }
+  if(vaultChannel)vaultChannel.onmessage=({data})=>{if(data?.sender!==vaultSender&&data?.profileId===window.state?.currentUserId){vaultSessions.get(data.profileId)?.broker.lock();}};
+  window.EventBus?.on?.('fs:changed', event=>{
+    const state=vaultSessions.get(window.state?.currentUserId), path='/documents/vault.enc';
+    const changed=event?.path===path||event?.oldPath===path||event?.newPath===path||event?.restoredPath===path||
+      (event?.action==='deleteRecursive'&&event.path&&(event.path==='/'||path.startsWith(event.path+'/')));
+    if(state&&!state.writing&&changed)state.broker.lock();
+  });
 
   function isPrivateProfile(profileId) {
     if (!profileId) return false;
     if (typeof window.isPrivateUser === 'function') {
-      return window.isPrivateUser(profileId) || profileId === 'guest' || profileId === 'bl4ut0' || profileId === 'root';
+      return window.isPrivateUser(profileId);
     }
-    return true;
+    return false;
   }
 
   const AUTH_PATTERNS = [
@@ -192,10 +240,10 @@
     },
 
     getActiveSession() {
-      if (activePtySession) return activePtySession;
+      if (activePtySession?.active && activePtySession.profileId === window.state?.currentUserId) return activePtySession;
       const currentId = (typeof window !== 'undefined' && window.state?.currentUserId) || 'guest';
       if (activeSessions.has(currentId)) return activeSessions.get(currentId);
-      return activeSessions.values().next().value || null;
+      return null;
     },
 
     sendInput(data, profileId) {
@@ -212,7 +260,7 @@
      * VFS mount root is `/` with full access across `/`, `/home`, `/usr/local/bin`, `/etc`, `/tmp`, `/documents`.
      */
     async getOrCreateSession(profileId = window.state?.currentUserId || 'guest') {
-      if (!isPrivateProfile(profileId)) {
+      if (!isPrivateProfile(profileId) || profileId !== window.state?.currentUserId) {
         throw new Error('A valid PortfoliOS profile is required to launch native CLI containers.');
       }
 
@@ -228,76 +276,7 @@
         allowedPaths: ['/', '/home', '/usr/local/bin', '/etc', '/tmp', '/documents'],
         ptyOutputListeners: new Set(),
         ptyInputListeners: new Set(),
-        vaultTokens: new Map(),
-        vault: {
-          async saveToken(provider, tokenRec) {
-            session.vaultTokens.set(provider, tokenRec);
-            if (window.SystemFS && typeof window.SystemFS.writeFile === 'function') {
-              try {
-                await window.SystemFS.ensureDirectory('/etc/portfolios/vault', { silent: true });
-                await window.SystemFS.writeFile(
-                  `/etc/portfolios/vault/${provider}.json`,
-                  `${provider}.json`,
-                  '/etc/portfolios/vault',
-                  JSON.stringify(tokenRec, null, 2),
-                  undefined,
-                  'application/json'
-                );
-              } catch (_) {}
-            }
-          },
-          async getToken(provider) {
-            if (session.vaultTokens.has(provider)) {
-              return session.vaultTokens.get(provider);
-            }
-            if (window.SystemFS && typeof window.SystemFS.readFile === 'function') {
-              try {
-                const rec = await window.SystemFS.readFile(`/etc/portfolios/vault/${provider}.json`);
-                if (rec?.data) {
-                  const parsed = JSON.parse(String(rec.data));
-                  session.vaultTokens.set(provider, parsed);
-                  return parsed;
-                }
-              } catch (_) {}
-            }
-            return null;
-          },
-          lock() {
-            session.vaultTokens.clear();
-          },
-          async revokeToken(provider) {
-            session.vaultTokens.delete(provider);
-            if (window.SystemFS && typeof window.SystemFS.deleteFile === 'function') {
-              try { await window.SystemFS.deleteFile(`/etc/portfolios/vault/${provider}.json`); } catch (_) {}
-            }
-          },
-          async purge() {
-            session.vaultTokens.clear();
-            if (window.SystemFS) {
-              const providers = ['openai', 'google', 'anthropic', 'xai', 'github'];
-              for (const p of providers) {
-                try { await window.SystemFS.deleteFile?.(`/etc/portfolios/vault/${p}.json`); } catch (_) {}
-                try { await window.SystemFS.unlink?.(`/etc/portfolios/vault/${p}.json`); } catch (_) {}
-              }
-              try { await window.SystemFS.deleteFile?.('/documents/vault.enc'); } catch (_) {}
-              try { await window.SystemFS.unlink?.('/documents/vault.enc'); } catch (_) {}
-              try { await window.SystemFS.deleteFile?.('/documents/vault.enc.bak'); } catch (_) {}
-            }
-            return true;
-          },
-          async listProviders() {
-            const list = new Set(session.vaultTokens.keys());
-            if (window.SystemFS && typeof window.SystemFS.readDir === 'function') {
-              try {
-                const files = (await window.SystemFS.readDir('/etc/portfolios/vault')) || [];
-                for (const f of files) {
-                  if (f.name?.endsWith('.json')) list.add(f.name.replace('.json', ''));
-                }
-              } catch (_) {}
-            }
-            return Array.from(list);
-          }
-        },
+        vault: null,
         activeProcess: null,
 
         writeInput(data) {
@@ -380,10 +359,12 @@
 
         close() {
           this.active = false;
+          this.activeProcess?.abortController?.abort();
+          this.activeProcess?.engine?.terminate?.();
           this.activeProcess = null;
           this.ptyOutputListeners.clear();
           this.ptyInputListeners.clear();
-          this.vaultTokens.clear();
+
           if (activePtySession === this) {
             activePtySession = null;
           }
@@ -391,6 +372,23 @@
         }
       };
 
+      const broker=getVault(profileId);
+      session.vault={
+        async saveToken(provider,tokenRec,{consumer=credentialConsumers[provider]}={}) {
+          if(!session.active||profileId!==window.state?.currentUserId)throw new Error('Runtime session ended.');
+          return broker.save({provider,accountId:String(tokenRec.account||tokenRec.accountId||'default'),label:String(tokenRec.account||provider),secret:tokenRec,consumers:consumer?[consumer]:[]});
+        },
+        async getToken(provider,{consumer=credentialConsumers[provider]}={}) {
+          if(!session.active||profileId!==window.state?.currentUserId)throw new Error('Runtime session ended.');
+          if(!consumer||window.CredentialVault.consumers[consumer]!==provider)throw new Error('Subsystem cannot use this provider.');
+          const lease=broker.acquire(consumer);try{return lease.read();}finally{lease.release();}
+        },
+        lock:()=>broker.lock(),
+        listProviders:async()=>[...new Set(broker.list().map(c=>c.provider))],
+        revokeToken:async(provider,{consumer=credentialConsumers[provider]}={})=>{await broker.unlink(consumer);},
+        purge:()=>broker.purge()
+      };
+      Object.defineProperty(session,'vaultTokens',{get:()=>new Map(broker.isUnlocked?broker.list().map(c=>[c.provider,{id:c.id,account:c.accountId}]):[])});
       activeSessions.set(profileId, session);
       return session;
     },
@@ -415,11 +413,8 @@
         if (cmd === 'git-credential-portfolios' || cmd.endsWith('/git-credential-portfolios')) {
           const action = args[0] || 'get';
           if (action === 'get') {
-            const ghToken = await session.vault.getToken('github');
-            if (ghToken?.accessToken) {
-              session.emitOutput(`protocol=https\r\nhost=github.com\r\nusername=git\r\npassword=${ghToken.accessToken}\r\n`);
-            }
-            return { exitCode: 0 };
+            session.emitOutput('Credential delivery requires the scoped native Git connector; secrets are not printed in terminal output.\r\n');
+            return {exitCode:1};
           }
           return { exitCode: 0 };
         }
@@ -624,303 +619,88 @@
     }
   };
 
-  function uint8ToBase64(bytes) {
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from(bytes).toString('base64');
-    }
-    if (typeof globalThis.Buffer !== 'undefined') {
-      return globalThis.Buffer.from(bytes).toString('base64');
-    }
-    const encodeFn = typeof btoa === 'function' ? btoa : (typeof globalThis.btoa === 'function' ? globalThis.btoa : null);
-    if (!encodeFn) throw new Error('Base64 encoder unavailable.');
-    let binary = '';
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return encodeFn(binary);
-  }
-
-  function base64ToUint8(base64) {
-    if (typeof Buffer !== 'undefined') {
-      return new Uint8Array(Buffer.from(base64, 'base64'));
-    }
-    if (typeof globalThis.Buffer !== 'undefined') {
-      return new Uint8Array(globalThis.Buffer.from(base64, 'base64'));
-    }
-    const decodeFn = typeof atob === 'function' ? atob : (typeof globalThis.atob === 'function' ? globalThis.atob : null);
-    if (!decodeFn) throw new Error('Base64 decoder unavailable.');
-    const binary = decodeFn(base64);
-    const len = binary.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  }
-
-  async function sha256Hex(bytes) {
-    const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
-    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  function validateVaultPassword(password) {
-    if (typeof password !== 'string') {
-      return { valid: false, errors: ['Password must be a string.'], entropyBits: 0 };
-    }
-    const errors = [];
-    if (password.length < 14) {
-      errors.push('Password must be at least 14 characters long.');
-    }
-    if (!/[a-z]/.test(password)) {
-      errors.push('Password must contain at least one lowercase letter.');
-    }
-    if (!/[A-Z]/.test(password)) {
-      errors.push('Password must contain at least one uppercase letter.');
-    }
-    if (!/[0-9]/.test(password)) {
-      errors.push('Password must contain at least one number.');
-    }
-    if (!/[^a-zA-Z0-9]/.test(password)) {
-      errors.push('Password must contain at least one special character or symbol.');
-    }
-    if (/(.)\1{3,}/.test(password)) {
-      errors.push('Password must not contain 4 or more repeating characters.');
-    }
-    const common = ['password', '12345678', 'admin1234', 'qwertyuiop', 'portfolios'];
-    const lower = password.toLowerCase();
-    for (const word of common) {
-      if (lower.includes(word)) {
-        errors.push(`Password must not contain common word '${word}'.`);
-        break;
-      }
-    }
-    let pool = 0;
-    if (/[a-z]/.test(password)) pool += 26;
-    if (/[A-Z]/.test(password)) pool += 26;
-    if (/[0-9]/.test(password)) pool += 10;
-    if (/[^a-zA-Z0-9]/.test(password)) pool += 32;
-    const entropyBits = Math.round(password.length * Math.log2(pool || 1));
-    if (entropyBits < 60) {
-      errors.push(`Password entropy is too low (${entropyBits} bits). Minimum required: 60 bits.`);
-    }
-    return { valid: errors.length === 0, errors, entropyBits };
-  }
-
   window.PortfoliOSVault = {
-    validatePassword(password) {
-      return validateVaultPassword(password);
+    validatePassword:password=>window.CredentialVault.validatePassword(password),
+    getStatus:()=>getVault().status(),
+    lock(){for(const state of vaultSessions.values())state.broker.lock();vaultChanged();},
+    async purgeAndReset(){const result=await getVault().purge();vaultChanged();return result;},
+    unlockWithPassphrase:async password=>{const result=await getVault().unlock(password);vaultChanged();return result;},
+    initWithPassphrase:async password=>{const result=await getVault().initialize(password);vaultChanged();return result;},
+    listAccounts:()=>getVault().list(),
+    getBinding:consumer=>getVault().binding(consumer),
+    acquire:consumer=>getVault().acquire(consumer),
+    link:(id,consumer)=>getVault().link(id,consumer),
+    unlink:consumer=>getVault().unlink(consumer),
+    removeUnused:id=>getVault().removeUnused(id),
+    checkpoint:()=>getVault().checkpoint(),
+    importCodex:async text=>getVault().save({...window.CredentialVault.parseCodex(text),consumers:['cli.codex']}),
+    async migrateLegacyKeyring(){
+      const owner=window.state.currentUserId, broker=getVault(owner);if(!broker.isUnlocked)throw new Error('Unlock the vault first.');
+      let moved=0;
+      for(const provider of Object.keys(credentialConsumers)){
+        if(owner!==window.state.currentUserId)throw new Error('Profile changed during migration.');
+        const path='/etc/portfolios/vault/'+provider+'.json',record=await window.SystemFS.readFile(path);if(!record)continue;
+        const text=typeof record.data==='string'?record.data:await window.readFilesystemRecordText(record);
+        let secret;try{secret=JSON.parse(text);}catch{throw new Error('Legacy keyring contains invalid JSON. No unsaved record was deleted.');}
+        if(secret.profileId!==owner)throw new Error('Legacy login has no matching private-profile owner. Import a selected provider login file instead.');
+        await broker.save({provider,accountId:String(secret.account||provider),label:String(secret.account||provider),secret,consumers:[credentialConsumers[provider]]});
+        if(owner!==window.state.currentUserId)throw new Error('Profile changed during migration.');
+        await window.SystemFS.deleteFile(path,{expectedRecord:record});moved++;
+      }return {moved};
     },
-
-    async getStatus() {
-      const session = await window.PortfoliOSRuntimeBridge.getOrCreateSession();
-      const providers = await session.vault.listProviders();
-      let hasEncrypted = false;
-      if (window.SystemFS && typeof window.SystemFS.readFile === 'function') {
-        try {
-          const rec = await window.SystemFS.readFile('/documents/vault.enc');
-          hasEncrypted = Boolean(rec && !rec.isDirectory);
-        } catch (_) {}
-      }
-      return {
-        isLocked: session.vaultTokens.size === 0 && (providers.length > 0 || hasEncrypted),
-        providers,
-        hasEncryptedBackup: hasEncrypted,
-        tokenCount: session.vaultTokens.size
-      };
-    },
-
-    lock() {
-      for (const s of activeSessions.values()) {
-        if (s?.vault) s.vault.lock();
-      }
-      if (typeof window.dispatchEvent === 'function') {
-        window.dispatchEvent(new CustomEvent('portfolios:vault-status-changed', {
-          detail: { locked: true, action: 'lock' }
-        }));
-      }
-    },
-
-    async purgeAndReset() {
-      for (const s of activeSessions.values()) {
-        if (s?.vault) await s.vault.purge();
-      }
-      const session = await window.PortfoliOSRuntimeBridge.getOrCreateSession();
-      if (session?.vault) {
-        await session.vault.purge();
-      }
-      if (window.cliAuthSessions && typeof window.cliAuthSessions.clear === 'function') {
-        window.cliAuthSessions.clear();
-      }
-      if (typeof window.dispatchEvent === 'function') {
-        window.dispatchEvent(new CustomEvent('portfolios:vault-status-changed', {
-          detail: { locked: false, purged: true, action: 'purge' }
-        }));
-      }
-      return { success: true };
-    },
-
-    async unlockWithPassphrase(password) {
-      if (!password || typeof password !== 'string') {
-        throw new Error('Master passphrase is required.');
-      }
-      let fileRec = null;
-      if (window.SystemFS && typeof window.SystemFS.readFile === 'function') {
-        try {
-          fileRec = await window.SystemFS.readFile('/documents/vault.enc');
-        } catch (_) {}
-      }
-      if (!fileRec || !fileRec.data) {
-        throw new Error("Encrypted vault envelope ('/documents/vault.enc') not found.");
-      }
-
-      const envelope = typeof fileRec.data === 'string' ? JSON.parse(fileRec.data) : JSON.parse(new TextDecoder().decode(fileRec.data));
-      if (!envelope || envelope.format !== 'portfolios-zk-vault') {
-        throw new Error('Invalid vault envelope format. Expected portfolios-zk-vault.');
-      }
-
-      const salt = base64ToUint8(envelope.kdf.salt);
-      const iv = base64ToUint8(envelope.cipher.iv);
-      const ciphertext = base64ToUint8(envelope.ciphertext);
-
-      const calculatedChecksum = await sha256Hex(ciphertext);
-      if (envelope.checksum && envelope.checksum !== calculatedChecksum) {
-        throw new Error('Vault transport checksum mismatch: payload was corrupted or modified.');
-      }
-
-      const encoder = new TextEncoder();
-      const baseKey = await globalThis.crypto.subtle.importKey(
-        'raw',
-        encoder.encode(password),
-        'PBKDF2',
-        false,
-        ['deriveKey']
-      );
-      const key = await globalThis.crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt, iterations: envelope.kdf.iterations, hash: 'SHA-512' },
-        baseKey,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['decrypt']
-      );
-
-      let decryptedBuf;
-      try {
-        decryptedBuf = await globalThis.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-      } catch (_) {
-        throw new Error('Incorrect master passphrase or corrupted authentication tag.');
-      }
-
-      const data = JSON.parse(new TextDecoder('utf-8').decode(decryptedBuf));
-      const restored = [];
-      const session = await window.PortfoliOSRuntimeBridge.getOrCreateSession();
-
-      if (data && data.tokens) {
-        for (const [provider, tokenRec] of Object.entries(data.tokens)) {
-          await session.vault.saveToken(provider, tokenRec);
-          restored.push(provider);
+    showAccountsModal() {
+      const owner=window.state?.currentUserId;getVault(owner);
+      const existing=document.querySelector('[data-vault-accounts]');if(existing){existing.focus();return;}
+      const dialog=document.createElement('dialog');dialog.className='vault-accounts';dialog.dataset.vaultAccounts='';dialog.setAttribute('aria-label','Saved tool logins');
+      dialog.innerHTML='<header><h2>Saved tool logins</h2><button type="button" data-close aria-label="Close saved logins">Close</button></header><p>Logins stay encrypted in your private vault. Each subsystem chooses a saved account. Closing an app does not delete its saved login.</p><p data-status role="status" aria-live="polite"></p><div class="vault-account-actions"><button data-setup>Set up vault</button><button data-unlock>Unlock vault</button><label>Import Codex login JSON<input data-import type="file" accept=".json,application/json"></label><button data-migrate>Move legacy keyring into vault</button></div><p>Import reads the selected file directly into encrypted storage; it does not upload it or save a plaintext SystemFS copy. A saved login is not proof of live CLI authentication.</p><div data-accounts></div>';
+      const events=new AbortController(), find=q=>dialog.querySelector(q), message=text=>{if(dialog.isConnected&&owner===window.state?.currentUserId)find('[data-status]').textContent=text;};
+      const run=fn=>async event=>{const target=event?.currentTarget;try{if(target)target.disabled=true;await fn();await render();}catch(error){message(error.message);}finally{if(target)target.disabled=false;}};
+      const close=()=>dialog.close();
+      const button=(text,fn)=>{const node=document.createElement('button');node.type='button';node.textContent=text;node.addEventListener('click',run(fn),{signal:events.signal});return node;};
+      async function render(){
+        if(owner!==window.state?.currentUserId){close();return;}
+        const state=await getVault(owner).status();if(!dialog.isConnected||owner!==window.state?.currentUserId)return;
+        find('[data-import]').disabled=state.isLocked;find('[data-migrate]').disabled=state.isLocked;
+        find('[data-setup]').hidden=state.initialized;find('[data-unlock]').hidden=!state.initialized||!state.isLocked;
+        const list=find('[data-accounts]');list.replaceChildren();
+        if(state.isLocked){message(state.initialized?'Vault locked. Unlock once to access saved accounts.':'Set a master passphrase before saving logins.');return;}
+        message(state.credentials.length+' saved login(s). Unused logins are retained until you choose Remove.');
+        for(const entry of state.credentials){
+          const card=document.createElement('section');card.className='vault-account-card';
+          const title=document.createElement('h3');title.textContent=entry.label;card.append(title);
+          const details=document.createElement('p');details.textContent=entry.provider+' · '+entry.accountId;card.append(details);
+          const select=document.createElement('select');select.setAttribute('aria-label','Subsystem for '+entry.label);
+          for(const [consumer,provider]of Object.entries(window.CredentialVault.consumers))if(provider===entry.provider){const option=document.createElement('option');option.value=consumer;option.textContent=consumer;select.append(option);}
+          card.append(select,button('Link selected subsystem',()=>window.PortfoliOSVault.link(entry.id,select.value)));
+          for(const consumer of entry.consumers)card.append(button('Unlink '+consumer,()=>window.PortfoliOSVault.unlink(consumer)));
+          if(!entry.consumers.length){
+            const note=document.createElement('p');note.textContent='Unused by saved subsystem links. You may keep it for later or remove it.';card.append(note);
+            const remove=document.createElement('button');remove.type='button';remove.textContent='Remove unused login';
+            remove.addEventListener('click',()=>{
+              remove.hidden=true;
+              card.append(button('Confirm removal',()=>window.PortfoliOSVault.removeUnused(entry.id)),button('Keep login',async()=>{}));
+            },{signal:events.signal});card.append(remove);
+          }
+          list.append(card);
         }
       }
-
-      if (typeof window.dispatchEvent === 'function') {
-        window.dispatchEvent(new CustomEvent('portfolios:vault-status-changed', {
-          detail: { locked: false, unlocked: true, restored, action: 'unlock' }
-        }));
-      }
-
-      return { success: true, restored };
+      const refresh=()=>{void render().catch(error=>message(error.message));};
+      find('[data-close]').addEventListener('click',close,{signal:events.signal});
+      find('[data-setup]').addEventListener('click',()=>{close();window.PortfoliOSVault.showSetupModal({onComplete:()=>window.PortfoliOSVault.showAccountsModal()});},{signal:events.signal});
+      find('[data-unlock]').addEventListener('click',()=>{close();window.PortfoliOSVault.showUnlockModal({onUnlock:()=>window.PortfoliOSVault.showAccountsModal()});},{signal:events.signal});
+      find('[data-migrate]').addEventListener('click',run(()=>window.PortfoliOSVault.migrateLegacyKeyring()),{signal:events.signal});
+      find('[data-import]').addEventListener('change',run(async()=>{
+        const input=find('[data-import]'),file=input.files?.[0];if(!file)return;
+        try{if(file.size>256*1024)throw new Error('Credential file exceeds the size limit.');await window.PortfoliOSVault.importCodex(await file.text());}finally{input.value='';}
+      }),{signal:events.signal});
+      window.addEventListener('portfolios:vault-status-changed',refresh,{signal:events.signal});
+      dialog.addEventListener('close',()=>{find('[data-import]').value='';events.abort();dialog.remove();},{once:true});
+      document.body.append(dialog);dialog.showModal();refresh();
     },
-
-    async initWithPassphrase(password) {
-      const validation = validateVaultPassword(password);
-      if (!validation.valid) {
-        throw new Error(validation.errors.join(' '));
-      }
-
-      const session = await window.PortfoliOSRuntimeBridge.getOrCreateSession();
-      const tokens = {};
-      for (const [p, tok] of session.vaultTokens.entries()) {
-        tokens[p] = tok;
-      }
-
-      if (window.SystemFS && typeof window.SystemFS.readDir === 'function') {
-        try {
-          const files = (await window.SystemFS.readDir('/etc/portfolios/vault')) || [];
-          for (const f of files) {
-            if (f.name?.endsWith('.json')) {
-              const rec = await window.SystemFS.readFile(f.path);
-              if (rec?.data) {
-                tokens[f.name.replace('.json', '')] = JSON.parse(String(rec.data));
-              }
-            }
-          }
-        } catch (_) {}
-      }
-
-      const salt = globalThis.crypto.getRandomValues(new Uint8Array(32));
-      const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
-      const encoder = new TextEncoder();
-      const baseKey = await globalThis.crypto.subtle.importKey(
-        'raw',
-        encoder.encode(password),
-        'PBKDF2',
-        false,
-        ['deriveKey']
-      );
-      const key = await globalThis.crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-512' },
-        baseKey,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['encrypt']
-      );
-
-      const payload = {
-        version: 1,
-        profileId: window.state?.currentUserId || 'guest',
-        tokens,
-        exportedAt: Date.now()
-      };
-      const plaintext = encoder.encode(JSON.stringify(payload));
-      const cipherBuf = await globalThis.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
-      const cipherBytes = new Uint8Array(cipherBuf);
-
-      const checksum = await sha256Hex(cipherBytes);
-      const envelope = {
-        version: 1,
-        format: 'portfolios-zk-vault',
-        kdf: { algorithm: 'PBKDF2', hash: 'SHA-512', iterations: 600000, salt: uint8ToBase64(salt) },
-        cipher: { algorithm: 'AES-256-GCM', iv: uint8ToBase64(iv), tagLength: 128 },
-        ciphertext: uint8ToBase64(cipherBytes),
-        checksum,
-        exportedAt: Date.now()
-      };
-
-      if (window.SystemFS) {
-        await window.SystemFS.ensureDirectory?.('/documents', { silent: true });
-        await window.SystemFS.writeFile?.(
-          '/documents/vault.enc',
-          'vault.enc',
-          '/documents',
-          JSON.stringify(envelope, null, 2),
-          undefined,
-          'application/json'
-        );
-      }
-
-      if (typeof window.dispatchEvent === 'function') {
-        window.dispatchEvent(new CustomEvent('portfolios:vault-status-changed', {
-          detail: { locked: false, initialized: true, action: 'init' }
-        }));
-      }
-
-      return { success: true };
-    },
-
     closeModal() {
       if (typeof document === 'undefined') return;
       const backdrop = document.getElementById('vault-modal-backdrop');
-      if (backdrop) backdrop.style.display = 'none';
+      if (backdrop) {backdrop.style.display = 'none';for(const input of backdrop.querySelectorAll('input'))input.value='';}
     },
 
     showUnlockModal(options = {}) {
@@ -964,10 +744,12 @@
         }
 
         const cleanup = () => {
-          backdrop.style.display = 'none';
+          window.PortfoliOSVault.closeModal();
         };
 
+        let pending = false, cancelled = false;
         const doUnlock = async () => {
+          if (pending || cancelled) return;
           const pass = passInput?.value || '';
           if (!pass) {
             if (errBox) {
@@ -982,12 +764,16 @@
           }
           if (errBox) errBox.hidden = true;
 
+          pending = true;
           try {
             const res = await window.PortfoliOSVault.unlockWithPassphrase(pass);
+            if (cancelled) return;
             cleanup();
             if (typeof options.onUnlock === 'function') options.onUnlock(res);
             resolve(res);
           } catch (err) {
+            pending = false;
+            if (cancelled) return;
             if (submitBtn) {
               submitBtn.disabled = false;
               submitBtn.innerHTML = '<i class="fa-solid fa-unlock"></i> Unlock Vault';
@@ -1010,6 +796,8 @@
         }
         if (cancelBtn) {
           cancelBtn.onclick = () => {
+            cancelled = true;
+            if (pending) getVault().lock();
             cleanup();
             if (typeof options.onCancel === 'function') options.onCancel();
             resolve({ success: false, cancelled: true });
@@ -1017,6 +805,8 @@
         }
         if (purgeLink) {
           purgeLink.onclick = () => {
+            cancelled = true;
+            if (pending) getVault().lock();
             window.PortfoliOSVault.showPurgeModal(options).then(resolve).catch(reject);
           };
         }
@@ -1058,7 +848,8 @@
           confirmInput.value = '';
           confirmInput.focus();
         }
-        if (purgeSubmit) purgeSubmit.disabled = true;
+        if (purgeSubmit) { purgeSubmit.disabled = true; purgeSubmit.innerHTML = '<i class="fa-solid fa-trash-can"></i> Purge vault &amp; reset'; }
+        if (purgeCancel) purgeCancel.disabled = false;
         if (purgeErr) purgeErr.hidden = true;
 
         if (confirmInput && purgeSubmit) {
@@ -1068,7 +859,7 @@
         }
 
         const cleanup = () => {
-          backdrop.style.display = 'none';
+          window.PortfoliOSVault.closeModal();
         };
 
         if (purgeCancel) {
@@ -1081,7 +872,9 @@
 
         if (purgeSubmit) {
           purgeSubmit.onclick = async () => {
+            if (confirmInput?.value.trim() !== 'PURGE') return;
             purgeSubmit.disabled = true;
+            if (purgeCancel) purgeCancel.disabled = true;
             purgeSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Purging...';
             try {
               await window.PortfoliOSVault.purgeAndReset();
@@ -1090,6 +883,7 @@
               resolve({ success: true, purged: true });
             } catch (err) {
               purgeSubmit.disabled = false;
+              if (purgeCancel) purgeCancel.disabled = false;
               purgeSubmit.innerHTML = '<i class="fa-solid fa-trash-can"></i> Purge All Credentials & Reset';
               if (purgeErr) {
                 purgeErr.textContent = `Purge failed: ${err.message}`;
@@ -1118,8 +912,6 @@
         const eyeBtn = document.getElementById('vault-setup-toggle-eye');
 
         const reqLen = document.getElementById('vreq-len');
-        const reqMix = document.getElementById('vreq-mix');
-        const reqEnt = document.getElementById('vreq-ent');
         const reqMatch = document.getElementById('vreq-match');
 
         if (!backdrop || !viewSetup) {
@@ -1132,7 +924,7 @@
         if (viewUnlock) viewUnlock.style.display = 'none';
         if (viewPurge) viewPurge.style.display = 'none';
 
-        if (pass1) { pass1.value = ''; pass1.focus(); }
+        if (pass1) { pass1.value = ''; pass1.type = 'password'; pass1.focus(); }
         if (pass2) pass2.value = '';
         if (submitBtn) submitBtn.disabled = true;
         if (errBox) errBox.hidden = true;
@@ -1140,27 +932,15 @@
         const updateCriteria = () => {
           const val1 = pass1?.value || '';
           const val2 = pass2?.value || '';
-          const validation = validateVaultPassword(val1);
+          const validation = window.CredentialVault.validatePassword(val1);
 
           const hasLen = val1.length >= 14;
-          const hasMix = /[a-z]/.test(val1) && /[A-Z]/.test(val1) && /[0-9]/.test(val1) && /[^a-zA-Z0-9]/.test(val1);
-          const hasEnt = validation.entropyBits >= 60;
           const hasMatch = val1.length > 0 && val1 === val2;
 
           if (reqLen) {
             reqLen.className = `vault-req ${hasLen ? 'met' : ''}`;
             const icon = reqLen.querySelector('i');
             if (icon) icon.className = hasLen ? 'fa-solid fa-check-circle' : 'fa-regular fa-circle';
-          }
-          if (reqMix) {
-            reqMix.className = `vault-req ${hasMix ? 'met' : ''}`;
-            const icon = reqMix.querySelector('i');
-            if (icon) icon.className = hasMix ? 'fa-solid fa-check-circle' : 'fa-regular fa-circle';
-          }
-          if (reqEnt) {
-            reqEnt.className = `vault-req ${hasEnt ? 'met' : ''}`;
-            const icon = reqEnt.querySelector('i');
-            if (icon) icon.className = hasEnt ? 'fa-solid fa-check-circle' : 'fa-regular fa-circle';
           }
           if (reqMatch) {
             reqMatch.className = `vault-req ${hasMatch ? 'met' : ''}`;
@@ -1184,12 +964,15 @@
           };
         }
 
+        let pending = false, cancelled = false;
         const cleanup = () => {
-          backdrop.style.display = 'none';
+          window.PortfoliOSVault.closeModal();
         };
 
         if (cancelBtn) {
           cancelBtn.onclick = () => {
+            cancelled = true;
+            if (pending) getVault().lock();
             cleanup();
             if (typeof options.onCancel === 'function') options.onCancel();
             resolve({ success: false, cancelled: true });
@@ -1198,15 +981,20 @@
 
         if (submitBtn) {
           submitBtn.onclick = async () => {
+            if (pending || cancelled) return;
+            pending = true;
             const pass = pass1?.value || '';
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Initializing...';
             try {
               const res = await window.PortfoliOSVault.initWithPassphrase(pass);
+              if (cancelled) return;
               cleanup();
               if (typeof options.onComplete === 'function') options.onComplete(res);
               resolve(res);
             } catch (err) {
+              pending = false;
+              if (cancelled) return;
               submitBtn.disabled = false;
               submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Initialize Vault';
               if (errBox) {
@@ -1220,10 +1008,12 @@
     }
   };
 
-  // Bind to profile switch events if window.addEventListener is available
-  if (typeof window.addEventListener === 'function') {
-    window.addEventListener('portfolios:profile-switched', () => {
-      window.PortfoliOSRuntimeBridge.closeAll();
-    });
-  }
+  const revokeProfile=()=>{
+    window.PortfoliOSRuntimeBridge.closeAll();
+    for(const state of vaultSessions.values())state.broker.close();vaultSessions.clear();
+    window.PortfoliOSVault.closeModal();
+    document.querySelector?.('[data-vault-accounts]')?.close();
+  };
+  window.EventBus?.on?.('user:changed',revokeProfile);
+  if(typeof window.addEventListener==='function')window.addEventListener('pagehide',revokeProfile);
 })();

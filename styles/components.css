@@ -6395,3 +6395,7 @@ dialog[data-desktop-folder-dialog] { width: min(28rem, 90vw); padding: 0; }
 .vault-link-btn:hover {
     color: #ef4444;
 }
+
+/* Profile-scoped encrypted credential account manager. */
+.vault-accounts{box-sizing:border-box;width:min(720px,92vw);max-height:85dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--line-strong);border-radius:var(--radius);padding:1.25rem}
+.vault-accounts::backdrop{background:#0009}.vault-accounts header,.vault-account-actions{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}.vault-accounts header h2{flex:1}.vault-accounts p{line-height:1.5;overflow-wrap:anywhere}.vault-accounts button,.vault-accounts select,.vault-accounts input{font:inherit;background:var(--surface-raised);color:var(--text);border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:.55rem;max-width:100%}.vault-account-card{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}.vault-account-card button{margin:.25rem}.vault-accounts [hidden]{display:none!important}

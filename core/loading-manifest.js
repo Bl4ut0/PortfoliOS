@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.11.12.1";
+    const release = "2026.11.14.1";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "core/app-icons.js", "data/systems.js", "data/apps.js",
@@ -51,10 +51,10 @@
             filmcraft: ["@craft"],
             effectcraft: ["@craft"],
 
-            codex: ["@ai", "core/runtime-bridge.js", "desktop/terminal.js", "core/codex-preview.js"],
-            cli: ["@ai", "core/runtime-bridge.js", "desktop/terminal.js", "desktop/brain-helper.js"],
+            codex: ["@ai", "core/credential-vault.js", "core/runtime-bridge.js", "desktop/terminal.js", "core/codex-preview.js"],
+            cli: ["@ai", "core/credential-vault.js", "core/runtime-bridge.js", "desktop/terminal.js", "desktop/brain-helper.js"],
             "local-ai": ["@ai", "desktop/brain-helper.js"],
-            settings: ["@ai", "desktop/settings.js", "desktop/brain-helper.js"],
+            settings: ["@ai", "core/credential-vault.js", "core/runtime-bridge.js", "desktop/settings.js", "desktop/brain-helper.js"],
             dossier: ["desktop/dossier.js"], network: ["desktop/network-map.js"],
             linux: ["desktop/linux.js"], browser: ["@browser", "desktop/browser.js"], store: ["desktop/store.js"],
             files: ["@media", "@sysinfo"], about: ["@sysinfo"], musicmini: ["@media"], imageviewer: ["@media"],

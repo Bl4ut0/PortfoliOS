@@ -13,11 +13,15 @@ window.SystemFS = {
         return userId === "private" || /^private_[a-zA-Z0-9_-]+$/.test(userId || "") ? "/.workspaces/" + userId : "";
     },
 
+    isCredentialPath(path) { return path === '/etc/portfolios/vault' || path.startsWith('/etc/portfolios/vault/'); },
+
     isSharedPath(path) {
+        if (this.isCredentialPath(path)) return false;
         return ["/apps", "/ROMs", "/etc", "/home"].some(root => path === root || path.startsWith(root + "/"));
     },
 
     storagePath(path, prefix = this.workspacePrefix()) {
+        if (this.isCredentialPath(path) && !prefix) throw new Error('Credentials require a private workspace.');
         if (path.startsWith("/.workspaces")) throw new Error("Workspace storage paths are internal.");
         const publicGuest = window.state?.currentUserId === "bl4ut0" && (path === "/home/guest" || path.startsWith("/home/guest/"));
         if (!publicGuest && path.startsWith("/home/") && !path.startsWith("/home/" + (window.state?.currentUserId || "bl4ut0") + "/") && path !== "/home/" + (window.state?.currentUserId || "bl4ut0")) {
@@ -29,6 +33,8 @@ window.SystemFS = {
 
     visibleRecord(record, prefix = this.workspacePrefix()) {
         if (!record) return null;
+        // Old unscoped keyring files have no attributable owner; never expose them to another profile.
+        if (this.isCredentialPath(record.path)) return null;
         if (record.path.startsWith('/.public/')) {
             if (prefix) return null;
             return { ...record, path:record.path.slice('/.public'.length), parent:record.parent.slice('/.public'.length) || '/' };
@@ -207,7 +213,7 @@ window.SystemFS = {
             const path = cursor.value.path;
             const publicHome = ['/home/bl4ut0', '/home/guest'].some(root => path === root || path.startsWith(root + '/'));
             const publicRom = path === '/.public' || path.startsWith('/.public/');
-            if (publicHome || publicRom || (!path.startsWith('/.') && !this.isSharedPath(path))) cursor.delete();
+            if (!this.isCredentialPath(path) && (publicHome || publicRom || (!path.startsWith('/.') && !this.isSharedPath(path)))) cursor.delete();
             cursor.continue();
         };
         await done;
@@ -270,7 +276,7 @@ window.SystemFS = {
                     copy = { ...record, path: record.path.replace(home, "/home/" + toId), parent: record.parent.replace(home, "/home/" + toId) };
                 } else if (record.path.startsWith(workspace + "/")) {
                     copy = { ...record, path: record.path.replace(workspace, "/.workspaces/" + toId), parent: record.parent.replace(workspace, "/.workspaces/" + toId) };
-                } else if (fromId === "private" && !record.path.startsWith("/.") && !this.isSharedPath(record.path)) {
+                } else if (fromId === "private" && !record.path.startsWith("/.") && !this.isCredentialPath(record.path) && !this.isSharedPath(record.path)) {
                     copy = { ...record, path: "/.workspaces/" + toId + record.path, parent: "/.workspaces/" + toId + (record.parent === "/" ? "" : record.parent) };
                 }
                 if (copy) {
@@ -297,7 +303,7 @@ window.SystemFS = {
                 const cursor = request.result;
                 if (!cursor) return;
                 const record = cursor.value;
-                if (!record.path.startsWith("/.") && !this.isSharedPath(record.path)) {
+                if (!record.path.startsWith("/.") && !this.isCredentialPath(record.path) && !this.isSharedPath(record.path)) {
                     const copy = { ...record, path: "/.workspaces/private" + record.path, parent: "/.workspaces/private" + (record.parent === "/" ? "" : record.parent) };
                     const existing = store.get(copy.path);
                     existing.onsuccess = () => { if (!existing.result) store.put(copy); };
@@ -903,6 +909,7 @@ window.SystemFS = {
 
     canBrowsePath(path) {
         if (!path || path === "/") return true;
+        if (this.isCredentialPath(path)) return false;
         const parts = path.split("/").filter(Boolean);
         if (parts.some((p) => p.startsWith("."))) return false;
         return !this.isSharedPath(path) || ["/documents", "/Pictures", "/Downloads", "/music", "/Saved Games"].some(root => path === root || path.startsWith(root + "/"));

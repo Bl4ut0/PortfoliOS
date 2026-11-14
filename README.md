@@ -27,26 +27,20 @@ PortfoliOS incorporates a browser-native **Structured Access System** that bridg
 
 2. **User-Space Linux x86_64 POSIX Syscall Translation Table**:
    - Implemented in user-space (`posix-syscall-table.js`) without requiring heavy Linux container images, VM emulators, or secondary OS loaders.
-   - Translates raw Linux syscalls directly to browser secondary connectors:
+   - Defines syscall connector mappings; this does not establish real Linux binary/CLI execution:
      - **File I/O**: `sys_open`, `sys_openat`, `sys_read`, `sys_write`, `sys_close`, `sys_stat`, `sys_fstat`, `sys_lstat`, `sys_lseek`, `sys_getdents64`, `sys_mkdir`, `sys_unlink` -> mapped to SystemFS Root `/`.
      - **Networking**: `sys_socket`, `sys_connect`, `sys_sendto`, `sys_recvfrom` -> mapped to native TCP/UDP sockets via Native Relay.
      - **TTY/PTY Control**: `sys_ioctl` (`TIOCGWINSZ`, `TCGETS`, `TCSETS`) -> mapped to PTY controller with ANSI stream formatting and OAuth detection.
      - **Memory**: `sys_brk`, `sys_mmap` -> mapped to WebAssembly linear memory.
 
-3. **Zero-Knowledge Client-Side Keyring & Credentials Vault**:
-   - **Cryptographic Engine**: AES-256-GCM encryption with 128-bit authentication tags, combined with PBKDF2-HMAC-SHA512 key derivation at **600,000 iterations** (rejecting downgrades < 100,000), rotating 32-byte salts, and 12-byte IVs.
-   - **Multi-Program Unified Storage**: Protects subscriptions and API tokens for all active tools (`codex` / ChatGPT, `agy` / Antigravity, `claude` / Claude Code, `xai` / Grok, and `github` / Git Helper) under `/etc/portfolios/vault/`.
-   - **Cross-Device Recovery Envelope**: Exports client-side encrypted envelopes to `/documents/vault.enc`. Plain-text tokens remain exclusively in local IndexedDB and are **never** synced unencrypted to Google Drive or OneDrive.
-   - **Setup & Recovery (Purge & Re-Initialize)**:
-     - Because the vault is Zero-Knowledge, forgotten passwords cannot be cracked or backdoored.
-     - A safe recovery workflow (`vault purge` or `window.PortfoliOSVault.purgeAndReset()`) wipes locked keys, removes `/etc/portfolios/vault/*.json`, deletes `/documents/vault.enc`, and resets the vault so the user can re-initialize with a new Master Passphrase without breaking existing system files.
-   - **Visual Multi-Program Authentication Modal**:
-     - Global desktop overlay dialog (`#vault-modal`) with three views: **Unlock**, **Setup**, and **Purge**.
-     - Shows badges for associated programs and allows unlocking all tools simultaneously with real-time decryption and error feedback.
+3. **Encrypted saved tool logins**:
+   - The OS credential broker persists account records and explicit subsystem links only inside profile-scoped `/documents/vault.enc`.
+   - AES-256-GCM uses a fresh IV per save; PBKDF2-HMAC-SHA512 derives an in-memory key at 600,000 rounds. Reload/profile changes lock access without deleting saved accounts.
+   - Desktop Settings → Saved Logins imports an existing Codex login JSON directly into encrypted storage. Multiple accounts and shared consumers are supported; unused removal is explicit.
+   - This storage milestone does not complete native CLI execution, live sign-in/refresh or cross-device recovery. See [the vault contract and remaining gates](docs/VAULT_AUTH.md).
 
-4. **Git Credential Helper (`git-credential-portfolios`)**:
-   - Seeded in `/usr/local/bin/git-credential-portfolios`.
-   - Responds to standard Git credential protocol queries by reading the GitHub token from `/etc/portfolios/vault/github.json`, enabling `git clone` and `git push` over HTTPS without manual credential prompts.
+4. **Git credential connector**:
+   - The seeded `git-credential-portfolios` entry is a placeholder for scoped native Git integration. Manual execution refuses to print secrets into terminal output; native Git HTTPS authentication is not yet certified.
 
 5. **Windows Native Messaging Relay (`PortfoliOS-NativeRelay`)**:
    - Companion Chrome/Firefox extension and lightweight Windows native messaging host (`PortfoliOS-NativeRelay.msi`).
@@ -79,6 +73,7 @@ cd PortfoliOS
 ## Directory Structure
 
 * **[core/](core/)**: Core system services:
+  * **[credential-vault.js](core/credential-vault.js)**: Encrypted account records, saved subsystem links and revocable access; [contract](docs/VAULT_AUTH.md).
   * **[runtime-bridge.js](core/runtime-bridge.js)**: Secondary connector adapter, POSIX Root `/` VFS bridge, PTY controller, process harness, Zero-Knowledge Keyring Vault, and Git credential helper.
   * **[cloud-auth.js](core/cloud-auth.js)** & **[cloud-sync.js](core/cloud-sync.js)**: Unified cloud authentication and sync drivers (Google Drive & Microsoft OneDrive).
   * **[filesystem.js](core/filesystem.js)**: Virtual File System (`SystemFS`) backed by IndexedDB with root `/` hierarchy.
@@ -134,23 +129,24 @@ npm run deploy:full
 
 ## Zero-Knowledge Keyring & Vault Shell Commands
 
-The terminal includes a first-party `vault` command suite to manage stored credentials:
+The `vault` command and Desktop Settings share the same encrypted broker:
 
-* `vault init`: Interactive setup wizard to configure a strong Master Passphrase (&ge;14 chars, &ge;60-bit entropy).
-* `vault status`: Display current lock status, active provider credentials, and sync readiness.
-* `vault lock`: Flush in-memory keys from the active session.
-* `vault unlock [file]`: Decrypt `/documents/vault.enc` and authenticate active CLI sessions (opens visual modal if run interactively).
-* `vault purge` / `vault reset`: **Recovery Option** for forgotten passphrases. Safely wipes locked keys, removes `/etc/portfolios/vault/*.json`, and deletes `/documents/vault.enc` with confirmation (`Type PURGE`).
-* `vault export [file]`: Encrypt vault with AES-256-GCM + PBKDF2-SHA512 to `/documents/vault.enc` for cross-device sync.
-* `vault import [file]`: Decrypt and restore credentials from an encrypted envelope.
-* `vault list`: List configured CLI providers in `/etc/portfolios/vault/`.
+* `vault init`, `vault unlock`, `vault lock`, `vault status`: Manage the passphrase and current access state.
+* `vault accounts`, `vault list`: Manage saved accounts and subsystem links, or display metadata.
+* `vault link <login-id> <subsystem>`, `vault unlink <subsystem>`: Select or disconnect one subsystem without deleting other users of that login.
+* `vault remove <unused-login-id>`: Remove only an unreferenced saved login.
+* `vault export`: Save a fresh encrypted checkpoint to `/documents/vault.enc`; this does not prove cloud upload.
+* `vault migrate`: Explicitly migrate matching profile-owned legacy records after unlock.
+* `vault purge`: Confirm deletion of this profile's encrypted file and revoke access. Other profiles and existing cloud recovery copies remain.
+
+The passphrase unlock is required after reload; provider sign-in is repeated only when the actual provider requires it. See [storage, access control, tests and limitations](docs/VAULT_AUTH.md).
 
 ---
 
 ## Useful CLI Commands
 
 * **Developer & AI**: `codex`, `agy`, `claude`, `xai`, `ai`, `git-credential-portfolios`
-* **Keyring & Security**: `vault <init|status|lock|unlock|purge|export|import|list>`
+* **Keyring & Security**: `vault <init|status|lock|unlock|accounts|list|link|unlink|remove|migrate|export|purge>`
 * **Package Management & System**: `apt <install|remove|update|list|search>`, `npm install -g <pkg>`
 * **Network & Tools**: `curl <url>`, `wget <url>`, `chmod +x <file>`, `./<script>`, `sh <script>`, `which <cmd>`
 * **POSIX File Navigation**: `ls`, `cd`, `pwd`, `cat`, `head`, `tail`, `grep`, `find`, `tree`, `stat`, `mkdir`, `rm`, `cp`, `mv`
@@ -171,7 +167,7 @@ The terminal includes a first-party `vault` command suite to manage stored crede
 
 PortfoliOS supports dual cloud drivers: **Google Drive** and **Microsoft OneDrive**.
 
-1. **Client-Side Encryption Only**: Cloud drives sync only the client-side AES-256-GCM encrypted envelope `/documents/vault.enc`. Plain-text credentials in `/etc/portfolios/vault/` and hidden dotfiles (`.*`) are strictly blocked from cloud uploads.
+1. **Credential encryption**: The broker persists only encrypted `/documents/vault.enc`; no new plaintext keyring/home copy is created. Approved document backup can carry this ciphertext; `/etc` and hidden dotfiles remain excluded. This rule covers credentials, not encryption of every ordinary document.
 2. **Local Security Center**: User imports and cloud restores are verified inside the browser before entering the workspace. Executables, scripts, and active documents undergo quarantine inspection without uploading files to third-party scanning services.
 3. **Session Lease & Conflict Recovery**: Private profiles maintain a single active lease across devices with conflict resolution and tombstones for deleted files.
 

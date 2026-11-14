@@ -2719,42 +2719,6 @@ async function runWhich(args) {
     return results.join("\n");
 }
 
-function resolveActiveUserEmail(bin = "agy") {
-    const privateProfiles = window.getPrivateProfiles ? window.getPrivateProfiles() : {};
-    const savedPrivate = window.getSavedPrivateProfile ? window.getSavedPrivateProfile() : null;
-    const userAcc = window.getCurrentUser ? window.getCurrentUser() : null;
-    const gProfile = window.GDriveSync?.getSavedGoogleProfile ? window.GDriveSync.getSavedGoogleProfile() : null;
-
-    const candidates = [
-        window.PortfoliOS_GoogleSession?.email,
-        gProfile?.email,
-        savedPrivate?.email,
-        currentUser && privateProfiles?.[currentUser]?.email,
-        userAcc?.email,
-        userAcc?.handle && userAcc.handle.includes("@") && !userAcc.handle.startsWith("private_") ? userAcc.handle : null
-    ];
-
-    for (const candidate of candidates) {
-        const clean = String(candidate || "").trim();
-        if (clean && clean.includes("@") && !clean.startsWith("private_") && !clean.endsWith("@portfolios.local")) {
-            return clean;
-        }
-    }
-
-    if (bin === "agy") return "bl4ut0@gmail.com";
-    if (bin === "codex") return "bl4ut0@gmail.com";
-    if (bin === "claude") return "bl4ut0@gmail.com";
-    return "bl4ut0@gmail.com";
-}
-
-function normalizeCliAccountName(rawAccount, bin = "agy") {
-    const clean = String(rawAccount || "").trim();
-    if (!clean || clean.startsWith("private_") || clean.endsWith("@portfolios.local") || clean === "guest@gmail.com") {
-        return resolveActiveUserEmail(bin);
-    }
-    return clean;
-}
-
 // ============================================================================
 // PortfoliOS Git / GitHub Web Bridge & Git-Backed Cloud Remote Agent Manager
 // Browser SystemFS (IndexedDB) and client-side Google Drive only exist while
@@ -2794,37 +2758,12 @@ window.PortfoliOSGitBridge = {
     },
 
     async getGitHubToken() {
-        if (shellEnv.GITHUB_TOKEN) return shellEnv.GITHUB_TOKEN;
-        if (shellEnv.GH_TOKEN) return shellEnv.GH_TOKEN;
-        try {
-            const rec = await window.SystemFS?.readFile?.("/etc/portfolios/vault/github.json");
-            if (rec?.data) {
-                const parsed = typeof rec.data === "string" ? JSON.parse(rec.data) : rec.data;
-                if (parsed?.accessToken) return parsed.accessToken;
-            }
-        } catch (_) {}
-        return null;
+        const lease=window.PortfoliOSVault.acquire('cli.git');
+        try { const value=lease.read();return value.accessToken||value.access_token||null; } finally { lease.release(); }
     },
-
-    async setGitHubToken(token, account = null) {
-        const cleanToken = String(token || "").trim();
-        if (!cleanToken) return false;
-        shellEnv.GITHUB_TOKEN = cleanToken;
-        try {
-            await window.SystemFS?.ensureDirectory?.("/etc", { silent: true });
-            await window.SystemFS?.ensureDirectory?.("/etc/portfolios", { silent: true });
-            await window.SystemFS?.ensureDirectory?.("/etc/portfolios/vault", { silent: true });
-            await writeTerminalFile(
-                "/etc/portfolios/vault/github.json",
-                JSON.stringify({
-                    provider: "github",
-                    accessToken: cleanToken,
-                    account: account || resolveActiveUserEmail("git"),
-                    updatedAt: new Date().toISOString()
-                }, null, 2),
-                "application/json"
-            );
-        } catch (_) {}
+    async setGitHubToken(token,account=null) {
+        const session=await window.PortfoliOSRuntimeBridge.getOrCreateSession();
+        await session.vault.saveToken('github',{accessToken:String(token||'').trim(),account:account||'GitHub account'},{consumer:'cli.git'});
         return true;
     },
 
@@ -2936,157 +2875,29 @@ function getCliConfigInfo(bin) {
     };
 }
 
+window.addEventListener?.('portfolios:vault-status-changed',()=>{
+    cliAuthSessions.clear();
+    for(const key of ['OPENAI_API_KEY','GEMINI_API_KEY','ANTHROPIC_API_KEY','XAI_API_KEY','GITHUB_TOKEN'])delete shellEnv[key];
+});
+function cliVaultConsumer(bin) {
+    return ({codex:'cli.codex',agy:'cli.agy',gemini:'cli.gemini',claude:'cli.claude',grok:'cli.xai',xai:'cli.xai',gh:'cli.gh',git:'cli.git'})[bin];
+}
 async function loadCliSession(binMeta) {
-    const config = getCliConfigInfo(binMeta.bin);
-    if (cliAuthSessions.has(binMeta.bin)) {
-        const cached = cliAuthSessions.get(binMeta.bin);
-        cached.account = normalizeCliAccountName(cached.account, binMeta.bin);
-        if (binMeta.bin === "agy" && (!cached.model || cached.model === "gemini-2.5-pro-agy")) {
-            cached.model = "gemini-3.8-flash-high";
-        }
-        return cached;
-    }
-
-    // 1. Check if environment variable is set in the virtual Linux shell
-    if (shellEnv[config.envVar]) {
-        const envSession = {
-            bin: binMeta.bin,
-            name: binMeta.name,
-            version: binMeta.version,
-            provider: `${config.envVar} (Environment)`,
-            account: resolveActiveUserEmail(binMeta.bin),
-            model: config.defaultModel,
-            source: "env"
-        };
-        cliAuthSessions.set(binMeta.bin, envSession);
-        return envSession;
-    }
-
-    // 2. Check SystemFS native dotfiles in user's home directory
-    try {
-        const record = await window.SystemFS.readFile(config.authFile);
-        if (record && record.data) {
-            const parsed = typeof record.data === "string" ? JSON.parse(record.data) : record.data;
-            const rawModel = parsed.model || config.defaultModel;
-            const normalizedModel = (binMeta.bin === "agy" && rawModel === "gemini-2.5-pro-agy")
-                ? "gemini-3.8-flash-high"
-                : rawModel;
-            const normalizedAccount = normalizeCliAccountName(parsed.account || parsed.email || parsed.emailAddress, binMeta.bin);
-            const normalizedProvider = (binMeta.bin === "agy" && (!parsed.provider || parsed.provider === "Google Account OAuth"))
-                ? "Google AI Pro"
-                : (parsed.provider || config.provider);
-            const session = {
-                bin: binMeta.bin,
-                name: binMeta.name,
-                version: binMeta.version,
-                provider: normalizedProvider,
-                account: normalizedAccount,
-                model: normalizedModel,
-                effort: parsed.effort || "high",
-                source: "systemfs",
-                authenticatedAt: parsed.authenticated_at || parsed.authenticatedAt || new Date().toISOString()
-            };
-            cliAuthSessions.set(binMeta.bin, session);
-            if (parsed.account !== normalizedAccount || parsed.model !== normalizedModel) {
-                try { await saveCliSession(binMeta, session); } catch (_) {}
-            }
-            return session;
-        }
-    } catch (_) {}
-
-    // 3. Auto-provision session in the PortfoliOS Virtual Linux Environment
-    if (["agy", "gemini", "claude", "codex"].includes(binMeta.bin)) {
-        const detectedEmail = resolveActiveUserEmail(binMeta.bin);
-        if (detectedEmail) {
-            const autoSession = {
-                bin: binMeta.bin,
-                name: binMeta.name,
-                version: binMeta.version,
-                provider: config.provider,
-                account: detectedEmail,
-                model: config.defaultModel,
-                effort: "high",
-                authMode: "oauth",
-                trustedDirs: ["/", "/home", "/documents", "/workspace", "/tmp", currentDir],
-                authenticatedAt: new Date().toISOString()
-            };
-            try { await saveCliSession(binMeta, autoSession); } catch (_) {}
-            return autoSession;
-        }
-    }
-
-    return null;
+    const consumer=cliVaultConsumer(binMeta.bin);if(!consumer||!window.PortfoliOSVault)return null;
+    const status=await window.PortfoliOSVault.getStatus();if(status.isLocked)return null;
+    const binding=window.PortfoliOSVault.getBinding(consumer);if(!binding)return null;
+    return {bin:binMeta.bin,name:binMeta.name,provider:binding.provider,account:binding.label,credentialId:binding.id,source:'encrypted-vault',authState:'stored-not-verified'};
 }
-
-async function saveCliSession(binMeta, session) {
-    const config = getCliConfigInfo(binMeta.bin);
-    session.account = normalizeCliAccountName(session.account, binMeta.bin);
-    await window.SystemFS.ensureDirectory?.(config.dir, { silent: true });
-    await writeTerminalFile(config.authFile, JSON.stringify(session, null, 2), "application/json");
-
-    if (binMeta.bin === "codex") {
-        await writeTerminalFile(
-            config.configFile,
-            `model = "${session.model || config.defaultModel}"\napproval_policy = "never"\nsandbox_mode = "workspace-write"\n`,
-            "text/plain"
-        );
-    } else if (binMeta.bin === "agy" || binMeta.bin === "gemini") {
-        const parentDir = window.SystemFS.getParentPath(config.configFile);
-        await window.SystemFS.ensureDirectory?.(parentDir, { silent: true });
-        await writeTerminalFile(
-            config.configFile,
-            JSON.stringify({
-                model: session.model || config.defaultModel,
-                effort: session.effort || "high",
-                permission_mode: "always-proceed",
-                trusted_directories: ["/", "/home", "/documents", "/workspace", "/tmp", currentDir]
-            }, null, 2),
-            "application/json"
-        );
-    }
-
-    // Structured Vault Integration
-    const providerMap = { codex: "openai", agy: "google", gemini: "google", claude: "anthropic", xai: "xai", grok: "xai", gh: "github", github: "github" };
-    const vaultProvider = providerMap[binMeta.bin] || binMeta.bin;
-    const vaultTokenRec = {
-        provider: vaultProvider,
-        bin: binMeta.bin,
-        accessToken: session.apiKey || session.accessToken || `oauth-${binMeta.bin}-${Date.now()}`,
-        account: session.account,
-        authMode: session.authMode,
-        updatedAt: Date.now()
-    };
-
-    try {
-        await window.SystemFS.ensureDirectory?.("/etc/portfolios/vault", { silent: true });
-        await writeTerminalFile(`/etc/portfolios/vault/${vaultProvider}.json`, JSON.stringify(vaultTokenRec, null, 2), "application/json");
-    } catch (_) {}
-
-    if (window.PortfoliOSRuntimeBridge && typeof window.PortfoliOSRuntimeBridge.getOrCreateSession === "function") {
-        try {
-            const rtSession = await window.PortfoliOSRuntimeBridge.getOrCreateSession();
-            if (rtSession?.vault && typeof rtSession.vault.saveToken === "function") {
-                await rtSession.vault.saveToken(vaultProvider, vaultTokenRec);
-            }
-        } catch (_) {}
-    }
-
-    cliAuthSessions.set(binMeta.bin, session);
-    return session;
+async function saveCliSession(binMeta,session) {
+    const consumer=cliVaultConsumer(binMeta.bin);if(!consumer)throw new Error('No credential consumer exists for this CLI.');
+    const provider=window.CredentialVault.consumers[consumer];
+    const runtime=await window.PortfoliOSRuntimeBridge.getOrCreateSession();
+    await runtime.vault.saveToken(provider,{accessToken:session.apiKey||session.accessToken,account:session.account||'CLI account',authMode:session.authMode},{consumer});
+    return loadCliSession(binMeta);
 }
-
 async function removeCliSession(binMeta) {
     cliAuthSessions.delete(binMeta.bin);
-    const config = getCliConfigInfo(binMeta.bin);
-    try {
-        await window.SystemFS.deleteFile(config.authFile);
-    } catch (_) {}
-
-    const providerMap = { codex: "openai", agy: "google", gemini: "google", claude: "anthropic", xai: "xai", grok: "xai", gh: "github", github: "github" };
-    const vaultProvider = providerMap[binMeta.bin] || binMeta.bin;
-    try {
-        await window.SystemFS.deleteFile(`/etc/portfolios/vault/${vaultProvider}.json`);
-    } catch (_) {}
+    await window.PortfoliOSVault.unlink(cliVaultConsumer(binMeta.bin));
 }
 
 window.showTerminalAuthBanner = function(meta) {
@@ -3107,140 +2918,18 @@ window.hideTerminalAuthBanner = function() {
     }
 };
 
-window.completePendingCliAuth = async function(providerArg = false) {
-    if (!activeAuthMeta) return false;
-    const meta = activeAuthMeta;
-    const config = getCliConfigInfo(meta.bin);
-    const account = resolveActiveUserEmail(meta.bin);
-    const session = {
-        bin: meta.bin,
-        name: meta.name,
-        version: meta.version,
-        provider: meta.provider,
-        account,
-        model: meta.defaultModel || config.defaultModel || "default",
-        authMode: "oauth",
-        authenticatedAt: new Date().toISOString()
-    };
-    await saveCliSession(meta, session);
+window.completePendingCliAuth = async function() {
     window.hideTerminalAuthBanner();
-    window.addTerminalLine(`✓ Authenticated ${meta.name} via ${meta.provider} (${account}).`, "success");
-    if (activePrompt && typeof activePrompt.callback === "function") {
-        const cb = activePrompt.callback;
-        activePrompt = null;
-        for (const el of getTerminalInputElements()) el.type = "text";
-        updatePrompt();
-        cb("1");
-    }
-    return true;
+    window.PortfoliOSVault?.showAccountsModal();
+    window.addTerminalLine('A PortfoliOS login does not authenticate a CLI. Choose an existing vaulted login; live CLI sign-in requires the process bridge.', 'info');
+    return false;
 };
-
-async function startCliNativeAuth(meta, options = {}) {
-    const config = getCliConfigInfo(meta.bin);
-
-    const finishAuth = async (authMode, accountName, keyVal = null) => {
-        const cleanAccount = normalizeCliAccountName(accountName, meta.bin);
-        const session = {
-            bin: meta.bin,
-            name: meta.name,
-            version: meta.version,
-            provider: authMode === "api_key" ? `${config.envVar} Key` : (meta.provider || config.provider),
-            account: cleanAccount,
-            model: meta.defaultModel || config.defaultModel || "default",
-            effort: "high",
-            authMode,
-            trustedDirs: ["/", "/home", "/documents", "/workspace", "/tmp", currentDir],
-            authenticatedAt: new Date().toISOString()
-        };
-        if (keyVal) {
-            session.apiKey = keyVal;
-            shellEnv[config.envVar] = keyVal;
-        }
-        await saveCliSession(meta, session);
-        window.hideTerminalAuthBanner();
-        if (meta.bin !== "agy") {
-            window.addTerminalLine(`✓ Authenticated ${meta.name} (${session.provider} · ${session.account}).`, "success");
-        }
-        if (typeof options.onComplete === "function") {
-            await options.onComplete(session);
-        }
-        return session;
-    };
-
-    if (options.autoComplete) {
-        return await finishAuth("oauth", resolveActiveUserEmail(meta.bin));
-    }
-
-    if (options.forceApiKey) {
-        promptUser(`Enter ${config.envVar}: `, true, async (keyVal) => {
-            const rawKey = String(keyVal || "").trim();
-            if (!rawKey || rawKey.toLowerCase() === "cancel") {
-                window.addTerminalLine(`${meta.bin}: authentication cancelled.`, "muted");
-                updatePrompt();
-                return;
-            }
-            await finishAuth("api_key", resolveActiveUserEmail(meta.bin), rawKey);
-        });
-        return "";
-    }
-
-    if (["agy", "gemini", "claude", "codex"].includes(meta.bin) && !options.forceReauth) {
-        const detectedEmail = resolveActiveUserEmail(meta.bin);
-        if (detectedEmail) {
-            return await finishAuth("oauth", detectedEmail);
-        }
-    }
-
-    window.showTerminalAuthBanner(meta);
-    if (meta.bin === "agy") {
-        window.addTerminalLine("Welcome to the Antigravity CLI. You are currently not signed in.\nSigning in...", "info");
-    } else {
-        const boxLines = [
-            `╭─ ${meta.name} (v${meta.version}) ───────────────────────────────────────╮`,
-            `│ Welcome to ${meta.name}!                                                │`,
-            `│ Authenticate to start interactive session in ${currentDir}:             │`,
-            `│   [1] Sign in with ${meta.provider.padEnd(51)} │`,
-            `│   [2] Enter API Key (${config.envVar.padEnd(46)}) │`,
-            `╰────────────────────────────────────────────────────────────────────────╯`,
-            `Select option [1-2, or 'cancel']: `
-        ];
-        window.addTerminalLine(boxLines.join("\n"), "info");
-    }
-
-    promptUser(`[${meta.bin} login]> `, false, async (val) => {
-        window.hideTerminalAuthBanner();
-        const input = String(val || "").trim();
-        const lower = input.toLowerCase();
-
-        if (lower === "cancel" || lower === "abort" || lower === "exit" || lower === "q") {
-            window.addTerminalLine(`${meta.bin}: authentication cancelled.`, "muted");
-            updatePrompt();
-            return;
-        }
-
-        if (lower === "2" || lower === "api" || lower === "key" || input.startsWith("sk-") || input.startsWith("AIza") || input.startsWith("xai-")) {
-            if (input.startsWith("sk-") || input.startsWith("AIza") || input.startsWith("xai-")) {
-                await finishAuth("api_key", resolveActiveUserEmail(meta.bin), input);
-                return;
-            }
-            promptUser(`Enter ${config.envVar}: `, true, async (keyVal) => {
-                const rawKey = String(keyVal || "").trim();
-                if (!rawKey || rawKey.toLowerCase() === "cancel") {
-                    window.addTerminalLine(`${meta.bin}: authentication cancelled.`, "muted");
-                    updatePrompt();
-                    return;
-                }
-                await finishAuth("api_key", resolveActiveUserEmail(meta.bin), rawKey);
-            });
-            return;
-        }
-
-        await finishAuth("oauth", resolveActiveUserEmail(meta.bin));
-    });
-    return "";
+async function startCliNativeAuth(meta,options={}) {
+    window.PortfoliOSVault?.showAccountsModal();
+    return meta.bin==='codex'
+        ? 'Use Saved Logins to import your existing Codex login JSON into the unlocked vault. Live Codex sign-in/process execution still needs the native process bridge.'
+        : 'Choose a saved login for this subsystem in Saved Logins. A live provider login must be performed by the actual CLI; it is not inferred from your PortfoliOS account.';
 }
-
-
 
 async function handleActiveCliSessionInput(rawInput) {
     if (!activeCliSession) return null;
@@ -3313,37 +3002,28 @@ async function executeInstalledCliBinary(binMeta, args = []) {
         const repoCfg = await window.PortfoliOSGitBridge.readRepoConfig(currentDir);
         return [
             `${binMeta.name} v${binMeta.version} Health Check:`,
-            `  ✓ Binary path:        /usr/local/bin/${binMeta.bin} (WASI container engine)`,
-            `  ✓ Upstream channel:   ${binMeta.pkg}@${binMeta.version} (latest)`,
-            `  ✓ VFS mount root:     / (full SystemFS access across /, /home, /usr/local/bin, /etc, /tmp, /documents)`,
-            `  ✓ Git repository:     ${repoCfg?.slug ? `${repoCfg.slug} (${repoCfg.remoteUrl})` : "No Git remote in currentDir (use 'git clone <url>' or 'git remote add origin <url>')"}`,
-            `  ✓ PTY stream:         Live terminal input/output wired`
+            `  Catalog entry: /usr/local/bin/${binMeta.bin} (native execution not verified)`,
+            `  Package metadata: ${binMeta.pkg}@${binMeta.version}`,
+            `  Filesystem: profile-scoped SystemFS; native guest access remains an acceptance gate`,
+            `  Git repository: ${repoCfg?.slug ? `${repoCfg.slug} (${repoCfg.remoteUrl})` : "No Git remote in currentDir (use 'git clone <url>' or 'git remote add origin <url>')"}`,
+            `  Process/PTY: browser adapter present; real CLI launch, auth delivery and provider request remain unverified`
         ].join("\n");
     }
 
     if (sub === "logout" || (sub === "auth" && (args[1] || "").toLowerCase() === "logout")) {
         await removeCliSession(binMeta);
-        return `✓ Logged out of ${binMeta.name}. Removed ${config.authFile}.`;
+        return `Unlinked ${binMeta.name}. The encrypted login remains saved for other subsystems. Use vault accounts to review unused logins.`;
     }
 
-    if (sub === "login" || sub === "auth") {
+    if ((sub === "login" || sub === "auth") && (args[1] || "").toLowerCase() !== "status") {
         const isWithKey = args.some(a => a === "--with-api-key" || a === "--with-key");
         return await startCliNativeAuth(binMeta, { forceApiKey: isWithKey, forceReauth: true });
     }
 
     if (sub === "status" || (sub === "auth" && (args[1] || "").toLowerCase() === "status") || (sub === "login" && (args[1] || "").toLowerCase() === "status")) {
-        const session = await loadCliSession(binMeta);
-        const hasAuthFile = Boolean(await window.SystemFS?.readFile?.(config.authFile));
-        const repoCfg = await window.PortfoliOSGitBridge.readRepoConfig(currentDir);
-        return [
-            `${binMeta.name} (${binMeta.bin}) v${binMeta.version}`,
-            `  Runtime:      PortfoliOS Container Runtime (mount: /)`,
-            `  Git Remote:   ${repoCfg?.slug ? `${repoCfg.slug} (${repoCfg.remoteUrl})` : "None (run 'git clone <url>' or 'git remote add origin <url>')"}`,
-            `  Status:       ${session ? `Authenticated (${session.provider} · ${session.account})` : "Not authenticated"}`,
-            `  Workspace:    ${currentDir} (Auto-Trusted)`,
-            `  Auth File:    ${config.authFile} [${hasAuthFile ? "exists" : "missing"}]`,
-            `  Model:        ${session?.model || binMeta.defaultModel || config.defaultModel}`
-        ].join("\n");
+        const status=await window.PortfoliOSVault.getStatus();
+        const session=await loadCliSession(binMeta);
+        return `${binMeta.name}: ${status.isLocked?'vault locked':session?'saved login linked ('+session.account+')':'no saved login linked'}. Saved credentials are not proof of live CLI authentication.`;
     }
 
     if (sub === "--help" || sub === "-h" || sub === "help") {
@@ -3928,276 +3608,22 @@ async function launchDesktopAppFromCli(appKey, label) {
 // Core command executor (supports piping via `stdin`)
 // Zero-Knowledge Keyring & Vault Shell Manager
 async function runVaultCommand(args = []) {
-    const sub = (args[0] || "").toLowerCase();
-
-    if (!sub || sub === "help" || sub === "--help" || sub === "-h") {
-        return [
-            "PortfoliOS Zero-Knowledge Keyring & Vault Manager",
-            "Usage: vault <command> [options]",
-            "",
-            "Commands:",
-            "  init                Initialize master passphrase and setup zero-knowledge vault",
-            "  status              Display current vault lock status and configured providers",
-            "  lock                Purge in-memory credentials from the active browser session",
-            "  unlock [file]       Decrypt credentials envelope and authenticate active sessions",
-            "  purge | reset       Erase all stored credentials and reset vault (Recovery option)",
-            "  export [file]       Encrypt vault to /documents/vault.enc (AES-256-GCM + PBKDF2)",
-            "  import [file]       Decrypt specified envelope (default: /documents/vault.enc)",
-            "  list                List authenticated CLI tool providers in /etc/portfolios/vault",
-            "",
-            "Security: Plain-text tokens are stored exclusively in local IndexedDB. Cloud sync",
-            "transfers only client-side AES-256-GCM encrypted envelopes with rotating 256-bit salts."
-        ].join("\n");
-    }
-
-    if (sub === "init") {
-        if (typeof window.PortfoliOSVault?.showSetupModal === "function" && document.getElementById("vault-modal-backdrop")) {
-            window.PortfoliOSVault.showSetupModal();
-            return "Opening visual Vault Setup wizard...";
-        }
-        promptUser("Enter New Master Passphrase (min 14 chars): ", true, async (pass1) => {
-            const validation = window.PortfoliOSVault?.validatePassword
-                ? window.PortfoliOSVault.validatePassword(pass1)
-                : { valid: Boolean(pass1 && pass1.length >= 14), errors: [] };
-            if (!validation.valid) {
-                window.addTerminalLine("vault init error: Password does not meet security requirements:", "error");
-                for (const err of (validation.errors || [])) {
-                    window.addTerminalLine(`  • ${err}`, "error");
-                }
-                return;
-            }
-            promptUser("Confirm Master Passphrase: ", true, async (pass2) => {
-                if (pass1 !== pass2) {
-                    window.addTerminalLine("vault init error: Passphrases do not match.", "error");
-                    return;
-                }
-                try {
-                    await window.PortfoliOSVault.initWithPassphrase(pass1);
-                    window.addTerminalLine("✓ Zero-Knowledge Vault initialized successfully with AES-256-GCM + PBKDF2-SHA512.", "success");
-                    window.addTerminalLine("  Encrypted envelope saved to /documents/vault.enc (Cloud sync ready).", "muted");
-                } catch (err) {
-                    window.addTerminalLine(`vault init error: ${err.message}`, "error");
-                }
-            });
-        });
-        return "";
-    }
-
-    if (sub === "purge" || sub === "reset") {
-        if (typeof window.PortfoliOSVault?.showPurgeModal === "function" && document.getElementById("vault-modal-backdrop")) {
-            window.PortfoliOSVault.showPurgeModal();
-            return "Opening visual Vault Purge & Reset dialog...";
-        }
-        promptUser("WARNING: This will permanently erase all saved credentials in /etc/portfolios/vault/ and /documents/vault.enc.\nType 'PURGE' to confirm: ", false, async (confirmText) => {
-            if (confirmText.trim() !== "PURGE") {
-                window.addTerminalLine("vault purge: Operation cancelled.", "muted");
-                return;
-            }
-            try {
-                if (window.PortfoliOSVault && typeof window.PortfoliOSVault.purgeAndReset === "function") {
-                    await window.PortfoliOSVault.purgeAndReset();
-                }
-                cliAuthSessions.clear();
-                window.addTerminalLine("✓ Zero-Knowledge Vault purged. All saved credentials and backups erased.", "success");
-                window.addTerminalLine("  You may now run 'vault init' to configure a new Master Passphrase.", "muted");
-            } catch (err) {
-                window.addTerminalLine(`vault purge error: ${err.message}`, "error");
-            }
-        });
-        return "";
-    }
-
-    if (sub === "status") {
-        let providers = [];
-        if (window.SystemFS && typeof window.SystemFS.readDir === "function") {
-            try {
-                const files = (await window.SystemFS.readDir("/etc/portfolios/vault")) || [];
-                providers = files.filter(f => f.name?.endsWith(".json")).map(f => f.name.replace(".json", ""));
-            } catch (_) {}
-        }
-        let hasEncrypted = false;
-        try {
-            const enc = await window.SystemFS?.readFile?.("/documents/vault.enc");
-            hasEncrypted = Boolean(enc && !enc.isDirectory);
-        } catch (_) {}
-
-        const session = window.PortfoliOSRuntimeBridge?.getActiveSession();
-        const inMemoryCount = session?.vaultTokens ? session.vaultTokens.size : 0;
-        const isLocked = inMemoryCount === 0 && providers.length > 0;
-
-        return [
-            "PortfoliOS Zero-Knowledge Keyring Status:",
-            `  Vault State:        ${isLocked ? "\x1b[33mLocked (Memory keys cleared)\x1b[0m" : "\x1b[32mActive (Keys in memory)\x1b[0m"}`,
-            `  Local Providers:    ${providers.length ? providers.join(", ") : "None configured"}`,
-            `  Encrypted Backup:   ${hasEncrypted ? "\x1b[32m/documents/vault.enc (Sync Ready)\x1b[0m" : "\x1b[33mNot exported yet\x1b[0m"}`,
-            `  Root VFS Mount:     / (SystemFS mounted)`,
-            `  Native Relay:       ${window.PortfoliOSNativeRelay ? "Connected" : "In-browser mode"}`
-        ].join("\n");
-    }
-
-    if (sub === "lock") {
-        if (window.PortfoliOSVault && typeof window.PortfoliOSVault.lock === "function") {
-            window.PortfoliOSVault.lock();
-        }
-        const session = window.PortfoliOSRuntimeBridge?.getActiveSession();
-        if (session?.vault) session.vault.lock();
-        return "✓ Zero-Knowledge Vault locked. In-memory keys purged from this session.";
-    }
-
-    if (sub === "list") {
-        let providers = [];
-        if (window.SystemFS && typeof window.SystemFS.readDir === "function") {
-            try {
-                const files = (await window.SystemFS.readDir("/etc/portfolios/vault")) || [];
-                providers = files.filter(f => f.name?.endsWith(".json")).map(f => f.name.replace(".json", ""));
-            } catch (_) {}
-        }
-        if (!providers.length) return "No CLI credentials currently saved in /etc/portfolios/vault.";
-        return "Configured Providers in Vault:\n" + providers.map(p => `  - ${p}`).join("\n");
-    }
-
-    if (sub === "export") {
-        const targetPath = args[1] || "/documents/vault.enc";
-        let tokens = {};
-        if (window.SystemFS && typeof window.SystemFS.readDir === "function") {
-            try {
-                const files = (await window.SystemFS.readDir("/etc/portfolios/vault")) || [];
-                for (const f of files) {
-                    if (f.name?.endsWith(".json")) {
-                        const rec = await window.SystemFS.readFile(f.path);
-                        if (rec?.data) {
-                            const pName = f.name.replace(".json", "");
-                            tokens[pName] = JSON.parse(String(rec.data));
-                        }
-                    }
-                }
-            } catch (_) {}
-        }
-
-        if (Object.keys(tokens).length === 0) {
-            return "vault export: No credentials in /etc/portfolios/vault to export. Sign in via 'codex login', 'agy login', etc. first.";
-        }
-
-        promptUser("Enter Master Passphrase for Vault Export: ", true, async (password) => {
-            if (!password || password.length < 12) {
-                window.addTerminalLine("vault export: Password must be at least 12 characters long.", "error");
-                return;
-            }
-            try {
-                // Cryptographic export using PBKDF2-SHA512 (600,000 rounds) + AES-256-GCM
-                const salt = crypto.getRandomValues(new Uint8Array(32));
-                const iv = crypto.getRandomValues(new Uint8Array(12));
-                const encoder = new TextEncoder();
-                const baseKey = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-                const key = await crypto.subtle.deriveKey(
-                    { name: "PBKDF2", salt, iterations: 600000, hash: "SHA-512" },
-                    baseKey,
-                    { name: "AES-GCM", length: 256 },
-                    false,
-                    ["encrypt"]
-                );
-
-                const payload = {
-                    version: 1,
-                    profileId: window.state?.currentUserId || "guest",
-                    tokens,
-                    exportedAt: Date.now()
-                };
-                const plaintext = encoder.encode(JSON.stringify(payload));
-                const cipherBuf = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
-                const cipherBytes = new Uint8Array(cipherBuf);
-
-                const toB64 = (bytes) => btoa(Array.from(bytes).map(b => String.fromCharCode(b)).join(""));
-                const digest = await crypto.subtle.digest("SHA-256", cipherBytes);
-                const checksum = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-
-                const envelope = {
-                    version: 1,
-                    format: "portfolios-zk-vault",
-                    kdf: { algorithm: "PBKDF2", hash: "SHA-512", iterations: 600000, salt: toB64(salt) },
-                    cipher: { algorithm: "AES-256-GCM", iv: toB64(iv), tagLength: 128 },
-                    ciphertext: toB64(cipherBytes),
-                    checksum,
-                    exportedAt: Date.now()
-                };
-
-                const parent = window.SystemFS.getParentPath(targetPath);
-                await window.SystemFS.ensureDirectory?.(parent, { silent: true });
-                await writeTerminalFile(targetPath, JSON.stringify(envelope, null, 2), "application/json");
-
-                window.addTerminalLine(`✓ Zero-Knowledge Vault exported to ${targetPath} (AES-256-GCM + PBKDF2-SHA512).`, "success");
-                window.addTerminalLine("  Encrypted envelope is ready for cross-device Google Drive / OneDrive sync.", "muted");
-            } catch (err) {
-                window.addTerminalLine(`vault export error: ${err.message}`, "error");
-            }
-        });
-        return "";
-    }
-
-    if (sub === "unlock" && !args[1] && typeof window.PortfoliOSVault?.showUnlockModal === "function" && document.getElementById("vault-modal-backdrop")) {
-        window.PortfoliOSVault.showUnlockModal({
-            onUnlock: (res) => {
-                window.addTerminalLine(`✓ Zero-Knowledge Vault unlocked via authentication dialog. Restored: ${res.restored?.join(", ") || "keys"}.`, "success");
-            }
-        });
-        return "Opening visual Vault Authentication dialog...";
-    }
-
-    if (sub === "import" || sub === "unlock") {
-        const sourcePath = args[1] || "/documents/vault.enc";
-        const fileRec = await window.SystemFS?.readFile?.(sourcePath);
-        if (!fileRec || !fileRec.data) {
-            return `vault ${sub}: File '${sourcePath}' not found in SystemFS.`;
-        }
-
-        promptUser("Enter Master Passphrase to Unlock Vault: ", true, async (password) => {
-            try {
-                const envelope = JSON.parse(String(fileRec.data));
-                if (!envelope || envelope.format !== "portfolios-zk-vault") {
-                    throw new Error("Invalid envelope format. Expected portfolios-zk-vault.");
-                }
-
-                const fromB64 = (str) => new Uint8Array(atob(str).split("").map(c => c.charCodeAt(0)));
-                const salt = fromB64(envelope.kdf.salt);
-                const iv = fromB64(envelope.cipher.iv);
-                const ciphertext = fromB64(envelope.ciphertext);
-
-                const encoder = new TextEncoder();
-                const baseKey = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-                const key = await crypto.subtle.deriveKey(
-                    { name: "PBKDF2", salt, iterations: envelope.kdf.iterations, hash: "SHA-512" },
-                    baseKey,
-                    { name: "AES-GCM", length: 256 },
-                    false,
-                    ["decrypt"]
-                );
-
-                let decryptedBuf;
-                try {
-                    decryptedBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
-                } catch (_) {
-                    throw new Error("Incorrect master passphrase or corrupted authentication tag.");
-                }
-
-                const data = JSON.parse(new TextDecoder("utf-8").decode(decryptedBuf));
-                const restored = [];
-                if (data && data.tokens) {
-                    await window.SystemFS.ensureDirectory?.("/etc/portfolios/vault", { silent: true });
-                    for (const [provider, tokenRec] of Object.entries(data.tokens)) {
-                        await writeTerminalFile(`/etc/portfolios/vault/${provider}.json`, JSON.stringify(tokenRec, null, 2), "application/json");
-                        restored.push(provider);
-                    }
-                }
-
-                window.addTerminalLine(`✓ Zero-Knowledge Vault decrypted successfully. Restored ${restored.length} provider(s): ${restored.join(", ")}.`, "success");
-            } catch (err) {
-                window.addTerminalLine(`vault unlock error: ${err.message}`, "error");
-            }
-        });
-        return "";
-    }
-
-    return `vault: Unknown subcommand '${sub}'. Run 'vault help' for usage.`;
+    const vault=window.PortfoliOSVault,sub=(args[0]||'help').toLowerCase();
+    if(!vault)return 'Vault service unavailable.';
+    if(sub==='help'||sub==='--help')return 'vault init | unlock | lock | status | accounts | list | link <login-id> <subsystem> | unlink <subsystem> | remove <unused-login-id> | migrate | export | purge';
+    if(sub==='init'){vault.showSetupModal();return 'Set a vault master passphrase. Saved tool logins are encrypted before storage.';}
+    if(sub==='unlock'||sub==='import'){vault.showUnlockModal();return 'Unlock your saved vault; provider login is not repeated.';}
+    if(sub==='lock'){vault.lock();return 'Vault locked. Subsystem access revoked; encrypted logins retained.';}
+    if(sub==='accounts'){vault.showAccountsModal();return 'Opened Saved Logins.';}
+    if(sub==='status'){const status=await vault.getStatus();return `Vault: ${status.isLocked?'locked':'unlocked'} · ${status.initialized?'encrypted storage present':'setup required'} · ${status.tokenCount} saved login(s) visible`;}
+    if(sub==='list')return vault.listAccounts().map(c=>`${c.id} · ${c.provider} · ${c.label} · ${c.consumers.join(', ')||'unused'}`).join('\n')||'No saved logins.';
+    if(sub==='link'){await vault.link(args[1],args[2]);return 'Subsystem linked to the selected saved login.';}
+    if(sub==='unlink'){await vault.unlink(args[1]);return 'Subsystem unlinked. Saved login retained; review unused logins with vault accounts.';}
+    if(sub==='remove'){await vault.removeUnused(args[1]);return 'Unused saved login removed.';}
+    if(sub==='migrate'){const result=await vault.migrateLegacyKeyring();return `Moved ${result.moved} legacy login(s) into encrypted storage.`;}
+    if(sub==='export'){await vault.checkpoint();return 'Encrypted vault saved to /documents/vault.enc. Only the encrypted envelope participates in backup.';}
+    if(sub==='purge'){vault.showPurgeModal();return 'Confirm purge in the vault dialog. This removes the encrypted vault.';}
+    return 'Unknown vault command. Run vault help.';
 }
 
 async function executeCommand(command, args, commandPart, stdin) {

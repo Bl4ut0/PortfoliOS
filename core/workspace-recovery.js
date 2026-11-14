@@ -347,7 +347,7 @@ async function safeJson(response, fallback = {}) {
             let intents={};if(intentRecord?.data){try{const it=await window.readFilesystemRecordText(intentRecord);if(it&&it.trim())intents=JSON.parse(it);}catch{}}
             // Live syncing directly reconciles Drive files; snapshots only run when explicitly requested (e.g. handoff) or forced.
             const shouldSnapshot = Boolean(options.snapshot || options.forceSnapshot);
-            const snapshot = shouldSnapshot ? await this.snapshot(sync,records,baseline,owner,intents) : null;
+            let snapshot = shouldSnapshot ? await this.snapshot(sync,records,baseline,owner,intents) : null;
             const localMap=new Map(records.map(record=>[record.path,record]));
             const next=Object.assign(Object.create(null),ledger.files),report={snapshot,conflicts:[],deletions:[]};
             this.lastSnapshot=snapshot || previous.snapshot || ledger.snapshot || null;
@@ -408,7 +408,11 @@ async function safeJson(response, fallback = {}) {
                     }
                     next[path]={hash:await digest(blob),settings:merged.settings,localRevision:result.record.revision,remoteVersion:uploaded.version};continue;
                 }
+                if(path==='/documents/vault.enc' && ['conflict','deleted-conflict','deletion-conflict'].includes(action)) {
+                    throw new Error('Encrypted vault versions conflict. Both local and cloud copies were retained. Resolve the vault copies before retrying sync.');
+                }
                 if(action==='conflict' || action==='deleted-conflict' || action==='deletion-conflict'){
+                    if(!snapshot){snapshot=await this.snapshot(sync,records,baseline,owner,intents);report.snapshot=snapshot;this.lastSnapshot=snapshot || this.lastSnapshot;}
                     if(remote && !remoteBlob){
                         try{remoteBlob=await sync.downloadFile(remote.id);remoteHash=await digest(remoteBlob);}catch{}
                     }
@@ -419,18 +423,14 @@ async function safeJson(response, fallback = {}) {
                         resolution=clash.choice;
                         window.showDesktopToast?.(`Clash resolved: kept newer & larger copy of ${local?.name || remote?.name || path}`);
                     } else if(typeof document!=='undefined' && document.body){
-                        try{
-                            resolution=await this.showClashResolver({path,local,remote,localBlob,remoteBlob,owner});
-                        }catch(err){
-                            console.warn('Clash resolver error:',err);
-                        }
-                        if(!resolution)resolution=remote?'remote':'local';
+                        resolution=await this.showClashResolver({path,local,remote,localBlob,remoteBlob,owner});
+                        if(!resolution)throw new Error('Sync cancelled. Local and cloud copies were retained.');
                     } else {
                         resolution=clash.choice || (remote?'remote':'local');
                     }
 
                     if(resolution==='local'){
-                        if(remote)await this.preserve({...remote,name:(remote.name || SystemFS.getName(path))+' (cloud copy)'},snapshot,owner);
+                        if(remote)await this.preserve({...remote,path,data:remoteBlob,type:remote.mimeType,name:(remote.name || SystemFS.getName(path))+' (cloud copy)'},snapshot,owner);
                         action='upload';
                         report.conflicts.push({path,kind:'resolved-clash',resolution:'local'});
                     } else if(resolution==='both'){
@@ -482,9 +482,13 @@ async function safeJson(response, fallback = {}) {
             const blob=new Blob([JSON.stringify(checkpoint)],{type:'application/json'});
             if(ledgerRecord)await sync.updateFile(ledgerRecord.id,'application/json',blob);
             else await sync.uploadFile(ledgerPath,'portfolios-sync-state.json','application/json',blob);
-            localStorage.setItem(baseKey,JSON.stringify(checkpoint));
-            window.Storage?.local.set(sync.getScopedStorageKey('sync_manifest',scope),JSON.stringify(Object.keys(next).filter(path=>!next[path].deleted)));
-            window.Storage?.local.set(sync.getScopedStorageKey('last_sync_time',scope),String(Date.now()));
+            // A targeted startup pass has not reconciled other local files. Keep their
+            // last confirmed base; adopting the remote ledger would erase edit conflicts.
+            const confirmed=targetFilter?Object.assign(Object.create(null),baseline):next;
+            if(targetFilter)for(const path of paths){if(next[path])confirmed[path]=next[path];else delete confirmed[path];}
+            localStorage.setItem(baseKey,JSON.stringify({...checkpoint,files:confirmed}));
+            window.Storage?.local.set(sync.getScopedStorageKey('sync_manifest',scope),JSON.stringify(Object.keys(confirmed).filter(path=>!confirmed[path].deleted)));
+            if(!targetFilter)window.Storage?.local.set(sync.getScopedStorageKey('last_sync_time',scope),String(Date.now()));
             this.lastReport=report;
             await window.loadPreferencesFromFilesystem?.();window.EventBus?.emit('fs:changed',{action:'sync',paths:Object.keys(next)});
             window.EventBus?.emit('preferences:external',{userId:owner});

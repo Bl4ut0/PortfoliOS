@@ -353,22 +353,37 @@ function initGDriveSettings() {
         setTimeout(() => { if (vaultMsg) vaultMsg.hidden = true; }, 5000);
     };
 
+    document.getElementById('settings-vault-accounts-btn')?.addEventListener('click',()=>window.PortfoliOSVault?.showAccountsModal());
     const updateVaultStatusUI = async () => {
         if (!vaultIndicator || !vaultStatusText || !window.PortfoliOSVault?.getStatus) return;
+        const controls = document.querySelectorAll('#settings-vault-section button');
+        const allowed = window.isPrivateUser?.(window.state?.currentUserId) && window.state?.sessionChosen !== false;
+        for (const button of controls) button.disabled = !allowed;
+        if (!allowed) {
+            vaultIndicator.className = 'status-indicator-dot idle';
+            vaultStatusText.textContent = 'Choose a private workspace to use saved logins';
+            return;
+        }
         try {
             const status = await window.PortfoliOSVault.getStatus();
             vaultIndicator.className = "status-indicator-dot";
-            if (status.isLocked) {
+            if (!status.initialized) {
+                vaultIndicator.classList.add("idle");
+                vaultStatusText.textContent = "Vault unconfigured · set up a passphrase";
+            } else if (status.isLocked) {
                 vaultIndicator.classList.add("loading");
-                vaultStatusText.textContent = `Vault Locked (${status.providers.length} provider(s) encrypted)`;
+                vaultStatusText.textContent = "Vault locked · saved logins remain encrypted";
             } else if (!status.providers.length && !status.hasEncryptedBackup) {
                 vaultIndicator.classList.add("idle");
-                vaultStatusText.textContent = "Vault Unconfigured (Ready for setup)";
+                vaultStatusText.textContent = "Vault unconfigured · set up a passphrase";
             } else {
                 vaultIndicator.classList.add("connected");
-                vaultStatusText.textContent = `Vault Active (${status.tokenCount || status.providers.length} provider(s) in memory)`;
+                vaultStatusText.textContent = `Vault unlocked (${status.tokenCount} saved login(s))`;
             }
-        } catch (_) {}
+        } catch (_) {
+            vaultIndicator.className = 'status-indicator-dot idle';
+            vaultStatusText.textContent = 'Choose a private workspace to use saved logins';
+        }
     };
 
     if (unlockVaultBtn) {
@@ -418,10 +433,10 @@ function initGDriveSettings() {
 
     if (exportVaultBtn) {
         exportVaultBtn.addEventListener("click", async () => {
-            if (window.handleCommand) {
-                await window.handleCommand("vault export");
-                showVaultMsg("✓ Vault export initiated. Check terminal output.");
-            }
+            try {
+                await window.PortfoliOSVault.checkpoint();
+                showVaultMsg("Encrypted vault saved. Cloud backup runs through the usual workspace sync.");
+            } catch (error) { showVaultMsg(error.message, true); }
         });
     }
 

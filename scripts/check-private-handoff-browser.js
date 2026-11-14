@@ -77,22 +77,37 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
  }
  async function prepare(viewName='desktop'){
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce',serviceWorkers:'block'});await routeContext(context);
-  const p=await context.newPage();p.on('pageerror',error=>pageErrors.push(error.message));await p.goto(target);await p.locator('[data-enter-view='+viewName+']').click();await p.locator('[data-session-profile="'+owner+'"]').waitFor();
-  await p.evaluate(({owner,profile})=>{GDriveSync.scheduleAutomaticSync=()=>{};window.triggerGDriveSync=()=>{};GDriveSync.accountSessions[owner]={token:'fixture-token-not-a-real-credential',expiresAt:Date.now()+3600000,profile};},{owner,profile});
+  const p=await context.newPage();p.on('pageerror',error=>pageErrors.push(error.stack || error.message));await p.goto(target);await p.locator('[data-enter-view='+viewName+']').click();await p.locator('[data-session-profile="'+owner+'"]').waitFor();
+  await p.evaluate(({owner,profile})=>{GDriveSync.scheduleAutomaticSync=()=>{};window.triggerGDriveSync=async()=>{};GDriveSync.accountSessions[owner]={token:'fixture-token-not-a-real-credential',expiresAt:Date.now()+3600000,profile};},{owner,profile});
   return {p,context};
  }
  async function selected(p){await p.locator('[data-session-profile="'+owner+'"]').click();}
- async function ready(p){await p.waitForFunction(()=>state.sessionChosen && document.body.dataset.startupStage==='workspace' && PrivateSessions.owned);}
+ // Entry restores critical shell state first. The fixture disables automatic backup,
+ // so explicitly complete the deferred document pass before checking restored content.
+ async function ready(p,{chooseCloud=false,expectVault=false}={}){
+  await p.waitForFunction(()=>state.sessionChosen && document.body.dataset.startupStage==='workspace' && PrivateSessions.owned);
+  if(expectVault)assert.equal(await p.evaluate(async()=>!!await SystemFS.readFile('/documents/vault.enc')),true,'Encrypted vault restores with critical state before deferred documents');
+  const restore=()=>{const pending=p.evaluate(()=>Promise.race([GDriveSync.sync(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Fixture document reconciliation timed out')),30000))]));pending.catch(()=>{});return pending;};
+  let pending=restore();
+  if(chooseCloud){
+   await p.getByRole('button',{name:'Cancel Sync',exact:true}).click();await assert.rejects(pending,/Sync cancelled/);
+   assert.equal(await read(p),'old offline edits','Cancel sync preserves the offline copy');
+   pending=restore();await p.locator('dialog[aria-label="File clash resolution"] [data-choice="remote"]').click();
+  }
+  await pending;
+ }
  async function write(p,text){await p.evaluate(async text=>{clearTimeout(GDriveSync.pendingSyncTimer);await SystemFS.writeFile('/documents/handoff.txt','handoff.txt','/documents',text,text.length,'text/plain',false);clearTimeout(GDriveSync.pendingSyncTimer);},text);}
  async function read(p,path='/documents/handoff.txt'){return p.evaluate(async path=>readFilesystemRecordText(await SystemFS.readFile(path)),path);}
  try{
   browser=await chromium.launch({channel:'chrome',headless:true});
-  const a=await prepare();failWrites=true;await selected(a.p);
-  await a.p.locator('[data-session-error]:not([hidden])').waitFor();assert.equal(await a.p.evaluate(()=>state.sessionChosen),false);
-  await selected(a.p);await a.p.locator('[data-session-error]:not([hidden])').waitFor();assert.equal(await a.p.evaluate(()=>PrivateSessions.ready),false,'Failed restore retries cannot bypass reconciliation');
+  const a=await prepare();
+  await a.p.evaluate(()=>{const original=PrivateSessions.enter;window.fixtureEntryFailures=0;PrivateSessions.enter=async function(...args){try{return await original.apply(this,args);}catch(error){window.fixtureEntryFailures++;throw error;}};});
+  failWrites=true;await selected(a.p);
+  await a.p.waitForFunction(()=>fixtureEntryFailures===1);await a.p.locator('[data-session-error]:not([hidden])').waitFor();assert.equal(await a.p.evaluate(()=>state.sessionChosen),false);
+  await selected(a.p);await a.p.waitForFunction(()=>fixtureEntryFailures===2);await a.p.locator('[data-session-error]:not([hidden])').waitFor();assert.equal(await a.p.evaluate(()=>PrivateSessions.ready),false,'Failed restore retries cannot bypass reconciliation');
   failWrites=false;await selected(a.p);await ready(a.p);const aid=await a.p.evaluate(()=>PrivateSessions.id);
   await a.p.reload();await a.p.locator('[data-enter-view=desktop]').click();await a.p.locator('[data-session-profile="'+owner+'"]').waitFor();
-  await a.p.evaluate(({owner,profile})=>{GDriveSync.scheduleAutomaticSync=()=>{};window.triggerGDriveSync=()=>{};GDriveSync.accountSessions[owner]={token:'fixture-token-not-a-real-credential',expiresAt:Date.now()+3600000,profile};},{owner,profile});
+  await a.p.evaluate(({owner,profile})=>{GDriveSync.scheduleAutomaticSync=()=>{};window.triggerGDriveSync=async()=>{};GDriveSync.accountSessions[owner]={token:'fixture-token-not-a-real-credential',expiresAt:Date.now()+3600000,profile};},{owner,profile});
   await selected(a.p);await ready(a.p);assert.equal(await a.p.evaluate(()=>PrivateSessions.id),aid,'Reload retains unique tab identity without force takeover');
   const clone=await a.context.newPage();await clone.addInitScript(id=>sessionStorage.setItem('portfolios:session-id',id),aid);await clone.goto(target);await clone.locator('[data-enter-view=desktop]').click();await clone.locator('[data-session-profile="'+owner+'"]').waitFor();
   await clone.evaluate(({owner,profile})=>{GDriveSync.accountSessions[owner]={token:'fixture-token-not-a-real-credential',expiresAt:Date.now()+3600000,profile};},{owner,profile});
@@ -102,6 +117,8 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   await a.p.evaluate(async()=>{const data='large recovery fixture '.repeat(220000);await SystemFS.writeFile('/documents/large.txt','large.txt','/documents',data,data.length,'text/plain');clearTimeout(GDriveSync.pendingSyncTimer);await GDriveSync.sync();});
   const large=[...remote.values()].find(file=>file.appProperties?.path==='/documents/large.txt');assert(large.data.length>4*1024*1024,'Large file uses resumable gateway chunks');
   await a.p.evaluate(async()=>{await SystemFS.deleteFile('/documents/large.txt');clearTimeout(GDriveSync.pendingSyncTimer);await GDriveSync.sync();});
+  await a.p.addScriptTag({url:target+'core/credential-vault.js'});await a.p.addScriptTag({url:target+'core/runtime-bridge.js'});
+  await a.p.evaluate(async()=>{await PortfoliOSVault.initWithPassphrase('Synthetic handoff vault passphrase 47!');await PortfoliOSVault.importCodex(JSON.stringify({tokens:{account_id:'handoff-codex',access_token:'fixture-handoff-access',refresh_token:'fixture-handoff-refresh'}}));window.handoffCredential=PortfoliOSVault.acquire('cli.codex');await GDriveSync.sync();if(handoffCredential.read().tokens.account_id!=='handoff-codex')throw new Error('Regular backup revoked the tool login');await PortfoliOSVault.link(PortfoliOSVault.getBinding('cli.codex').id,'app.codex');await GDriveSync.sync();});
   await a.p.evaluate(async()=>{
    setPortfolioTheme('light');await savePreferencesToFilesystem({strict:true});
    let release;const held=WorkspaceSessions.withLock('preferences',state.currentUserId,()=>new Promise(resolve=>{release=resolve;}));
@@ -122,7 +139,12 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   assert.equal(await b.p.evaluate(()=>state.sessionChosen),false,'Second workspace cannot mount before handoff');
   await b.p.getByRole('button',{name:'Save other session & take over',exact:true}).click();
   await write(a.p,'saved during handoff');
-  await a.p.evaluate(()=>PrivateSessions.tick());await ready(b.p);
+  await a.p.evaluate(()=>PrivateSessions.tick());await ready(b.p,{expectVault:true});
+  assert.equal(await a.p.evaluate(()=>{try{handoffCredential.read();return false}catch{return true}}),true,'Handoff revokes previous workspace credential access');
+  await b.p.addScriptTag({url:target+'core/credential-vault.js'});await b.p.addScriptTag({url:target+'core/runtime-bridge.js'});
+  assert.equal(await b.p.evaluate(async()=>(await PortfoliOSVault.getStatus()).isLocked),true,'Transferred encrypted vault starts locked');
+  await b.p.evaluate(()=>PortfoliOSVault.unlockWithPassphrase('Synthetic handoff vault passphrase 47!'));
+  assert.equal(await b.p.evaluate(()=>{const lease=PortfoliOSVault.acquire('cli.codex');try{return lease.read().tokens.account_id;}finally{lease.release();}}),'handoff-codex','Independent browser restores encrypted Codex account without provider login');
   assert.equal(await read(b.p),'saved during handoff','New device sees flushed owner changes');
   assert.equal(await a.p.evaluate(()=>PrivateSessions.owned),false);
   await a.p.getByRole('button',{name:'Choose account',exact:true}).waitFor();
@@ -136,7 +158,7 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   failWrites=true;await write(b.p,'new active dirty version');await b.p.evaluate(()=>PrivateSessions.tick());
   await b.p.getByRole('button',{name:'Retry save and handoff',exact:true}).waitFor();
   assert.equal(active.id,bid,'Failed save does not release owner');assert.equal(await a.p.evaluate(()=>state.sessionChosen),false);
-  failWrites=false;await b.p.getByRole('button',{name:'Retry save and handoff',exact:true}).click();await ready(a.p);
+  failWrites=false;await b.p.getByRole('button',{name:'Retry save and handoff',exact:true}).click();await ready(a.p,{chooseCloud:true});
   assert.equal(await read(a.p),'new active dirty version','Canonical current version retained');
   const recovered=await a.p.evaluate(async()=>(await SystemFS.getAllFiles()).filter(f=>f.path.startsWith('/Recovered Sessions/') && f.metadata?.originalPath==='/documents/handoff.txt').map(f=>({path:f.path,data:f.data instanceof Blob?null:f.data})));
   assert(recovered.length,'Divergent former-session file preserved locally');
@@ -148,7 +170,11 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL
   await a.p.waitForFunction(()=>!document.querySelector('dialog[aria-label="Restore recovery copy"]'));
   assert.equal(await read(a.p,'/documents/recovered-handoff.txt'),'old offline edits','Native Save As restores a chosen recovery copy');
   await a.p.getByRole('button',{name:'Load Drive recovery history',exact:true}).click();
-  await a.p.getByRole('button',{name:/^Drive snapshot:/}).first().click();
+  const offlineHash=require('node:crypto').createHash('sha256').update('old offline edits').digest('hex');
+  const offlineManifest=[...remote.values()].find(f=>f.name==='snapshot.json'&&JSON.parse(f.data).files.some(entry=>entry.path==='/documents/handoff.txt'&&entry.hash===offlineHash));
+  assert(offlineManifest,'Offline conflict has an immutable cloud snapshot before replacement');
+  const offlineFolder=remote.get(offlineManifest.parents[0]);
+  await a.p.getByRole('button',{name:'Drive snapshot: '+offlineFolder.name,exact:true}).click();
   await a.p.getByRole('button',{name:'Restore /documents/handoff.txt',exact:true}).click();
   await a.p.getByRole('textbox',{name:'File name',exact:true}).fill('cloud-recovered.txt');
   await a.p.getByRole('button',{name:'Save',exact:true}).click();

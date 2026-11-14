@@ -24,8 +24,11 @@ const mockSystemFS = {
     }
     return null;
   },
-  async writeFile(filePath, name, parent, data, size, type) {
-    files.set(filePath, { path: filePath, name, parent, data, size: size || data.length, isDirectory: false });
+  async writeFile(filePath, name, parent, data, size, type, isDirectory=false, options={}) {
+    const old=files.get(filePath);
+    if(options.expectedAbsent&&old||options.expectedRecord&&options.expectedRecord.revision!==old?.revision)throw new Error('Concurrent change');
+    const record={path:filePath,name,parent,data,size:size||data.length,isDirectory,revision:crypto.randomUUID()};
+    files.set(filePath,record);return record;
   },
   async readDir(dirPath) {
     const list = [];
@@ -48,7 +51,7 @@ const sandbox = {
   window: null,
   document: {
     addEventListener: () => {},
-    querySelectorAll: () => []
+    querySelectorAll: () => [], querySelector:()=>null,getElementById:()=>null
   },
   WebAssembly: globalThis.WebAssembly,
   TextEncoder: globalThis.TextEncoder,
@@ -59,14 +62,15 @@ const sandbox = {
   btoa: globalThis.btoa,
   atob: globalThis.atob,
   SystemFS: mockSystemFS,
-  state: { currentUserId: 'bl4ut0' },
-  isPrivateUser: (user) => user === 'bl4ut0' || user === 'guest' || user === 'root',
+  state: { currentUserId: 'private_fixture' },
+  isPrivateUser: (user) => /^private_/.test(user||''),
   console
 };
 sandbox.window = sandbox;
 sandbox.globalThis = sandbox;
 
 const context = vm.createContext(sandbox);
+vm.runInContext(fs.readFileSync(path.join(root,'core/credential-vault.js'),'utf8'),context);
 vm.runInContext(bridgeSource, context);
 
 const Bridge = sandbox.window.PortfoliOSRuntimeBridge;
@@ -86,7 +90,7 @@ assert(Bridge, 'PortfoliOSRuntimeBridge must be defined on window');
   );
 
   // 3. Create private session with root / mount
-  const session = await Bridge.getOrCreateSession('bl4ut0');
+  const session = await Bridge.getOrCreateSession('private_fixture');
   assert.equal(session.active, true);
   assert.equal(session.mountRoot, '/');
   assert.equal(session.vfsRoot, '/');
@@ -119,7 +123,7 @@ assert(Bridge, 'PortfoliOSRuntimeBridge must be defined on window');
   
   const shebangOutput = [];
   const shebangRes = await Bridge.runProcess({
-    profileId: 'bl4ut0',
+    profileId: 'private_fixture',
     cmd: 'test-script.sh',
     args: ['arg1'],
     onOutput: (c) => shebangOutput.push(c)
@@ -140,7 +144,7 @@ assert(Bridge, 'PortfoliOSRuntimeBridge must be defined on window');
   // 7a. Version check
   const versionOutput = [];
   const verRes = await Bridge.runProcess({
-    profileId: 'bl4ut0',
+    profileId: 'private_fixture',
     cmd: 'agy',
     args: ['--version'],
     onOutput: (c) => versionOutput.push(c)
@@ -151,7 +155,7 @@ assert(Bridge, 'PortfoliOSRuntimeBridge must be defined on window');
   // 7b. Doctor check
   const doctorOutput = [];
   const docRes = await Bridge.runProcess({
-    profileId: 'bl4ut0',
+    profileId: 'private_fixture',
     cmd: 'agy',
     args: ['doctor'],
     onOutput: (c) => doctorOutput.push(c)
@@ -175,7 +179,7 @@ assert(Bridge, 'PortfoliOSRuntimeBridge must be defined on window');
   };
 
   const cancelPromise = Bridge.runProcess({
-    profileId: 'bl4ut0',
+    profileId: 'private_fixture',
     cmd: 'interactive-tool',
     args: [],
     onOutput: () => {}
@@ -183,12 +187,15 @@ assert(Bridge, 'PortfoliOSRuntimeBridge must be defined on window');
 
   // Wait a tick then send Ctrl+C
   await new Promise(r => setTimeout(r, 25));
-  Bridge.sendInput('\x03', 'bl4ut0');
+  Bridge.sendInput('\x03', 'private_fixture');
   const cancelRes = await cancelPromise;
   assert.equal(cancelRes.exitCode, 130, 'Cancelled process must return SIGINT exit code 130');
 
   // 9. Git Credential Helper and Vault Integration
-  const vaultSession = await Bridge.getOrCreateSession('bl4ut0');
+  const vaultSession = await Bridge.getOrCreateSession('private_fixture');
+  const vault = sandbox.window.PortfoliOSVault;
+  const strongPassword = 'Master#SecureVaultKey987!';
+  await vault.initWithPassphrase(strongPassword);
   await vaultSession.vault.saveToken('github', {
     accessToken: 'ghp_testsecret12345',
     account: 'octocat'
@@ -197,28 +204,26 @@ assert(Bridge, 'PortfoliOSRuntimeBridge must be defined on window');
 
   const gitHelperOutput = [];
   const gitRes = await Bridge.runProcess({
-    profileId: 'bl4ut0',
+    profileId: 'private_fixture',
     cmd: 'git-credential-portfolios',
     args: ['get'],
     onOutput: (c) => gitHelperOutput.push(c)
   });
-  assert.equal(gitRes.exitCode, 0);
-  assert(gitHelperOutput.some(c => c.includes('password=ghp_testsecret12345')));
+  assert.equal(gitRes.exitCode, 1);
+  assert(!gitHelperOutput.some(c => c.includes('ghp_testsecret12345')));
 
   // Test window.PortfoliOSVault
-  const vault = sandbox.window.PortfoliOSVault;
   const vaultStatus = await vault.getStatus();
   assert(vaultStatus.providers.includes('github'));
 
   // 10. Vault password policy validation
   const weakCheck = vault.validatePassword('short');
   assert.equal(weakCheck.valid, false);
-  const strongPassword = 'Master#SecureVaultKey987!';
   const strongCheck = vault.validatePassword(strongPassword);
   assert.equal(strongCheck.valid, true);
 
   // 11. Vault init & export with AES-256-GCM + PBKDF2
-  const initRes = await vault.initWithPassphrase(strongPassword);
+  const initRes = await vault.checkpoint();
   assert.equal(initRes.success, true);
   const encFile = await mockSystemFS.readFile('/documents/vault.enc');
   assert(encFile, '/documents/vault.enc must exist after initWithPassphrase');
@@ -245,7 +250,7 @@ assert(Bridge, 'PortfoliOSRuntimeBridge must be defined on window');
   assert.equal(files.has('/documents/vault.enc'), false);
   assert.equal(files.has('/etc/portfolios/vault/github.json'), false);
   const purgedStatus = await vault.getStatus();
-  assert.equal(purgedStatus.isLocked, false);
+  assert.equal(purgedStatus.isLocked, true);
   assert.equal(purgedStatus.providers.length, 0);
   assert.equal(purgedStatus.hasEncryptedBackup, false);
 

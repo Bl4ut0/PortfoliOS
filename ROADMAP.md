@@ -1,6 +1,6 @@
 # PortfoliOS Roadmap
 
-Updated 2026-11-12. Priorities describe delivery order rather than promised dates. A milestone is complete only after checks, commit, push, production deployment, and release verification.
+Updated 2026-11-14. Priorities describe delivery order rather than promised dates. A milestone is complete only after checks, commit, push, production deployment, and release verification.
 
 ---
 
@@ -14,31 +14,11 @@ Updated 2026-11-12. Priorities describe delivery order rather than promised date
 
 ---
 
-## Delivered in the Structured Access System and Zero-Knowledge Vault release
+## Current credential and runtime milestone
 
-- **Root `/` POSIX Virtual Filesystem**:
-  - Full root `/` mounting covering `/`, `/home/<user>`, `/usr/local/bin`, `/etc`, `/tmp`, and `/documents`.
-  - Normalized path traversal guards blocking escapes above root `/`.
-- **Zero-Knowledge Client-Side Keyring & Vault**:
-  - Unified token store under `/etc/portfolios/vault/` protecting `codex` (ChatGPT), `agy` (Google Antigravity), `claude` (Claude Code), `xai` (xAI Grok), and `github` (Git Credential Helper).
-  - Client-side AES-256-GCM encryption with 128-bit authentication tags and PBKDF2-HMAC-SHA512 key derivation at 600,000 rounds with rotating 32-byte salts.
-  - Plain-text tokens stored exclusively in local IndexedDB; unencrypted `/etc` and dotfiles strictly blocked from cloud sync.
-- **Setup & Recovery Option (Purge & Re-Initialize)**:
-  - Addressed Zero-Knowledge lost-password scenario: because ciphertext cannot be cracked or backdoored, a safe recovery workflow (`vault purge` / `window.PortfoliOSVault.purgeAndReset()`) wipes locked keys, cleans `/etc/portfolios/vault/*.json`, and deletes `/documents/vault.enc`.
-  - Allows users to re-initialize with a new Master Passphrase without breaking existing system files or leaving corrupted sessions.
-- **Visual Multi-Program Authentication Modal**:
-  - Top-level desktop overlay (`#vault-modal`) with **Unlock**, **Setup**, and **Purge & Reset** views.
-  - Live criteria checklist for password strength (&ge;14 chars, character mix, &ge;60-bit entropy) and one-click unlock for all active programs.
-- **User-space Linux x86_64 POSIX Syscall Translation Table**:
-  - Directly translates Linux x86_64 syscalls (`sys_open`, `sys_read`, `sys_write`, `sys_close`, `sys_stat`, `sys_getdents64`, `sys_socket`, `sys_connect`, `sys_ioctl`, `sys_brk`) to browser secondary connectors without requiring heavy Linux container images or secondary loaders.
-- **In-Browser Terminal CLI Toolchain**:
-  - Added first-party commands: `vault`, `codex`, `agy`, `claude`, `xai`, `git-credential-portfolios`, `apt`, `npm`, `curl`, `wget`, `sh`.
-- **Git Credential Helper**:
-  - `/usr/local/bin/git-credential-portfolios` serves stored GitHub credentials from the vault to Git CLI over standard credential protocol.
-- **Windows Native Messaging Relay**:
-  - `PortfoliOS-NativeRelay` companion extension and host bridge enabling raw TCP/UDP duplex networking.
-- **Dual Cloud Sync Drivers**:
-  - Integrated Google Drive and OneDrive sync drivers, explicitly allowing `/documents/vault.enc` to sync while keeping credentials protected.
+The [encrypted credential broker](docs/VAULT_AUTH.md) now provides profile-scoped saved accounts, explicit per-subsystem bindings, temporary revocable access, reload/unlock persistence and a real Codex auth-file import path. New credentials are encrypted before every SystemFS write; unused logins are offered for explicit removal while referenced logins remain. Legacy unowned keyrings are hidden and retained for attributable recovery. Targeted startup restores now retain unprocessed files’ prior merge baselines; encrypted vault conflicts block overwrite, and offline file conflicts receive a recovery snapshot before replacement. Cancel Sync preserves the copies.
+
+These are local implementation/test results pending publication, not evidence of native CLI compatibility. Earlier descriptions overstated plaintext keyring protection, synthetic OAuth success and the Git credential helper. Live CLI process execution, ephemeral auth-file/credential-protocol delivery, refresh writeback, a real provider request after reload and cloud recovery verification remain required. Antigravity needs its own validated connector. The Native Relay's network sockets alone do not supply those process capabilities.
 
 ---
 
@@ -96,7 +76,7 @@ Build `2026.10.11.15` implements one active Google workspace, saved handoff, exp
 | Priority | Milestone | Platform Scope | Acceptance criteria | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
 | **P0** | **Sync Recovery and Conflict Handling** | **Desktop** | Validate handoff/recovery framework with real cloud accounts; add durable resumable retry queues, snapshot retention controls, folder deletion review, and stable-identity atomic moves. | Account-scoped storage |
-| **P0** | **Desktop Keyring & Developer Toolchain** | **Desktop** | Complete terminal package management workflows (`apt`, `npm`), PTY process streaming, and Zero-Knowledge Vault sync recovery integration. | Root `/` VFS & Vault Connector |
+| **P0** | **Desktop Keyring & Developer Toolchain** | **Desktop** | Connect a real CLI process/PTY through the installed user bridge; scope ephemeral credential files, persist provider refresh output through the encrypted broker, and verify Codex request → reload/unlock → repeat. Then validate Antigravity, Git credentials and cloud restore. Package metadata/mock commands are not executable compatibility. | Root `/` VFS & Vault Connector |
 | **P1** | **Restore Across Devices** | **Desktop** | Two browsers restore the same account's documents, preferences, app-install selections, and desktop layouts. Other accounts' homes and metadata never enter the backup. Validate restore before applying it. | Stable subject IDs & conflict handling |
 | **P1** | **Desktop WASM Application & Creative Expansion** | **Desktop** | Follow [the WASM expansion roadmap](docs/wasm/ROADMAP.md): evaluate layered PhotoCraft, multi-document VectorCraft/DesignCraft edit/save/reopen fixtures; LightCraft first useful interaction and larger libraries; FilmCraft/EffectCraft media-codec/render fixtures; Code OSS Documents filesystem provider. | Reliable backup & lifecycle boundaries |
 | **P1** | **Public Portfolio and WardenIT** | **Desktop** | Add WardenIT/project screenshots and concise case studies, verify public contact/services flows, and keep portfolio milestones current. | Project media and outcomes |
@@ -108,4 +88,4 @@ Build `2026.10.11.15` implements one active Google workspace, saved handoff, exp
 
 ## Release Checks
 
-Run `npm test`. For storage changes, serve the repo and open `scripts/check-profile-filesystem.html`: its disposable IndexedDB audit must pass. Check Desktop and Mobile chooser entry, public access, saved account reconnect, another account, cancellation, offline continuation, reload, and profile switching during backup.
+Run `npm test` and `node scripts/check-credential-vault-browser.js` for credential changes. For storage changes, serve the repo and open `scripts/check-profile-filesystem.html`: its disposable IndexedDB audit must pass. Check Desktop and Mobile chooser entry, public access, saved account reconnect, another account, cancellation, offline continuation, reload, and profile switching during backup.

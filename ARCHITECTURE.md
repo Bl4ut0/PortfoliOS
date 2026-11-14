@@ -11,6 +11,7 @@ This document describes the modular implementation of PortfoliOS. The project is
 ```text
 PortfoliOS/
 ├── core/                         # Core system services
+│   ├── credential-vault.js       # Encrypted account records, subsystem bindings and revocable access
 │   ├── runtime-bridge.js         # POSIX Root / VFS bridge, PTY controller, process harness, ZK vault, git helper
 │   ├── cloud-auth.js             # Unified cloud auth driver (Google Drive & OneDrive)
 │   ├── cloud-sync.js             # Unified cloud sync driver
@@ -53,6 +54,7 @@ PortfoliOS/
 ## 3. Key Components
 
 ### A. Core Layers (`/core`)
+- **[credential-vault.js](core/credential-vault.js)**: OS-owned encrypted credential broker; [storage, bridge and lifecycle contract](docs/VAULT_AUTH.md).
 - **[runtime-bridge.js](core/runtime-bridge.js)**: Secondary connector adapter integrating the Root `/` POSIX VFS bridge, PTY controller, Linux process harness, Zero-Knowledge Keyring Vault, and Git credential helper (`git-credential-portfolios`).
 - **[cloud-auth.js](core/cloud-auth.js)** & **[cloud-sync.js](core/cloud-sync.js)**: Unified cloud authentication and sync drivers supporting Google Drive and Microsoft OneDrive with client-side encrypted envelope synchronization.
 - **[event-bus.js](core/event-bus.js)**: System EventBus avoiding direct component coupling via events (`app:opened`, `app:closed`, `fs:changed`, `portfolios:vault-status-changed`).
@@ -88,12 +90,11 @@ graph TD
     SyscallTable -->|sys_ioctl| PTY[PTY Controller Stream]
     Terminal -->|Token Queries| Vault[Zero-Knowledge Keyring Vault]
     Vault -->|In-Memory AES Keys| Memory[(Session Memory)]
-    Vault -->|Write-Through| LocalVault["/etc/portfolios/vault/*.json (Local IndexedDB)"]
-    Vault -->|AES-256-GCM Export| EncFile["/documents/vault.enc (Cloud Sync Ready)"]
+    Vault -->|Scoped temporary access| Consumer[Linked subsystem]
+    Vault -->|AES-256-GCM on every write| EncFile["/documents/vault.enc (Profile IndexedDB)"]
     EncFile -->|Sync Allowed| CloudSync[Google Drive / OneDrive Sync]
-    LocalVault -.->|Sync Blocked| CloudSync
 ```
 
 - **POSIX Syscall Mapping**: User-space translation layer maps Linux binary syscalls directly to browser secondary connectors.
-- **Zero-Knowledge Keyring**: Master Passphrase derives 256-bit AES key via PBKDF2 (600,000 rounds). Only encrypted `/documents/vault.enc` leaves the device.
+- **Encrypted keyring**: Passphrase-derived AES key and plaintext records stay in memory while unlocked. Only ciphertext persists. Lock/profile changes revoke leases; saved bindings survive reload. Real native process/auth delivery remains open; manual Git helper output never includes secrets.
 - **Event-Driven Reactivity**: SystemFS file changes emit `fs:changed`, and vault transitions emit `portfolios:vault-status-changed`, keeping the UI in sync without polling.

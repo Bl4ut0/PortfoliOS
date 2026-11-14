@@ -86,7 +86,7 @@
                 button.className='session-public-action';
                 if(options?.primary) button.classList.add('primary');
                 button.textContent=label;
-                button.onclick=()=>callback(button,text).catch(error=>{text.textContent=error.message;});
+                button.onclick=()=>Promise.resolve().then(()=>callback(button,text)).catch(error=>{text.textContent=error.message;});
                 panel.append(button);
             }
             node.append(panel);
@@ -191,7 +191,8 @@
                 await window.savePreferencesToFilesystem?.({strict:true});
                 const criticalPaths = [
                     '/Desktop/desktop-layout.json',
-                    '/Pictures/Icon Packs/active.json'
+                    '/Pictures/Icon Packs/active.json',
+                    '/documents/vault.enc'
                 ];
                 await GDriveSync.sync((done,total,path)=>{
                     const name = path ? path.split('/').pop() : '';
@@ -328,6 +329,7 @@
             await window.savePreferencesToFilesystem?.({strict:true});
         },
         lock(message) {
+            window.PortfoliOSVault?.lock();
             clearInterval(this.timer);
             if (window.GDriveSync?.pendingSyncTimer !== null) {
                 clearTimeout(window.GDriveSync?.pendingSyncTimer);

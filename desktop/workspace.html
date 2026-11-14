@@ -821,12 +821,13 @@
                                         <section class="settings-section" id="settings-vault-section">
                                             <h3>Zero-Knowledge Credentials Keyring</h3>
                                             <div class="sync-actions-card">
-                                                <p class="settings-info-text">Client-side AES-256-GCM encrypted vault protecting your CLI subscriptions (ChatGPT, Antigravity, Claude, xAI, GitHub) across devices without storing plain-text keys on cloud drives.</p>
+                                                <p class="settings-info-text">Saved tool logins are encrypted before local storage and backup. Unlock the vault once, then choose an account for each linked subsystem. CLI provider sign-in is separate from your PortfoliOS account.</p>
                                                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
                                                     <span class="status-indicator-dot connected" id="settings-vault-indicator"></span>
-                                                    <strong id="settings-vault-status-text">Vault Ready (IndexedDB)</strong>
+                                                    <strong id="settings-vault-status-text">Checking encrypted vault…</strong>
                                                 </div>
                                                 <div class="gdrive-actions-row" style="display:flex;gap:8px;flex-wrap:wrap;">
+                                                    <button type="button" id="settings-vault-accounts-btn" class="settings-btn btn-secondary">Saved Logins</button>
                                                     <button type="button" id="settings-vault-unlock-btn" class="settings-btn btn-primary">
                                                         <i class="fa-solid fa-unlock"></i> Unlock Vault
                                                     </button>
@@ -834,7 +835,7 @@
                                                         <i class="fa-solid fa-key"></i> Setup Passphrase
                                                     </button>
                                                     <button type="button" id="settings-vault-export-btn" class="settings-btn btn-secondary">
-                                                        <i class="fa-solid fa-file-shield"></i> Export Encrypted (.enc)
+                                                        <i class="fa-solid fa-file-shield"></i> Save encrypted vault
                                                     </button>
                                                     <button type="button" id="settings-vault-import-btn" class="settings-btn btn-secondary" style="display:none;">
                                                         <i class="fa-solid fa-key"></i> Import &amp; Decrypt Vault
@@ -1066,7 +1067,7 @@
                                         <div class="vault-header-icon"><i class="fa-solid fa-shield-halved"></i></div>
                                         <div>
                                             <h3 id="vault-modal-title">Unlock PortfoliOS Keyring</h3>
-                                            <p class="vault-subtitle">Enter your Master Passphrase to authenticate active CLI sessions.</p>
+                                            <p class="vault-subtitle">Unlock saved tool logins for your linked subsystems. Provider sign-in remains separate.</p>
                                         </div>
                                     </div>
 
@@ -1133,8 +1134,6 @@
 
                                     <div class="vault-requirements-list">
                                         <small class="vault-req" id="vreq-len"><i class="fa-regular fa-circle"></i> At least 14 characters</small>
-                                        <small class="vault-req" id="vreq-mix"><i class="fa-regular fa-circle"></i> Upper, lower, number, and symbol</small>
-                                        <small class="vault-req" id="vreq-ent"><i class="fa-regular fa-circle"></i> High entropy (&ge; 60 bits)</small>
                                         <small class="vault-req" id="vreq-match"><i class="fa-regular fa-circle"></i> Passphrases match</small>
                                     </div>
 
@@ -1159,8 +1158,8 @@
                                     </div>
 
                                     <div class="vault-warning-box">
-                                        <p><strong><i class="fa-solid fa-circle-exclamation"></i> Irreversible Action:</strong> Because PortfoliOS uses Zero-Knowledge AES-256-GCM encryption with PBKDF2 (600,000 rounds), forgotten passphrases <em>cannot be recovered or cracked</em>.</p>
-                                        <p>Purging will permanently erase all saved CLI credentials from <code>/etc/portfolios/vault/</code>, clear session keys from memory, and delete <code>/documents/vault.enc</code> so you can configure a fresh Master Passphrase.</p>
+                                        <p><strong><i class="fa-solid fa-circle-exclamation"></i> Irreversible Action:</strong> Because PortfoliOS uses Zero-Knowledge AES-256-GCM encryption with PBKDF2 (600,000 rounds), PortfoliOS cannot recover a forgotten passphrase. Keep a secure copy of your passphrase.</p>
+                                        <p>Purging deletes this profile’s encrypted <code>/documents/vault.enc</code> and clears its unlocked session keys. Other profiles, historical keyring files, and existing cloud backup copies are not erased. You can then set up a new passphrase.</p>
                                     </div>
 
                                     <div class="vault-input-group">
