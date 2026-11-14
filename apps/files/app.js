@@ -819,6 +819,10 @@
 
         // 1. Check user-configured and system default file associations
         const associatedApp = window.getFileAssociation ? window.getFileAssociation(lowerName) : null;
+        if (associatedApp === 'loop-studio' && !window.isAppInstalled?.('loop-studio')) {
+            window.showDesktopToast?.('Install Loop Studio from the Store to open this project.'); return;
+        }
+
         if (associatedApp && (!window.isAppInstalled || window.isAppInstalled(associatedApp))) {
             if (associatedApp === "imageviewer") {
                 return window.openDesktopWindow("imageviewer", { path: item.path, record: item });

@@ -479,7 +479,7 @@ const installAppFiles = async (id) => {
     window.renderStore();
 
     const modularStoreApps = [
-        "plex",
+        "loop-studio", "plex",
         "codex", "solidcraft", "genoffice", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes", "pdfcraft", "photocraft", "vectorcraft",
         "lightcraft", "designcraft", "filmcraft", "effectcraft"
     ];

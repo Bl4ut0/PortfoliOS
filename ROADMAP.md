@@ -18,7 +18,15 @@ Updated 2026-11-14. Priorities describe delivery order rather than promised date
 
 The [encrypted credential broker](docs/VAULT_AUTH.md) now provides profile-scoped saved accounts, explicit per-subsystem bindings, temporary revocable access, reload/unlock persistence and a real Codex auth-file import path. New credentials are encrypted before every SystemFS write; unused logins are offered for explicit removal while referenced logins remain. Legacy unowned keyrings are hidden and retained for attributable recovery. Targeted startup restores now retain unprocessed files’ prior merge baselines; encrypted vault conflicts block overwrite, and offline file conflicts receive a recovery snapshot before replacement. Cancel Sync preserves the copies.
 
-These are local implementation/test results pending publication, not evidence of native CLI compatibility. Earlier descriptions overstated plaintext keyring protection, synthetic OAuth success and the Git credential helper. Live CLI process execution, ephemeral auth-file/credential-protocol delivery, refresh writeback, a real provider request after reload and cloud recovery verification remain required. Antigravity needs its own validated connector. The Native Relay's network sockets alone do not supply those process capabilities.
+The credential implementation was published in release 2026.11.14.1; this is not evidence of native CLI compatibility. Earlier descriptions overstated plaintext keyring protection, synthetic OAuth success and the Git credential helper. Live CLI process execution, ephemeral auth-file/credential-protocol delivery, refresh writeback, a real provider request after reload and cloud recovery verification remain required. Antigravity needs its own validated connector. The Native Relay's network sockets alone do not supply those process capabilities.
+
+---
+
+## Loop Studio and shared sound library
+
+Local implementation and fixtures now cover the Desktop Strudel workstation, bounded live patterns, an indexed eight-sound public kit, recordings and SystemFS projects, private reload/isolation, reviewed on-device AI draft plumbing, and browser-local MCP tools. The engine and sound assets load on use, outside boot/login. See [the app contract and limits](apps/loop-studio/README.md) and [sound-pack publishing](data/sounds/README.md).
+
+Next music gates: physical-device audio latency/codec checks, real local-model composition quality, external MCP transport adapter, more curated sound packs, richer supported pattern functions and later native Mobile adaptation. The browser-local MessagePort connection does not provide an HTTP/stdio MCP listener.
 
 ---
 

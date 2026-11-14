@@ -1,0 +1,73 @@
+{
+  "id": "portfolios-kit",
+  "title": "PortfoliOS Pocket Kit",
+  "license": "ISC",
+  "source": "https://github.com/Bl4ut0/PortfoliOS",
+  "description": "Original synthesized percussion. No third-party recordings.",
+  "sounds": [
+    {
+      "id": "bd",
+      "title": "Kick",
+      "category": "drums",
+      "files": [
+        "bd.wav"
+      ]
+    },
+    {
+      "id": "sd",
+      "title": "Snare",
+      "category": "drums",
+      "files": [
+        "sd.wav"
+      ]
+    },
+    {
+      "id": "hh",
+      "title": "Closed hi-hat",
+      "category": "drums",
+      "files": [
+        "hh.wav"
+      ]
+    },
+    {
+      "id": "oh",
+      "title": "Open hi-hat",
+      "category": "drums",
+      "files": [
+        "oh.wav"
+      ]
+    },
+    {
+      "id": "clap",
+      "title": "Clap",
+      "category": "drums",
+      "files": [
+        "clap.wav"
+      ]
+    },
+    {
+      "id": "rim",
+      "title": "Rim click",
+      "category": "drums",
+      "files": [
+        "rim.wav"
+      ]
+    },
+    {
+      "id": "tom",
+      "title": "Low tom",
+      "category": "drums",
+      "files": [
+        "tom.wav"
+      ]
+    },
+    {
+      "id": "bell",
+      "title": "Bell",
+      "category": "percussion",
+      "files": [
+        "bell.wav"
+      ]
+    }
+  ]
+}

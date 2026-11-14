@@ -1,7 +1,7 @@
 /** Offline boot plus assets actually used by a workspace. App binaries stay in SystemFS. */
 const DB_NAME = "PortfoliOS_FS";
 const STORE_NAME = "files";
-const SHELL_RELEASE = "2026.11.14.1";
+const SHELL_RELEASE = "2026.11.14.2";
 const SHELL_CACHE = "portfolio-shell-" + SHELL_RELEASE;
 const versioned = path => path + "?v=" + SHELL_RELEASE;
 const BOOT_ASSETS = ["/", "/manifest.webmanifest", ...[
@@ -50,12 +50,20 @@ self.addEventListener("activate", event => {
         await self.clients.claim();
     })());
 });
+function isSharedSoundAsset(path) {
+    try { path=decodeURIComponent(path); } catch { return false; }
+    return /^\/data\/sounds\/[a-z0-9_ /.-]+\.(wav|ogg|mp3|flac|m4a|webm)$/i.test(path) && !path.split("/").some(part=>part.startsWith("."));
+}
 function isMobileShellAsset(path) {
     return ["/", "/index.html", "/manifest.webmanifest", "/styles-v1.css", "/main.js", "/identity-portrait.jpg", "/doom-icon.png", "/duke3d-icon.png", "/diablo-icon.png", "/quake-icon.png"].includes(path)
         || /^\/(core|data|desktop|quick|styles)\/[^/]+\.(js|css|html)$/.test(path)
         || /^\/mobile\/[^/]+\.(js|css|html|svg|png)$/.test(path)
         || /^\/(?:mobile\/)?apps\/[^/]+\/app\.(js|css)$/.test(path)
-        || path === "/apps/_shared/iframe-game.js";
+        || path === "/apps/_shared/iframe-game.js"
+        || /^\/apps\/loop-studio\/(patterns|audio|tools)\.js$/.test(path)
+        || path === "/apps/loop-studio/vendor/strudel-web-1.3.0.js"
+        || path === "/data/sounds/catalog.json"
+        || isSharedSoundAsset(path);
 }
 async function fetchShellAsset(request) {
     // Retry temporary origin failures without accepting assets from another release.
@@ -74,9 +82,11 @@ async function serveMobileShellAsset(request) {
     const cache = await caches.open(SHELL_CACHE);
     const navigation = request.mode === "navigate";
     const cached = await caches.match(request);
-    const version = new URL(request.url).searchParams.get("v");
+    const assetURL = new URL(request.url);
+    const version = assetURL.searchParams.get("v");
+    const immutableSound = assetURL.pathname.startsWith("/data/sounds/") && /^[a-f0-9]{16}$/.test(assetURL.searchParams.get("sha") || "");
     // Exact versioned assets need no repeat revalidation. Never fall back to another release's code.
-    if (!navigation && version && cached) return cached;
+    if (!navigation && (version || immutableSound) && cached) return cached;
     try {
         const response = await fetchShellAsset(request);
         if (response.ok) await cache.put(request, response.clone());

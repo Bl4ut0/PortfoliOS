@@ -635,6 +635,7 @@ window.setWallpaper = (wallpaperId) => {
 // Default Applications & File Associations Engine
 // =========================================================================
 const DEFAULT_FILE_ASSOCIATIONS = {
+    ".loop.json": "loop-studio",
     // Images -> defaults to imageviewer
     ".png": "imageviewer",
     ".jpg": "imageviewer",
@@ -689,6 +690,7 @@ const DEFAULT_FILE_ASSOCIATIONS = {
 };
 
 const COMMON_FILE_TYPE_GROUPS = [
+    { id: "loop-projects", label: "Music code projects", icon: "fa-solid fa-music", extensions: [".loop.json"], defaultApp: "loop-studio", compatibleApps: ["loop-studio", "vscode", "office"] },
     {
         id: "images",
         label: "Photos & Images",
@@ -789,10 +791,11 @@ window.getUserFileAssociations = () => {
 window.getFileAssociation = (filenameOrExt = "") => {
     if (!filenameOrExt) return null;
     const clean = String(filenameOrExt).trim().toLowerCase();
-    const ext = clean.startsWith(".") ? clean : (clean.includes(".") ? "." + clean.split(".").pop() : "");
-    if (!ext) return null;
-
     const userMap = window.getUserFileAssociations();
+    const known = [...new Set([...Object.keys(DEFAULT_FILE_ASSOCIATIONS), ...Object.keys(userMap)])];
+    const ext = known.filter(ext => clean === ext || clean.endsWith(ext)).sort((a,b) => b.length-a.length)[0]
+        || (clean.startsWith(".") ? clean : (clean.includes(".") ? "." + clean.split(".").pop() : ""));
+    if (!ext) return null;
     const targetApp = userMap[ext] || DEFAULT_FILE_ASSOCIATIONS[ext] || null;
 
     if (targetApp) {

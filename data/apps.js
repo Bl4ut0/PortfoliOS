@@ -11,7 +11,7 @@ window.standardInstalledAppIds = [
 
 window.desktopPinnedIds = [
     "store", "files", "cli", "browser", "devhub", "office",
-    "pdfcraft", "solidcraft", "genoffice", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft",
+    "loop-studio", "pdfcraft", "solidcraft", "genoffice", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft",
     "romplayer", "openrct2", "doomsource", "duke32", "diablo", "quake", "ut99", "webamp", "musicmini", "iptv"
 ];
 
@@ -46,7 +46,7 @@ window.startMenuGroups = [
         id: "installed",
         label: "Installed Store Apps",
         ids: [
-            "pdfcraft", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft",
+            "loop-studio", "pdfcraft", "photocraft", "vectorcraft", "lightcraft", "designcraft", "filmcraft", "effectcraft",
             "solidcraft", "genoffice", "genoffice-docs", "genoffice-sheets", "genoffice-slides", "genoffice-notes",
             "romplayer", "openrct2", "webamp", "iptv", "doomsource", "duke32", "diablo", "quake", "ut99"
         ]
@@ -86,6 +86,7 @@ window.defaultDesktopIconLayout = {
 };
 
 window.desktopApps = [
+    { id: "loop-studio", title: "Loop Studio", icon: "apps/loop-studio/icon.svg", category: "media", modular: true, meta: "Live music coding with Strudel & SystemFS" },
     { id: "plex", title: "Plex Player", icon: "apps/plex/icon.svg", category: "media", modular: true, meta: "Native Plex client preview" },
     { id: "vscode", title: "Code OSS", icon: "apps/vscode/icon.png", category: "development", modular: true, meta: "SystemFS code workspace" },
     { id: "solidcraft", title: "SolidCraft", icon: "apps/solidcraft/icon.svg", category: "productivity", modular: true, meta: "Parametric 3D CAD & solid modeling" },
@@ -135,6 +136,7 @@ window.modularApps = window.desktopApps
     .map((app) => app.id);
 
 window.storeApps = [
+    { id: "loop-studio", title: "Loop Studio", icon: "apps/loop-studio/icon.svg", category: "Media", description: "Make loops with live Strudel patterns, a shared local sound kit, synth voices and recording. Save projects in SystemFS and try the optional on-device co-composer. Desktop interface.", size: "0.7 MB engine + shared sounds", publisher: "PortfoliOS / Strudel engine" },
     { id: "genoffice", title: "GenOffice", icon: "apps/genoffice/icon.svg", category: "Productivity", description: "Open-source AI-native office suite by Genspark. Features six integrated editors for Word (.docx), Excel (.xlsx), PowerPoint (.pptx), PDF, Markdown, and HTML with byte-preserving patch engines, Local AI agent skills, and full SystemFS integration.", size: "Modular suite", publisher: "Genspark AI / PortfoliOS" },
     { id: "genoffice-docs", title: "GenDocs", icon: "apps/genoffice-docs/icon.svg", category: "Productivity", description: "AI-native Word processor and document editor. Seamless OOXML (.docx), .doc, and rich text authoring with clean blank workspace startup, Save As routing, and SystemFS workspace storage.", size: "Productivity suite", publisher: "Genspark AI / PortfoliOS" },
     { id: "genoffice-sheets", title: "GenSheets", icon: "apps/genoffice-sheets/icon.svg", category: "Productivity", description: "AI-native spreadsheet studio and calculation engine. Dynamic formula calculation, cell editing, CSV/TSV data interchange, and .xlsx workbook preservation in SystemFS.", size: "Productivity suite", publisher: "Genspark AI / PortfoliOS" },

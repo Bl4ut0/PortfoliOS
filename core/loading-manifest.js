@@ -1,6 +1,6 @@
 /** Release-scoped loading graph. Safe in both the page and service worker. */
 (function (root) {
-    const release = "2026.11.14.1";
+    const release = "2026.11.14.2";
     const shared = [
         "core/event-bus.js", "core/storage.js", "core/state.js", "core/utils.js",
         "core/filesystem.js", "core/security-service.js", "core/app-icons.js", "data/systems.js", "data/apps.js",
@@ -37,6 +37,7 @@
             sysinfo: ["core/system-info.js"]
         },
         desktopApps: {
+            "loop-studio": ["core/sound-library.js", "apps/loop-studio/patterns.js", "apps/loop-studio/audio.js", "apps/loop-studio/tools.js"],
             plex: ["@plex"],
             solidcraft: ["@craft"],
             genoffice: ["@ai", "@genoffice"],

@@ -154,6 +154,12 @@ The passphrase unlock is required after reload; provider sign-in is repeated onl
 
 ---
 
+## Loop Studio and shared sounds
+
+[Loop Studio](apps/loop-studio/README.md) is an installable Desktop music-coding app powered by a pinned Strudel engine. It supports live patterns, synth voices, a shared sample shelf, local recording, native SystemFS project dialogs and optional reviewed on-device AI drafts. The engine loads on Play.
+
+The [shared sound library](data/sounds/README.md) starts with eight original percussion sounds and provides reusable metadata/sample maps for other apps. Add a licensed pack, rebuild `catalog.json`, then publish it through the existing deploy workflow. Public sample assets remain separate from private SystemFS recordings.
+
 ## Experience Modes
 
 - **Desktop (Priority 1)**: Full-fidelity windowed workspace with Start launcher, taskbar, system tray, Zero-Knowledge Keyring Vault modal, native terminal CLI toolchain, local AI, File Explorer, Code OSS, Office Document Editor, IPTV Player, Webamp player, and playable WASM engines (DOOM, OpenRCT2, UT99).

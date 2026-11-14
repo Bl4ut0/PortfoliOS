@@ -1,2 +1,5 @@
 # Imported browser release assets must retain their checksum-pinned bytes.
 apps/browser/browserjs/** -text -whitespace linguist-generated=true
+
+# Keep the pinned upstream music engine and source notices byte-for-byte.
+apps/loop-studio/vendor/** -text -whitespace linguist-generated=true

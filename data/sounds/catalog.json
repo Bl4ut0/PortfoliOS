@@ -1,0 +1,134 @@
+{
+  "format": "portfolios-sounds",
+  "version": 1,
+  "packs": [
+    {
+      "id": "portfolios-kit",
+      "title": "PortfoliOS Pocket Kit",
+      "license": "ISC",
+      "source": "https://github.com/Bl4ut0/PortfoliOS"
+    }
+  ],
+  "sounds": [
+    {
+      "id": "bd",
+      "title": "Kick",
+      "category": "drums",
+      "pack": "portfolios-kit",
+      "files": [
+        {
+          "url": "data/sounds/portfolios-kit/bd.wav",
+          "bytes": 15920,
+          "sha256": "00e2e5ef06e4edaea97ae6bad465a73e8690ea9491aaab518e8058f70c0b6054",
+          "type": "audio/wav",
+          "seconds": 0.36
+        }
+      ]
+    },
+    {
+      "id": "sd",
+      "title": "Snare",
+      "category": "drums",
+      "pack": "portfolios-kit",
+      "files": [
+        {
+          "url": "data/sounds/portfolios-kit/sd.wav",
+          "bytes": 8422,
+          "sha256": "4dce7f7d17c415c30a42a416c3904293d5391f132feaf8b726fa1908d0e7a2c3",
+          "type": "audio/wav",
+          "seconds": 0.19
+        }
+      ]
+    },
+    {
+      "id": "hh",
+      "title": "Closed hi-hat",
+      "category": "drums",
+      "pack": "portfolios-kit",
+      "files": [
+        {
+          "url": "data/sounds/portfolios-kit/hh.wav",
+          "bytes": 2910,
+          "sha256": "4c72c6ef5e07e77734aba68e83da7500c6c426467c705e792bacdcc4ded4f334",
+          "type": "audio/wav",
+          "seconds": 0.065
+        }
+      ]
+    },
+    {
+      "id": "oh",
+      "title": "Open hi-hat",
+      "category": "drums",
+      "pack": "portfolios-kit",
+      "files": [
+        {
+          "url": "data/sounds/portfolios-kit/oh.wav",
+          "bytes": 10186,
+          "sha256": "8ecb9f094a8e0e3d8bedb22b2aee59d33775234cc9ea642cc5e5222efa8e8e9a",
+          "type": "audio/wav",
+          "seconds": 0.23
+        }
+      ]
+    },
+    {
+      "id": "clap",
+      "title": "Clap",
+      "category": "drums",
+      "pack": "portfolios-kit",
+      "files": [
+        {
+          "url": "data/sounds/portfolios-kit/clap.wav",
+          "bytes": 9746,
+          "sha256": "ae95c20adab63520e09ce6ef19d6964d4ffbc663a2a17251935f08046841c00a",
+          "type": "audio/wav",
+          "seconds": 0.22
+        }
+      ]
+    },
+    {
+      "id": "rim",
+      "title": "Rim click",
+      "category": "drums",
+      "pack": "portfolios-kit",
+      "files": [
+        {
+          "url": "data/sounds/portfolios-kit/rim.wav",
+          "bytes": 4012,
+          "sha256": "6001eaf7be730cdc2f75796f6c117d7c8944f186da38125083cdd9983fe9db7b",
+          "type": "audio/wav",
+          "seconds": 0.09
+        }
+      ]
+    },
+    {
+      "id": "tom",
+      "title": "Low tom",
+      "category": "drums",
+      "pack": "portfolios-kit",
+      "files": [
+        {
+          "url": "data/sounds/portfolios-kit/tom.wav",
+          "bytes": 15038,
+          "sha256": "2258614c0e436e15d279060a34acf80bd325e8fbb4dff25e159c8e9676688661",
+          "type": "audio/wav",
+          "seconds": 0.34
+        }
+      ]
+    },
+    {
+      "id": "bell",
+      "title": "Bell",
+      "category": "percussion",
+      "pack": "portfolios-kit",
+      "files": [
+        {
+          "url": "data/sounds/portfolios-kit/bell.wav",
+          "bytes": 22094,
+          "sha256": "61e8abd297fe161f6c66e2961e46f309aa75a05d44a0332b57d59f3a56788e73",
+          "type": "audio/wav",
+          "seconds": 0.5
+        }
+      ]
+    }
+  ]
+}
