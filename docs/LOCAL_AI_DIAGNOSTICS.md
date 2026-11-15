@@ -15,6 +15,14 @@ Prompt/editor text is not added to request diagnostics. The failure itself may c
 
 The excerpt ending at a 43% download cannot establish the original failure's exact cause. A separate real-GPU reproduction using Gemma 2 returned a string `ContextWindowSizeExceededError` that the previous controller replaced with its generic failure message. Normal chat also succeeded on that same model; this is not evidence that every device or every failed request had a context error.
 
+## Reported Galaxy Z Fold7 run
+
+The user clarified that the original failing run was on a Galaxy Z Fold7. The earlier exported desktop Linux user-agent string is not sufficient to identify the actual hardware or prove the run used a desktop GPU. The browser and its Desktop-site setting remain diagnostic context to confirm.
+
+Choosing the PortfoliOS Desktop experience on a phone still uses that phone/browser's WebGPU implementation. The NVIDIA reproduction does not establish Fold7 model compatibility. Browser GPU feature/buffer limits and driver behavior must be checked on the affected device; total phone RAM does not measure memory available to WebGPU.
+
+Release 2026.11.14.3 checks required features and exports adapter buffer limits, but it does not certify that Gemma 2 will run on this phone. Use the new Last Error, Failure, Request and GPU lines to investigate. A smaller catalog model can provide a comparison if it passes the same capability checks; do not silently switch models or infer an out-of-memory cause from the device name alone.
+
 ## Recovery behavior
 
 All local models receive up to six short relevant project summaries rather than the entire portfolio/bookmark list. The model's memory size does not imply a larger context window. Broadly oversized requests fail before dispatch; the engine still enforces its actual tokenizer limit. User input is not silently truncated.
