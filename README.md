@@ -154,6 +154,8 @@ The passphrase unlock is required after reload; provider sign-in is repeated onl
 
 ---
 
+Local AI preserves worker error details and supports warm retries after context-limit rejections. See [diagnostics and verification limits](docs/LOCAL_AI_DIAGNOSTICS.md).
+
 ## Loop Studio and shared sounds
 
 [Loop Studio](apps/loop-studio/README.md) is an installable Desktop music-coding app powered by a pinned Strudel engine. It supports live patterns, synth voices, a shared sample shelf, local recording, native SystemFS project dialogs and optional reviewed on-device AI drafts. The engine loads on Play.

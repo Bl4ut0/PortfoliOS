@@ -29,7 +29,7 @@ Co-compose uses the existing Local AI service only after a user asks for a draft
 
 The model sees the current editor, tempo, request and installed sound names. Its structured response is parsed and validated, then displayed as a draft. Applying, playing and saving require separate user actions. Undo draft restores the previous editor. Invalid or late replies cannot write files, run scripts, play audio or update another profile. Cancellation affects only a generation owned by this app.
 
-Small local models may return invalid JSON or unsupported notation; those drafts remain unapplied. Browser tests exercise this plumbing with a fixture provider, not a downloaded GPU model. Musical output quality on a real user's model remains to be evaluated.
+Small local models may return invalid JSON or unsupported notation; those drafts remain unapplied. Browser regression tests exercise this plumbing with a fixture provider. A targeted actual-GPU check with Gemma 2 also returned a validated two-track draft after request-error recovery; see [Local AI diagnostics](../../docs/LOCAL_AI_DIAGNOSTICS.md). Other devices and broader musical quality remain to be evaluated.
 
 ## Browser-local MCP tools
 

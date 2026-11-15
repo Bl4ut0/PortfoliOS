@@ -1230,6 +1230,16 @@ function initDebugSettings() {
         if (snapshot.lastError) {
             lines.push(`[LocalAI Last Error] ${snapshot.lastError}`);
         }
+        if (snapshot.lastFailure) {
+            lines.push(`[LocalAI Failure] phase=${snapshot.lastFailure.phase} model=${snapshot.lastFailure.modelId} surface=${snapshot.lastFailure.surface || "-"} type=${snapshot.lastFailure.errorType} at=${snapshot.lastFailure.at}`);
+        }
+        if (snapshot.lastRequest) {
+            const request = snapshot.lastRequest;
+            lines.push(`[LocalAI Request] surface=${request.surface} inputCharacters=${request.inputCharacters} maxOutputTokens=${request.maxOutputTokens} contextWindowTokens=${request.contextWindowTokens} stream=${request.stream}`);
+        }
+        if (snapshot.gpu) {
+            lines.push(`[LocalAI GPU] vendor=${snapshot.gpu.vendor} device=${snapshot.gpu.device} fallback=${snapshot.gpu.isFallbackAdapter} shader-f16=${snapshot.gpu.features.includes("shader-f16")} maxStorageBufferBindingSize=${snapshot.gpu.maxStorageBufferBindingSize}`);
+        }
         return lines;
     };
 

@@ -81,8 +81,8 @@
     const FALLBACK_MODEL_IDS = AVAILABLE_MODELS
         .filter(m => m.type === "local")
         .map(m => m.id);
-    const WORKER_URL = "core/local-ai-worker.php?v=1.0.63";
-    const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm";
+    const WORKER_URL = "core/local-ai-worker.php?v=1.0.64";
+    const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm@0.2.88";
     const STATUS_EMIT_MIN_MS = 220;
     const CHAT_MAX_TOKENS = 120;
     const INTERNAL_SPECIAL_TOKEN_RE = /<image_soft_token>|<start_of_turn>|<end_of_turn>|<bos>|<eos>|<pad>|<unused\d+>|<\|(?:begin_of_text|end_of_text|eot_id|start_header_id|end_header_id)\|>/gi;
@@ -346,6 +346,9 @@
     let progress = 0;
     let statusText = isCloudModel(modelInfo) ? "Cloud AI is off." : "Local AI is off.";
     let lastError = "";
+    let lastFailure = null;
+    let lastRequest = null;
+    let gpuInfo = null;
     let stopRequested = false;
     let activeGenerationId = 0;
     let activeGenerationStartedAt = 0;
@@ -385,6 +388,11 @@
             workerUrl: WORKER_URL,
             runtimeUrl: WEBLLM_URL,
             userAgent: navigator.userAgent,
+            contextWindowTokens: modelInfo.contextWindowTokens || null,
+            requiredFeatures: modelInfo.required_features || [],
+            gpu: gpuInfo,
+            lastFailure,
+            lastRequest,
             ...extra
         };
     }
@@ -401,8 +409,45 @@
         }
     }
 
+    function normalizeAIError(value, fallback) {
+        let candidate = value;
+        for (let depth = 0; depth < 4; depth++) {
+            if (typeof candidate === "string" && candidate.trim()) {
+                const message = candidate.trim().slice(0, 2048);
+                return new Error(/^-?\d+$/.test(message) ? `${fallback} WebLLM runtime code: ${message}.` : message);
+            }
+            if (typeof candidate === "number" && Number.isFinite(candidate)) return new Error(`${fallback} WebLLM runtime code: ${candidate}.`);
+            if (typeof candidate?.message === "string" && candidate.message.trim()) {
+                const normalized = new Error(candidate.message.trim().slice(0, 2048));
+                normalized.name = typeof candidate.name === "string" ? candidate.name : "Error";
+                return normalized;
+            }
+            candidate = candidate?.error ?? candidate?.cause;
+        }
+        return new Error(fallback);
+    }
+
+    function recordAIFailure(phase, value) {
+        const error = normalizeAIError(value, phase === "generation" ? "Local AI failed to generate a response." : "Local AI failed to start.");
+        lastError = error.message;
+        lastFailure = {
+            phase, message: error.message, errorType: value?.name || typeof value,
+            modelId: modelInfo.id, surface: activeGenerationSurface || "", at: new Date().toISOString(),
+            request: lastRequest ? { ...lastRequest } : null
+        };
+        emitAIDebug(`${phase === "generation" ? "Generation" : "Model load"} failed.`, getAIDebugSnapshot());
+        return error;
+    }
+
+    function isRequestValidationError(error) {
+        return /ContextWindowSizeExceededError|Prompt tokens exceed context window size|LocalAIInputTooLongError|MessageOrderError|SystemMessageOrderError|UnsupportedRoleError|Invalid(?:NumberString|StreamOptions|ResponseFormat|Temperature|TopP|MaxTokens)Error/i.test(`${error.name}: ${error.message}`);
+    }
+
     function emitAIDebug(message, detail = null) {
-        const detailText = detail ? ` ${serializeDebugValue(detail)}` : "";
+        const logDetail = message === "Loading progress update." && detail
+            ? {modelId: detail.modelId, progress: detail.progress, statusText: detail.statusText}
+            : detail;
+        const detailText = logDetail ? ` ${serializeDebugValue(logDetail)}` : "";
         const line = `[LocalAI] ${message}${detailText}`;
         if (window.addSystemLog) {
             window.addSystemLog("ai", line);
@@ -535,6 +580,7 @@
     }
 
     function stopActiveRuntimeForModelChange() {
+        activeGenerationId += 1;
         stopRequested = true;
         activeGenerationStartedAt = 0;
         activeGenerationSurface = "";
@@ -700,6 +746,9 @@
             type: "local",
             source,
             confirmed: true,
+            contextWindowTokens: Number(record.overrides?.context_window_size) > 0 ? Number(record.overrides.context_window_size) : 4096,
+            required_features: Array.isArray(record.required_features) ? [...record.required_features] : [],
+            vramRequiredMB: getModelMemoryMB(record),
             note
         };
     }
@@ -926,23 +975,6 @@
             throw new Error(lastError);
         }
 
-        // Request preferred GPU adapter based on BIOS hardware configuration
-        try {
-            const powerPreference = window.PortfoliOS_BIOS?.getGpuPreference?.() || "high-performance";
-            const adapter = await navigator.gpu.requestAdapter(powerPreference === "default" ? undefined : { powerPreference });
-            if (adapter) {
-                const info = await adapter.requestAdapterInfo?.() || {};
-                emitAIDebug("WebGPU adapter selected.", getAIDebugSnapshot({
-                    vendor: info.vendor || "unknown",
-                    device: info.device || info.description || "unknown"
-                }));
-                console.log(`[LocalAI] GPU adapter (${powerPreference}): ${info.vendor || "unknown"} — ${info.device || info.description || "unknown"}`);
-            }
-        } catch (gpuErr) {
-            emitAIDebug("Could not request GPU adapter.", getAIDebugSnapshot({ error: serializeDebugValue(gpuErr) }));
-            console.warn("[LocalAI] Could not request GPU adapter:", gpuErr);
-        }
-
         setStatus("loading", "Loading WebLLM runtime...", 0.02);
 
         loadPromise = (async () => {
@@ -954,6 +986,21 @@
                     setStatus("idle", "Local AI is off.", 0, { force: true });
                     return null;
                 }
+                const powerPreference = window.PortfoliOS_BIOS?.getGpuPreference?.() || "high-performance";
+                const adapter = await navigator.gpu.requestAdapter(powerPreference === "default" ? undefined : { powerPreference });
+                if (!adapter) throw new Error("WebGPU returned no adapter. Check browser hardware acceleration and GPU availability.");
+                const info = adapter.info || await adapter.requestAdapterInfo?.() || {};
+                gpuInfo = {
+                    vendor: info.vendor || "unknown", device: info.device || info.description || "unknown",
+                    architecture: info.architecture || "", isFallbackAdapter: Boolean(info.isFallbackAdapter),
+                    features: Array.from(adapter.features || []),
+                    maxStorageBufferBindingSize: adapter.limits?.maxStorageBufferBindingSize || null,
+                    maxBufferSize: adapter.limits?.maxBufferSize || null, powerPreference
+                };
+                emitAIDebug("WebGPU adapter selected.", getAIDebugSnapshot());
+                const missing = (modelInfo.required_features || []).filter(feature => !adapter.features?.has(feature));
+                if (missing.length) throw new Error(`This model requires missing WebGPU features: ${missing.join(", ")}. Use a compatible GPU/browser or select a compatible model.`);
+                if (stopRequested) return null;
                 const modelLoadText = modelInfo.note
                     ? `${modelInfo.note} Loading ${modelInfo.label}...`
                     : `Loading ${modelInfo.label}...`;
@@ -1008,6 +1055,8 @@
                     return null;
                 }
                 lastError = "";
+                lastFailure = null;
+                lastRequest = null;
                 emitAIDebug("Local AI engine ready.", getAIDebugSnapshot());
                 setStatus("ready", `${modelInfo.label} is ready.`, 1, { force: true });
                 return engine;
@@ -1016,11 +1065,10 @@
                     setStatus("idle", "Local AI is off.", 0, { force: true });
                     return null;
                 }
-                lastError = error?.message || "Local AI failed to start.";
-                emitAIDebug("Local AI load failed.", getAIDebugSnapshot({ error: serializeDebugValue(error) }));
+                const failure = recordAIFailure("load", error);
                 await disable("error", { preserveError: true });
                 setStatus("error", lastError, 0, { force: true });
-                throw error;
+                throw failure;
             } finally {
                 loadPromise = null;
             }
@@ -1033,26 +1081,6 @@
         emitAIDebug("Enable requested.", getAIDebugSnapshot({ source }));
 
         const isCloud = isCloudModel(modelInfo);
-        if (!isCloud && modelInfo.required_features?.includes("shader-f16")) {
-            if (!navigator.gpu) {
-                lastError = "WebGPU is not available in this browser.";
-                setStatus("error", lastError, 0, { force: true });
-                throw new Error(lastError);
-            }
-            try {
-                const adapter = await navigator.gpu.requestAdapter();
-                const hasF16 = adapter?.features?.has("shader-f16");
-                if (!hasF16) {
-                    const featErr = `Your GPU or browser doesn't support the 'shader-f16' feature required by this Gemma model. Please select a compatible model like SmolLM2 360M.`;
-                    lastError = featErr;
-                    setStatus("error", lastError, 0, { force: true });
-                    throw new Error(featErr);
-                }
-            } catch (e) {
-                console.warn("[LocalAI] Proactive feature check error:", e);
-            }
-        }
-
         const allowed = await requestPermission(source);
         if (!allowed) {
             emitAIDebug("Enable cancelled before load.", getAIDebugSnapshot({ source }));
@@ -1063,6 +1091,8 @@
         if (isCloud) {
             stopRequested = false;
             lastError = "";
+            lastFailure = null;
+            lastRequest = null;
             status = "ready";
             emitAIDebug("Cloud AI enabled.", getAIDebugSnapshot({ source }));
             setStatus("ready", `Cloud AI is ready.`, 1, { force: true });
@@ -1086,10 +1116,9 @@
         try {
             await loadWebLLMModule();
         } catch (error) {
-            lastError = error?.message || "Local AI runtime failed to load.";
-            emitAIDebug("Local AI runtime failed during enable.", getAIDebugSnapshot({ error: serializeDebugValue(error), source }));
+            const failure = recordAIFailure("load", error);
             setStatus("error", lastError, 0, { force: true });
-            throw error;
+            throw failure;
         }
 
         await loadEngine();
@@ -1125,6 +1154,7 @@
     }
 
     async function disable(reason = "user", options = {}) {
+        activeGenerationId += 1;
         emitAIDebug("Disable requested.", getAIDebugSnapshot({ reason, preserveError: Boolean(options.preserveError) }));
         stopRequested = true;
         activeGenerationStartedAt = 0;
@@ -1144,6 +1174,7 @@
             status = "idle";
             if (!options.preserveError) {
                 lastError = "";
+                lastFailure = null;
             }
             setStatus("idle", "Cloud AI is off.", 0, { force: true });
             return getStatus();
@@ -1173,6 +1204,8 @@
 
         if (!options.preserveError) {
             lastError = "";
+            lastFailure = null;
+            lastRequest = null;
         }
 
         const text = reason === "taskmgr"
@@ -1184,9 +1217,8 @@
         return getStatus();
     }
 
-    function getPortfolioContext() {
+    function getPortfolioContext(prompt = "") {
         const isSmallLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) < 500;
-        const isConstrainedLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) <= 1000;
         const privateProfile = window.getAssistantSessionInfo?.().profile === 'private';
         const systems = window.getVisibleSystems?.() || window.systems || [];
         const bookmarks = privateProfile ? [] : (window.bookmarks || []);
@@ -1202,15 +1234,24 @@
         ].join("\n");
         contextText += "\n";
 
-        const maxSystems = isSmallLocal ? 8 : (isConstrainedLocal ? 10 : systems.length);
-        const summaryLimit = isSmallLocal ? 90 : (isConstrainedLocal ? 130 : 0);
+        const local = !isCloudModel(modelInfo);
+        const maxSystems = local ? 6 : systems.length;
+        const summaryLimit = isSmallLocal ? 90 : 130;
+        const words = [...new Set(String(prompt).toLowerCase().match(/[a-z0-9]{3,}/g) || [])]
+            .filter(word => !["the", "and", "about", "what", "how", "can", "you", "portfolios", "please", "tell"].includes(word)).slice(0, 32);
+        const ranked = local ? systems.map((sys, order) => ({
+            sys, order,
+            score: words.reduce((score, word) => score
+                + (String(sys.title).toLowerCase().includes(word) ? 4 : 0)
+                + (String(sys.summary).toLowerCase().includes(word) ? 1 : 0), 0)
+        })).sort((a,b) => b.score-a.score || a.order-b.order).map(item => item.sys) : systems;
 
-        systems.slice(0, maxSystems).forEach(sys => {
+        ranked.slice(0, maxSystems).forEach(sys => {
             if (isSmallLocal) {
                 // Highly minified representation for small local models to avoid token limit overload
                 contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary.slice(0, 90)}...\n`;
-            } else if (isConstrainedLocal) {
-                contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary.slice(0, summaryLimit)}...\n`;
+            } else if (local) {
+                contextText += `- **${String(sys.title).slice(0,80)}** (${String(sys.type).slice(0,40)}, Status: ${String(sys.status).slice(0,40)}): ${String(sys.summary || "").slice(0, summaryLimit)}...\n`;
             } else {
                 contextText += `- **${sys.title}** (${sys.type}, Status: ${sys.status}): ${sys.summary}\n`;
                 if (sys.tech && sys.tech.length > 0) {
@@ -1228,7 +1269,7 @@
             contextText += `- Additional project nodes are available in the Store, Network Map, and desktop app catalog.\n`;
         }
         
-        if (bookmarks.length > 0 && !isConstrainedLocal) {
+        if (bookmarks.length > 0 && !local) {
             contextText += "\nSystem Bookmarks:\n";
             bookmarks.forEach(b => {
                 contextText += `- ${b.title}: ${b.url}\n`;
@@ -1367,11 +1408,10 @@
         const isMobileChat = context.mode === "mobile";
         const isChat = context.mode === "chat" || isMobileChat;
         
-        const dataset = getPortfolioContext();
+        const dataset = getPortfolioContext(prompt);
         let systemPrompt = "";
         
         const isCloud = isCloudModel(modelInfo);
-        const isConstrainedLocal = !isCloud && (modelInfo.memoryMB || 0) <= 1000;
         const runtimeType = isCloud ? `a cloud-hosted model (${modelInfo.label})` : `a local on-device WebGPU model (${modelInfo.label})`;
         const tokenHygiene = "Write normal text only. Never output internal model tokens such as <image_soft_token>, <start_of_turn>, <end_of_turn>, <bos>, or <eos>.";
         const groundingRules = [
@@ -1415,7 +1455,7 @@
         ].join("\n");
         const skillsSection = isMobileChat
             ? "You are in the phone experience. Answer in plain text. Do not produce action blocks, execute tools, or open desktop windows. Refer users to mobile apps such as Settings, Files, Store, Documents, Music, Task Manager, and ROM Player."
-            : isConstrainedLocal ? compactSkillsSection : fullSkillsSection;
+            : !isCloud ? compactSkillsSection : fullSkillsSection;
 
         if (isChat) {
             systemPrompt = [
@@ -1748,23 +1788,42 @@
         }
     }
 
-    function getLocalGenerationOptions() {
+    function getLocalGenerationOptions(context = {}) {
         const isConstrainedLocal = !isCloudModel(modelInfo) && (modelInfo.memoryMB || 0) <= 1000;
         return {
             temperature: isConstrainedLocal ? 0.2 : 0.35,
             top_p: isConstrainedLocal ? 0.75 : 0.9,
-            max_tokens: isConstrainedLocal ? 96 : CHAT_MAX_TOKENS
+            max_tokens: context.mode === "loop-studio" ? (isConstrainedLocal ? 256 : 384) : isConstrainedLocal ? 96 : CHAT_MAX_TOKENS
         };
     }
 
     async function generateCompletion(prompt, context = {}, onChunk = null) {
         const isCloud = isCloudModel(modelInfo);
+        const generationId = activeGenerationId;
         if (context.localOnly && isCloud) throw new Error("This request requires an on-device model. Cloud routing is disabled for it.");
-        const outputStream = typeof onChunk === "function" ? createOutputStreamSanitizer(onChunk) : null;
+        const outputStream = typeof onChunk === "function" ? createOutputStreamSanitizer(delta => {
+            if (generationId === activeGenerationId && !stopRequested) onChunk(delta);
+        }) : null;
         const emitChunk = outputStream ? (delta) => outputStream.push(delta) : null;
 
         try {
             let rawText = "";
+            const generationOptions = isCloud ? null : getLocalGenerationOptions(context);
+            const messages = isCloud ? null : buildSystemMessages(prompt, context);
+            if (!isCloud) {
+                lastRequest = {
+                    surface: String(context.mode || "chat"), stream: Boolean(outputStream),
+                    inputCharacters: messages.reduce((count, message) => count + String(message.content || "").length, 0),
+                    systemCharacters: String(messages[0]?.content || "").length, userCharacters: String(prompt || "").length,
+                    maxOutputTokens: generationOptions.max_tokens, contextWindowTokens: modelInfo.contextWindowTokens || 4096
+                };
+                emitAIDebug("Generation requested.", getAIDebugSnapshot());
+                if (lastRequest.inputCharacters > lastRequest.contextWindowTokens * 4) {
+                    const error = new Error("This request is too large for the selected local model. Shorten the message or current project, then try again. The loaded model is retained.");
+                    error.name = "LocalAIInputTooLongError";
+                    throw error;
+                }
+            }
 
             if (isCloud) {
                 if (modelInfo.type === "cloud-openai") {
@@ -1775,16 +1834,15 @@
                     throw new Error(`Unsupported cloud model type: ${modelInfo.type}`);
                 }
             } else if (outputStream) {
-                const generationOptions = getLocalGenerationOptions();
                 const chunks = await engine.chat.completions.create({
-                    messages: buildSystemMessages(prompt, context),
+                    messages,
                     temperature: generationOptions.temperature,
                     top_p: generationOptions.top_p,
                     max_tokens: generationOptions.max_tokens,
                     stream: true
                 });
                 for await (const chunk of chunks) {
-                    if (stopRequested) break;
+                    if (stopRequested || generationId !== activeGenerationId) break;
                     const delta = chunk.choices[0]?.delta?.content || "";
                     if (delta) {
                         rawText += delta;
@@ -1793,9 +1851,8 @@
                     await yieldToBrowser();
                 }
             } else {
-                const generationOptions = getLocalGenerationOptions();
                 const reply = await engine.chat.completions.create({
-                    messages: buildSystemMessages(prompt, context),
+                    messages,
                     temperature: generationOptions.temperature,
                     top_p: generationOptions.top_p,
                     max_tokens: generationOptions.max_tokens
@@ -1804,12 +1861,14 @@
                 rawText = reply?.choices?.[0]?.message?.content || "";
             }
 
-            if (stopRequested) {
+            if (stopRequested || generationId !== activeGenerationId) {
                 outputStream?.discard();
                 return CANCELLED_RESPONSE;
             }
 
             outputStream?.flush();
+            // Structured music drafts must not pass through prose de-duplication or portfolio fallbacks.
+            if (context.mode === "loop-studio") return stripInternalSpecialTokens(rawText).trim();
             return finalizeModelOutput(rawText, { prompt });
         } catch (err) {
             outputStream?.discard();
@@ -1867,28 +1926,38 @@
 
         stopRequested = false;
         activeGenerationId += 1;
+        const generationId = activeGenerationId;
         activeGenerationStartedAt = Date.now();
         activeGenerationSurface = String(context.mode || "chat");
         setStatus("generating", isCloud ? "Cloud AI is answering..." : "Local AI is answering in a background GPU worker...", 1, { force: true });
         await yieldToBrowser();
         try {
-            if (context.mode === "chat") {
-                return await runAgentLoop(prompt, context, onChunk);
-            } else {
-                return await generateCompletion(prompt, context, onChunk);
-            }
+            const response = context.mode === "chat"
+                ? await runAgentLoop(prompt, context, onChunk)
+                : await generateCompletion(prompt, context, onChunk);
+            if (generationId !== activeGenerationId || stopRequested) return CANCELLED_RESPONSE;
+            lastError = "";
+            lastFailure = null;
+            return response;
         } catch (error) {
-            lastError = error?.message || "Local AI failed to generate response.";
-            await disable("error", { preserveError: true });
-            setStatus("error", lastError, 0, { force: true });
-            throw error;
+            if (generationId !== activeGenerationId || stopRequested) return CANCELLED_RESPONSE;
+            const failure = recordAIFailure("generation", error);
+            if (!isCloud && worker && engine && isRequestValidationError(failure)) {
+                setStatus("ready", "The request could not run. The model is still ready; shorten or correct the request and try again.", 1, { force: true });
+            } else {
+                await disable("error", { preserveError: true });
+                setStatus("error", lastError, 0, { force: true });
+            }
+            throw failure;
         } finally {
-            if (status === "generating" && (isCloud || (worker && engine))) {
+            if (generationId === activeGenerationId && status === "generating" && (isCloud || (worker && engine))) {
                 setStatus("ready", isCloud ? "Cloud AI is ready." : `${modelInfo.label} is ready.`, 1, { force: true });
                 stopRequested = false;
             }
-            activeGenerationStartedAt = 0;
-            activeGenerationSurface = "";
+            if (generationId === activeGenerationId) {
+                activeGenerationStartedAt = 0;
+                activeGenerationSurface = "";
+            }
         }
     }
 
@@ -1984,6 +2053,9 @@
             status = "idle";
             progress = 0;
             lastError = "";
+            lastFailure = null;
+            lastRequest = null;
+            gpuInfo = null;
             statusText = isCloudModel(modelInfo) ? "Cloud AI is off." : "Local AI is off.";
 
             emitModelChanged(previousModelId, "user");
